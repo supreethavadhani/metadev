@@ -20,45 +20,23 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core;
+package org.simplity.fm.example.gen;
 
-import org.simplity.fm.core.datatypes.DataType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.simplity.fm.core.IPackageNameProvider;
 
 /**
- * static class that locates a data type instance
+ * Is auto-generated and added
  * @author simplity.org
  *
  */
-public abstract class DataTypes {
-	protected static final Logger logger = LoggerFactory.getLogger(DataTypes.class);
-	private static final IDataTypes instance = locateTypes();
-	
-	/**
-	 * 
-	 * @return an instance of 
-	 */
-	public static IDataTypes getInstance() {
-		return instance;
+public class PackageNameProvider implements IPackageNameProvider{
+
+	public String getGeneratedRootPackageName() {
+		return this.getClass().getPackage().getName() + ".gen";
 	}
-	
-	private static IDataTypes locateTypes() {
-		Config config = Config.getConfig();
-		String cls = config.getGeneratedPackageName() + '.' + Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
-		try {
-			return (IDataTypes)Class.forName(cls).newInstance();
-		}catch(Exception e) {
-			e.printStackTrace();
-			logger.error("Unable to locate generated data types class {}. No data types will be served for this app now.", cls);
-			return new IDataTypes() {
-				
-				@Override
-				public DataType getDataType(String name) {
-					logger.error("Class {} is not located. NO data types in the repository.", cls);
-					return null;
-				}
-			};
-		}
+
+	public String getServiceRootPackageName() {
+		return this.getClass().getPackage().getName() + ".service";
 	}
+
 }

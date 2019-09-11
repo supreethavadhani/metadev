@@ -21,7 +21,7 @@
  */
 package org.simplity.fm.core.form;
 
-import org.simplity.fm.core.ValueLists;
+import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.datatypes.DataType;
 import org.simplity.fm.core.datatypes.InvalidValueException;
 import org.simplity.fm.core.datatypes.ValueType;
@@ -144,7 +144,7 @@ public class Field {
 			this.valueList = null;
 		} else {
 			this.valueListName = valueListName;
-			this.valueList = ValueLists.getList(valueListName);
+			this.valueList = ComponentProvider.getProvider().getValueList(valueListName);
 		}
 		this.dbColumnName = dbColumnName;
 		this.columnType = columnType;

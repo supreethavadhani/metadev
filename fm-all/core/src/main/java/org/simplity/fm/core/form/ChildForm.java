@@ -22,7 +22,7 @@
 
 package org.simplity.fm.core.form;
 
-import org.simplity.fm.core.Forms;
+import org.simplity.fm.core.ComponentProvider;
 
 /**
  * represents data structure for field in a form that is designed to hold
@@ -82,7 +82,7 @@ public class ChildForm {
 	public ChildForm(String fieldName, String formName, boolean isTabular, int minRows, int maxRows,
 			String errorMessageId) {
 		this.fieldName = fieldName;
-		this.form = Forms.getForm(formName);
+		this.form = ComponentProvider.getProvider().getForm(formName);
 		this.isTabular = isTabular;
 		this.minRows = minRows;
 		this.maxRows = maxRows;

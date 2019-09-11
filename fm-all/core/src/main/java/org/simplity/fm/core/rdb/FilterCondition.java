@@ -29,28 +29,28 @@ import org.simplity.fm.core.Conventions;
  */
 public enum FilterCondition {
 	/** equal */
-	Equal(Conventions.Comparator.EQ),
+	Equal(Conventions.Filter.EQ),
 	/** not equal */
-	NotEqual(Conventions.Comparator.NE),
+	NotEqual(Conventions.Filter.NE),
 	/** greater. remember it is greater and not "more" */
-	Greater(Conventions.Comparator.GT),
+	Greater(Conventions.Filter.GT),
 	/** greater or equal */
-	GreaterOrEqual(Conventions.Comparator.GE),
+	GreaterOrEqual(Conventions.Filter.GE),
 	/**
 	 * we prefer to call small rather than less because we say greater and not
 	 * more :-)
 	 */
-	Smaller(Conventions.Comparator.LT),
+	Smaller(Conventions.Filter.LT),
 	/** we prefer to smaller to less than more :-) */
-	SmallerOrEqual(Conventions.Comparator.LE),
+	SmallerOrEqual(Conventions.Filter.LE),
 	/** like */
-	Contains(Conventions.Comparator.CONTAINS),
+	Contains(Conventions.Filter.CONTAINS),
 	/** starts with */
-	StartsWith(Conventions.Comparator.STARTS_WITH),
+	StartsWith(Conventions.Filter.STARTS_WITH),
 	/** between */
-	Between(Conventions.Comparator.BETWEEN),
+	Between(Conventions.Filter.BETWEEN),
 	/** one in the list */
-	In(Conventions.Comparator.IN_LIST);
+	In(Conventions.Filter.IN_LIST);
 	private String textValue;
 
 	private FilterCondition(String text) {

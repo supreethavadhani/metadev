@@ -24,8 +24,8 @@ package org.simplity.fm.core.validn;
 
 import java.util.List;
 
+import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.ValueLists;
 import org.simplity.fm.core.form.FormData;
 
 /**
@@ -54,7 +54,7 @@ public class DependentListValidation implements IValidation {
 	public DependentListValidation(int fieldIndex, int parentFieldIndex, String listName, String fieldName, String messageId ) {
 		this.fieldIndex = fieldIndex;
 		this.parentFieldIndex = parentFieldIndex;
-		this.validValues = ValueLists.getList(listName);
+		this.validValues = ComponentProvider.getProvider().getValueList(listName);
 		this.fieldName = fieldName;
 		this.messaageId = messageId;
 	}

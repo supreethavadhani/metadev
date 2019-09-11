@@ -22,7 +22,6 @@
 
 package org.simplity.fm.gen;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -105,7 +104,7 @@ class Form {
 				if (ct == null) {
 					continue;
 				}
-				if(ct == ColumnType.UniqueKey) {
+				if (ct == ColumnType.UniqueKey) {
 					uniqueList.add(field);
 				}
 				field.isRequired = ct.isRequired();
@@ -219,9 +218,26 @@ class Form {
 		return names;
 	}
 
-	void emitJavaClass(StringBuilder sbf, String fileName, String generatedPackage) {
+	private String getQualifier(String nam) {
+		int idx = nam.lastIndexOf('.');
+		if (idx == -1) {
+			return null;
+		}
+		return nam.substring(0, idx);
+	}
+
+	void emitJavaClass(StringBuilder sbf, String generatedPackage) {
 		String typesName = Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
-		sbf.append("package ").append(generatedPackage).append(".form;");
+		String pck = getQualifier(this.name);
+		String cls = null;
+		if(pck == null) {
+			pck = generatedPackage + ".form";
+			cls = Util.toClassName(this.name);
+		}else {
+			cls = Util.toClassName(this.generatedColumnName.substring(pck.length()+1));
+			pck = generatedPackage + ".form." + pck;
+		}
+		sbf.append("package ").append(pck);
 		sbf.append('\n');
 
 		/*
@@ -252,10 +268,8 @@ class Form {
 		/*
 		 * class definition
 		 */
-		String cls = Util.toClassName(this.name);
-		sbf.append("\n\n/**\n * class that represents structure of ");
-		sbf.append(this.name);
-		sbf.append("\n * <br /> generated at ").append(LocalDateTime.now()).append(" from file ").append(fileName);
+
+		sbf.append("\n\n/**\n * class that represents structure of ").append(this.name);
 		sbf.append("\n */ ");
 		sbf.append("\npublic class ").append(cls).append(" extends Form {");
 
@@ -337,10 +351,10 @@ class Form {
 			StringBuilder idxBuf = new StringBuilder();
 			sbf.append(P).append("String UNIQUE = \" WHERE ");
 			boolean isFirst = true;
-			for(Field f : this.uniqueFields) {
-				if(isFirst) {
-					isFirst  = false;
-				}else {
+			for (Field f : this.uniqueFields) {
+				if (isFirst) {
+					isFirst = false;
+				} else {
 					sbf.append(" AND ");
 					idxBuf.append(C);
 				}
@@ -391,7 +405,7 @@ class Form {
 			sbf.append(t).append("uniqueClause = UNIQUE;");
 			sbf.append(t).append("uniqueParams = this.getParams(UNIQUE_IDX);");
 		}
-		
+
 		if (this.childForms != null && this.childForms.length > 0) {
 			this.emitChildDbParam(sbf);
 		}
@@ -559,8 +573,9 @@ class Form {
 			}
 		}
 		if (this.hasCustomValidations) {
-	//		sbf.append("new ").append(customPackageName).append('.').append(Util.toClassName(this.name))
-	//				.append("Validation()");
+			// sbf.append("new
+			// ").append(customPackageName).append('.').append(Util.toClassName(this.name))
+			// .append("Validation()");
 		} else if (sbf.length() > n) {
 			/*
 			 * remove last sufix
@@ -573,10 +588,7 @@ class Form {
 	}
 
 	void emitTs(StringBuilder sbf, Map<String, DataType> dataTypes, Map<String, ValueList> valueLists,
-			Map<String, KeyedValueList> keyedLists, String fileName) {
-
-		sbf.append("/*\n * generated from ").append(fileName).append(" at ").append(LocalDateTime.now())
-				.append("\n */");
+			Map<String, KeyedValueList> keyedLists) {
 
 		sbf.append("\nimport { Form , Field, ChildForm } from '../form/form';");
 		sbf.append("\nimport { SelectOption } from '../form/types';");
@@ -633,8 +645,8 @@ class Form {
 		StringBuilder altSbf = new StringBuilder("\n\t\tthis.controls = new Map();");
 		if (this.fields != null && this.fields.length > 0) {
 			for (Field field : this.fields) {
-				sbf.append("\n\t\tthis.fields.set('").append(field.name).append("', this.")
-						.append(field.name).append(");");
+				sbf.append("\n\t\tthis.fields.set('").append(field.name).append("', this.").append(field.name)
+						.append(");");
 				altSbf.append("\n\t\tthis.controls.set('").append(field.name).append("', [");
 				field.emitFg(altSbf, dataTypes.get(field.dataType));
 				altSbf.append("]);");
@@ -649,8 +661,8 @@ class Form {
 		if (this.childForms != null && this.childForms.length != 0) {
 			sbf.append("\n\n\t\tthis.childForms = new Map();");
 			for (ChildForm child : this.childForms) {
-				sbf.append("\n\t\tthis.childForms.set('").append(child.name).append("', this.")
-						.append(child.name).append(");");
+				sbf.append("\n\t\tthis.childForms.set('").append(child.name).append("', this.").append(child.name)
+						.append(");");
 			}
 		}
 
@@ -870,7 +882,7 @@ class Form {
 				idxSbf.append(field.index);
 			}
 		}
-		//update sql will have the where indexes at the end
+		// update sql will have the where indexes at the end
 		idxSbf.append(C).append(whereIndexes).append("};");
 
 		sbf.append(whereClause);

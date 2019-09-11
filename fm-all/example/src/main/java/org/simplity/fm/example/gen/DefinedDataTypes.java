@@ -20,45 +20,23 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core;
+package org.simplity.fm.example.gen;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.simplity.fm.core.form.Form;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.simplity.fm.core.ComponentProvider;
+import org.simplity.fm.core.IDataTypes;
+import org.simplity.fm.core.datatypes.DataType;
 
 /**
- * static class that can locate a design-time
- * 
  * @author simplity.org
  *
  */
-public final class Forms {
-	private static final Logger logger = LoggerFactory.getLogger(Forms.class);
-	private static final Map<String, Form> allForms = new HashMap<>();
+public class DefinedDataTypes implements IDataTypes {
+	public static void main(String[] args) {
+		ComponentProvider.getProvider();
+	}
 
-	/**
-	 * 
-	 * @param formName
-	 * @return form , or null if there is such form
-	 */
-	public static Form getForm(String formName) {
-		Form form = allForms.get(formName);
-		if (form != null) {
-			return form;
-		}
-		try {
-			String cls = Config.getConfig().getGeneratedPackageName() + ".form."
-					+ formName.substring(0, 1).toUpperCase() + formName.substring(1);
-			form = (Form) Class.forName(cls).newInstance();
-			allForms.put(formName, form);
-			return form;
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("Form {} could not be located and used as a class for form. Error {}", formName, e.getMessage());
-			return null;
-		}
+	public DataType getDataType(String name) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

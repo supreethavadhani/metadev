@@ -22,39 +22,23 @@
 
 package org.simplity.fm.core;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.simplity.fm.core.validn.IValueList;
-
 /**
- * repository that serves all lists defined for this project
+ * this interface is used to plant an implementation class in the root package
+ * where classes are generated. It is then used by the ComponentProvider to get
+ * this class name.
  * 
  * @author simplity.org
  *
  */
-public final class ValueLists {
-	private static final Map<String, IValueList> allLists = new HashMap<>();
-
+public interface IPackageNameProvider {
 	/**
 	 * 
-	 * @param listName
-	 * @return list of valid values, null if no such named list
+	 * @return name of the root package where classes are generated
 	 */
-	public static IValueList getList(String listName) {
-		IValueList list = allLists.get(listName);
-		if (list != null) {
-			return list;
-		}
-		try {
-			String cls = Config.getConfig().getGeneratedPackageName() + ".list."
-					+ listName.substring(0, 1).toUpperCase() + listName.substring(1);
-			list = (IValueList) Class.forName(cls).newInstance();
-			allLists.put(listName, list);
-			return list;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
+	public String getGeneratedRootPackageName();
+	/**
+	 * 
+	 * @return name of the root package where service classes are generated
+	 */
+	public String getServiceRootPackageName();
 }

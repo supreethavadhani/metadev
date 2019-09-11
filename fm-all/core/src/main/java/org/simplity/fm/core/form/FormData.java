@@ -46,12 +46,10 @@ import org.simplity.fm.core.validn.IValidation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonWriter;
 
 /**
  * @author simplity.org
@@ -506,7 +504,7 @@ public class FormData {
 	 * 
 	 * @param json
 	 */
-	public void load(ObjectNode json) {
+	public void load(JsonObject json) {
 		this.validateAndLoad(json, true, true, null);
 	}
 
@@ -518,7 +516,7 @@ public class FormData {
 	 * @param ctx
 	 *            non-null to which any validation errors are added
 	 */
-	public void loadKeys(ObjectNode json, IserviceContext ctx) {
+	public void loadKeys(JsonObject json, IserviceContext ctx) {
 		int[] indexes = this.form.getKeyIndexes();
 		if (indexes == null) {
 			return;
@@ -592,7 +590,7 @@ public class FormData {
 	 * @param ctx
 	 *            non-null
 	 */
-	public void validateAndLoad(ObjectNode json, boolean allFieldsAreOptional, boolean forInsert, IserviceContext ctx) {
+	public void validateAndLoad(JsonObject json, boolean allFieldsAreOptional, boolean forInsert, IserviceContext ctx) {
 		boolean keyIsOptional = false;
 		if (forInsert) {
 			keyIsOptional = this.form.getDbMetaData().generatedColumnName != null;
@@ -610,10 +608,10 @@ public class FormData {
 		}
 	}
 
-	private FormData[] validateChild(ChildForm childForm, ObjectNode json, boolean allFieldsAreOptional,
+	private FormData[] validateChild(ChildForm childForm, JsonObject json, boolean allFieldsAreOptional,
 			boolean forInsert, IserviceContext ctx) {
 		String fieldName = childForm.fieldName;
-		JsonNode childNode = json.get(fieldName);
+		JsonElement childNode = json.get(fieldName);
 		if (childNode == null) {
 			if (childForm.minRows > 0) {
 				ctx.addMessage(Message.newFieldError(fieldName, childForm.errorMessageId));
@@ -621,31 +619,30 @@ public class FormData {
 			return null;
 		}
 
-		JsonNodeType nt = childNode.getNodeType();
 		if (childForm.isTabular == false) {
-			if (nt != JsonNodeType.OBJECT) {
+			if (!childNode.isJsonObject()) {
 				logger.error(
 						"Form {} has a child form named {} and hence an object is expeted. But {} is received as data",
-						this.form.getFormId(), fieldName, nt);
+						this.form.getFormId(), fieldName, childNode.getClass().getSimpleName());
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 				return null;
 			}
 			FormData fd = childForm.form.newFormData();
-			fd.validateAndLoad((ObjectNode) childNode, allFieldsAreOptional, forInsert, ctx);
+			fd.validateAndLoad((JsonObject) childNode, allFieldsAreOptional, forInsert, ctx);
 			FormData[] result = { fd };
 			return result;
 		}
 
-		ArrayNode arr = null;
+		JsonArray arr = null;
 		int n = 0;
-		if (nt == JsonNodeType.ARRAY) {
-			arr = (ArrayNode) childNode;
+		if (childNode.isJsonArray()) {
+			arr = (JsonArray) childNode;
 			n = arr.size();
 			if (allFieldsAreOptional == false) {
 				if ((n < childForm.minRows || n > childForm.maxRows)) {
 					logger.error(
 							"Form {} has a child form named {} and hence an object is expeted. But {} is received as data",
-							this.form.getFormId(), fieldName, nt);
+							this.form.getFormId(), fieldName, childNode.getClass().getSimpleName());
 					arr = null;
 				}
 			}
@@ -661,15 +658,15 @@ public class FormData {
 		}
 		List<FormData> fds = new ArrayList<>();
 		for (int j = 0; j < n; j++) {
-			JsonNode col = arr.get(j);
+			JsonElement col = arr.get(j);
 
-			if (col == null || col.getNodeType() != JsonNodeType.OBJECT) {
+			if (col == null || !col.isJsonObject()) {
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 				continue;
 			}
 			FormData fd = childForm.form.newFormData();
 			fds.add(fd);
-			fd.validateAndLoad((ObjectNode) col, allFieldsAreOptional, forInsert, ctx);
+			fd.validateAndLoad((JsonObject) col, allFieldsAreOptional, forInsert, ctx);
 		}
 		if (fds.size() == 0) {
 			return null;
@@ -677,7 +674,7 @@ public class FormData {
 		return fds.toArray(new FormData[0]);
 	}
 
-	private static void setFeilds(ObjectNode json, Form form, Object[] row, boolean allFieldsAreOptional,
+	private static void setFeilds(JsonObject json, Form form, Object[] row, boolean allFieldsAreOptional,
 			boolean keyIsOptional, IserviceContext ctx) {
 
 		for (Field field : form.getFields()) {
@@ -747,35 +744,35 @@ public class FormData {
 	 * @throws IOException
 	 */
 	public void serializeAsJson(Writer writer) throws IOException {
-		try (JsonGenerator gen = new JsonFactory().createGenerator(writer)) {
+		try (JsonWriter gen = new JsonWriter(writer)) {
 			this.serialize(gen);
 		}
 	}
 
-	private void serialize(JsonGenerator gen) throws IOException {
-		gen.writeStartObject();
+	private void serialize(JsonWriter gen) throws IOException {
+		gen.beginObject();
 		writeFields(gen);
 		if (this.childData != null) {
 			this.serializeChildren(gen);
 		}
 
-		gen.writeEndObject();
+		gen.endObject();
 	}
 
-	private void serializeChildren(JsonGenerator gen) throws IOException {
+	private void serializeChildren(JsonWriter gen) throws IOException {
 		int i = 0;
 		for (ChildForm cf : this.form.childForms) {
 			FormData[] fd = this.childData[i];
 			if (fd == null) {
 				continue;
 			}
-			gen.writeFieldName(cf.fieldName);
+			gen.name(cf.fieldName);
 			if (cf.isTabular) {
-				gen.writeStartArray();
+				gen.beginArray();
 				for (FormData cd : fd) {
 					cd.serialize(gen);
 				}
-				gen.writeEndArray();
+				gen.endArray();
 			} else {
 				fd[0].serialize(gen);
 			}
@@ -783,30 +780,38 @@ public class FormData {
 		}
 	}
 
-	private void writeFields(JsonGenerator gen) throws IOException {
+	private void writeFields(JsonWriter gen) throws IOException {
 		for (Field field : this.form.getFields()) {
 			Object value = this.fieldValues[field.getIndex()];
 			if (value == null) {
 				continue;
 			}
-			gen.writeFieldName(field.getFieldName());
-			if (value instanceof LocalDate || value instanceof Instant) {
-				value = value.toString();
-			}
-			gen.writeObject(value);
+			gen.name(field.getFieldName());
+			writeField(gen, value, field.getValueType());
 		}
 	}
 
-	private static String getTextAttribute(JsonNode json, String fieldName) {
-		JsonNode node = json.get(fieldName);
+	private static void writeField(JsonWriter writer, Object value, ValueType vt) throws IOException {
+		if(vt == ValueType.INTEGER || vt == ValueType.DECIMAL) {
+			writer.value((Number)(value));
+			return;
+		}
+		if(vt == ValueType.BOOLEAN) {
+			writer.value((boolean)(value));
+			return;
+		}
+		writer.value(value.toString());
+	}
+	
+	private static String getTextAttribute(JsonObject json, String fieldName) {
+		JsonElement node = json.get(fieldName);
 		if (node == null) {
 			return null;
 		}
-		JsonNodeType nt = node.getNodeType();
-		if (nt == JsonNodeType.NULL || nt == JsonNodeType.MISSING) {
-			return null;
+		if(node.isJsonPrimitive()) {
+			return node.getAsString();
 		}
-		return node.asText();
+			return null;
 	}
 
 	/**

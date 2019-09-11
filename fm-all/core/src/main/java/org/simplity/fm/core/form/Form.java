@@ -24,10 +24,10 @@ package org.simplity.fm.core.form;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.rdb.FilterCondition;
@@ -37,10 +37,8 @@ import org.simplity.fm.core.validn.IValidation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 /**
  * @author simplity.org
@@ -374,9 +372,10 @@ public class Form {
 	 * @param conditions
 	 * @param errors
 	 * @param ctx 
+	 * @param maxRows mxRows to be read
 	 * @return filter clause that can be used to get rows from the db
 	 */
-	public SqlReader parseForFilter(ObjectNode conditions, List<Message> errors, IserviceContext ctx) {
+	public SqlReader parseForFilter(JsonObject conditions, List<Message> errors, IserviceContext ctx, int maxRows) {
 		StringBuilder sql = new StringBuilder(this.dbMetaData.selectClause);
 		sql.append(" WHERE ");
 		List<FormDbParam> params = new ArrayList<>();
@@ -396,8 +395,7 @@ public class Form {
 		 * fairly long inside the loop for each filed. But it is more
 		 * serial code. Hence left it that way
 		 */
-		for (Iterator<Map.Entry<String, JsonNode>> it = conditions.fields(); it.hasNext();) {
-			Map.Entry<String, JsonNode> entry = it.next();
+		for (Map.Entry<String, JsonElement> entry : conditions.entrySet()) {
 			String fieldName = entry.getKey();
 			Field field = this.getField(fieldName);
 			if (field == null) {
@@ -405,23 +403,22 @@ public class Form {
 				continue;
 			}
 
-			JsonNode node = entry.getValue();
-			if (node == null || node.getNodeType() != JsonNodeType.ARRAY) {
-				logger.error("Filter condition for filed {} should be an array, but it is {}", fieldName, node);
+			JsonElement node = entry.getValue();
+			if (node == null || !node.isJsonObject()) {
+				logger.error("Filter condition for filed {} should be an object, but it is {}", fieldName, node);
 				errors.add(Message.newError(Message.MSG_INVALID_DATA));
 				return null;
 			}
 
-			ArrayNode arr = (ArrayNode) node;
-			int n = node.size();
-			if (n < 2 || n > 3) {
-				logger.error("Filter condition for filed {} should have 2 elements, but it has {}", fieldName,
-						arr.size());
+			JsonObject con = (JsonObject) node;
+
+			JsonElement ele = con.get(Conventions.Http.TAG_FILTER_COMP);
+			if(ele == null || !ele.isJsonPrimitive()) {
+				logger.error("comp is missing for a filter condition");
 				errors.add(Message.newError(Message.MSG_INVALID_DATA));
 				return null;
 			}
-
-			String condnText = arr.get(0).asText();
+			String condnText = ele.getAsString();
 			FilterCondition condn = FilterCondition.parse(condnText);
 			if (condn == null) {
 				logger.error("{} is not a valid filter condition", condnText);
@@ -429,6 +426,24 @@ public class Form {
 				return null;
 			}
 
+			ele = con.get(Conventions.Http.TAG_FILTER_VALUE);
+			if(ele == null || !ele.isJsonPrimitive()) {
+				logger.error("value is missing for a filter condition");
+				errors.add(Message.newError(Message.MSG_INVALID_DATA));
+				return null;
+			}
+			String value = ele.getAsString();
+			String value2 = null;
+			if(condn == FilterCondition.Between) {
+				ele = con.get(Conventions.Http.TAG_FILTER_VALUE_TO);
+				if(ele == null || !ele.isJsonPrimitive()) {
+					logger.error("valueTo is missing for a filter condition");
+					errors.add(Message.newError(Message.MSG_INVALID_DATA));
+					return null;
+				}
+				value2 = ele.getAsString();
+			}
+			
 			int idx = params.size();
 			if ( idx > 0) {
 				sql.append(" and ");
@@ -436,9 +451,8 @@ public class Form {
 
 			sql.append(field.getDbColumnName());
 			ValueType vt = field.getValueType();
-			Object value = null;
+			Object obj = null;
 
-			String text = arr.get(1).asText();
 			/*
 			 * complex ones first.. we have to append ? to sql, and add type and
 			 * value to the lists for each case
@@ -453,11 +467,11 @@ public class Form {
 
 				sql.append(LIKE);
 				params.add(new FormDbParam(idx++, vt));
-				text = escapeLike(text);
+				value = escapeLike(value);
 				if (condn == FilterCondition.Contains) {
-					values.add(WILD_CARD + text + WILD_CARD);
+					values.add(WILD_CARD + value + WILD_CARD);
 				} else {
-					values.add(WILD_CARD + text);
+					values.add(WILD_CARD + value);
 				}
 				continue;
 			}
@@ -465,15 +479,15 @@ public class Form {
 			if (condn == FilterCondition.In) {
 				sql.append(IN);
 				boolean firstOne = true;
-				for (String part : text.split(",")) {
-					value = vt.parse(part.trim());
+				for (String part : value.split(",")) {
+					obj = vt.parse(part.trim());
 					if (value == null) {
-						logger.error("{} is not a valid value for value type {} for field {}", text, vt, fieldName);
+						logger.error("{} is not a valid value for value type {} for field {}", value, vt, fieldName);
 						errors.add(Message.newError(Message.MSG_INVALID_DATA));
 						return null;
 					}
 					params.add(new FormDbParam(idx++, vt));
-					values.add(value);
+					values.add(obj);
 					if (firstOne) {
 						sql.append('?');
 						firstOne = false;
@@ -485,35 +499,34 @@ public class Form {
 				continue;
 			}
 
-			value = vt.parse(text);
+			obj = vt.parse(value);
 			if (value == null) {
-				logger.error("{} is not a valid value for value type {} for field {}", text, vt, fieldName);
+				logger.error("{} is not a valid value for value type {} for field {}", value, vt, fieldName);
 				errors.add(Message.newError(Message.MSG_INVALID_DATA));
 				return null;
 			}
 
 			if (condn == FilterCondition.Between) {
-				Object value2 = null;
-				text = arr.get(2).asText();
-				if (text != null) {
-					value2 = vt.parse(text);
+				Object obj2 = null;
+				if(value2 != null) {
+					obj2 = vt.parse(value2);
 				}
-				if (value2 == null) {
-					logger.error("{} is not a valid value for value type {} for field {}", text, vt, fieldName);
+				if (obj2 == null) {
+					logger.error("{} is not a valid value for value type {} for field {}", value2, vt, fieldName);
 					errors.add(Message.newError(Message.MSG_INVALID_DATA));
 					return null;
 				}
 				sql.append(BETWEEN);
-				values.add(value);
+				values.add(obj);
 				params.add(new FormDbParam(idx++, vt));
-				values.add(value2);
+				values.add(obj2);
 				params.add(new FormDbParam(idx++, vt));
 				continue;
 			}
 
 			sql.append(' ').append(condnText).append(" ?");
 			params.add(new FormDbParam(idx++, vt));
-			values.add(value);
+			values.add(obj);
 		}
 		return new SqlReader(sql.toString(), params.toArray(new FormDbParam[0]), values.toArray(new Object[0]));
 	}

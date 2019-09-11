@@ -20,30 +20,19 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.service;
-
-import com.google.gson.JsonObject;
+package org.simplity.fm.core;
 
 /**
- * Interface for service. The instance is expected to be re-usable, and
- * thread-safe. (immutable). Singleton pattern is suitable or this.
- *
- * 
  * @author simplity.org
  *
  */
-public interface IService {
+public interface IMessages {
 	/**
-	 * serve when data is requested in a Map
 	 * 
-	 * @param ctx
-	 *            service context provides certain data structures and methods.
-	 * @param inputPayload
-	 *            non-null, could be empty if no pay-load was received from the
-	 *            client
-	 * @throws Exception
-	 *             so that the caller can wire exceptions to the right exception
-	 *             handler that is configured for the app
+	 * @param messageId
+	 * @return message instance for this message name/id. null if it does not
+	 *         exist
 	 */
-	public void serve(IserviceContext ctx, JsonObject inputPayload) throws Exception;
+	public abstract Message getMessage(String messageId);
+
 }

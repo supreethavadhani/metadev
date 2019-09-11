@@ -29,8 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.Forms;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.IDbClient;
@@ -40,9 +40,8 @@ import org.simplity.fm.core.service.IserviceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 /**
  * service for a form based I/O operation from DB
@@ -60,7 +59,7 @@ public abstract class FormIo implements IService {
 	 * @return non-null instance
 	 */
 	public static FormIo getInstance(IoType opern, String formName) {
-		Form form = Forms.getForm(formName);
+		Form form = ComponentProvider.getProvider().getForm(formName);
 		if (form == null) {
 			logger.error("No form named {}.", formName);
 			return null;
@@ -106,7 +105,7 @@ public abstract class FormIo implements IService {
 		}
 
 		@Override
-		public void serve(IserviceContext ctx, ObjectNode payload) throws Exception {
+		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
 			FormData fd = this.form.newFormData();
 			Field tenant = this.form.dbMetaData.tenantField;
 			if (tenant != null) {
@@ -159,12 +158,12 @@ public abstract class FormIo implements IService {
 		}
 
 		@Override
-		public void serve(IserviceContext ctx, ObjectNode payload) throws Exception {
+		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
 			List<Message> msgs = new ArrayList<>();
-			ObjectNode conditions = null;
-			JsonNode node = payload.get(Conventions.Http.TAG_CONDITIONS);
-			if (node != null && node.getNodeType() == JsonNodeType.OBJECT) {
-				conditions = (ObjectNode) node;
+			JsonObject conditions = null;
+			JsonElement node = payload.get(Conventions.Http.TAG_CONDITIONS);
+			if (node != null && node.isJsonObject()) {
+				conditions = (JsonObject) node;
 			} else {
 				logger.error("payload for filter should have attribute named {} to contain conditions",
 						Conventions.Http.TAG_CONDITIONS);
@@ -174,11 +173,11 @@ public abstract class FormIo implements IService {
 
 			int nbrRows = Conventions.Http.DEFAULT_NBR_ROWS;
 			node = payload.get(Conventions.Http.TAG_NBR_ROWS);
-			if (node != null && node.getNodeType() == JsonNodeType.NUMBER) {
-				nbrRows = node.asInt(nbrRows);
+			if (node != null && node.isJsonPrimitive()) {
+				nbrRows = node.getAsInt();
 			}
 
-			SqlReader reader = this.form.parseForFilter(conditions, msgs, ctx);
+			SqlReader reader = this.form.parseForFilter(conditions, msgs, ctx, nbrRows);
 
 			if (msgs.size() > 0) {
 				ctx.addMessages(msgs);
@@ -233,7 +232,7 @@ public abstract class FormIo implements IService {
 		}
 
 		@Override
-		public void serve(IserviceContext ctx, ObjectNode payload) throws Exception {
+		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
 			FormData fd = this.form.newFormData();
 			fd.validateAndLoad(payload, false, false, ctx);
 			if (ctx.allOk() == false) {
@@ -264,7 +263,7 @@ public abstract class FormIo implements IService {
 		}
 
 		@Override
-		public void serve(IserviceContext ctx, ObjectNode payload) throws Exception {
+		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
 			FormData fd = this.form.newFormData();
 			fd.validateAndLoad(payload, false, true, ctx);
 			if (!ctx.allOk()) {
@@ -295,7 +294,7 @@ public abstract class FormIo implements IService {
 		}
 
 		@Override
-		public void serve(IserviceContext ctx, ObjectNode payload) throws Exception {
+		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
 			FormData fd = this.form.newFormData();
 			fd.loadKeys(ctx.getInputFields(), ctx);
 			if (!ctx.allOk()) {

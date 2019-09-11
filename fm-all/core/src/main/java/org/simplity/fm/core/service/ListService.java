@@ -24,15 +24,16 @@ package org.simplity.fm.core.service;
 
 import java.io.Writer;
 
+import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.JsonUtil;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.ValueLists;
 import org.simplity.fm.core.validn.IValueList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.JsonObject;
+
 
 /**
  * handles request to get drop-down values for a field, typically from a client
@@ -56,14 +57,14 @@ public class ListService implements IService{
 	}
 
 	@Override
-	public void serve(IserviceContext ctx, ObjectNode payload) throws Exception {
+	public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
 		
 		String listName = ctx.getInputValue("list");
 		if(listName == null) {
 			ctx.addMessage(Message.newError("list is requred for listService"));
 			return;
 		}
-		IValueList list = ValueLists.getList(listName);
+		IValueList list = ComponentProvider.getProvider().getValueList(listName);
 		if(list == null) {
 			ctx.addMessage(Message.newError("list " + listName + " is not configured"));
 			return;

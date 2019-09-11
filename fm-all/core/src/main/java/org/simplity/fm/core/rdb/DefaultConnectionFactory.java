@@ -43,7 +43,7 @@ public class DefaultConnectionFactory implements IConnectionFactory {
 	private static final Logger logger = LoggerFactory.getLogger(DefaultConnectionFactory.class);
 	
 	/**
-	 * get a factory that gets connection to default schema. This factory an not get connection to any other schema
+	 * get a factory that gets connection to default schema. This factory can not get connection to any other schema
 	 * @param conString non-null connection string
 	 * @param driverClassName non-null driver class name
 	 * @return factory that can be used to get connection to a default schema. null in case the credentials could not be used to get a sample connection

@@ -186,8 +186,7 @@ public class Generator {
 		}
 
 		StringBuilder sbf = new StringBuilder();
-		String fileName = xls.getPath().replace('\\', '/');
-		form.emitJavaClass(sbf, fileName, rootPackageName );
+		form.emitJavaClass(sbf, rootPackageName );
 		String outName = outputRoot + "form/" + Util.toClassName(fn) + ".java";
 		Util.writeOut(outName, sbf);
 
@@ -196,7 +195,7 @@ public class Generator {
 		}
 
 		sbf.setLength(0);
-		form.emitTs(sbf, typesMap, project.lists, project.keyedLists, fileName);
+		form.emitTs(sbf, typesMap, project.lists, project.keyedLists);
 		outName = outputRoot + "ts/" + fn + ".ts";
 		Util.writeOut(outName, sbf);
 	}

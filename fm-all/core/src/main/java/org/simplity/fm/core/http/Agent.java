@@ -33,19 +33,19 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.service.DefaultContext;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.IserviceContext;
-import org.simplity.fm.core.service.Services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 
 /**
  * Agent is the single-point-of-contact to invoke any service on this app.
@@ -120,7 +120,7 @@ public class Agent {
 			return;
 		}
 
-		ObjectNode json = this.readContent(req);
+		JsonObject json = this.readContent(req);
 		if (json == null) {
 			logger.info("Invalid JSON recd from client ");
 			resp.setStatus(Conventions.Http.STATUS_INVALID_DATA);
@@ -151,19 +151,19 @@ public class Agent {
 		respond(resp, ctx, writer.toString());
 	}
 
-	private ObjectNode readContent(HttpServletRequest req) {
+	private JsonObject readContent(HttpServletRequest req) {
 		if (req.getContentLength() == 0) {
-			return new ObjectMapper().createObjectNode();
+			return new JsonObject();
 		}
 		try (Reader reader = req.getReader()) {
 			/*
 			 * read it as json
 			 */
-			JsonNode node = new ObjectMapper().readTree(reader);
-			if (node.getNodeType() != JsonNodeType.OBJECT) {
+			JsonElement node = new JsonParser().parse(reader);
+			if (!node.isJsonObject()) {
 				return null;
 			}
-			return (ObjectNode) node;
+			return (JsonObject) node;
 		} catch (Exception e) {
 			logger.error("Invalid data recd from client {}", e.getMessage());
 			return null;
@@ -253,7 +253,7 @@ public class Agent {
 
 			return null;
 		}
-		IService service = Services.getService(serviceName);
+		IService service = ComponentProvider.getProvider().getService(serviceName);
 		if (service == null) {
 			logger.info("{} is not a service", serviceName);
 		}
