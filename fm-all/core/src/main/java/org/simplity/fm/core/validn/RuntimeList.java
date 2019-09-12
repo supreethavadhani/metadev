@@ -48,6 +48,7 @@ public class RuntimeList implements IValueList {
 	protected String checkSql;
 	protected boolean hasKey;
 	protected boolean keyIsNumeric;
+	protected boolean valueIsNumeric;
 
 	@Override
 	public String getName() {
@@ -60,7 +61,7 @@ public class RuntimeList implements IValueList {
 	}
 
 	@Override
-	public String[][] getList(final String key) {
+	public Object[][] getList(final String key) {
 		if (this.hasKey) {
 			if (key == null) {
 				logger.error("Key should have value for list {}", this.name);
@@ -77,7 +78,7 @@ public class RuntimeList implements IValueList {
 			}
 		}
 		final long numericValue = l;
-		final List<String[]> result = new ArrayList<>();
+		final List<Object[]> result = new ArrayList<>();
 
 		try {
 			RdbDriver.getDriver().transact(new IDbClient() {
@@ -103,7 +104,13 @@ public class RuntimeList implements IValueList {
 
 						@Override
 						public boolean readARow(ResultSet rs) throws SQLException {
-							String[] row = { rs.getString(1), rs.getString(2) };
+							Object[] row = new Object[2];
+							if (RuntimeList.this.keyIsNumeric) {
+								row[0] = rs.getLong(1);
+							} else {
+								row[0] = rs.getString(1);
+							}
+							row[1] = rs.getString(2);
 							result.add(row);
 							return true;
 						}
@@ -121,7 +128,7 @@ public class RuntimeList implements IValueList {
 			logger.error("No data found for list {} with key {}", this.name, key);
 			return null;
 		}
-		return result.toArray(new String[0][]);
+		return result.toArray(new Object[0][]);
 	}
 
 	@Override
@@ -148,16 +155,16 @@ public class RuntimeList implements IValueList {
 
 						@Override
 						public void setParams(PreparedStatement ps) throws SQLException {
-							if (fieldValue instanceof String) {
-								ps.setString(1, (String) fieldValue);
-							} else {
+							if (RuntimeList.this.valueIsNumeric) {
 								ps.setLong(1, (Long) fieldValue);
+							} else {
+								ps.setString(1, (String) fieldValue);
 							}
 							if (RuntimeList.this.hasKey) {
-								if (keyValue instanceof String) {
-									ps.setString(2, (String) keyValue);
-								} else {
+								if (RuntimeList.this.keyIsNumeric) {
 									ps.setLong(2, (Long) keyValue);
+								} else {
+									ps.setString(2, (String) keyValue);
 								}
 							}
 						}

@@ -22,7 +22,6 @@
 
 package org.simplity.fm.gen;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,12 +29,12 @@ import java.util.Map;
  * @author simplity.org
  *
  */
-class KeyedValueList {
+class KeyedList {
 	private static final String C = ", ";
 	final String name;
-	final Map<String, Pair[]> lists;
+	final Map<Object, Pair[]> lists;
 
-	KeyedValueList(String name, Map<String, Pair[]> lists) {
+	KeyedList(String name, Map<Object, Pair[]> lists) {
 		this.name = name;
 		this.lists = lists;
 	}
@@ -49,17 +48,19 @@ class KeyedValueList {
 		Util.emitImport(sbf, org.simplity.fm.core.validn.KeyedValueList.class);
 		Util.emitImport(sbf, org.simplity.fm.core.validn.ValueList.class);
 
-		sbf.append("\n\n/**\n * List of valid values for list ").append(this.name);
-		sbf.append("\n * <br /> generated at ").append(LocalDateTime.now());
-		sbf.append("\n */ ");
-
 		sbf.append("\npublic class ").append(Util.toClassName(this.name)).append(" extends KeyedValueList {");
 
-		sbf.append("\n\tprivate static final String[] NAMES = {");
+		sbf.append("\n\tprivate static final OBJECT[] KEYS = {");
 		StringBuilder vals = new StringBuilder();
-		vals.append("\n\tprivate static final String[][][] VALUES = {");
-		for (Map.Entry<String, Pair[]> entry : this.lists.entrySet()) {
-			sbf.append(Util.escape(entry.getKey())).append(C);
+		vals.append("\n\tprivate static final Object[][][] VALUES = {");
+		for (Map.Entry<Object, Pair[]> entry : this.lists.entrySet()) {
+			Object key = entry.getKey();
+			if(key instanceof String) {
+				sbf.append(Util.escape(key.toString()));
+			}else {
+				sbf.append(key);
+			}
+			sbf.append(C);
 			this.emitJavaSet(vals, entry.getValue());
 			vals.append(C);
 		}
@@ -88,7 +89,13 @@ class KeyedValueList {
 	private void emitJavaSet(StringBuilder vals, Pair[] ps) {
 		vals.append("\n\t\t\t{");
 		for (Pair p : ps) {
-			vals.append("\n\t\t\t\t{").append(Util.escape(p.value.toString())).append(C).append(Util.escape(p.label)).append("}");
+			vals.append("\n\t\t\t\t{");
+			if(p.value instanceof String) {
+				vals.append(Util.escape(p.value.toString()));
+			}else {
+				vals.append(p.value);
+			}
+			vals.append(C).append(Util.escape(p.label)).append("}");
 			vals.append(C);
 		}
 		vals.setLength(vals.length() - C.length());
@@ -97,7 +104,7 @@ class KeyedValueList {
 
 	protected void emitTs(StringBuilder sbf, String indent) {
 		boolean firstOne = true;
-		for (Map.Entry<String, Pair[]> entry : this.lists.entrySet()) {
+		for (Map.Entry<Object, Pair[]> entry : this.lists.entrySet()) {
 			if (firstOne) {
 				firstOne = false;
 			} else {
@@ -113,8 +120,12 @@ class KeyedValueList {
 				} else {
 					sbf.append(C);
 				}
-				sbf.append(newIndent);
-				sbf.append("{value:").append(Util.escapeTs(p.value));
+				sbf.append(newIndent).append("{value:");
+				if(p.value instanceof String) {
+					sbf.append(Util.escapeTs(p.value));
+				}else {
+					sbf.append(p.value);
+				}
 				sbf.append(",text:").append(Util.escapeTs(p.label)).append("}");
 			}
 			sbf.append(indent).append(']');

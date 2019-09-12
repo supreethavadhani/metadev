@@ -140,7 +140,7 @@ class Field {
 	}
 
 	void emitTs(StringBuilder sbf, DataType dt, Map<String, ValueList> valueLists,
-			Map<String, KeyedValueList> keyedLists) {
+			Map<String, KeyedList> keyedLists) {
 		if (dt == null) {
 			String msg = "Field " + this.name + " has an invalid data type of " + this.dataType + ". Field not added.";
 			logger.error(msg);
@@ -184,7 +184,7 @@ class Field {
 					sbf.append("\n\t\t\t]");
 				}
 			} else {
-				KeyedValueList list = keyedLists.get(this.listName);
+				KeyedList list = keyedLists.get(this.listName);
 				if (list == null) {
 					Form.logger.info("keyed-list of values not defined for {}. It is treated as a run-time list.",
 							this.listName);

@@ -44,14 +44,14 @@ public class JsonUtil {
 	 * @param arr
 	 * @throws IOException 
 	 */
-	public static void write(Writer writer, String[][] arr) throws IOException {
+	public static void write(Writer writer, Object[][] arr) throws IOException {
 		if(arr == null) {
 			writer.write("[[]]");
 			return;
 		}
 		writer.write(OPEN_ARR);
 		boolean first = true;
-		for(String[] row : arr) {
+		for(Object[] row : arr) {
 			if(first) {
 				first = false;
 			}else {
@@ -68,14 +68,14 @@ public class JsonUtil {
 	 * @param arr
 	 * @throws IOException 
 	 */
-	public static void write(Writer writer, String[] arr) throws IOException {
+	public static void write(Writer writer, Object[] arr) throws IOException {
 		if(arr ==null) {
 			writer.write("[]");
 			return;
 		}
 		writer.write(OPEN_ARR);
 		boolean first = true;
-		for(String s : arr) {
+		for(Object s : arr) {
 			if(first) {
 				first =false;
 			}else {
@@ -89,12 +89,17 @@ public class JsonUtil {
 	/**
 	 * write a string
 	 * @param writer
-	 * @param s
+	 * @param primitive  value
 	 * @throws IOException 
 	 */
-	public static void write(Writer writer, String s) throws IOException {
-		if(s == null) {
+	public static void write(Writer writer, Object primitive) throws IOException {
+		if(primitive == null) {
 			writer.write(NULL);
+			return;
+		}
+		String s = primitive.toString();
+		if(primitive instanceof Number || primitive instanceof Boolean) {
+			writer.write(primitive.toString());
 			return;
 		}
 		writer.write(Q);

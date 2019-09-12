@@ -48,9 +48,10 @@ public interface IValueList {
 	 * 
 	 * @param keyValue
 	 *            null if this list is not key-based.
-	 * @return array of [internalValue, displayValue]. possibly null
+	 * @return array of [internalValue, displayValue]. internal value could be
+	 *         string or number. null if no such list
 	 */
-	public String[][] getList(String keyValue);
+	public Object[][] getList(String keyValue);
 
 	/**
 	 * is the field value valid as per this list?

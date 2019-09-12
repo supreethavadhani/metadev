@@ -22,8 +22,6 @@
 
 package org.simplity.fm.gen;
 
-import java.time.LocalDateTime;
-
 /**
  * @author simplity.org
  *
@@ -36,16 +34,13 @@ class RuntimeList {
 	String col2;
 	String key;
 	boolean keyIsNumeric;
+	boolean valueIsNumeric;
 
 	void emitJava(StringBuilder sbf, String packageName) {
 		sbf.append("package ").append(packageName).append(';');
 		sbf.append('\n');
 
 		Util.emitImport(sbf, org.simplity.fm.core.validn.RuntimeList.class);
-
-		sbf.append("\n\n/**\n * run-time utility to get list of valid values and validate a field ").append(this.name);
-		sbf.append("\n * <br /> generated at ").append(LocalDateTime.now());
-		sbf.append("\n */ ");
 
 		sbf.append("\npublic class ").append(Util.toClassName(this.name)).append(" extends RuntimeList {");
 
@@ -72,12 +67,14 @@ class RuntimeList {
 			sbf.append("true;");
 			sbf.append("\n\t private static final boolean KEY_IS_NUMERIC = ").append(this.keyIsNumeric).append(";");
 		}
+		sbf.append("\n\t private static final boolean VALUE_IS_NUMERIC = ").append(this.valueIsNumeric).append(";");
 		
 		sbf.append("\n\t/**\n\t *\n\t */\n\tpublic ").append(Util.toClassName(this.name)).append("() {");
 		sbf.append("\n\t\tthis.listSql = LIST_SQL;");
 		sbf.append("\n\t\tthis.checkSql = CHECK_SQL;");
 		sbf.append("\n\t\tthis.name = NAME;");
 		sbf.append("\n\t\tthis.hasKey = HAS_KEY;");
+		sbf.append("\n\t\tthis.valueIsNumeric = VALUE_IS_NUMERIC;");
 		if(this.key != null) {
 			sbf.append("\n\t\tthis.keyIsNumeric = KEY_IS_NUMERIC;");
 		}

@@ -264,11 +264,11 @@ public class Generator {
 		return map;
 	}
 
-	private static Map<String, KeyedValueList> parseKeyedLists(Sheet sheet) {
+	private static Map<String, KeyedList> parseKeyedLists(Sheet sheet) {
 		// we iterate up to a non-existing row to trigger build
 		int n = sheet.getLastRowNum() + 1;
 		logger.info("Started parsing keyed lists ");
-		KeyedValueBuilder builder = new KeyedValueBuilder();
+		KeyedListBuilder builder = new KeyedListBuilder();
 		XlsUtil.consumeRows(sheet, NBR_CELLS_KEYED_LIST, new Consumer<Row>() {
 
 			@Override
@@ -276,7 +276,7 @@ public class Generator {
 				builder.addRow(row);
 			}
 		});
-		Map<String, KeyedValueList> map = builder.done();
+		Map<String, KeyedList> map = builder.done();
 		n = map.size();
 		if (n == 0) {
 			logger.info("No keyed value lists added.");
@@ -355,20 +355,20 @@ public class Generator {
 	 * using a builder to accumulate rows for a list and then create a list
 	 * 
 	 */
-	static class KeyedValueBuilder {
-		Map<String, KeyedValueList> klists = new HashMap<>();
+	static class KeyedListBuilder {
+		Map<String, KeyedList> klists = new HashMap<>();
 		private String name = null;
-		private String keyName = null;
-		private Map<String, Pair[]> lists = new HashMap<>();
+		private Object keyId = null;
+		private Map<Object, Pair[]> lists = new HashMap<>();
 		private List<Pair> pairs = new ArrayList<>();
 
-		protected KeyedValueBuilder() {
+		protected KeyedListBuilder() {
 			//
 		}
 
-		Map<String, KeyedValueList> done() {
+		Map<String, KeyedList> done() {
 			this.build();
-			Map<String, KeyedValueList> result = this.klists;
+			Map<String, KeyedList> result = this.klists;
 			this.newList(null, null);
 			this.klists = new HashMap<>();
 			return result;
@@ -381,7 +381,7 @@ public class Generator {
 		 */
 		void addRow(Row row) {
 			String newName = XlsUtil.textValueOf(row.getCell(0));
-			String newKey = XlsUtil.textValueOf(row.getCell(1));
+			Object newKey = XlsUtil.objectValueOf(row.getCell(1));
 			Object val = XlsUtil.objectValueOf(row.getCell(2));
 			String label = XlsUtil.textValueOf(row.getCell(3));
 			if (this.name == null) {
@@ -399,28 +399,28 @@ public class Generator {
 				 */
 				this.build();
 				this.newList(newName, newKey);
-			} else if (newKey != null && newKey.contentEquals(this.keyName) == false) {
+			} else if (newKey != null && newKey.equals(this.keyId) == false) {
 				this.addList(newKey);
 			}
 
 			this.pairs.add(new Pair(label, val));
 		}
 
-		private void newList(String newName, String newKey) {
+		private void newList(String newName, Object newKey) {
 			this.pairs.clear();
 			this.lists = new HashMap<>();
-			this.keyName = newKey;
+			this.keyId = newKey;
 			this.name = newName;
 		}
 
-		private void addList(String newKey) {
-			if (this.keyName == null || this.pairs.size() == 0) {
+		private void addList(Object newKey) {
+			if (this.keyId == null || this.pairs.size() == 0) {
 				AppComps.logger.error("empty line in lists??, valueList not created.");
 			} else {
-				this.lists.put(this.keyName, this.pairs.toArray(new Pair[0]));
+				this.lists.put(this.keyId, this.pairs.toArray(new Pair[0]));
 				this.pairs.clear();
 			}
-			this.keyName = newKey;
+			this.keyId = newKey;
 		}
 
 		private void build() {
@@ -429,7 +429,7 @@ public class Generator {
 				return;
 			}
 			this.addList(null);
-			this.klists.put(this.name, new KeyedValueList(this.name, this.lists));
+			this.klists.put(this.name, new KeyedList(this.name, this.lists));
 			AppComps.logger.info("Keyed value list {} parsed and added with {} keys.", this.name, this.lists.size());
 		}
 	}

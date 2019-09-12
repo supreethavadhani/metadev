@@ -34,7 +34,10 @@ import java.util.Set;
 public class ValueList implements IValueList {
 	protected String name;
 	protected Set<String> values;
-	protected String[][] valueList;
+	/*
+	 * [object,string][] first element could be either number or text, but the second one always is text
+	 */
+	protected Object[][] valueList;
 
 	/**
 	 * 
@@ -64,7 +67,7 @@ public class ValueList implements IValueList {
 	}
 
 	@Override
-	public String[][] getList(String keyValue) {
+	public Object[][] getList(String keyValue) {
 		return this.valueList;
 	}
 }

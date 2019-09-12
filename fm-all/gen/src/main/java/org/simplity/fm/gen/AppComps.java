@@ -41,7 +41,7 @@ class AppComps {
 
 	DataType[] dataTypes;
 	Map<String, ValueList> lists;
-	Map<String, KeyedValueList> keyedLists;
+	Map<String, KeyedList> keyedLists;
 	Map<String, RuntimeList> runtimeLists;
 	Field[] commonFields;
 
@@ -143,7 +143,7 @@ class AppComps {
 		}
 
 		StringBuilder sbf = new StringBuilder();
-		for (KeyedValueList list : this.keyedLists.values()) {
+		for (KeyedList list : this.keyedLists.values()) {
 			sbf.setLength(0);
 			list.emitJava(sbf, pack);
 			Util.writeOut(folder + Util.toClassName(list.name) + ".java", sbf);

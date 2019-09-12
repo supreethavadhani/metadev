@@ -56,7 +56,7 @@ public class KeyedValueList implements IValueList{
 	}
 
 	@Override
-	public String[][] getList(String keyValue) {
+	public Object[][] getList(String keyValue) {
 		ValueList vl  = this.values.get(keyValue.toString());
 		if (vl == null) {
 			return null;

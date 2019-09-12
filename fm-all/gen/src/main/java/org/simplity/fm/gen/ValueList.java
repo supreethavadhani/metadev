@@ -22,7 +22,6 @@
 
 package org.simplity.fm.gen;
 
-import java.time.LocalDateTime;
 
 /**
  * @author simplity.org
@@ -44,15 +43,18 @@ class ValueList {
 
 		Util.emitImport(sbf, org.simplity.fm.core.validn.ValueList.class);
 
-		sbf.append("\n\n/**\n * List of valid values for list ").append(this.name);
-		sbf.append("\n * <br /> generated at ").append(LocalDateTime.now());
-		sbf.append("\n */ ");
 
 		sbf.append("\npublic class ").append(Util.toClassName(this.name)).append(" extends ValueList {");
 
-		sbf.append("\n\t private static final String[][] VALUES = { ");
+		sbf.append("\n\t private static final Object[][] VALUES = { ");
 		for (Pair p : this.pairs) {
-			sbf.append("\n\t\t\t{").append(Util.escape(p.value.toString())).append(C).append(Util.escape(p.label)).append("}");
+			sbf.append("\n\t\t\t{");
+			if(p.value instanceof String) {
+				sbf.append(Util.escape(p.value.toString()));
+			}else {
+				sbf.append(p.value);
+			}
+			sbf.append(C).append(Util.escape(p.label)).append("}");
 			sbf.append(C);
 		}
 		sbf.setLength(sbf.length() - C.length());
@@ -60,7 +62,7 @@ class ValueList {
 		sbf.append("\n\t private static final String NAME = \"").append(this.name).append("\";");
 
 		sbf.append("\n\n/**\n *\n\t * @param name\n\t * @param valueList\n */");
-		sbf.append("\n\tpublic ").append(Util.toClassName(this.name)).append("(String name, String[][] valueList) {");
+		sbf.append("\n\tpublic ").append(Util.toClassName(this.name)).append("(String name, Object[][] valueList) {");
 		sbf.append("\n\t\tsuper(name, valueList);");
 		sbf.append("\n\t}");
 
@@ -79,7 +81,12 @@ class ValueList {
 			}
 			sbf.append(indent);
 			Pair pair = this.pairs[i];
-			sbf.append("{value:").append(Util.escapeTs(pair.value));
+			sbf.append("{value:");
+			if(pair.value instanceof String) {
+				sbf.append(Util.escapeTs(pair.value));
+			}else {
+				sbf.append(pair.value);
+			}
 			sbf.append(",text:").append(Util.escapeTs(pair.label)).append('}');
 		}
 	}

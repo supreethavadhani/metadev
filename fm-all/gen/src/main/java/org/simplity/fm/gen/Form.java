@@ -588,7 +588,7 @@ class Form {
 	}
 
 	void emitTs(StringBuilder sbf, Map<String, DataType> dataTypes, Map<String, ValueList> valueLists,
-			Map<String, KeyedValueList> keyedLists) {
+			Map<String, KeyedList> keyedLists) {
 
 		sbf.append("\nimport { Form , Field, ChildForm } from '../form/form';");
 		sbf.append("\nimport { SelectOption } from '../form/types';");
