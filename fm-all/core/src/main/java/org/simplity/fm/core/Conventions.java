@@ -107,12 +107,16 @@ public class Conventions {
 		/**
 		 * number of rows of data (expected or delivered)
 		 */
-		public static final String TAG_NBR_ROWS = "nbrRows";
+		public static final String TAG_NBR_ROWS = "maxRows";
 		/**
 		 * filter conditions
 		 */
 		public static final String TAG_CONDITIONS = "conditions";
 
+		/**
+		 * filter sort order. "sort" : {"field1":"asc/desc", "field2"...}
+		 */
+		public static final String TAG_SORT = "sort";
 		/**
 		 * field/tag name for filter condition
 		 */
@@ -128,7 +132,7 @@ public class Conventions {
 		/**
 		 * default MAX nbr rows
 		 */
-		public static final int DEFAULT_NBR_ROWS = 200;
+		public static final int DEFAULT_NBR_ROWS = 500;
 		
 	}
 

@@ -171,13 +171,22 @@ public abstract class FormIo implements IService {
 				return;
 			}
 
+			/*
+			 * sort order
+			 */
+			JsonObject sorts = null;
+			node = payload.get(Conventions.Http.TAG_SORT);
+			if (node != null && node.isJsonObject()) {
+				sorts = (JsonObject) node;
+			}
+
 			int nbrRows = Conventions.Http.DEFAULT_NBR_ROWS;
 			node = payload.get(Conventions.Http.TAG_NBR_ROWS);
 			if (node != null && node.isJsonPrimitive()) {
 				nbrRows = node.getAsInt();
 			}
 
-			SqlReader reader = this.form.parseForFilter(conditions, msgs, ctx, nbrRows);
+			SqlReader reader = this.form.parseForFilter(conditions, sorts, msgs, ctx, nbrRows);
 
 			if (msgs.size() > 0) {
 				ctx.addMessages(msgs);

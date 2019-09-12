@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
@@ -369,13 +370,14 @@ public class Form {
 	/**
 	 * parse the input into a filter clause
 	 * 
-	 * @param conditions
+	 * @param conditions non-null {field1: {oper:"=", value:"abcd"...}
+	 * @param sorts how the result to be sorted {field1:"a/d",
 	 * @param errors
 	 * @param ctx 
 	 * @param maxRows mxRows to be read
 	 * @return filter clause that can be used to get rows from the db
 	 */
-	public SqlReader parseForFilter(JsonObject conditions, List<Message> errors, IserviceContext ctx, int maxRows) {
+	public SqlReader parseForFilter(JsonObject conditions, JsonObject sorts,  List<Message> errors, IserviceContext ctx, int maxRows) {
 		StringBuilder sql = new StringBuilder(this.dbMetaData.selectClause);
 		sql.append(" WHERE ");
 		List<FormDbParam> params = new ArrayList<>();
@@ -527,6 +529,28 @@ public class Form {
 			sql.append(' ').append(condnText).append(" ?");
 			params.add(new FormDbParam(idx++, vt));
 			values.add(obj);
+		}
+		
+		if(sorts != null) {
+			boolean isFirst = true;
+			for(Entry<String, JsonElement> entry : sorts.entrySet()) {
+				String f = entry.getKey();
+				Field field = this.fieldMap.get(f);
+				if(field == null) {
+					logger.error("{} is not a field in teh form. Sort order ignored");
+					continue;
+				}
+				if(isFirst) {
+					sql.append(" ORDER BY ");
+					isFirst = false;
+				}else {
+					sql.append(", ");
+				}
+				sql.append(field.getDbColumnName());
+				if(entry.getValue().getAsString().toLowerCase().startsWith("d")) {
+					sql.append(" DESC ");
+				}
+			}
 		}
 		return new SqlReader(sql.toString(), params.toArray(new FormDbParam[0]), values.toArray(new Object[0]));
 	}
