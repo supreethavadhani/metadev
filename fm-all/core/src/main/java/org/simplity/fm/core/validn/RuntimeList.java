@@ -61,7 +61,7 @@ public class RuntimeList implements IValueList {
 	}
 
 	@Override
-	public Object[][] getList(final String key) {
+	public Object[][] getList(final Object key) {
 		if (this.hasKey) {
 			if (key == null) {
 				logger.error("Key should have value for list {}", this.name);
@@ -71,7 +71,7 @@ public class RuntimeList implements IValueList {
 		long l = 0;
 		if (this.keyIsNumeric) {
 			try {
-				l = Long.parseLong(key);
+				l = Long.parseLong(key.toString());
 			} catch (Exception e) {
 				logger.error("Key should be numeric value for list {} but we got {}", this.name, key);
 				return null;
@@ -97,7 +97,7 @@ public class RuntimeList implements IValueList {
 								if (RuntimeList.this.keyIsNumeric) {
 									ps.setLong(1, numericValue);
 								} else {
-									ps.setString(1, key);
+									ps.setString(1, key.toString());
 								}
 							}
 						}

@@ -32,7 +32,10 @@ import java.util.Set;
  * @author simplity.org
  */
 public class ValueList implements IValueList {
-	protected String name;
+	/*
+	 * it is object, to allow keyed-list to re-use it as its collection
+	 */
+	protected Object name;
 	protected Set<String> values;
 	/*
 	 * [object,string][] first element could be either number or text, but the second one always is text
@@ -44,16 +47,16 @@ public class ValueList implements IValueList {
 	 * @param name non-null unique name
 	 * @param valueList non-null non-empty String[][String, String]
 	 */
-	public ValueList(String name, String[][] valueList) {
+	public ValueList(Object name, Object[][] valueList) {
 		this.name = name;
 		this.valueList = valueList;
 		this.values = new HashSet<>();
-		for(String[] arr: valueList) {
-			this.values.add(arr[0]);
+		for(Object[] arr: valueList) {
+			this.values.add(arr[0].toString());
 		}
 	}
 	@Override
-	public String getName() {
+	public Object getName() {
 		return this.name;
 	}
 
@@ -67,7 +70,7 @@ public class ValueList implements IValueList {
 	}
 
 	@Override
-	public Object[][] getList(String keyValue) {
+	public Object[][] getList(Object keyValue) {
 		return this.valueList;
 	}
 }

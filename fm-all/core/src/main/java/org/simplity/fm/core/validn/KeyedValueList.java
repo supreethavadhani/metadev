@@ -34,11 +34,11 @@ import java.util.Map;
  */
 public class KeyedValueList implements IValueList{
 	protected String name;
-	protected Map<String, ValueList> values = new HashMap<>();
+	protected Map<Object, ValueList> values = new HashMap<>();
 
 	@Override
 	public boolean isValid(Object fieldValue, Object keyValue) {
-		ValueList vl  = this.values.get(keyValue.toString());
+		ValueList vl  = this.values.get(keyValue);
 		if (vl == null) {
 			return false;
 		}
@@ -56,8 +56,8 @@ public class KeyedValueList implements IValueList{
 	}
 
 	@Override
-	public Object[][] getList(String keyValue) {
-		ValueList vl  = this.values.get(keyValue.toString());
+	public Object[][] getList(Object keyValue) {
+		ValueList vl  = this.values.get(keyValue);
 		if (vl == null) {
 			return null;
 		}

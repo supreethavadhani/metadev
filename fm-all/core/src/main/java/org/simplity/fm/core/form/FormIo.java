@@ -97,11 +97,20 @@ public abstract class FormIo implements IService {
 		}
 	}
 
+	protected static String toServiceName(Form form, IoType oper) {
+		return oper.name() + '-' + form.getFormId();
+	}
+
 	protected static class FormReader extends FormIo {
 		private final Form form;
 
 		protected FormReader(Form form) {
 			this.form = form;
+		}
+
+		@Override
+		public String getId() {
+			return toServiceName(this.form, IoType.GET);
 		}
 
 		@Override
@@ -155,6 +164,11 @@ public abstract class FormIo implements IService {
 
 		protected FormFilter(Form form) {
 			this.form = form;
+		}
+
+		@Override
+		public String getId() {
+			return toServiceName(this.form, IoType.FILTER);
 		}
 
 		@Override
@@ -241,6 +255,11 @@ public abstract class FormIo implements IService {
 		}
 
 		@Override
+		public String getId() {
+			return toServiceName(this.form, IoType.UPDATE);
+		}
+
+		@Override
 		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
 			FormData fd = this.form.newFormData();
 			fd.validateAndLoad(payload, false, false, ctx);
@@ -272,6 +291,11 @@ public abstract class FormIo implements IService {
 		}
 
 		@Override
+		public String getId() {
+			return toServiceName(this.form, IoType.CREATE);
+		}
+
+		@Override
 		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
 			FormData fd = this.form.newFormData();
 			fd.validateAndLoad(payload, false, true, ctx);
@@ -300,6 +324,11 @@ public abstract class FormIo implements IService {
 
 		protected FormDeleter(Form form) {
 			this.form = form;
+		}
+
+		@Override
+		public String getId() {
+			return toServiceName(this.form, IoType.DELETE);
 		}
 
 		@Override

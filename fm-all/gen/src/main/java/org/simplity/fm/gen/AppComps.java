@@ -43,8 +43,6 @@ class AppComps {
 	Map<String, ValueList> lists;
 	Map<String, KeyedList> keyedLists;
 	Map<String, RuntimeList> runtimeLists;
-	Field[] commonFields;
-
 
 
 	void emitJava(String rootFolder, String packageName, String dataTypesFileName) {

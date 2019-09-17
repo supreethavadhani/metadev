@@ -56,12 +56,17 @@ public class ListService implements IService{
 		//privatised for a singleton pattern
 	}
 
+
+	@Override
+	public String getId() {
+		return Conventions.App.LIST_SERVICE_NAME;
+	}
 	@Override
 	public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
 		
 		String listName = ctx.getInputValue("list");
 		if(listName == null) {
-			ctx.addMessage(Message.newError("list is requred for listService"));
+			ctx.addMessage(Message.newError("list is required for listService"));
 			return;
 		}
 		IValueList list = ComponentProvider.getProvider().getValueList(listName);

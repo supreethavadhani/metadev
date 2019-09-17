@@ -34,7 +34,7 @@ public interface IValueList {
 	 * 
 	 * @return unique name of this list
 	 */
-	public String getName();
+	public Object getName();
 
 	/**
 	 * is this list key-based?
@@ -51,7 +51,7 @@ public interface IValueList {
 	 * @return array of [internalValue, displayValue]. internal value could be
 	 *         string or number. null if no such list
 	 */
-	public Object[][] getList(String keyValue);
+	public Object[][] getList(Object keyValue);
 
 	/**
 	 * is the field value valid as per this list?

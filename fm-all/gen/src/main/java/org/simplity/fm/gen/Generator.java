@@ -76,34 +76,42 @@ public class Generator {
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
-		if (args.length != 3) {
+		if (args.length != 4) {
 			System.err.println(
-					"Usage : java Generator.class resourceRootFolder generatedSourceRootFolder generatedPackageName");
+					"Usage : java Generator.class resourceRootFolder generatedSourceRootFolder generatedPackageName tsImportPrefix");
 			return;
 		}
-		generate(args[0], args[1], args[2]);
+		generate(args[0], args[1], args[2], args[3]);
 	}
 
 	/**
 	 * 
-	 * @param inputRootFolder folder where application.xlsx file, and spec folder are located. e.g.
-	 * @param outputRootFolder java source folder where the sources are to be generated
-	 * @param rootPackageName root
+	 * @param inputRootFolder
+	 *            folder where application.xlsx file, and spec folder are
+	 *            located. e.g.
+	 * @param outputRootFolder
+	 *            java source folder where the sources are to be generated
+	 * @param rootPackageName
+	 *            root
+	 * @param tsImportPrefix
+	 *            relative path of form folder from the folder where named forms
+	 *            are generated.for example ".." in case the two folders are in
+	 *            the same parent folder
 	 */
-	public static void generate(String inputRootFolder, String outputRootFolder,
-			String rootPackageName) {
+	public static void generate(String inputRootFolder, String outputRootFolder, String rootPackageName,
+			String tsImportPrefix) {
 
 		String resourceRootFolder = inputRootFolder;
-		if(!inputRootFolder.endsWith(FOLDER)) {
+		if (!inputRootFolder.endsWith(FOLDER)) {
 			resourceRootFolder += FOLDER;
 		}
-		
+
 		String generatedSourceRootFolder = outputRootFolder;
-		if(!generatedSourceRootFolder.endsWith(FOLDER)) {
+		if (!generatedSourceRootFolder.endsWith(FOLDER)) {
 			generatedSourceRootFolder += FOLDER;
 		}
 		generatedSourceRootFolder += rootPackageName.replace('.', '/') + FOLDER;
-		
+
 		/*
 		 * create output folders if required
 		 */
@@ -137,8 +145,7 @@ public class Generator {
 		/*
 		 * generate project level components like data types
 		 */
-		project.emitJava(generatedSourceRootFolder, rootPackageName,
-				Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME);
+		project.emitJava(generatedSourceRootFolder, rootPackageName, Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME);
 
 		logger.info("Going to process forms under folder {}", resourceRootFolder);
 		f = new File(resourceRootFolder + "form/");
@@ -149,7 +156,7 @@ public class Generator {
 
 		Map<String, DataType> typesMap = project.getTypes();
 		for (File xls : f.listFiles()) {
-			emitForm(xls, generatedSourceRootFolder, typesMap, project, rootPackageName);
+			emitForm(xls, generatedSourceRootFolder, typesMap, project, rootPackageName, tsImportPrefix);
 		}
 	}
 
@@ -167,7 +174,8 @@ public class Generator {
 		return allOk;
 	}
 
-	private static void emitForm(File xls, String outputRoot, Map<String, DataType> typesMap, AppComps project, String rootPackageName) {
+	private static void emitForm(File xls, String outputRoot, Map<String, DataType> typesMap, AppComps project,
+			String rootPackageName, String tsImportPrefix) {
 		String fn = xls.getName();
 		if (fn.endsWith(EXT) == false) {
 			logger.info("Skipping non-xlsx file {} " + fn);
@@ -178,7 +186,7 @@ public class Generator {
 		logger.info("Going to generate form " + fn);
 		Form form = null;
 		try (Workbook book = new XSSFWorkbook(new FileInputStream(xls))) {
-			form = parseForm(book, fn, project.commonFields);
+			form = parseForm(book, fn);
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("Form {} not generated. Error : {}, {}", fn, e, e.getMessage());
@@ -186,7 +194,7 @@ public class Generator {
 		}
 
 		StringBuilder sbf = new StringBuilder();
-		form.emitJavaClass(sbf, rootPackageName );
+		form.emitJavaClass(sbf, rootPackageName);
 		String outName = outputRoot + "form/" + Util.toClassName(fn) + ".java";
 		Util.writeOut(outName, sbf);
 
@@ -195,7 +203,7 @@ public class Generator {
 		}
 
 		sbf.setLength(0);
-		form.emitTs(sbf, typesMap, project.lists, project.keyedLists);
+		form.emitTs(sbf, typesMap, project.lists, project.keyedLists, tsImportPrefix);
 		outName = outputRoot + "ts/" + fn + ".ts";
 		Util.writeOut(outName, sbf);
 	}
@@ -210,7 +218,6 @@ public class Generator {
 		dt.lists = parseLists(sheets[1]);
 		dt.keyedLists = parseKeyedLists(sheets[2]);
 		dt.runtimeLists = parseRuntimeLists(sheets[3]);
-		dt.commonFields = parseCommonFields(sheets[4]);
 		return dt;
 	}
 
@@ -232,15 +239,13 @@ public class Generator {
 		int n = typeList.size();
 		if (n == 0) {
 			logger.error("No valid data type parsed!!");
-			return null;
+		} else {
+			logger.info("{} data types parsed.", n);
 		}
-		logger.info("{} data types parsed.", n);
 		return typeList.toArray(new DataType[0]);
 	}
 
 	private static Map<String, ValueList> parseLists(Sheet sheet) {
-		// we iterate up to a non-existing row to trigger build
-		int n = sheet.getLastRowNum() + 1;
 		logger.info("Started parsing for values lists. ");
 		ValueListBuilder builder = new ValueListBuilder();
 		XlsUtil.consumeRows(sheet, NBR_CELLS_LIST, new Consumer<Row>() {
@@ -255,18 +260,16 @@ public class Generator {
 		 * built
 		 */
 		Map<String, ValueList> map = builder.done();
-		n = map.size();
+		int n = map.size();
 		if (n == 0) {
 			logger.info("No value lists added.");
-			return null;
+		} else {
+			logger.info("{} value lists added.", n);
 		}
-		logger.info("{} value lists added.", n);
 		return map;
 	}
 
 	private static Map<String, KeyedList> parseKeyedLists(Sheet sheet) {
-		// we iterate up to a non-existing row to trigger build
-		int n = sheet.getLastRowNum() + 1;
 		logger.info("Started parsing keyed lists ");
 		KeyedListBuilder builder = new KeyedListBuilder();
 		XlsUtil.consumeRows(sheet, NBR_CELLS_KEYED_LIST, new Consumer<Row>() {
@@ -277,12 +280,13 @@ public class Generator {
 			}
 		});
 		Map<String, KeyedList> map = builder.done();
-		n = map.size();
+		int n = map.size();
 		if (n == 0) {
 			logger.info("No keyed value lists added.");
-			return null;
+
+		} else {
+			logger.info("{} keyed value lists added.", n);
 		}
-		logger.info("{} keyed value lists added.", n);
 		return map;
 	}
 
@@ -297,43 +301,20 @@ public class Generator {
 				rl.name = XlsUtil.textValueOf(row.getCell(0));
 				rl.table = XlsUtil.textValueOf(row.getCell(1));
 				rl.col1 = XlsUtil.textValueOf(row.getCell(2));
-				rl.col2 = XlsUtil.textValueOf(row.getCell(3));
-				rl.key = XlsUtil.textValueOf(row.getCell(4));
-				rl.keyIsNumeric = XlsUtil.boolValueOf(row.getCell(5));
+				rl.valueIsNumeric = XlsUtil.boolValueOf(row.getCell(3));
+				rl.col2 = XlsUtil.textValueOf(row.getCell(4));
+				rl.key = XlsUtil.textValueOf(row.getCell(5));
+				rl.keyIsNumeric = XlsUtil.boolValueOf(row.getCell(6));
 				list.put(rl.name, rl);
 			}
 		});
 		int n = list.size();
 		if (n == 0) {
 			logger.warn("No runtime lists parsed..");
-			return null;
+		} else {
+			logger.info("{} runtime list parsed. ", n);
 		}
-		logger.info("{} runtime list parsed. ", n);
 		return list;
-	}
-
-	private static Field[] parseCommonFields(Sheet sheet) {
-		List<Field> fields = new ArrayList<Field>();
-		logger.info("Started parsing common fields");
-		XlsUtil.consumeRows(sheet, NBR_CELLS_FIELD, new Consumer<Row>() {
-			private int idx = 0;
-
-			@Override
-			public void accept(Row row) {
-				Field field = parseField(row, this.idx);
-				if (field != null) {
-					fields.add(field);
-					this.idx++;
-				}
-			}
-		});
-		int n = fields.size();
-		if (n == 0) {
-			logger.warn("No common fields parsed..");
-			return null;
-		}
-		logger.info("{} common fields parsed. These fields canbe included in any form with a directive.", n);
-		return fields.toArray(new Field[0]);
 	}
 
 	static void parseSi(Sheet sheet, Map<String, Object> settings) {
@@ -543,7 +524,7 @@ public class Generator {
 		return p;
 	}
 
-	static Form parseForm(Workbook book, String formName, Field[] commonFields) {
+	static Form parseForm(Workbook book, String formName) {
 		logger.info("Started parsing work book " + formName);
 		Sheet fieldsSheet = book.getSheet("fields");
 		if (fieldsSheet == null) {
@@ -572,13 +553,8 @@ public class Generator {
 		 * special instructions
 		 */
 		sheet = sheets[0];
-		boolean addCommonFields = false;
 		if (sheet != null) {
 			parseSi(sheet, form.params);
-			Object obj = form.params.get("addCommonFields");
-			if (obj != null && obj instanceof Boolean) {
-				addCommonFields = (Boolean) obj;
-			}
 		}
 
 		/*
@@ -586,11 +562,7 @@ public class Generator {
 		 */
 		sheet = sheets[1];
 		if (sheet != null) {
-			if (addCommonFields) {
-				form.fields = parseFields(sheet, commonFields);
-			} else {
-				form.fields = parseFields(sheet, null);
-			}
+			form.fields = parseFields(sheet, null);
 		}
 
 		Set<String> names = form.getNameSet();
@@ -761,9 +733,6 @@ public class Generator {
 		f.errorId = XlsUtil.textValueOf(row.getCell(7));
 		f.isRequired = XlsUtil.boolValueOf(row.getCell(8));
 		f.isEditable = XlsUtil.boolValueOf(row.getCell(9));
-		/*
-		 * current project has an issue people not managing it properly..
-		 */
 		f.listName = XlsUtil.textValueOf(row.getCell(10));
 		f.listKey = XlsUtil.textValueOf(row.getCell(11));
 		f.dbColumnName = XlsUtil.textValueOf(row.getCell(12));
@@ -845,8 +814,9 @@ public class Generator {
 			AppComps.logger.error("Field name is empty. row {} skipped", row.getRowNum());
 			return null;
 		}
-		String s = XlsUtil.textValueOf(row.getCell(1)).toUpperCase();
+		String s = null;
 		try {
+			s = XlsUtil.textValueOf(row.getCell(1)).toUpperCase();
 			dt.valueType = ValueType.valueOf(s);
 		} catch (Exception e) {
 			AppComps.logger.error("{} is not a valid data type. row {} skipped", s, row.getRowNum());

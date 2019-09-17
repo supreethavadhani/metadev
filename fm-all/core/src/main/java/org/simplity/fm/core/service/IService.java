@@ -46,4 +46,10 @@ public interface IService {
 	 *             handler that is configured for the app
 	 */
 	public void serve(IserviceContext ctx, JsonObject inputPayload) throws Exception;
+	
+	/**
+	 * 
+	 * @return unique name/id of this service
+	 */
+	public String getId();
 }

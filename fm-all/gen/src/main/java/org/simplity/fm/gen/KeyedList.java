@@ -50,7 +50,7 @@ class KeyedList {
 
 		sbf.append("\npublic class ").append(Util.toClassName(this.name)).append(" extends KeyedValueList {");
 
-		sbf.append("\n\tprivate static final OBJECT[] KEYS = {");
+		sbf.append("\n\tprivate static final Object[] KEYS = {");
 		StringBuilder vals = new StringBuilder();
 		vals.append("\n\tprivate static final Object[][][] VALUES = {");
 		for (Map.Entry<Object, Pair[]> entry : this.lists.entrySet()) {
@@ -79,8 +79,8 @@ class KeyedList {
 		sbf.append("\n\t\tthis.name = NAME;");
 		sbf.append("\n\t\tthis.values = new HashMap<>();");
 
-		sbf.append("\n\t\tfor (int i = 0; i < NAMES.length;i++) {");
-		sbf.append("\n\t\t\tthis.values.put(NAMES[i], new ValueList(NAMES[i], VALUES[i]));");
+		sbf.append("\n\t\tfor (int i = 0; i < KEYS.length;i++) {");
+		sbf.append("\n\t\t\tthis.values.put(KEYS[i], new ValueList(KEYS[i], VALUES[i]));");
 		sbf.append("\n\t\t}");
 		sbf.append("\n\t}");
 		sbf.append("\n}\n");

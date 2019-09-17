@@ -237,8 +237,7 @@ class Form {
 			cls = Util.toClassName(this.generatedColumnName.substring(pck.length()+1));
 			pck = generatedPackage + ".form." + pck;
 		}
-		sbf.append("package ").append(pck);
-		sbf.append('\n');
+		sbf.append("package ").append(pck).append(";\n");
 
 		/*
 		 * imports
@@ -588,10 +587,10 @@ class Form {
 	}
 
 	void emitTs(StringBuilder sbf, Map<String, DataType> dataTypes, Map<String, ValueList> valueLists,
-			Map<String, KeyedList> keyedLists) {
+			Map<String, KeyedList> keyedLists, String tsImportPrefix) {
 
-		sbf.append("\nimport { Form , Field, ChildForm } from '../form/form';");
-		sbf.append("\nimport { SelectOption } from '../form/types';");
+		sbf.append("\nimport { Form , Field, ChildForm } from '").append(tsImportPrefix).append("/form/form';");
+		sbf.append("\nimport { SelectOption } from '").append(tsImportPrefix).append("/form/types';");
 		sbf.append("\nimport { Validators } from '@angular/forms'");
 		/*
 		 * import for child forms being referred
