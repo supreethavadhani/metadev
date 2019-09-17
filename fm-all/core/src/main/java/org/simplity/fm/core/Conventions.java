@@ -55,7 +55,7 @@ public class Conventions {
 		 * values for the headers
 		 */
 		public static final String[] HDR_TEXTS = { "POST, GET, OPTIONS",
-				"content-type, " + SERVICE_HEADER + ", " + TOKEN_HEADER, "1728", "Keep-Alive",
+				"content-type, " + SERVICE_HEADER + ", " + AUTH_HEADER+ ", " + TOKEN_HEADER, "1728", "Keep-Alive",
 				"no-cache, no-store, must-revalidate", "11111110", "application/json" };
 		/**
 		 * http status

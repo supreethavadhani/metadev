@@ -41,46 +41,37 @@ import org.simplity.fm.core.http.LoggedInUser;
  *
  */
 public class DefaultContext implements IserviceContext {
-	protected Map<String, String> inputFields = new HashMap<>();
 	protected List<Message> messages = new ArrayList<>();
 	protected boolean inError;
 	protected Writer responseWriter;
 	protected LoggedInUser loggedInUser;
 	protected Object tenantId;
-
+	/*
+	 * created on need-basis because we expect this to be sued sparingly..
+	 */
+	protected Map<String, Object> objects;
 
 	/**
 	 * 
-	 * @param inputFields
 	 * @param loggedInUser
 	 * @param responseWriter
 	 */
-	public DefaultContext(Map<String, String> inputFields, LoggedInUser loggedInUser, Writer responseWriter) {
-		this.inputFields = inputFields;
+	public DefaultContext(LoggedInUser loggedInUser, Writer responseWriter) {
 		this.responseWriter = responseWriter;
 		this.loggedInUser = loggedInUser;
 	}
-	
+
 	/**
-	 * MUST be executed before this context is used in case this APP is designed for multi-tenant deployment
-	 * @param tenantId the tenantId to set
+	 * MUST be executed before this context is used in case this APP is designed
+	 * for multi-tenant deployment
+	 * 
+	 * @param tenantId
+	 *            the tenantId to set
 	 */
 	public void setTenantId(Object tenantId) {
 		this.tenantId = tenantId;
 	}
-	@Override
-	public Map<String, String> getInputFields() {
-		return this.inputFields;
-	}
 
-	@Override
-	public String getInputValue(String fieldName) {
-		if(this.inputFields == null) {
-			return  null;
-		}
-		return this.inputFields.get(fieldName);
-	}
-	
 	@Override
 	public LoggedInUser getUser() {
 		return this.loggedInUser;
@@ -98,10 +89,10 @@ public class DefaultContext implements IserviceContext {
 
 	@Override
 	public void addMessage(Message message) {
-		if(message == null) {
+		if (message == null) {
 			return;
 		}
-		if(!this.inError && message.messageType == MessageType.ERROR) {
+		if (!this.inError && message.messageType == MessageType.ERROR) {
 			this.inError = true;
 		}
 		this.messages.add(message);
@@ -111,17 +102,32 @@ public class DefaultContext implements IserviceContext {
 	public Message[] getMessages() {
 		return this.messages.toArray(new Message[0]);
 	}
-	
+
 	@Override
 	public void addMessages(Collection<Message> msgs) {
-		for(Message msg : msgs) {
+		for (Message msg : msgs) {
 			this.addMessage(msg);
 		}
 	}
-	
-	
+
 	@Override
 	public Object getTenantId() {
 		return this.tenantId;
+	}
+
+	@Override
+	public void setValue(String key, Object value) {
+		if (this.objects == null) {
+			this.objects = new HashMap<>();
+		}
+		this.objects.put(key, value);
+	}
+
+	@Override
+	public Object getValue(String key) {
+		if (this.objects == null) {
+			return null;
+		}
+		return this.objects.get(key);
 	}
 }

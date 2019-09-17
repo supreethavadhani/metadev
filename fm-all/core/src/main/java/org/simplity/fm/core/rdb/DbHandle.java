@@ -43,8 +43,6 @@ import org.slf4j.LoggerFactory;
 public class DbHandle {
 	private static final Logger logger = LoggerFactory.getLogger(DbHandle.class);
 	private final Connection con;
-	private final boolean readOnly;
-	private boolean isDirty = false;
 
 	/**
 	 * to be created by DbDriver ONLY
@@ -52,9 +50,8 @@ public class DbHandle {
 	 * @param con
 	 * @param readOnly
 	 */
-	DbHandle(Connection con, boolean readOnly) {
+	DbHandle(Connection con) {
 		this.con = con;
-		this.readOnly = readOnly;
 	}
 
 	/**
@@ -189,10 +186,6 @@ public class DbHandle {
 	 * @throws SQLException
 	 */
 	public int write(IDbWriter writer) throws SQLException {
-		if (this.readOnly) {
-			throw new SQLException("Transaction is opened for readOnly. write operation not allowed.");
-		}
-		this.isDirty = true;
 		String sql = writer.getPreparedStatement();
 		if (sql == null) {
 			logger.warn(
@@ -214,11 +207,7 @@ public class DbHandle {
 	 * @throws SQLException
 	 */
 	public int write(IDbBatchWriter writer) throws SQLException {
-		if (this.readOnly) {
-			throw new SQLException("Transaction is opened for readOnly. write operation not allowed.");
-		}
 		
-		this.isDirty = true;
 		String sql = writer.getPreparedStatement();
 		if (sql == null) {
 			logger.warn(
@@ -256,10 +245,6 @@ public class DbHandle {
 	 * @throws SQLException
 	 */
 	public int insertAndGenerteKeys(IDbWriter writer, String keyColumnName, long[] generatedKeys) throws SQLException {
-		if (this.readOnly) {
-			throw new SQLException("Transaction is opened for readOnly. write operation not allowed.");
-		}
-		this.isDirty = true;
 		String[] keys = { keyColumnName };
 
 		try (PreparedStatement ps = this.con.prepareStatement(writer.getPreparedStatement(), keys)) {
@@ -286,10 +271,6 @@ public class DbHandle {
 	 * @throws SQLException
 	 */
 	public int write(String sql, ValueType[] paramTypes, Object[] paramValues) throws SQLException {
-		if (this.readOnly) {
-			throw new SQLException("Transaction is opened for readOnly. write operation not allowed.");
-		}
-		this.isDirty = true;
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 
 			for (int i = 0; i < paramValues.length; i++) {
@@ -319,10 +300,6 @@ public class DbHandle {
 	 */
 	public int insert(String sql, ValueType[] paramTypes, Object[] params, long[] generatedKeys, String keyName)
 			throws SQLException {
-		if (this.readOnly) {
-			throw new SQLException("Transaction is opened for readOnly. write operation not allowed.");
-		}
-		this.isDirty = true;
 		return doWrite(this.con, sql, paramTypes, params, generatedKeys, keyName);
 	}
 
@@ -342,10 +319,6 @@ public class DbHandle {
 	 * @throws SQLException
 	 */
 	public int[] writeBatch(String sql, ValueType[] paramTypes, Object[][] paramValues) throws SQLException {
-		if (this.readOnly) {
-			throw new SQLException("Transaction is opened for readOnly. write operation not allowed.");
-		}
-		this.isDirty = true;
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			for (Object[] row : paramValues) {
 				ps.addBatch();
@@ -375,19 +348,6 @@ public class DbHandle {
 		return this.con.createBlob();
 	}
 
-	protected void done(boolean allOk) throws SQLException {
-		if (!this.isDirty) {
-			return;
-		}
-		if (allOk) {
-			this.con.commit();
-		} else {
-			this.con.rollback();
-		}
-	}
-	
-	
-	
 	
 	/*
 	 * core worker methods are static. They are called either directly from

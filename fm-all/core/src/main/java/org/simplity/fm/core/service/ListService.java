@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 
 /**
@@ -63,9 +64,12 @@ public class ListService implements IService{
 	}
 	@Override
 	public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
-		
-		String listName = ctx.getInputValue("list");
-		if(listName == null) {
+		String listName = null;
+		JsonPrimitive ele = payload.getAsJsonPrimitive("list");
+		if(ele != null) {
+			listName = ele.getAsString();
+		}
+		if(listName == null || listName.isEmpty()) {
 			ctx.addMessage(Message.newError("list is required for listService"));
 			return;
 		}
@@ -76,8 +80,11 @@ public class ListService implements IService{
 		}
 		String key = null;
 		if(list.isKeyBased()) {
-			key = ctx.getInputValue("key");
-			if(key == null) {
+			ele = payload.getAsJsonPrimitive("key");
+			if(ele != null) {
+				key = ele.getAsString();
+			}
+			if(key == null || key.isEmpty()) {
 				ctx.addMessage(Message.newError("list " + listName + " is key based. key is missing in the request"));
 				return;
 			}

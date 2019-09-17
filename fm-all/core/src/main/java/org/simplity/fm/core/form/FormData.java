@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.stream.JsonWriter;
 
 /**
@@ -553,11 +554,11 @@ public class FormData {
 	/**
 	 * load keys from a JSON. input is suspect.
 	 * 
-	 * @param inputValues
+	 * @param inputData
 	 *            non-null collection of field values
 	 * @return true if unique fields are extracted. false otherwise
 	 */
-	public boolean loadUniqKeys(Map<String, String> inputValues) {
+	public boolean loadUniqKeys(JsonObject inputData) {
 		int[] indexes = this.form.getUniqIndexes();
 		if (indexes == null) {
 			return false;
@@ -565,7 +566,11 @@ public class FormData {
 		Field[] fields = this.form.getFields();
 		for (int idx : indexes) {
 			Field f = fields[idx];
-			String value = inputValues.get(f.getFieldName());
+			String value = null;
+			JsonPrimitive ele = inputData.getAsJsonPrimitive(f.getFieldName());
+			if(ele != null) {
+				value = ele.getAsString();
+			}
 			boolean result = validateAndSet(f, value, this.fieldValues, idx, false, null);
 			if (!result) {
 				return false;
@@ -978,7 +983,7 @@ public class FormData {
 
 	private static boolean fetchWorker(DbHandle driver, String sql, Object[] values, FormDbParam[] setters,
 			FormDbParam[] getters) throws SQLException {
-		Boolean[] result = new Boolean[1];
+		boolean[] result = new boolean[1];
 		driver.read(new IDbReader() {
 
 			@Override

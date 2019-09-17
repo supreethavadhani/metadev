@@ -176,26 +176,12 @@ public class Message {
 		} else {
 			writer.write(this.messageType.toString().toLowerCase());
 		}
-
-		writer.write("\",\"id\":\"");
-		writer.write(this.messageId);
 		writer.write(Q);
 
-		writer.write("\",\"text:\"");
-		writer.write(this.messageId);
-		writer.write(Q);
-
-		if (this.fieldName != null) {
-			writer.write(",\"fieldName\":\"");
-			writer.write(this.fieldName);
-			writer.write(Q);
-		}
-
-		if (this.objectName != null) {
-			writer.write(",\"objectName\": \"");
-			writer.write(this.objectName);
-			writer.write(Q);
-		}
+		writePair(writer, "id", this.messageId);
+		writePair(writer, "text", this.messageId);
+		writePair(writer, "fieldName", this.fieldName);
+		writePair(writer, "objectName", this.objectName);
 
 		if (this.params != null && this.params.length > 0) {
 			writer.write(",\"params\":[");
@@ -203,9 +189,7 @@ public class Message {
 			writer.write(Q);
 
 			for (int i = 1; i < this.params.length; i++) {
-				writer.write(",\"");
-				writer.write(this.params[i].replaceAll("\"", "\"\""));
-				writer.write(Q);
+				writePair(writer, null, this.params[i]);
 			}
 			writer.write(']');
 		}
@@ -216,5 +200,18 @@ public class Message {
 		}
 
 		writer.write("}");
+	}
+	
+	private static void writePair(Writer writer, String key, String value) throws IOException {
+		if(value == null) {
+			return;
+		}
+		writer.write(",\"");
+		if(key != null) {
+			writer.write(key);
+			writer.write("\":\"");
+		}
+		writer.write(value.replaceAll("\"", "\"\""));
+		writer.write(Q);
 	}
 }

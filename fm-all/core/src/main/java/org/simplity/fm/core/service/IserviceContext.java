@@ -24,7 +24,6 @@ package org.simplity.fm.core.service;
 
 import java.io.Writer;
 import java.util.Collection;
-import java.util.Map;
 
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.http.LoggedInUser;
@@ -37,19 +36,25 @@ import org.simplity.fm.core.http.LoggedInUser;
  *
  */
 public interface IserviceContext {
+	
 	/**
 	 * 
-	 * @return non-null, possibly empty, map of field-value pairs that are
-	 *         received from the client
+	 * @param key
+	 * @return object associated with this key, null if no such key, or teh
+	 *         value is null
 	 */
-	public Map<String, String> getInputFields();
-
+	public Object getValue(String key);
+	
 	/**
+	 * put an name-value pair in the context
 	 * 
-	 * @param fieldName non-null fieldName
-	 * @return value received as input, or null if no value is received for this field
+	 * @param key
+	 *            non-null
+	 * @param value
+	 *            null has same effect as removing it. hence remove not
+	 *            provided.
 	 */
-	public String getInputValue(String fieldName);
+	public void setValue(String key, Object value);
 	
 	/**
 	 * @return non-null user on whose behalf this service is requested

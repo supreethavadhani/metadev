@@ -126,7 +126,7 @@ public class Agent {
 			resp.setStatus(Conventions.Http.STATUS_INVALID_DATA);
 			return;
 		}
-		Map<String, String> fields = this.readQueryString(req);
+		this.readQueryString(req, json);
 
 		/*
 		 * We allow the service to use output stream, but not input stream. This
@@ -134,7 +134,7 @@ public class Agent {
 		 * receiving payload from an external source
 		 */
 		Writer writer = new StringWriter();
-		IserviceContext ctx = new DefaultContext(fields, user, writer);
+		IserviceContext ctx = new DefaultContext(user, writer);
 		try {
 			service.serve(ctx, json);
 			if (ctx.allOk()) {
@@ -225,11 +225,10 @@ public class Agent {
 		writer.write("]");
 	}
 
-	private Map<String, String> readQueryString(HttpServletRequest req) {
-		Map<String, String> values = new HashMap<>();
+	private void readQueryString(HttpServletRequest req, JsonObject json) {
 		String qry = req.getQueryString();
 		if (qry == null) {
-			return values;
+			return;
 		}
 
 		for (String part : qry.split("&")) {
@@ -240,10 +239,8 @@ public class Agent {
 			} else {
 				val = this.decode(pair[1]);
 			}
-			values.put(pair[0].trim(), val);
+			json.addProperty(pair[0].trim(), val);
 		}
-		logger.info("{} parameters extracted from query string", values.size());
-		return values;
 	}
 
 	private IService getService(HttpServletRequest req) {

@@ -75,19 +75,38 @@ public class RdbDriver {
 			throw new SQLException(msg);
 		}
 		try (Connection con = factory.getConnection()) {
-			DbHandle handle = new DbHandle(con, readOnly);
-			try {
-				boolean ok = transactor.transact(handle);
-				handle.done(ok);
-
-			} catch (Exception e) {
-				logger.error("Exception occurred in the middle of a transaction: {}", e.getMessage());
-				handle.done(false);
-				throw new SQLException(e.getMessage());
-			}
+			this.doTransact(con, transactor, readOnly);
 		}
 	}
 
+	private void  doTransact(Connection con, IDbClient transactor, boolean readOnly) throws SQLException {
+		DbHandle handle = new DbHandle(con);
+		try {
+			if(readOnly) {
+				con.setReadOnly(true);
+				
+			}else {
+				con.setAutoCommit(false);
+				if(transactor.transact(handle)) {
+					con.commit();
+				}else {
+					con.rollback();
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error("Exception occurred in the middle of a transaction: {}, {}",e,  e.getMessage());
+			if(!readOnly) {
+				try {
+					con.rollback();
+				}catch(Exception ignore) {
+					//
+				}
+			}
+			throw new SQLException(e.getMessage());
+		}
+		
+	}
 	/**
 	 * do transaction on a schema that is not the default schema used by this
 	 * application. Use this ONLY id the schema is different from the default
@@ -109,16 +128,7 @@ public class RdbDriver {
 			throw new SQLException(msg);
 		}
 		try (Connection con = factory.getConnection(schemaName)) {
-			DbHandle handle = new DbHandle(con, readOnly);
-			try {
-				boolean ok = transactor.transact(handle);
-				handle.done(ok);
-
-			} catch (Exception e) {
-				logger.error("Exception occurred in the middle of a transaction: {}", e.getMessage());
-				handle.done(false);
-				throw new SQLException(e.getMessage());
-			}
+			this.doTransact(con, transactor, readOnly);
 		}
 	}
 

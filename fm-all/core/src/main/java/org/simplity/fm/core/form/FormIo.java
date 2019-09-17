@@ -27,7 +27,6 @@ import java.io.Writer;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Conventions;
@@ -121,7 +120,6 @@ public abstract class FormIo implements IService {
 				fd.setObject(tenant.getIndex(), ctx.getTenantId());
 			}
 
-			Map<String, String> inputValues = ctx.getInputFields();
 			/*
 			 * read by unique keys?
 			 */
@@ -129,12 +127,12 @@ public abstract class FormIo implements IService {
 				
 				@Override
 				public boolean transact(DbHandle handle) throws SQLException {
-					boolean ok = fd.loadUniqKeys(inputValues);
+					boolean ok = fd.loadUniqKeys(payload);
 					if(ok) {
 						ok = fd.fetchUsingUniqueKeys(handle);
 					}else {
 						//try primary keys
-						fd.loadKeys(ctx.getInputFields(), ctx);
+						fd.loadKeys(payload, ctx);
 						if (!ctx.allOk()) {
 							return true;
 						}
@@ -334,7 +332,7 @@ public abstract class FormIo implements IService {
 		@Override
 		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
 			FormData fd = this.form.newFormData();
-			fd.loadKeys(ctx.getInputFields(), ctx);
+			fd.loadKeys(payload, ctx);
 			if (!ctx.allOk()) {
 				return;
 			}
