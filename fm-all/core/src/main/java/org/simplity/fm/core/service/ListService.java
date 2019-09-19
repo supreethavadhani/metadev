@@ -60,7 +60,7 @@ public class ListService implements IService{
 
 	@Override
 	public String getId() {
-		return Conventions.App.LIST_SERVICE_NAME;
+		return Conventions.App.SERVICE_LIST;
 	}
 	@Override
 	public void serve(IserviceContext ctx, JsonObject payload) throws Exception {

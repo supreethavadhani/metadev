@@ -193,7 +193,7 @@ public abstract class FormIo implements IService {
 			}
 
 			int nbrRows = Conventions.Http.DEFAULT_NBR_ROWS;
-			node = payload.get(Conventions.Http.TAG_NBR_ROWS);
+			node = payload.get(Conventions.Http.TAG_MAX_ROWS);
 			if (node != null && node.isJsonPrimitive()) {
 				nbrRows = node.getAsInt();
 			}

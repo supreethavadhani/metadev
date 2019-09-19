@@ -244,9 +244,9 @@ public class Agent {
 	}
 
 	private IService getService(HttpServletRequest req) {
-		String serviceName = req.getHeader(Conventions.Http.SERVICE_HEADER);
+		String serviceName = req.getHeader(Conventions.Http.HEADER_SERVICE);
 		if (serviceName == null) {
-			logger.info("header {} not received", Conventions.Http.SERVICE_HEADER);
+			logger.info("header {} not received", Conventions.Http.HEADER_SERVICE);
 
 			return null;
 		}
@@ -265,7 +265,7 @@ public class Agent {
 	 * @return
 	 */
 	private LoggedInUser getUser(HttpServletRequest req) {
-		String token = req.getHeader(Conventions.Http.TOKEN_HEADER);
+		String token = req.getHeader(Conventions.Http.HEADER_AUTH);
 		if (token == null) {
 			return null;
 		}

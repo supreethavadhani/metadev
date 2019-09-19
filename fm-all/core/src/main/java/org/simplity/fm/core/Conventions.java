@@ -37,15 +37,11 @@ public class Conventions {
 		/**
 		 * header name to specify the service name
 		 */
-		public static final String SERVICE_HEADER = "_s";
+		public static final String HEADER_SERVICE = "_s";
 		/**
 		 * header name with which token is sent
 		 */
-		public static final String TOKEN_HEADER = "_t";
-		/**
-		 * standard header for auth token
-		 */
-		public static final String AUTH_HEADER = "Authorization";
+		public static final String HEADER_AUTH = "AUTHORIZATION";
 		/**
 		 * various headers that we respond back with
 		 */
@@ -55,7 +51,7 @@ public class Conventions {
 		 * values for the headers
 		 */
 		public static final String[] HDR_TEXTS = { "POST, GET, OPTIONS",
-				"content-type, " + SERVICE_HEADER + ", " + AUTH_HEADER+ ", " + TOKEN_HEADER, "1728", "Keep-Alive",
+				"content-type, " + HEADER_SERVICE + ", " + HEADER_AUTH, "1728", "Keep-Alive",
 				"no-cache, no-store, must-revalidate", "11111110", "application/json" };
 		/**
 		 * http status
@@ -83,10 +79,6 @@ public class Conventions {
 		public static final int STATUS_INTERNAL_ERROR = 500;
 
 		/**
-		 * tag/name of form header in the request pay load
-		 */
-		public static final String TAG_HEADER = "header";
-		/**
 		 * tag/name of form data in the request/response pay load
 		 */
 		public static final String TAG_DATA = "data";
@@ -107,7 +99,7 @@ public class Conventions {
 		/**
 		 * number of rows of data (expected or delivered)
 		 */
-		public static final String TAG_NBR_ROWS = "maxRows";
+		public static final String TAG_MAX_ROWS = "maxRows";
 		/**
 		 * filter conditions
 		 */
@@ -197,17 +189,17 @@ public class Conventions {
 		/**
 		 * predefined name for list service
 		 */
-		public static final String LIST_SERVICE_NAME = "list";
+		public static final String SERVICE_LIST = "list";
 		
 		/**
 		 * predefined name for list service
 		 */
-		public static final String LOGIN_SERVICE_NAME = "login";
+		public static final String SERVICE_LOGIN = "login";
 		
 		/**
 		 * predefined name for list service
 		 */
-		public static final String LOGOUT_SERVICE_NAME = "logout";
+		public static final String SERVICE_LOGOUT = "logout";
 		
 	}
 }
