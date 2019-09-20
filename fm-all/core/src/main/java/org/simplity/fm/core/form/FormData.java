@@ -496,7 +496,7 @@ public class FormData {
 			return;
 		}
 		Field f = this.form.getFields()[idx];
-		validateAndSet(f, value, this.fieldValues, idx, false, ctx);
+		validateAndSet(f, value, this.fieldValues, idx, false, ctx, null, 0);
 	}
 
 	/**
@@ -506,7 +506,7 @@ public class FormData {
 	 * @param json
 	 */
 	public void load(JsonObject json) {
-		this.validateAndLoad(json, true, true, null);
+		this.loadWorker(json, true, true, null, null, 0);
 	}
 
 	/**
@@ -526,7 +526,7 @@ public class FormData {
 		for (int idx : indexes) {
 			Field f = fields[idx];
 			String value = getTextAttribute(json, f.getFieldName());
-			validateAndSet(f, value, this.fieldValues, idx, false, ctx);
+			validateAndSet(f, value, this.fieldValues, idx, false, ctx, null, 0);
 		}
 	}
 
@@ -547,7 +547,7 @@ public class FormData {
 		for (int idx : indexes) {
 			Field f = fields[idx];
 			String value = inputValues.get(f.getFieldName());
-			validateAndSet(f, value, this.fieldValues, idx, false, ctx);
+			validateAndSet(f, value, this.fieldValues, idx, false, ctx, null, 0);
 		}
 	}
 
@@ -571,7 +571,7 @@ public class FormData {
 			if(ele != null) {
 				value = ele.getAsString();
 			}
-			boolean result = validateAndSet(f, value, this.fieldValues, idx, false, null);
+			boolean result = validateAndSet(f, value, this.fieldValues, idx, false, null, null, 0);
 			if (!result) {
 				return false;
 			}
@@ -596,11 +596,15 @@ public class FormData {
 	 *            non-null
 	 */
 	public void validateAndLoad(JsonObject json, boolean allFieldsAreOptional, boolean forInsert, IserviceContext ctx) {
+		this.loadWorker(json, allFieldsAreOptional, forInsert, ctx, null, 0);
+	}
+	
+	private void loadWorker(JsonObject json, boolean allFieldsAreOptional, boolean forInsert, IserviceContext ctx, String childName, int rowNbr) {
 		boolean keyIsOptional = false;
 		if (forInsert) {
 			keyIsOptional = this.form.getDbMetaData().generatedColumnName != null;
 		}
-		setFeilds(json, this.form, this.fieldValues, allFieldsAreOptional, keyIsOptional, ctx);
+		setFeilds(json, this.form, this.fieldValues, allFieldsAreOptional, keyIsOptional, ctx, childName, rowNbr);
 
 		ChildForm[] children = this.form.getChildForms();
 		if (children != null) {
@@ -611,8 +615,8 @@ public class FormData {
 		if (!allFieldsAreOptional) {
 			this.validateForm(ctx);
 		}
-	}
 
+	}
 	private FormData[] validateChild(ChildForm childForm, JsonObject json, boolean allFieldsAreOptional,
 			boolean forInsert, IserviceContext ctx) {
 		String fieldName = childForm.fieldName;
@@ -633,7 +637,7 @@ public class FormData {
 				return null;
 			}
 			FormData fd = childForm.form.newFormData();
-			fd.validateAndLoad((JsonObject) childNode, allFieldsAreOptional, forInsert, ctx);
+			fd.loadWorker((JsonObject) childNode, allFieldsAreOptional, forInsert, ctx, null, 0);
 			FormData[] result = { fd };
 			return result;
 		}
@@ -671,7 +675,7 @@ public class FormData {
 			}
 			FormData fd = childForm.form.newFormData();
 			fds.add(fd);
-			fd.validateAndLoad((JsonObject) col, allFieldsAreOptional, forInsert, ctx);
+			fd.loadWorker((JsonObject) col, allFieldsAreOptional, forInsert, ctx, fieldName, j);
 		}
 		if (fds.size() == 0) {
 			return null;
@@ -680,7 +684,7 @@ public class FormData {
 	}
 
 	private static void setFeilds(JsonObject json, Form form, Object[] row, boolean allFieldsAreOptional,
-			boolean keyIsOptional, IserviceContext ctx) {
+			boolean keyIsOptional, IserviceContext ctx, String childName, int rowNbr) {
 
 		for (Field field : form.getFields()) {
 			ColumnType ct = field.getColumnType();
@@ -703,12 +707,12 @@ public class FormData {
 			}
 
 			String value = getTextAttribute(json, field.getFieldName());
-			validateAndSet(field, value, row, field.getIndex(), allFieldsAreOptional, ctx);
+			validateAndSet(field, value, row, field.getIndex(), allFieldsAreOptional, ctx, childName, rowNbr);
 		}
 	}
 
 	private static boolean validateAndSet(Field field, String value, Object[] row, int idx,
-			boolean allFieldsAreOptional, IserviceContext ctx) {
+			boolean allFieldsAreOptional, IserviceContext ctx, String childName, int rowNbr) {
 		if (value == null || value.isEmpty()) {
 			if (allFieldsAreOptional) {
 				row[idx] = null;
@@ -722,7 +726,7 @@ public class FormData {
 			logger.error("{} is not a valid value for {} which is of data-type {} and value type {}", value,
 					field.getFieldName(), field.getDataType().getName(), field.getDataType().getValueType());
 			if (ctx != null) {
-				ctx.addMessage(Message.newFieldError(field.getFieldName(), field.getMessageId()));
+				ctx.addMessage(Message.newObjectFieldError(field.getFieldName(), childName, field.getMessageId(), rowNbr, e.getParams()));
 			}
 			return false;
 		}
