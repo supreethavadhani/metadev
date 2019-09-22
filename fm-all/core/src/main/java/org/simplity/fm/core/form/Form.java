@@ -142,7 +142,7 @@ public class Form {
 					keyIdx++;
 				}
 				if (field.getColumnType() == ColumnType.UniqueKey) {
-					uniqs[keyIdx] = field.getIndex();
+					uniqs[uniqIdx] = field.getIndex();
 					uniqIdx++;
 				}
 			}

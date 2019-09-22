@@ -84,7 +84,7 @@ public class RdbDriver {
 		try {
 			if(readOnly) {
 				con.setReadOnly(true);
-				
+				transactor.transact(handle);
 			}else {
 				con.setAutoCommit(false);
 				if(transactor.transact(handle)) {

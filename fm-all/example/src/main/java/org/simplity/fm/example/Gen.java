@@ -35,7 +35,7 @@ public class Gen {
 	 */
 	public static void main(String[] args) {
 		String root = "C:/Users/raghu/eclipse-workspace/fm-example/src/main/";
-		Generator.generate(root+"spec/",root+"java/" ,"org.simplity.fm.example.gen");
+		Generator.generate(root+"spec/",root+"java/" ,"org.simplity.fm.example.gen", "./");
 	}
 
 }
