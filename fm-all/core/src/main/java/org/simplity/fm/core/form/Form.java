@@ -55,8 +55,8 @@ public class Form {
 	private static final String WILD_CHAR = "_";
 	private static final String ESCAPED_WILD_CHAR = "\\_";
 	/**
-	 * this is the unique id given this to this form, it is an independent
-	 * form. It is the section name in case it is a section of a composite form
+	 * this is the unique id of this form. It is the section name in case it is
+	 * a section of a composite form
 	 */
 	protected String uniqueName;
 	/**
@@ -149,7 +149,7 @@ public class Form {
 			if (keyIdx != 0) {
 				this.keyIndexes = Arrays.copyOf(keys, keyIdx);
 			}
-			if(uniqIdx != 0) {
+			if (uniqIdx != 0) {
 				this.uniqueIndexes = Arrays.copyOf(uniqs, uniqIdx);
 			}
 		}
@@ -190,12 +190,14 @@ public class Form {
 			DbLink link = this.dbMetaData.dbLinks[i];
 			Form childForm = this.childForms[i].form;
 			if (link == null) {
-				logger.info("Form {} has a child {} but has no childMeta entry for it", this.getFormId(),childForm.getFormId());
+				logger.info("Form {} has a child {} but has no childMeta entry for it", this.getFormId(),
+						childForm.getFormId());
 				continue;
 			}
 			Form form = this.childForms[i].form;
-			if(form.dbMetaData == null) {
-				logger.warn("Child {} has no db meta data. It will not particiapte in db I/O of its parent", childForm.getFormId());
+			if (form.dbMetaData == null) {
+				logger.warn("Child {} has no db meta data. It will not particiapte in db I/O of its parent",
+						childForm.getFormId());
 				continue;
 			}
 
@@ -370,29 +372,33 @@ public class Form {
 	/**
 	 * parse the input into a filter clause
 	 * 
-	 * @param conditions non-null {field1: {oper:"=", value:"abcd"...}
-	 * @param sorts how the result to be sorted {field1:"a/d",
+	 * @param conditions
+	 *            non-null {field1: {oper:"=", value:"abcd"...}
+	 * @param sorts
+	 *            how the result to be sorted {field1:"a/d",
 	 * @param errors
-	 * @param ctx 
-	 * @param maxRows mxRows to be read
+	 * @param ctx
+	 * @param maxRows
+	 *            mxRows to be read
 	 * @return filter clause that can be used to get rows from the db
 	 */
-	public SqlReader parseForFilter(JsonObject conditions, JsonObject sorts,  List<Message> errors, IserviceContext ctx, int maxRows) {
+	public SqlReader parseForFilter(JsonObject conditions, JsonObject sorts, List<Message> errors, IserviceContext ctx,
+			int maxRows) {
 		StringBuilder sql = new StringBuilder(this.dbMetaData.selectClause);
 		sql.append(" WHERE ");
 		List<FormDbParam> params = new ArrayList<>();
 		List<Object> values = new ArrayList<>();
-		
+
 		/*
 		 * force a condition on tenant id id required
 		 */
 		Field tenant = this.dbMetaData.tenantField;
-		if(tenant != null) {
+		if (tenant != null) {
 			sql.append(tenant.getDbColumnName()).append("=?");
 			values.add(ctx.getTenantId());
 			params.add(new FormDbParam(0, tenant.getValueType()));
 		}
-		
+
 		/*
 		 * fairly long inside the loop for each filed. But it is more
 		 * serial code. Hence left it that way
@@ -415,7 +421,7 @@ public class Form {
 			JsonObject con = (JsonObject) node;
 
 			JsonElement ele = con.get(Conventions.Http.TAG_FILTER_COMP);
-			if(ele == null || !ele.isJsonPrimitive()) {
+			if (ele == null || !ele.isJsonPrimitive()) {
 				logger.error("comp is missing for a filter condition");
 				errors.add(Message.newError(Message.MSG_INVALID_DATA));
 				return null;
@@ -429,25 +435,25 @@ public class Form {
 			}
 
 			ele = con.get(Conventions.Http.TAG_FILTER_VALUE);
-			if(ele == null || !ele.isJsonPrimitive()) {
+			if (ele == null || !ele.isJsonPrimitive()) {
 				logger.error("value is missing for a filter condition");
 				errors.add(Message.newError(Message.MSG_INVALID_DATA));
 				return null;
 			}
 			String value = ele.getAsString();
 			String value2 = null;
-			if(condn == FilterCondition.Between) {
+			if (condn == FilterCondition.Between) {
 				ele = con.get(Conventions.Http.TAG_FILTER_VALUE_TO);
-				if(ele == null || !ele.isJsonPrimitive()) {
+				if (ele == null || !ele.isJsonPrimitive()) {
 					logger.error("valueTo is missing for a filter condition");
 					errors.add(Message.newError(Message.MSG_INVALID_DATA));
 					return null;
 				}
 				value2 = ele.getAsString();
 			}
-			
+
 			int idx = params.size();
-			if ( idx > 0) {
+			if (idx > 0) {
 				sql.append(" and ");
 			}
 
@@ -510,7 +516,7 @@ public class Form {
 
 			if (condn == FilterCondition.Between) {
 				Object obj2 = null;
-				if(value2 != null) {
+				if (value2 != null) {
 					obj2 = vt.parse(value2);
 				}
 				if (obj2 == null) {
@@ -530,24 +536,24 @@ public class Form {
 			params.add(new FormDbParam(idx++, vt));
 			values.add(obj);
 		}
-		
-		if(sorts != null) {
+
+		if (sorts != null) {
 			boolean isFirst = true;
-			for(Entry<String, JsonElement> entry : sorts.entrySet()) {
+			for (Entry<String, JsonElement> entry : sorts.entrySet()) {
 				String f = entry.getKey();
 				Field field = this.fieldMap.get(f);
-				if(field == null) {
+				if (field == null) {
 					logger.error("{} is not a field in teh form. Sort order ignored");
 					continue;
 				}
-				if(isFirst) {
+				if (isFirst) {
 					sql.append(" ORDER BY ");
 					isFirst = false;
-				}else {
+				} else {
 					sql.append(", ");
 				}
 				sql.append(field.getDbColumnName());
-				if(entry.getValue().getAsString().toLowerCase().startsWith("d")) {
+				if (entry.getValue().getAsString().toLowerCase().startsWith("d")) {
 					sql.append(" DESC ");
 				}
 			}

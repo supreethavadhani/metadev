@@ -115,7 +115,7 @@ public class FormData {
 	/**
 	 * @param user
 	 */
-	public void setOwner(LoggedInUser user) {
+	public void setUserId(LoggedInUser user) {
 		int idx = this.form.userIdFieldIdx;
 		if (idx != -1) {
 			this.fieldValues[idx] = user.getUserId();
@@ -523,10 +523,15 @@ public class FormData {
 			return;
 		}
 		Field[] fields = this.form.getFields();
+		int userIdx = this.form.getUserIdFieldIdx();
 		for (int idx : indexes) {
-			Field f = fields[idx];
-			String value = getTextAttribute(json, f.getFieldName());
-			validateAndSet(f, value, this.fieldValues, idx, false, ctx, null, 0);
+			if (idx == userIdx) {
+				this.setUserId(ctx.getUser());
+			} else {
+				Field f = fields[idx];
+				String value = getTextAttribute(json, f.getFieldName());
+				validateAndSet(f, value, this.fieldValues, idx, false, ctx, null, 0);
+			}
 		}
 	}
 
@@ -544,10 +549,15 @@ public class FormData {
 			return;
 		}
 		Field[] fields = this.form.getFields();
+		int userIdx = this.form.getUserIdFieldIdx();
 		for (int idx : indexes) {
-			Field f = fields[idx];
-			String value = inputValues.get(f.getFieldName());
-			validateAndSet(f, value, this.fieldValues, idx, false, ctx, null, 0);
+			if (idx == userIdx) {
+				this.setUserId(ctx.getUser());
+			} else {
+				Field f = fields[idx];
+				String value = inputValues.get(f.getFieldName());
+				validateAndSet(f, value, this.fieldValues, idx, false, ctx, null, 0);
+			}
 		}
 	}
 
@@ -568,7 +578,7 @@ public class FormData {
 			Field f = fields[idx];
 			String value = null;
 			JsonPrimitive ele = inputData.getAsJsonPrimitive(f.getFieldName());
-			if(ele != null) {
+			if (ele != null) {
 				value = ele.getAsString();
 			}
 			boolean result = validateAndSet(f, value, this.fieldValues, idx, false, null, null, 0);
@@ -598,13 +608,14 @@ public class FormData {
 	public void validateAndLoad(JsonObject json, boolean allFieldsAreOptional, boolean forInsert, IserviceContext ctx) {
 		this.loadWorker(json, allFieldsAreOptional, forInsert, ctx, null, 0);
 	}
-	
-	private void loadWorker(JsonObject json, boolean allFieldsAreOptional, boolean forInsert, IserviceContext ctx, String childName, int rowNbr) {
+
+	private void loadWorker(JsonObject json, boolean allFieldsAreOptional, boolean forInsert, IserviceContext ctx,
+			String childName, int rowNbr) {
 		boolean keyIsOptional = false;
 		if (forInsert) {
 			keyIsOptional = this.form.getDbMetaData().generatedColumnName != null;
 		}
-		setFeilds(json, this.form, this.fieldValues, allFieldsAreOptional, keyIsOptional, ctx, childName, rowNbr);
+		this.setFeilds(json, allFieldsAreOptional, keyIsOptional, ctx, childName, rowNbr);
 
 		ChildForm[] children = this.form.getChildForms();
 		if (children != null) {
@@ -617,6 +628,7 @@ public class FormData {
 		}
 
 	}
+
 	private FormData[] validateChild(ChildForm childForm, JsonObject json, boolean allFieldsAreOptional,
 			boolean forInsert, IserviceContext ctx) {
 		String fieldName = childForm.fieldName;
@@ -683,10 +695,16 @@ public class FormData {
 		return fds.toArray(new FormData[0]);
 	}
 
-	private static void setFeilds(JsonObject json, Form form, Object[] row, boolean allFieldsAreOptional,
+	private void setFeilds(JsonObject json, boolean allFieldsAreOptional,
 			boolean keyIsOptional, IserviceContext ctx, String childName, int rowNbr) {
 
-		for (Field field : form.getFields()) {
+		int userIdx = this.form.getUserIdFieldIdx();
+		for (Field field : this.form.getFields()) {
+			int idx = field.getIndex();
+			if(userIdx > -1 && field.getIndex() == userIdx) {
+				this.setUserId(ctx.getUser());
+				continue;
+			}
 			ColumnType ct = field.getColumnType();
 			if (ct != null) {
 				if (!ct.isInput()) {
@@ -698,7 +716,7 @@ public class FormData {
 					continue;
 				}
 				if (ct == ColumnType.ModifiedBy || ct == ColumnType.CreatedBy) {
-					row[field.getIndex()] = ctx.getUser().getUserId();
+					this.fieldValues[idx] = ctx.getUser().getUserId();
 				}
 				if (keyIsOptional && ct == ColumnType.PrimaryKey) {
 					logger.info("{} is generated key and hence is not parsed", field.getFieldName());
@@ -707,7 +725,7 @@ public class FormData {
 			}
 
 			String value = getTextAttribute(json, field.getFieldName());
-			validateAndSet(field, value, row, field.getIndex(), allFieldsAreOptional, ctx, childName, rowNbr);
+			validateAndSet(field, value, this.fieldValues, field.getIndex(), allFieldsAreOptional, ctx, childName, rowNbr);
 		}
 	}
 
@@ -726,7 +744,8 @@ public class FormData {
 			logger.error("{} is not a valid value for {} which is of data-type {} and value type {}", value,
 					field.getFieldName(), field.getDataType().getName(), field.getDataType().getValueType());
 			if (ctx != null) {
-				ctx.addMessage(Message.newObjectFieldError(field.getFieldName(), childName, field.getMessageId(), rowNbr, e.getParams()));
+				ctx.addMessage(Message.newObjectFieldError(field.getFieldName(), childName, field.getMessageId(),
+						rowNbr, e.getParams()));
 			}
 			return false;
 		}
@@ -801,26 +820,26 @@ public class FormData {
 	}
 
 	private static void writeField(JsonWriter writer, Object value, ValueType vt) throws IOException {
-		if(vt == ValueType.INTEGER || vt == ValueType.DECIMAL) {
-			writer.value((Number)(value));
+		if (vt == ValueType.INTEGER || vt == ValueType.DECIMAL) {
+			writer.value((Number) (value));
 			return;
 		}
-		if(vt == ValueType.BOOLEAN) {
-			writer.value((boolean)(value));
+		if (vt == ValueType.BOOLEAN) {
+			writer.value((boolean) (value));
 			return;
 		}
 		writer.value(value.toString());
 	}
-	
+
 	private static String getTextAttribute(JsonObject json, String fieldName) {
 		JsonElement node = json.get(fieldName);
 		if (node == null) {
 			return null;
 		}
-		if(node.isJsonPrimitive()) {
+		if (node.isJsonPrimitive()) {
 			return node.getAsString();
 		}
-			return null;
+		return null;
 	}
 
 	/**
@@ -1046,12 +1065,12 @@ public class FormData {
 			if (link == null) {
 				continue;
 			}
-			
+
 			FormData[] rows = this.childData[idx];
-			if(rows == null || rows.length == 0) {
+			if (rows == null || rows.length == 0) {
 				continue;
 			}
-			
+
 			DbMetaData meta = link.childMeta;
 			Object[] values = this.fieldValues;
 			handle.write(new IDbBatchWriter() {
@@ -1069,25 +1088,25 @@ public class FormData {
 					/*
 					 * copy parent keys to the child row
 					 */
-					for(String nam : link.childLinkNames) {
+					for (String nam : link.childLinkNames) {
 						fd.fieldValues[fd.getFieldIndex(nam)] = values[link.linkParentParams[posn].idx];
 						posn++;
 					}
 					posn = 1;
-					for(FormDbParam p : meta.insertParams) {
+					for (FormDbParam p : meta.insertParams) {
 						p.valueType.setPsParam(ps, posn, fd.fieldValues[p.idx]);
 						posn++;
 					}
-					
+
 					this.rowIdx++;
-					return(this.rowIdx < rows.length);
+					return (this.rowIdx < rows.length);
 				}
 			});
 		}
 	}
 
-	static FormData[] fetchDataWorker(DbHandle handle, Form form, String sql, Object[] values,
-			FormDbParam[] setters, FormDbParam[] getters) throws SQLException {
+	static FormData[] fetchDataWorker(DbHandle handle, Form form, String sql, Object[] values, FormDbParam[] setters,
+			FormDbParam[] getters) throws SQLException {
 		List<FormData> result = new ArrayList<>();
 		handle.read(new IDbReader() {
 
