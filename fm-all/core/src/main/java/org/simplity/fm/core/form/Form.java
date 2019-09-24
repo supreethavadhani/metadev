@@ -400,7 +400,7 @@ public class Form {
 		}
 
 		/*
-		 * fairly long inside the loop for each filed. But it is more
+		 * fairly long inside the loop for each field. But it is more
 		 * serial code. Hence left it that way
 		 */
 		for (Map.Entry<String, JsonElement> entry : conditions.entrySet()) {
@@ -460,7 +460,7 @@ public class Form {
 			sql.append(field.getDbColumnName());
 			ValueType vt = field.getValueType();
 			Object obj = null;
-
+			logger.info("Found a condition : field {} {} {} . value2={}",field.getFieldName(), condn.name(), value, value2);
 			/*
 			 * complex ones first.. we have to append ? to sql, and add type and
 			 * value to the lists for each case
@@ -558,6 +558,8 @@ public class Form {
 				}
 			}
 		}
+		String sqlText = sql.toString();
+		logger.info("Filter sql = {}", sqlText);
 		return new SqlReader(sql.toString(), params.toArray(new FormDbParam[0]), values.toArray(new Object[0]));
 	}
 

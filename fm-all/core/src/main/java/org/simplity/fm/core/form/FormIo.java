@@ -124,14 +124,14 @@ public abstract class FormIo implements IService {
 			 * read by unique keys?
 			 */
 			RdbDriver.getDriver().transact(new IDbClient() {
-				
+
 				@Override
 				public boolean transact(DbHandle handle) throws SQLException {
 					boolean ok = fd.loadUniqKeys(payload);
-					if(ok) {
+					if (ok) {
 						ok = fd.fetchUsingUniqueKeys(handle);
-					}else {
-						//try primary keys
+					} else {
+						// try primary keys
 						fd.loadKeys(payload, ctx);
 						if (!ctx.allOk()) {
 							return true;
@@ -147,8 +147,8 @@ public abstract class FormIo implements IService {
 							ctx.addMessage(Message.newError(msg));
 						}
 					} else {
-							logger.error("No data found");
-							ctx.addMessage(Message.newError("noData"));
+						logger.error("No data found");
+						ctx.addMessage(Message.newError("noData"));
 					}
 					return true;
 				}
@@ -214,10 +214,11 @@ public abstract class FormIo implements IService {
 			FormData[][] data = new FormData[1][];
 			Form f = this.form;
 			RdbDriver.getDriver().transact(new IDbClient() {
-				
+
 				@Override
 				public boolean transact(DbHandle handle) throws SQLException {
-					data[0] = FormData.fetchDataWorker(handle, f, reader.sql, reader.whereValues, reader.whereParams, f.dbMetaData.selectParams);
+					data[0] = FormData.fetchDataWorker(handle, f, reader.sql, reader.whereValues, reader.whereParams,
+							f.dbMetaData.selectParams);
 					return true;
 				}
 			}, true);
@@ -277,6 +278,9 @@ public abstract class FormIo implements IService {
 					return true;
 				}
 			}, false);
+			/*
+			 * what should be the payload back? As of now, we send nothing.
+			 */
 			return;
 		}
 	}
@@ -313,6 +317,12 @@ public abstract class FormIo implements IService {
 					return true;
 				}
 			}, false);
+			/*
+			 * as per our protocol, we send the form back as payload, possibly
+			 * because we may have to communicate the generated code back to the
+			 * client
+			 */
+			fd.serializeAsJson(ctx.getResponseWriter());
 			return;
 		}
 	}
@@ -348,6 +358,9 @@ public abstract class FormIo implements IService {
 					return true;
 				}
 			}, false);
+			/*
+			 * no payload is returned on success
+			 */
 			return;
 		}
 	}
