@@ -126,4 +126,10 @@ public class FromToValidation implements IValidation {
 		}
 		return n > 0;
 	}
+
+
+	@Override
+	public String getFieldName() {
+		return this.fieldName;
+	}
 }

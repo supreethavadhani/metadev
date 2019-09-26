@@ -32,7 +32,6 @@ import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.rdb.FilterCondition;
-import org.simplity.fm.core.service.IFormProcessor;
 import org.simplity.fm.core.service.IserviceContext;
 import org.simplity.fm.core.validn.IValidation;
 import org.slf4j.Logger;
@@ -84,15 +83,6 @@ public class Form {
 	 */
 	protected IValidation[] validations;
 
-	/**
-	 * pre-fill fields when the form is requested for the first time.
-	 */
-	protected IFormProcessor prefillProcessor;
-
-	/**
-	 * refill-fields each time the form is to be sent to client for editing.
-	 */
-	protected IFormProcessor refillProcessor;
 
 	/**
 	 * index to the values array for the key fields. this is derived based on
@@ -229,20 +219,6 @@ public class Form {
 		if (!foundOne) {
 			this.dbMetaData.dbLinks = null;
 		}
-	}
-
-	/**
-	 * @return the refillProcessor for this form
-	 */
-	public IFormProcessor getRefillProcessor() {
-		return this.refillProcessor;
-	}
-
-	/**
-	 * @return the prefillProcessor for this form
-	 */
-	public IFormProcessor getPrefillProcessor() {
-		return this.prefillProcessor;
 	}
 
 	/**

@@ -178,7 +178,7 @@ public enum ColumnType {
 
 	/**
 	 * @return true if this column is to be taken from user-input. For example,
-	 *         parent key is no taken from the input for an update operation,
+	 *         parent key is not taken from the input for an update operation,
 	 *         because an update operation should not change the parent of a
 	 *         child row.
 	 */

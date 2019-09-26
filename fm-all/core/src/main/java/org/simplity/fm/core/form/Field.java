@@ -26,12 +26,15 @@ import org.simplity.fm.core.datatypes.DataType;
 import org.simplity.fm.core.datatypes.InvalidValueException;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.validn.IValueList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author simplity.org
  *
  */
 public class Field {
+	private static final Logger logger = LoggerFactory.getLogger(Field.class);
 	/**
 	 * field name is unique within a form/template. However, it is strongly
 	 * advised that the same name is used in different forms if they actually
@@ -249,14 +252,17 @@ public class Field {
 			if (this.isRequired == false) {
 				return null;
 			}
+			logger.error("No value received for required field {}", this.fieldName );
 			this.throwMessage();
 		}
 		Object obj = this.dataType.parse(inputValue);
 		if (obj == null) {
+			logger.error("{} is not valid for field {}", inputValue, this.fieldName);
 			this.throwMessage();
 		}
 
 		if (this.valueList != null && this.valueList.isValid(inputValue, null) == false) {
+			logger.error("{} is not found in the list of valid values for  for field {}", inputValue, this.fieldName);
 			this.throwMessage();
 		}
 		return obj;

@@ -695,20 +695,20 @@ public class FormData {
 		return fds.toArray(new FormData[0]);
 	}
 
-	private void setFeilds(JsonObject json, boolean allFieldsAreOptional,
-			boolean keyIsOptional, IserviceContext ctx, String childName, int rowNbr) {
+	private void setFeilds(JsonObject json, boolean allFieldsAreOptional, boolean keyIsOptional, IserviceContext ctx,
+			String childName, int rowNbr) {
 
 		int userIdx = this.form.getUserIdFieldIdx();
 		for (Field field : this.form.getFields()) {
 			int idx = field.getIndex();
-			if(userIdx > -1 && field.getIndex() == userIdx) {
+			if (userIdx > -1 && field.getIndex() == userIdx) {
 				this.setUserId(ctx.getUser());
 				continue;
 			}
 			ColumnType ct = field.getColumnType();
 			if (ct != null) {
 				if (!ct.isInput()) {
-					logger.info("Filed {} skipped as we do not expect it from client", field.getFieldName());
+					logger.info("Field {} skipped as we do not expect it from client", field.getFieldName());
 					continue;
 				}
 				if (keyIsOptional && ct == ColumnType.GeneratedPrimaryKey) {
@@ -725,7 +725,8 @@ public class FormData {
 			}
 
 			String value = getTextAttribute(json, field.getFieldName());
-			validateAndSet(field, value, this.fieldValues, field.getIndex(), allFieldsAreOptional, ctx, childName, rowNbr);
+			validateAndSet(field, value, this.fieldValues, field.getIndex(), allFieldsAreOptional, ctx, childName,
+					rowNbr);
 		}
 	}
 
@@ -752,14 +753,17 @@ public class FormData {
 	}
 
 	/**
-	 * @param validations
+	 * @param serviceContext
 	 */
 	private void validateForm(IserviceContext ctx) {
 		IValidation[] validations = this.form.getValidations();
 		List<Message> errors = new ArrayList<>();
 		if (validations != null) {
 			for (IValidation vln : validations) {
-				vln.isValid(this, errors);
+				boolean ok = vln.isValid(this, errors);
+				if (!ok) {
+					logger.error("field {} failed an inter-field validaiton associated with it", vln.getFieldName());
+				}
 			}
 		}
 		if (errors.size() > 0) {
@@ -860,23 +864,30 @@ public class FormData {
 		int n = 0;
 		Object[] values = this.fieldValues;
 		if (meta.generatedColumnName != null) {
-			final long[] generatedKeys = new long[1];
-			n = handle.insertAndGenerteKeys(new IDbWriter() {
+			try {
+				final long[] generatedKeys = new long[1];
+				n = handle.insertAndGenerteKeys(new IDbWriter() {
 
-				@Override
-				public String getPreparedStatement() {
-					return meta.insertClause;
-				}
-
-				@Override
-				public void setParams(PreparedStatement ps) throws SQLException {
-					int posn = 1;
-					for (FormDbParam p : meta.insertParams) {
-						p.valueType.setPsParam(ps, posn, values);
+					@Override
+					public String getPreparedStatement() {
+						return meta.insertClause;
 					}
-				}
 
-			}, meta.generatedColumnName, generatedKeys);
+					@Override
+					public void setParams(PreparedStatement ps) throws SQLException {
+						int posn = 1;
+						for (FormDbParam p : meta.insertParams) {
+							p.valueType.setPsParam(ps, posn, values[p.idx]);
+							posn++;
+						}
+					}
+
+				}, meta.generatedColumnName, generatedKeys);
+			} catch (SQLException e) {
+				String msg = toMessage(e, meta.insertClause, meta.insertParams, values);
+				logger.error(msg);
+				throw new SQLException(msg, e);
+			}
 		} else {
 			n = writeWorker(handle, meta.insertClause, meta.insertParams, values);
 		}
@@ -904,8 +915,7 @@ public class FormData {
 			logger.error("Form {} is not designed for db operation", this.form.getFormId());
 			return false;
 		}
-		String sql = meta.deleteClause + meta.whereClause;
-		int nbr = writeWorker(handle, sql, meta.whereParams, this.fieldValues);
+		int nbr = writeWorker(handle, meta.updateClause, meta.updateParams, this.fieldValues);
 		return nbr > 0;
 	}
 
@@ -943,23 +953,47 @@ public class FormData {
 
 	private static int writeWorker(DbHandle handle, String sql, FormDbParam[] params, Object[] values)
 			throws SQLException {
-		return handle.write(new IDbWriter() {
+		try {
+			int n = handle.write(new IDbWriter() {
 
-			@Override
-			public String getPreparedStatement() {
-				return sql;
-			}
-
-			@Override
-			public void setParams(PreparedStatement ps) throws SQLException {
-				int posn = 1;
-				for (FormDbParam p : params) {
-					p.valueType.setPsParam(ps, posn, values[p.idx]);
-					posn++;
+				@Override
+				public String getPreparedStatement() {
+					return sql;
 				}
-			}
 
-		});
+				@Override
+				public void setParams(PreparedStatement ps) throws SQLException {
+					int posn = 1;
+					for (FormDbParam p : params) {
+						p.valueType.setPsParam(ps, posn, values[p.idx]);
+						posn++;
+					}
+				}
+
+			});
+			return n;
+		} catch (SQLException e) {
+			String msg = toMessage(e, sql, params, values);
+			logger.error(msg);
+			throw new SQLException(msg, e);
+		}
+	}
+
+	private static String toMessage(SQLException e, String sql, FormDbParam[] params, Object[] values) {
+		StringBuilder buf = new StringBuilder();
+		buf.append("Sql Exception : ").append(e.getMessage());
+		buf.append("SQL:").append(sql).append("\nParameters");
+		SQLException e1 = e.getNextException();
+		if (e1 != null) {
+			buf.append("\nLinked to the SqlExcpetion: ").append(e1.getMessage());
+		}
+		int idx = 1;
+		for (FormDbParam p : params) {
+			buf.append('\n').append(idx).append(". type=").append(p.valueType);
+			buf.append(" value=").append(values[p.idx]);
+			idx++;
+		}
+		return buf.toString();
 	}
 
 	/**

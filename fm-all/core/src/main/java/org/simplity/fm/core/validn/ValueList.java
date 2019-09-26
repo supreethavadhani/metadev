@@ -25,6 +25,9 @@ package org.simplity.fm.core.validn;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Base class for defining a set of enumerations as valid values of a field.
  * This class is extended by the generated ValueList classes
@@ -32,11 +35,12 @@ import java.util.Set;
  * @author simplity.org
  */
 public class ValueList implements IValueList {
+	private static final Logger logger = LoggerFactory.getLogger(ValueList.class);
 	/*
 	 * it is object, to allow keyed-list to re-use it as its collection
 	 */
 	protected Object name;
-	protected Set<String> values;
+	protected Set<Object> values;
 	/*
 	 * [object,string][] first element could be either number or text, but the second one always is text
 	 */
@@ -45,14 +49,14 @@ public class ValueList implements IValueList {
 	/**
 	 * 
 	 * @param name non-null unique name
-	 * @param valueList non-null non-empty String[][String, String]
+	 * @param valueList non-null non-empty [Object, String][]
 	 */
 	public ValueList(Object name, Object[][] valueList) {
 		this.name = name;
 		this.valueList = valueList;
 		this.values = new HashSet<>();
 		for(Object[] arr: valueList) {
-			this.values.add(arr[0].toString());
+			this.values.add(arr[0]);
 		}
 	}
 	@Override
@@ -66,7 +70,11 @@ public class ValueList implements IValueList {
 	}
 	@Override
 	public boolean isValid(Object fieldValue, Object keyValue) {
-		return this.values.contains(fieldValue.toString());
+		boolean ok = this.values.contains(fieldValue.toString());
+		if(!ok) {
+			logger.error("{} is not found in list {}", fieldValue, this.name);
+		}
+		return ok;
 	}
 
 	@Override

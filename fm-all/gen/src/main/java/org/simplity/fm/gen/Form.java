@@ -230,11 +230,11 @@ class Form {
 		String typesName = Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
 		String pck = getQualifier(this.name);
 		String cls = null;
-		if(pck == null) {
+		if (pck == null) {
 			pck = generatedPackage + ".form";
 			cls = Util.toClassName(this.name);
-		}else {
-			cls = Util.toClassName(this.generatedColumnName.substring(pck.length()+1));
+		} else {
+			cls = Util.toClassName(this.generatedColumnName.substring(pck.length() + 1));
 			pck = generatedPackage + ".form." + pck;
 		}
 		sbf.append("package ").append(pck).append(";\n");
@@ -646,9 +646,11 @@ class Form {
 			for (Field field : this.fields) {
 				sbf.append("\n\t\tthis.fields.set('").append(field.name).append("', this.").append(field.name)
 						.append(");");
-				altSbf.append("\n\t\tthis.controls.set('").append(field.name).append("', [");
-				field.emitFg(altSbf, dataTypes.get(field.dataType));
-				altSbf.append("]);");
+				if (field.isEditable) {
+					altSbf.append("\n\t\tthis.controls.set('").append(field.name).append("', [");
+					field.emitFg(altSbf, dataTypes.get(field.dataType));
+					altSbf.append("]);");
+				}
 			}
 
 			sbf.append(altSbf.toString());

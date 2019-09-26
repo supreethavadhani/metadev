@@ -23,7 +23,6 @@
 package org.simplity.fm.gen;
 
 import java.io.File;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import org.simplity.fm.core.Conventions;
@@ -39,7 +38,7 @@ class AppComps {
 	static final Logger logger = LoggerFactory.getLogger(AppComps.class);
 	private static final String C = ", ";
 
-	DataType[] dataTypes;
+	Map<String, DataType> dataTypes;
 	Map<String, ValueList> lists;
 	Map<String, KeyedList> keyedLists;
 	Map<String, RuntimeList> runtimeLists;
@@ -82,20 +81,17 @@ class AppComps {
 
 		sbf.append(
 				"\n\n/**\n * class that has static attributes for all data types defined for this project. It also extends <code>DataTypes</code>");
-		sbf.append("\n * <br /> generated at ").append(LocalDateTime.now());
 		sbf.append("\n */ ");
 		sbf.append("\npublic class ").append(cls).append(" implements IDataTypes {");
 
-		for (DataType dt : this.dataTypes) {
+		StringBuilder dtNames = new StringBuilder();
+		for (DataType dt : this.dataTypes.values()) {
 			dt.emitJava(sbf);
+			dtNames.append(dt.name).append(C);
 		}
+		dtNames.setLength(dtNames.length() - C.length());
 
-		sbf.append("\n\n\tpublic static final DataType[] allTypes = {");
-		for (DataType dt : this.dataTypes) {
-			sbf.append(dt.name).append(C);
-		}
-		sbf.setLength(sbf.length() - C.length());
-		sbf.append("};");
+		sbf.append("\n\n\tpublic static final DataType[] allTypes = {").append(dtNames.toString()).append("};");
 
 		sbf.append("\n\t private Map<String, DataType> typesMap;");
 
@@ -162,13 +158,5 @@ class AppComps {
 			list.emitJava(sbf, pack);
 			Util.writeOut(folder + Util.toClassName(list.name) + ".java", sbf);
 		}
-	}
-	
-	Map<String, DataType> getTypes() {
-		Map<String, DataType> types = new HashMap<>(this.dataTypes.length);
-		for (DataType d : this.dataTypes) {
-			types.put(d.name, d);
-		}
-		return types;
 	}
 }

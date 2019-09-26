@@ -35,7 +35,7 @@ import org.simplity.fm.core.form.FormData;
  * @author simplity.org
  */
 public class DependentListValidation implements IValidation {
-	private final IValueList validValues;
+	private final String listName;
 	private final int fieldIndex;
 	private final int parentFieldIndex;
 	private final String fieldName;
@@ -54,7 +54,7 @@ public class DependentListValidation implements IValidation {
 	public DependentListValidation(int fieldIndex, int parentFieldIndex, String listName, String fieldName, String messageId ) {
 		this.fieldIndex = fieldIndex;
 		this.parentFieldIndex = parentFieldIndex;
-		this.validValues = ComponentProvider.getProvider().getValueList(listName);
+		this.listName = listName;
 		this.fieldName = fieldName;
 		this.messaageId = messageId;
 	}
@@ -71,10 +71,20 @@ public class DependentListValidation implements IValidation {
 			return true;
 		}
 		
-		if(this.validValues.isValid(fieldValue, keyValue)) {
+		IValueList vl = ComponentProvider.getProvider().getValueList(this.listName);
+		if(vl == null) {
+			return true;
+		}
+		if(vl.isValid(fieldValue, keyValue)) {
 			return true;
 		}
 		mesages.add(Message.newFieldError(this.fieldName, this.messaageId));
 		return false;
+	}
+
+
+	@Override
+	public String getFieldName() {
+		return this.fieldName;
 	}
 }

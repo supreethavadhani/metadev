@@ -44,4 +44,10 @@ public interface IValidation {
 	 * @return true if all OK. false if an error message is added to the list
 	 */
 	public boolean isValid(FormData form, List<Message> messages);
+	
+	/**
+	 * 
+	 * @return primary/any field that is associated with this validation
+	 */
+	public String getFieldName();
 }

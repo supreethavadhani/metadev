@@ -25,6 +25,9 @@ package org.simplity.fm.core.validn;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Base class to specify an enumeration of valid values for a field. The
  * enumeration are further restricted based on a key field. This class is
@@ -33,6 +36,7 @@ import java.util.Map;
  * @author simplity.org
  */
 public class KeyedValueList implements IValueList{
+	protected static final Logger logger = LoggerFactory.getLogger(KeyedValueList.class);
 	protected String name;
 	protected Map<Object, ValueList> values = new HashMap<>();
 
@@ -40,9 +44,14 @@ public class KeyedValueList implements IValueList{
 	public boolean isValid(Object fieldValue, Object keyValue) {
 		ValueList vl  = this.values.get(keyValue);
 		if (vl == null) {
+			logger.error("Key {} is not valid for keyed list {}",keyValue, this.name);
 			return false;
 		}
-		return vl.isValid(fieldValue, null);
+		boolean ok =  vl.isValid(fieldValue, null);
+		if(!ok) {
+			logger.error("{} is not in the list for key {} is keyed list {}", fieldValue, keyValue, this.name);
+		}
+		return ok;
 	}
 
 	@Override
@@ -59,6 +68,7 @@ public class KeyedValueList implements IValueList{
 	public Object[][] getList(Object keyValue) {
 		ValueList vl  = this.values.get(keyValue);
 		if (vl == null) {
+			logger.error("Key {} is not valid for keyed list {}. Null list reured.", keyValue, this.name);
 			return null;
 		}
 		return vl.getList(null);

@@ -65,7 +65,7 @@ public class DbHandle {
 	 * 
 	 */
 	public int read(IDbReader reader) throws SQLException {
-		String  sql = reader.getPreparedStatement();
+		String sql = reader.getPreparedStatement();
 		if (sql == null) {
 			return 0;
 		}
@@ -130,7 +130,6 @@ public class DbHandle {
 		}
 	}
 
-
 	/**
 	 * lower level API that is very close to the JDBC API for reading all
 	 * rows from the result of a select query
@@ -179,7 +178,6 @@ public class DbHandle {
 		}
 	}
 
-
 	/**
 	 * @param writer
 	 * @return number of affected rows.
@@ -193,21 +191,25 @@ public class DbHandle {
 					writer.getClass().getName());
 			return 0;
 		}
+		logger.info("SQL:{}", sql);
 
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			writer.setParams(ps);
-			return ps.executeUpdate();
+			int n = ps.executeUpdate();
+			logger.info("{} rows affected ", n);
+			return n;
 		}
 	}
 
 	/**
 	 * write to the rdbms using a writer
+	 * 
 	 * @param writer
 	 * @return number of rows affected
 	 * @throws SQLException
 	 */
 	public int write(IDbBatchWriter writer) throws SQLException {
-		
+
 		String sql = writer.getPreparedStatement();
 		if (sql == null) {
 			logger.warn(
@@ -215,6 +217,7 @@ public class DbHandle {
 					writer.getClass().getName());
 			return 0;
 		}
+		logger.info("Batch SQL:{}", sql);
 
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			do {
@@ -233,26 +236,34 @@ public class DbHandle {
 				}
 				n += i;
 			}
+			logger.info("{} rows affected ", n);
 			return n;
 		}
 	}
 
 	/**
 	 * @param writer
-	 * @param keyColumnName 
-	 * @param generatedKeys 
+	 * @param keyColumnName
+	 * @param generatedKeys
 	 * @return number of affected rows.
 	 * @throws SQLException
 	 */
 	public int insertAndGenerteKeys(IDbWriter writer, String keyColumnName, long[] generatedKeys) throws SQLException {
 		String[] keys = { keyColumnName };
 
-		try (PreparedStatement ps = this.con.prepareStatement(writer.getPreparedStatement(), keys)) {
+		String sql = writer.getPreparedStatement();
+		if(sql == null) {
+			logger.warn("Writer returned a null SQL, indicating no action.");
+			return 0;
+		}
+		logger.info("Insert With Key SQL:{}", sql);
+		try (PreparedStatement ps = this.con.prepareStatement(sql, keys)) {
 			writer.setParams(ps);
 			int result = ps.executeUpdate();
 			if (result > 0) {
 				generatedKeys[0] = getGeneratedKey(ps);
 			}
+			logger.info("{} rows inserted ", result);
 			return result;
 		}
 	}
@@ -271,12 +282,15 @@ public class DbHandle {
 	 * @throws SQLException
 	 */
 	public int write(String sql, ValueType[] paramTypes, Object[] paramValues) throws SQLException {
-		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
+		logger.info("Generic Write SQL:{}", sql);
 
+		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			for (int i = 0; i < paramValues.length; i++) {
 				paramTypes[i].setPsParam(ps, i + 1, paramValues[i]);
 			}
-			return ps.executeUpdate();
+			int n = ps.executeUpdate();
+			logger.info("{} rows affected ", n);
+			return n;
 		}
 	}
 
@@ -303,7 +317,6 @@ public class DbHandle {
 		return doWrite(this.con, sql, paramTypes, params, generatedKeys, keyName);
 	}
 
-
 	/**
 	 * API that is close to the JDBC API for updating/inserting/deleting
 	 * 
@@ -319,6 +332,7 @@ public class DbHandle {
 	 * @throws SQLException
 	 */
 	public int[] writeBatch(String sql, ValueType[] paramTypes, Object[][] paramValues) throws SQLException {
+		logger.info("Generic Batch SQL:{}", sql);
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			for (Object[] row : paramValues) {
 				ps.addBatch();
@@ -348,7 +362,6 @@ public class DbHandle {
 		return this.con.createBlob();
 	}
 
-	
 	/*
 	 * core worker methods are static. They are called either directly from
 	 * driver (for one-off operation) or from transHandler as part of
@@ -357,10 +370,12 @@ public class DbHandle {
 
 	protected static int doRead(IDbReader reader, Connection con) throws SQLException {
 		String pps = reader.getPreparedStatement();
-		if (pps == null) {
+		if (pps == null || pps.isEmpty()) {
+			logger.warn("Reader returned no SQL. No read operaiton.");
 			return 0;
 		}
 
+		logger.info("Read SQL:{}", pps);
 		try (PreparedStatement ps = con.prepareStatement(pps)) {
 			reader.setParams(ps);
 			try (ResultSet rs = ps.executeQuery()) {
@@ -376,7 +391,6 @@ public class DbHandle {
 			}
 		}
 	}
-
 
 	/**
 	 * This is a specialized one for form-based i/o where output row may have
@@ -475,7 +489,6 @@ public class DbHandle {
 		}
 	}
 
-
 	private static long getGeneratedKey(PreparedStatement ps) throws SQLException {
 		try (ResultSet rs = ps.getGeneratedKeys()) {
 			if (rs.next()) {
@@ -498,5 +511,4 @@ public class DbHandle {
 		logger.error("RDBMS is not set up. Sql = ", sql);
 	}
 
-	
 }

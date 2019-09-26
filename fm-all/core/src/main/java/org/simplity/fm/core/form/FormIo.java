@@ -171,6 +171,7 @@ public abstract class FormIo implements IService {
 
 		@Override
 		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
+			logger.info("Startedfiltering form {}", this.form.uniqueName);
 			List<Message> msgs = new ArrayList<>();
 			JsonObject conditions = null;
 			JsonElement node = payload.get(Conventions.Http.TAG_CONDITIONS);
@@ -201,6 +202,7 @@ public abstract class FormIo implements IService {
 			SqlReader reader = this.form.parseForFilter(conditions, sorts, msgs, ctx, nbrRows);
 
 			if (msgs.size() > 0) {
+				logger.warn("Filering aborted due to errors in nuput data");
 				ctx.addMessages(msgs);
 				return;
 			}
@@ -226,6 +228,8 @@ public abstract class FormIo implements IService {
 			if (rows == null || rows.length == 0) {
 				logger.info("No data found for the form {}", this.form.getFormId());
 				rows = new FormData[0];
+			}else {
+				logger.info(" {} rows filtered", rows.length);
 			}
 			@SuppressWarnings("resource")
 			Writer writer = ctx.getResponseWriter();
@@ -263,6 +267,7 @@ public abstract class FormIo implements IService {
 			FormData fd = this.form.newFormData();
 			fd.validateAndLoad(payload, false, false, ctx);
 			if (ctx.allOk() == false) {
+				logger.warn("Update operation stopped due to errors in input data");
 				return;
 			}
 			Field tenant = this.form.dbMetaData.tenantField;

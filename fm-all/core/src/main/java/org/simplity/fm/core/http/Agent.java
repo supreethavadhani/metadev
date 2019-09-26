@@ -42,6 +42,7 @@ import org.simplity.fm.core.service.IserviceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -116,6 +117,7 @@ public class Agent {
 
 		IService service = this.getService(req);
 		if (service == null) {
+			logger.info("No/invalid Service");
 			resp.setStatus(Conventions.Http.STATUS_INVALID_SERVICE);
 			return;
 		}
@@ -135,6 +137,7 @@ public class Agent {
 		 */
 		Writer writer = new StringWriter();
 		IserviceContext ctx = new DefaultContext(user, writer);
+		logger.info("Requesting App engine for service:{} with input data:{}", service.getId(), new Gson().toJson(json));
 		try {
 			service.serve(ctx, json);
 			if (ctx.allOk()) {

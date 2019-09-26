@@ -77,4 +77,10 @@ public class ExclusiveValidation implements IValidation {
 		messages.add(Message.newFieldError(this.fieldName, this.messageId));
 		return false;
 	}
+
+
+	@Override
+	public String getFieldName() {
+		return this.fieldName;
+	}
 }

@@ -115,7 +115,7 @@ public class Generator {
 		/*
 		 * create output folders if required
 		 */
-		String[] folders = { "form/", "ts/", "list/", "klist/" };
+		String[] folders = { "form/", "ts/", "list/"};
 		if (createOutputFolders(generatedSourceRootFolder, folders) == false) {
 			return;
 		}
@@ -154,9 +154,8 @@ public class Generator {
 			return;
 		}
 
-		Map<String, DataType> typesMap = project.getTypes();
 		for (File xls : f.listFiles()) {
-			emitForm(xls, generatedSourceRootFolder, typesMap, project, rootPackageName, tsImportPrefix);
+			emitForm(xls, generatedSourceRootFolder, project.dataTypes, project, rootPackageName, tsImportPrefix);
 		}
 	}
 
@@ -221,28 +220,28 @@ public class Generator {
 		return dt;
 	}
 
-	private static DataType[] parseTypes(Sheet sheet) {
+	private static Map<String, DataType> parseTypes(Sheet sheet) {
 		logger.info("Started parsing for data types from sheet {} with {} rows ", sheet.getSheetName(),
 				(sheet.getLastRowNum() - sheet.getFirstRowNum() + 1));
-		List<DataType> typeList = new ArrayList<>();
+		Map<String, DataType> types = new HashMap<>();
 		XlsUtil.consumeRows(sheet, NBR_CELLS_DATA_TYPES, new Consumer<Row>() {
 
 			@Override
 			public void accept(Row row) {
 				DataType dt = parseDataType(row);
 				if (dt != null) {
-					typeList.add(dt);
+					types.put(dt.name, dt);
 				}
 			}
 		});
 
-		int n = typeList.size();
+		int n = types.size();
 		if (n == 0) {
 			logger.error("No valid data type parsed!!");
 		} else {
 			logger.info("{} data types parsed.", n);
 		}
-		return typeList.toArray(new DataType[0]);
+		return types;
 	}
 
 	private static Map<String, ValueList> parseLists(Sheet sheet) {
@@ -746,7 +745,12 @@ public class Generator {
 			f.columnType = null;
 		}
 		f.index = index;
-
+		/*
+		 * if the field is marked as required, we may change that based on the column type
+		 */
+		if(f.columnType != null && f.isRequired) {
+			f.isRequired = f.columnType.isRequired();
+		}
 		return f;
 	}
 
