@@ -48,9 +48,9 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-public class Generator {
+public class G {
 
-	protected static final Logger logger = LoggerFactory.getLogger(Generator.class);
+	protected static final Logger logger = LoggerFactory.getLogger(G.class);
 	private static final String[] PROJECT_SHEET_NAMES = { "dataTypes", "valueLists", "keyedValueLists", "runtimeLists",
 			"commonFields" };
 	private static final String[] SHEET_NAMES = { "specialInstructions", "fields", "childForms", "fromToPairs",
@@ -121,7 +121,7 @@ public class Generator {
 			return;
 		}
 
-		String fileName = resourceRootFolder + Conventions.App.APP_FILE + EXT;
+		String fileName = resourceRootFolder + Conventions.App.APP_FILE;
 		File f = new File(fileName);
 		if (f.exists() == false) {
 			logger.error("project configuration file {} not found. Aborting..", fileName);

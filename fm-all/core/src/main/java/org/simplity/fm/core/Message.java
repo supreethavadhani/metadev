@@ -39,6 +39,10 @@ public class Message {
 	 */
 	public static final String MSG_NOT_AUTHORIZED = "notAuthorized";
 	/**
+	 * time stamp value is invalid
+	 */
+	public static final String INVALID_TIMESTAMP = "invalidTimstamp";
+	/**
 	 * error to be used in case of any internal error
 	 */
 	public static final String MSG_INTERNAL_ERROR = "internalError";

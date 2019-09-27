@@ -52,7 +52,7 @@ class ValueList {
 			if(p.value instanceof String) {
 				sbf.append(Util.escape(p.value.toString()));
 			}else {
-				sbf.append(p.value);
+				sbf.append(p.value).append('L');
 			}
 			sbf.append(C).append(Util.escape(p.label)).append("}");
 			sbf.append(C);

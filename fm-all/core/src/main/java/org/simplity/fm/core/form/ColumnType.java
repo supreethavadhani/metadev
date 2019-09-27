@@ -115,8 +115,8 @@ public enum ColumnType {
 		}
 
 		/**
-		 * however, input is expected for update operation if time-stamp check
-		 * is required
+		 * in general, this is not input
+		 * special case of expecting time-stamp is handled
 		 */
 		@Override
 		public boolean isInput() {

@@ -73,7 +73,7 @@ class XlsUtil {
 	/**
 	 * 
 	 * @param cell
-	 * @return value of a cell as text. always non-null. empty string in ase of
+	 * @return value of a cell as text. always non-null. empty string in case of
 	 *         issues
 	 */
 	static String textValueOf(Cell cell) {

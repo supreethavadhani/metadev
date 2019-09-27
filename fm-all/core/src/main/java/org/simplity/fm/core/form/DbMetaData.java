@@ -99,7 +99,7 @@ public class DbMetaData {
 
 	/**
 	 * if this table allows update, and needs to use time-stamp-match technique
-	 * to avoid concurrant updates..
+	 * to avoid concurrent updates..
 	 */
 	public Field timestampField;
 }

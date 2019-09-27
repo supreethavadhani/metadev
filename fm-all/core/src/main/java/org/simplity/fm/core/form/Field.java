@@ -53,8 +53,7 @@ public class Field {
 	private DataType dataType;
 	/**
 	 * default value is used only if this is optional and the value is missing.
-	 * not
-	 * used if the field is mandatory
+	 * not used if the field is mandatory
 	 */
 	private Object defaultValue;
 	/**
@@ -261,7 +260,7 @@ public class Field {
 			this.throwMessage();
 		}
 
-		if (this.valueList != null && this.valueList.isValid(inputValue, null) == false) {
+		if (this.valueList != null && this.valueList.isValid(obj, null) == false) {
 			logger.error("{} is not found in the list of valid values for  for field {}", inputValue, this.fieldName);
 			this.throwMessage();
 		}

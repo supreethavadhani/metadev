@@ -204,6 +204,7 @@ class Form {
 			if (this.useTimeStampForUpdate && this.timestampField == null) {
 				logger.error(
 						"Table is designed to use time-stamp for concurrancy, but no field with columnType=modifiedAt");
+				this.useTimeStampForUpdate = false;
 			}
 		}
 	}
@@ -409,6 +410,14 @@ class Form {
 			this.emitChildDbParam(sbf);
 		}
 
+		if(this.useTimeStampForUpdate) {
+			sbf.append(t).append("timestampField = this.fields[").append(this.timestampField.index).append("];");
+		}
+		
+		if(this.tenantField != null) {
+			sbf.append(t).append("tenantField = this.fields[").append(this.tenantField.index).append("];");
+		}
+		
 		sbf.append("\n\t\tthis.dbMetaData = m;");
 		sbf.append("\n\t}");
 	}
@@ -884,14 +893,14 @@ class Form {
 			}
 		}
 		// update sql will have the where indexes at the end
-		idxSbf.append(C).append(whereIndexes).append("};");
-
+		idxSbf.append(C).append(whereIndexes);
 		sbf.append(whereClause);
-		if (this.timestampField != null) {
+
+		if (this.useTimeStampForUpdate) {
 			sbf.append(" AND ").append(this.timestampField.dbColumnName).append("=?");
 			idxSbf.append(C).append(this.timestampField.index);
 		}
 		sbf.append("\";");
-		sbf.append(idxSbf);
+		sbf.append(idxSbf).append("};");
 	}
 }

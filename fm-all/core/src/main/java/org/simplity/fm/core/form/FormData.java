@@ -703,6 +703,7 @@ public class FormData {
 			int idx = field.getIndex();
 			if (userIdx > -1 && field.getIndex() == userIdx) {
 				this.setUserId(ctx.getUser());
+				userIdx = -1; //we are done
 				continue;
 			}
 			ColumnType ct = field.getColumnType();
@@ -711,16 +712,12 @@ public class FormData {
 					logger.info("Field {} skipped as we do not expect it from client", field.getFieldName());
 					continue;
 				}
-				if (keyIsOptional && ct == ColumnType.GeneratedPrimaryKey) {
-					logger.info("Generated field {} skipped as we do not expect it from client", field.getFieldName());
+				if (keyIsOptional && (ct == ColumnType.GeneratedPrimaryKey || ct == ColumnType.PrimaryKey)) {
+					logger.info("key field {} is skipped as we do not expect it from client", field.getFieldName());
 					continue;
 				}
 				if (ct == ColumnType.ModifiedBy || ct == ColumnType.CreatedBy) {
 					this.fieldValues[idx] = ctx.getUser().getUserId();
-				}
-				if (keyIsOptional && ct == ColumnType.PrimaryKey) {
-					logger.info("{} is generated key and hence is not parsed", field.getFieldName());
-					continue;
 				}
 			}
 

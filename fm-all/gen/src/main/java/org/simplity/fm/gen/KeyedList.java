@@ -58,7 +58,7 @@ class KeyedList {
 			if(key instanceof String) {
 				sbf.append(Util.escape(key.toString()));
 			}else {
-				sbf.append(key);
+				sbf.append(key).append('L');
 			}
 			sbf.append(C);
 			this.emitJavaSet(vals, entry.getValue());
@@ -93,7 +93,7 @@ class KeyedList {
 			if(p.value instanceof String) {
 				vals.append(Util.escape(p.value.toString()));
 			}else {
-				vals.append(p.value);
+				vals.append(p.value).append('L');
 			}
 			vals.append(C).append(Util.escape(p.label)).append("}");
 			vals.append(C);

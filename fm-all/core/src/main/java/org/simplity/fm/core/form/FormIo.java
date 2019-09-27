@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 /**
  * service for a form based I/O operation from DB
@@ -266,13 +267,33 @@ public abstract class FormIo implements IService {
 		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
 			FormData fd = this.form.newFormData();
 			fd.validateAndLoad(payload, false, false, ctx);
-			if (ctx.allOk() == false) {
+			/*
+			 * special case of time-stamp check for updates!!
+			 */
+			Field f = this.form.dbMetaData.timestampField;
+			if(f != null) {
+				Object val = null;
+				JsonPrimitive el = payload.getAsJsonPrimitive(f.getFieldName());
+				if(el == null) {
+					ctx.addMessage(Message.newFieldError(f.getFieldName(), Message.FIELD_REQUIRED));
+				}else {
+					val = f.parse(el.getAsString());
+					if(val == null) {
+						ctx.addMessage(Message.newFieldError(f.getFieldName(), Message.INVALID_TIMESTAMP));
+					}else {
+						fd.setObject(f.getIndex(), val);
+					}
+				}
+			}
+			
+			if (!ctx.allOk()) {
 				logger.warn("Update operation stopped due to errors in input data");
 				return;
 			}
-			Field tenant = this.form.dbMetaData.tenantField;
-			if (tenant != null) {
-				fd.setObject(tenant.getIndex(), ctx.getTenantId());
+			
+			f = this.form.dbMetaData.tenantField;
+			if (f != null) {
+				fd.setObject(f.getIndex(), ctx.getTenantId());
 			}
 
 			RdbDriver.getDriver().transact(new IDbClient() {
