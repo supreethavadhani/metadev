@@ -296,14 +296,23 @@ public abstract class FormIo implements IService {
 				fd.setObject(f.getIndex(), ctx.getTenantId());
 			}
 
+			final boolean[] result = new boolean[1];
 			RdbDriver.getDriver().transact(new IDbClient() {
 
 				@Override
 				public boolean transact(DbHandle handle) throws SQLException {
-					fd.update(handle);
+					result[0] = fd.update(handle);
 					return true;
 				}
 			}, false);
+			
+			if(!result[0]) {
+				/*
+				 * no update? quite
+				 */
+				logger.error("This row is updated by another user. Client has to cancel the operation");
+				ctx.addMessage(Message.newError(Message.CONCURRENT_UPDATE));
+			}
 			/*
 			 * what should be the payload back? As of now, we send nothing.
 			 */

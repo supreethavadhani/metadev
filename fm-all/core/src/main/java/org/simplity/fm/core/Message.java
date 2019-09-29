@@ -41,7 +41,11 @@ public class Message {
 	/**
 	 * time stamp value is invalid
 	 */
-	public static final String INVALID_TIMESTAMP = "invalidTimstamp";
+	public static final String INVALID_TIMESTAMP = "invalidTimestamp";
+	/**
+	 * time stamp value is mismatch
+	 */
+	public static final String CONCURRENT_UPDATE = "concurrentUpdate";
 	/**
 	 * error to be used in case of any internal error
 	 */

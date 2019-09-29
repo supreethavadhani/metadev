@@ -58,7 +58,7 @@ public class Generator {
 	private static final String[] SHEET_DESC = { "service or processing ", "fields", "child Forms (tables, sub-forms)",
 			"from-To inter-field validations", "either-or type of inter-field validaitons",
 			"if-a-then-b type of inter-field validaitons", "custom validations" };
-	private static final String USE_TIME_STAMP = "useTimeStampForUpdate";
+	private static final String USE_TIMESTAMP = "useTimestampForUpdate";
 	private static final String EXT = ".xlsx";
 	private static final int NBR_CELLS_INCL = 4;
 	private static final int NBR_CELLS_FROM_TO = 4;
@@ -557,9 +557,9 @@ public class Generator {
 			parseSi(sheet, form.params);
 		}
 
-		Object obj = form.params.get(USE_TIME_STAMP);
+		Object obj = form.params.get(USE_TIMESTAMP);
 		if(obj != null && obj instanceof Boolean) {
-			form.useTimeStampForUpdate = (boolean)obj;
+			form.useTimestampForUpdate = (boolean)obj;
 		}
 		/*
 		 * fields

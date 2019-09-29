@@ -76,7 +76,7 @@ class Form {
 	Field tenantField;
 	Field timestampField;
 	String generatedColumnName;
-	boolean useTimeStampForUpdate;
+	boolean useTimestampForUpdate;
 
 	void buildFieldMap() {
 		this.fieldMap = new HashMap<>();
@@ -139,7 +139,7 @@ class Form {
 				if (ct == ColumnType.ModifiedAt) {
 					if (modifiedAt == null) {
 						modifiedAt = field;
-						if (this.useTimeStampForUpdate) {
+						if (this.useTimestampForUpdate) {
 							this.timestampField = field;
 						}
 					} else {
@@ -201,10 +201,10 @@ class Form {
 				this.uniqueFields = uniqueList.toArray(new Field[0]);
 			}
 
-			if (this.useTimeStampForUpdate && this.timestampField == null) {
+			if (this.useTimestampForUpdate && this.timestampField == null) {
 				logger.error(
 						"Table is designed to use time-stamp for concurrancy, but no field with columnType=modifiedAt");
-				this.useTimeStampForUpdate = false;
+				this.useTimestampForUpdate = false;
 			}
 		}
 	}
@@ -410,7 +410,7 @@ class Form {
 			this.emitChildDbParam(sbf);
 		}
 
-		if(this.useTimeStampForUpdate) {
+		if(this.useTimestampForUpdate) {
 			sbf.append(t).append("timestampField = this.fields[").append(this.timestampField.index).append("];");
 		}
 		
@@ -896,7 +896,7 @@ class Form {
 		idxSbf.append(C).append(whereIndexes);
 		sbf.append(whereClause);
 
-		if (this.useTimeStampForUpdate) {
+		if (this.useTimestampForUpdate) {
 			sbf.append(" AND ").append(this.timestampField.dbColumnName).append("=?");
 			idxSbf.append(C).append(this.timestampField.index);
 		}
