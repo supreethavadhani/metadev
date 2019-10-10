@@ -32,6 +32,7 @@ import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.IDbClient;
 import org.simplity.fm.core.rdb.IDbReader;
 import org.simplity.fm.core.rdb.RdbDriver;
+import org.simplity.fm.core.service.IserviceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +50,7 @@ public class RuntimeList implements IValueList {
 	protected boolean hasKey;
 	protected boolean keyIsNumeric;
 	protected boolean valueIsNumeric;
+	protected boolean isTenantSpecific;
 
 	@Override
 	public String getName() {
@@ -61,7 +63,7 @@ public class RuntimeList implements IValueList {
 	}
 
 	@Override
-	public Object[][] getList(final Object key) {
+	public Object[][] getList(final Object key, IserviceContext ctx) {
 		if (this.hasKey) {
 			if (key == null) {
 				logger.error("Key should have value for list {}", this.name);
@@ -79,7 +81,7 @@ public class RuntimeList implements IValueList {
 		}
 		final long numericValue = l;
 		final List<Object[]> result = new ArrayList<>();
-
+		final RuntimeList that =this;
 		try {
 			RdbDriver.getDriver().transact(new IDbClient() {
 
@@ -88,17 +90,23 @@ public class RuntimeList implements IValueList {
 					handle.read(new IDbReader() {
 						@Override
 						public String getPreparedStatement() {
-							return RuntimeList.this.listSql;
+							return that.listSql;
 						}
 
 						@Override
 						public void setParams(PreparedStatement ps) throws SQLException {
-							if (RuntimeList.this.hasKey) {
-								if (RuntimeList.this.keyIsNumeric) {
-									ps.setLong(1, numericValue);
+							int posn = 1;
+							if (that.hasKey) {
+								if (that.keyIsNumeric) {
+									ps.setLong(posn, numericValue);
 								} else {
-									ps.setString(1, key.toString());
+									ps.setString(posn, key.toString());
 								}
+								posn++;
+							}
+							if(that.isTenantSpecific) {
+								ps.setLong(posn, (long)ctx.getTenantId());
+								posn++;
 							}
 						}
 

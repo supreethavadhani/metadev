@@ -51,7 +51,8 @@ import org.slf4j.LoggerFactory;
 public class Generator {
 
 	protected static final Logger logger = LoggerFactory.getLogger(Generator.class);
-	private static final String[] PROJECT_SHEET_NAMES = { "dataTypes", "valueLists", "keyedValueLists", "runtimeLists"};
+	private static final String[] PROJECT_SHEET_NAMES = { "dataTypes", "valueLists", "keyedValueLists", "runtimeLists",
+			"params" };
 	private static final String[] SHEET_NAMES = { "specialInstructions", "fields", "childForms", "fromToPairs",
 			"mutuallyExclusivePairs", "mutuallyInclusivepairs", "customValidations" };
 	private static final String[] SHEET_DESC = { "service or processing ", "fields", "child Forms (tables, sub-forms)",
@@ -67,7 +68,7 @@ public class Generator {
 	private static final int NBR_CELLS_LIST = 3;
 	private static final int NBR_CELLS_KEYED_LIST = 4;
 	private static final int NBR_CELLS_DATA_TYPES = 12;
-	private static final int NBR_CELLS_RUNTIME_LIST = 6;
+	private static final int NBR_CELLS_RUNTIME_LIST = 7;
 	private static final String FOLDER = "/";
 
 	/**
@@ -115,7 +116,7 @@ public class Generator {
 		/*
 		 * create output folders if required
 		 */
-		String[] folders = { "form/", "ts/", "list/"};
+		String[] folders = { "form/", "ts/", "list/" };
 		if (createOutputFolders(generatedSourceRootFolder, folders) == false) {
 			return;
 		}
@@ -212,12 +213,19 @@ public class Generator {
 	 */
 	static AppComps parseAppComps(Workbook book) {
 		Sheet[] sheets = XlsUtil.readSheets(book, PROJECT_SHEET_NAMES);
-		AppComps dt = new AppComps();
-		dt.dataTypes = parseTypes(sheets[0]);
-		dt.lists = parseLists(sheets[1]);
-		dt.keyedLists = parseKeyedLists(sheets[2]);
-		dt.runtimeLists = parseRuntimeLists(sheets[3]);
-		return dt;
+		AppComps app = new AppComps();
+		app.params = new HashMap<>();
+		parseParams(sheets[4], app.params);
+		app.dataTypes = parseTypes(sheets[0]);
+		app.lists = parseLists(sheets[1]);
+		app.keyedLists = parseKeyedLists(sheets[2]);
+		String tenantColumnName = null;
+		Object obj = app.params.get(AppComps.TENANT_COLUMN);
+		if (obj != null) {
+			tenantColumnName = obj.toString();
+		}
+		app.runtimeLists = parseRuntimeLists(sheets[3], tenantColumnName);
+		return app;
 	}
 
 	private static Map<String, DataType> parseTypes(Sheet sheet) {
@@ -289,7 +297,7 @@ public class Generator {
 		return map;
 	}
 
-	private static Map<String, RuntimeList> parseRuntimeLists(Sheet sheet) {
+	private static Map<String, RuntimeList> parseRuntimeLists(Sheet sheet, String tenantColumnName) {
 		Map<String, RuntimeList> list = new HashMap<>();
 		logger.info("Started parsing runtime lists");
 		XlsUtil.consumeRows(sheet, NBR_CELLS_RUNTIME_LIST, new Consumer<Row>() {
@@ -304,6 +312,15 @@ public class Generator {
 				rl.col2 = XlsUtil.textValueOf(row.getCell(4));
 				rl.key = XlsUtil.textValueOf(row.getCell(5));
 				rl.keyIsNumeric = XlsUtil.boolValueOf(row.getCell(6));
+				boolean hasTenant = XlsUtil.boolValueOf(row.getCell(7));
+				if (hasTenant) {
+					if (tenantColumnName == null) {
+						logger.error("Run time list {} uses tenantField, but {} is not set in params sheet", rl.name,
+								AppComps.TENANT_COLUMN);
+					} else {
+						rl.tenantColumnName = tenantColumnName;
+					}
+				}
 				list.put(rl.name, rl);
 			}
 		});
@@ -316,7 +333,7 @@ public class Generator {
 		return list;
 	}
 
-	static void parseSi(Sheet sheet, Map<String, Object> settings) {
+	static void parseParams(Sheet sheet, Map<String, Object> settings) {
 		XlsUtil.consumeRows(sheet, 2, new Consumer<Row>() {
 
 			@Override
@@ -553,12 +570,12 @@ public class Generator {
 		 */
 		sheet = sheets[0];
 		if (sheet != null) {
-			parseSi(sheet, form.params);
+			parseParams(sheet, form.params);
 		}
 
 		Object obj = form.params.get(USE_TIMESTAMP);
-		if(obj != null && obj instanceof Boolean) {
-			form.useTimestampForUpdate = (boolean)obj;
+		if (obj != null && obj instanceof Boolean) {
+			form.useTimestampForUpdate = (boolean) obj;
 		}
 		/*
 		 * fields
@@ -620,7 +637,7 @@ public class Generator {
 		}
 		Form form = new Form();
 		form.name = formName;
-		parseSi(sheet, form.params);
+		parseParams(sheet, form.params);
 		if (form.params.get("dbTableName") == null) {
 			logger.error("dbTableName is required in params sheet");
 			return null;
@@ -750,9 +767,10 @@ public class Generator {
 		}
 		f.index = index;
 		/*
-		 * if the field is marked as required, we may change that based on the column type
+		 * if the field is marked as required, we may change that based on the
+		 * column type
 		 */
-		if(f.columnType != null && f.isRequired) {
+		if (f.columnType != null && f.isRequired) {
 			f.isRequired = f.columnType.isRequired();
 		}
 		return f;

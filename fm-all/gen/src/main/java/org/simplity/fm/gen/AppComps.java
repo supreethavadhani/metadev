@@ -37,11 +37,15 @@ import org.slf4j.LoggerFactory;
 class AppComps {
 	static final Logger logger = LoggerFactory.getLogger(AppComps.class);
 	private static final String C = ", ";
+	
+	static final Object TENANT_COLUMN = "tenantKeyColumnName";
+	static final Object TENANT_FIELD = "tenantKeyFieldName";
 
 	Map<String, DataType> dataTypes;
 	Map<String, ValueList> lists;
 	Map<String, KeyedList> keyedLists;
 	Map<String, RuntimeList> runtimeLists;
+	Map<String, Object> params;
 
 
 	void emitJava(String rootFolder, String packageName, String dataTypesFileName) {

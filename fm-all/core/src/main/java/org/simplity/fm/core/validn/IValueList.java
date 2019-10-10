@@ -22,6 +22,8 @@
 
 package org.simplity.fm.core.validn;
 
+import org.simplity.fm.core.service.IserviceContext;
+
 /**
  * design-time or run-time list that can be used for validating a field value
  * and supplying possible list of values for that field
@@ -48,10 +50,11 @@ public interface IValueList {
 	 * 
 	 * @param keyValue
 	 *            null if this list is not key-based.
+	 * @param ctx non-null for run-time list. can be null for generated lists (siple and keyed)
 	 * @return array of [internalValue, displayValue]. internal value could be
 	 *         string or number. null if no such list
 	 */
-	public Object[][] getList(Object keyValue);
+	public Object[][] getList(Object keyValue, IserviceContext ctx);
 
 	/**
 	 * is the field value valid as per this list?

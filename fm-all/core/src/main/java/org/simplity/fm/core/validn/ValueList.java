@@ -25,6 +25,7 @@ package org.simplity.fm.core.validn;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.simplity.fm.core.service.IserviceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +79,7 @@ public class ValueList implements IValueList {
 	}
 
 	@Override
-	public Object[][] getList(Object keyValue) {
+	public Object[][] getList(Object keyValue, IserviceContext ctx) {
 		return this.valueList;
 	}
 }

@@ -35,6 +35,7 @@ class RuntimeList {
 	String key;
 	boolean keyIsNumeric;
 	boolean valueIsNumeric;
+	String tenantColumnName;
 
 	void emitJava(StringBuilder sbf, String packageName) {
 		sbf.append("package ").append(packageName).append(';');
@@ -48,8 +49,17 @@ class RuntimeList {
 		
 		sbf.append("\n\t private static final String LIST_SQL = \"SELECT ");
 		sbf.append(this.col1).append(C).append(this.col2).append(" FROM ").append(this.table);
+
 		if(this.key != null) {
 			sbf.append(" WHERE ").append(this.key).append("=?");
+		}
+		if(this.tenantColumnName != null) {
+			if(this.key == null) {
+				sbf.append(" WHERE ");
+			}else {
+				sbf.append(" AND ");
+			}
+			sbf.append(this.tenantColumnName).append("=?");
 		}
 		sbf.append("\";");
 		

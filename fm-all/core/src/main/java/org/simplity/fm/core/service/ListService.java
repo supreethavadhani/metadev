@@ -89,7 +89,7 @@ public class ListService implements IService{
 				return;
 			}
 		}
-		Object[][] result = list.getList(key);
+		Object[][] result = list.getList(key, ctx);
 		if(result == null) {
 			ctx.addMessage(Message.newError("list " + listName + " did not return any values for key "+ key));
 			return;

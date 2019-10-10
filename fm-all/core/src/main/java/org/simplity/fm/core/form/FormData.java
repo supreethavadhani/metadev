@@ -1047,6 +1047,9 @@ public class FormData {
 
 			@Override
 			public void setParams(PreparedStatement ps) throws SQLException {
+				if(setters == null ||setters.length == 0) {
+					return;
+				}
 				int posn = 1;
 				for (FormDbParam p : setters) {
 					p.valueType.setPsParam(ps, posn, values[p.idx]);
