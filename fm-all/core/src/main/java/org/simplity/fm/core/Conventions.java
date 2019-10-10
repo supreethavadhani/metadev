@@ -201,5 +201,10 @@ public class Conventions {
 		 */
 		public static final String SERVICE_LOGOUT = "logout";
 		
+		/**
+		 * name with which the user data is saved in the context
+		 */
+		public static final String USER_IN_CTX = "_user";
+		
 	}
 }

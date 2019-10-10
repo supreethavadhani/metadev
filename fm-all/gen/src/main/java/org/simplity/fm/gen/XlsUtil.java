@@ -59,7 +59,7 @@ class XlsUtil {
 		if (ct == Cell.CELL_TYPE_NUMERIC) {
 			return (long) cell.getNumericCellValue() == 0;
 		}
-		String s = cell.getStringCellValue().toLowerCase();
+		String s = cell.getStringCellValue().toLowerCase().trim();
 		if ("true".equals(s)) {
 			return true;
 		}
@@ -85,7 +85,11 @@ class XlsUtil {
 			return null;
 		}
 		if (ct == Cell.CELL_TYPE_STRING) {
-			return cell.getStringCellValue().trim();
+			String s = cell.getStringCellValue().trim();
+			if(s == null || s.isEmpty()) {
+				return null;
+			}
+			return s;
 		}
 		if (ct == Cell.CELL_TYPE_NUMERIC) {
 			return "" + (long) cell.getNumericCellValue();

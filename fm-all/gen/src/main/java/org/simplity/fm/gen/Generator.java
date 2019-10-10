@@ -51,8 +51,7 @@ import org.slf4j.LoggerFactory;
 public class Generator {
 
 	protected static final Logger logger = LoggerFactory.getLogger(Generator.class);
-	private static final String[] PROJECT_SHEET_NAMES = { "dataTypes", "valueLists", "keyedValueLists", "runtimeLists",
-			"commonFields" };
+	private static final String[] PROJECT_SHEET_NAMES = { "dataTypes", "valueLists", "keyedValueLists", "runtimeLists"};
 	private static final String[] SHEET_NAMES = { "specialInstructions", "fields", "childForms", "fromToPairs",
 			"mutuallyExclusivePairs", "mutuallyInclusivepairs", "customValidations" };
 	private static final String[] SHEET_DESC = { "service or processing ", "fields", "child Forms (tables, sub-forms)",
@@ -256,7 +255,7 @@ public class Generator {
 			}
 		});
 		/**
-		 * signal to the builder to build teh last one that was still being
+		 * signal to the builder to build the last one that was still being
 		 * built
 		 */
 		Map<String, ValueList> map = builder.done();
@@ -1016,7 +1015,7 @@ public class Generator {
 				return;
 			}
 			this.lists.put(this.name, new ValueList(this.name, this.pairs.toArray(new Pair[0])));
-			AppComps.logger.info("Value list {} pared and added to the map", this.name);
+			AppComps.logger.info("Value list {} parsed and added to the map", this.name);
 		}
 	}
 

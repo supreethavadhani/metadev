@@ -78,6 +78,11 @@ class Form {
 	String generatedColumnName;
 	boolean useTimestampForUpdate;
 
+	/*
+	 * some tables may have primary key, but not have anything to update
+	 */
+	private boolean isUpdatable;
+
 	void buildFieldMap() {
 		this.fieldMap = new HashMap<>();
 
@@ -322,15 +327,13 @@ class Form {
 			return;
 		}
 
-		if (this.keyFields == null) {
-			logger.error(
-					"No keys defined for the db table. only filter operation is allowed. Other operations require primary key/s.");
-		}
-
 		this.emitSelect(sbf, tableName);
-		this.emitInsert(sbf, tableName);
+		if (this.keyFields == null) {
+			logger.info(
+					"No keys defined for the db table. only filter operation is allowed. Other operations require primary key/s.");
+		} else {
+			this.emitInsert(sbf, tableName);
 
-		if (this.keyFields != null) {
 			/*
 			 * indexes is to be built like "1,2,3,4"
 			 */
@@ -347,6 +350,7 @@ class Form {
 			this.emitUpdate(sbf, clause.toString(), indexes.toString(), tableName);
 			sbf.append(P).append("String DELETE = \"DELETE FROM ").append(tableName).append("\";");
 		}
+
 		if (this.uniqueFields != null) {
 			StringBuilder idxBuf = new StringBuilder();
 			sbf.append(P).append("String UNIQUE = \" WHERE ");
@@ -386,15 +390,18 @@ class Form {
 		}
 
 		sbf.append(t).append("selectClause = SELECT;");
-		sbf.append(t).append("selectParams = this.getParams(SELECT_IDX);");
-		sbf.append(t).append("insertClause = INSERT;");
-		sbf.append(t).append("insertParams = this.getParams(INSERT_IDX);");
-
 		if (this.keyFields != null) {
+
+			sbf.append(t).append("selectParams = this.getParams(SELECT_IDX);");
+			sbf.append(t).append("insertClause = INSERT;");
+			sbf.append(t).append("insertParams = this.getParams(INSERT_IDX);");
+
 			sbf.append(t).append("whereClause = WHERE;");
 			sbf.append(t).append("whereParams = this.getParams(WHERE_IDX);");
-			sbf.append(t).append("updateClause = UPDATE;");
-			sbf.append(t).append("updateParams = this.getParams(UPDATE_IDX);");
+			if (this.isUpdatable) {
+				sbf.append(t).append("updateClause = UPDATE;");
+				sbf.append(t).append("updateParams = this.getParams(UPDATE_IDX);");
+			}
 			sbf.append(t).append("deleteClause = DELETE;");
 			if (this.generatedColumnName != null) {
 				sbf.append(t).append("generatedColumnName = \"").append(this.generatedColumnName).append("\";");
@@ -410,14 +417,14 @@ class Form {
 			this.emitChildDbParam(sbf);
 		}
 
-		if(this.useTimestampForUpdate) {
+		if (this.useTimestampForUpdate) {
 			sbf.append(t).append("timestampField = this.fields[").append(this.timestampField.index).append("];");
 		}
-		
-		if(this.tenantField != null) {
+
+		if (this.tenantField != null) {
 			sbf.append(t).append("tenantField = this.fields[").append(this.tenantField.index).append("];");
 		}
-		
+
 		sbf.append("\n\t\tthis.dbMetaData = m;");
 		sbf.append("\n\t}");
 	}
@@ -570,8 +577,13 @@ class Form {
 				if (field.listKey == null) {
 					continue;
 				}
-				sbf.append("new DependentListValidation(").append(field.index);
 				Field f = this.fieldMap.get(field.listKey);
+				if (f == null) {
+					logger.error("Field {} specifies {} as listKey, but that field is not defined");
+					continue;
+				}
+
+				sbf.append("new DependentListValidation(").append(field.index);
 				sbf.append(C).append(f.index);
 				sbf.append(C).append(Util.escape(field.listName));
 				sbf.append(C).append(Util.escape(field.name));
@@ -598,8 +610,8 @@ class Form {
 	void emitTs(StringBuilder sbf, Map<String, DataType> dataTypes, Map<String, ValueList> valueLists,
 			Map<String, KeyedList> keyedLists, String tsImportPrefix) {
 
-		sbf.append("\nimport { Form , Field, ChildForm } from '").append(tsImportPrefix).append("/form/form';");
-		sbf.append("\nimport { SelectOption } from '").append(tsImportPrefix).append("/form/types';");
+		sbf.append("\nimport { Form , Field, ChildForm } from '").append(tsImportPrefix).append("form';");
+		sbf.append("\nimport { SelectOption } from '").append(tsImportPrefix).append("types';");
 		sbf.append("\nimport { Validators } from '@angular/forms'");
 		/*
 		 * import for child forms being referred
@@ -862,9 +874,10 @@ class Form {
 	}
 
 	private void emitUpdate(StringBuilder sbf, String whereClause, String whereIndexes, String tableName) {
-		sbf.append(P).append(" String UPDATE = \"UPDATE ").append(tableName).append(" SET ");
-		StringBuilder idxSbf = new StringBuilder();
-		idxSbf.append(P).append(" int[] UPDATE_IDX = {");
+		StringBuilder updateBuf = new StringBuilder();
+		updateBuf.append(P).append(" String UPDATE = \"UPDATE ").append(tableName).append(" SET ");
+		StringBuilder idxBuf = new StringBuilder();
+		idxBuf.append(P).append(" int[] UPDATE_IDX = {");
 		boolean firstOne = true;
 		boolean firstField = true;
 		for (Field field : this.fields) {
@@ -876,31 +889,39 @@ class Form {
 			if (firstOne) {
 				firstOne = false;
 			} else {
-				sbf.append(C);
+				updateBuf.append(C);
 			}
 
-			sbf.append(field.dbColumnName).append("=");
+			updateBuf.append(field.dbColumnName).append("=");
 			if (ct == ColumnType.ModifiedAt) {
-				sbf.append(" CURRENT_TIMESTAMP ");
+				updateBuf.append(" CURRENT_TIMESTAMP ");
 			} else {
-				sbf.append(" ? ");
+				updateBuf.append(" ? ");
 				if (firstField) {
 					firstField = false;
 				} else {
-					idxSbf.append(C);
+					idxBuf.append(C);
 				}
-				idxSbf.append(field.index);
+				idxBuf.append(field.index);
 			}
 		}
+		if (firstOne) {
+			/*
+			 * nothing to update
+			 */
+			this.isUpdatable = false;
+			return;
+		}
+		this.isUpdatable = true;
 		// update sql will have the where indexes at the end
-		idxSbf.append(C).append(whereIndexes);
-		sbf.append(whereClause);
+		idxBuf.append(C).append(whereIndexes);
+		updateBuf.append(whereClause);
 
 		if (this.useTimestampForUpdate) {
-			sbf.append(" AND ").append(this.timestampField.dbColumnName).append("=?");
-			idxSbf.append(C).append(this.timestampField.index);
+			updateBuf.append(" AND ").append(this.timestampField.dbColumnName).append("=?");
+			idxBuf.append(C).append(this.timestampField.index);
 		}
-		sbf.append("\";");
-		sbf.append(idxSbf).append("};");
+		updateBuf.append("\";");
+		sbf.append(updateBuf.toString()).append(idxBuf.toString()).append("};");
 	}
 }

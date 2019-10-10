@@ -43,7 +43,7 @@ class ValueList {
 
 		Util.emitImport(sbf, org.simplity.fm.core.validn.ValueList.class);
 
-
+		System.out.println("STarting list=|" + this.name + "|");
 		sbf.append("\npublic class ").append(Util.toClassName(this.name)).append(" extends ValueList {");
 
 		sbf.append("\n\t private static final Object[][] VALUES = { ");
