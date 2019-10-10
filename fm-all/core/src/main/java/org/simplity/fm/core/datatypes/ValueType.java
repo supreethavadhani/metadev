@@ -137,7 +137,11 @@ public enum ValueType {
 
 		@Override
 		public void setPsParam(PreparedStatement ps, int position, Object value) throws SQLException {
-			ps.setBoolean(position, (boolean) value);
+			boolean val = false;
+			if(value != null) {
+				val = (boolean)value;
+			}
+			ps.setBoolean(position, val);
 		}
 
 		@Override

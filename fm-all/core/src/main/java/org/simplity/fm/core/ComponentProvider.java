@@ -32,6 +32,7 @@ import org.simplity.fm.core.form.Form;
 import org.simplity.fm.core.form.FormIo;
 import org.simplity.fm.core.form.IoType;
 import org.simplity.fm.core.service.IService;
+import org.simplity.fm.core.service.ListService;
 import org.simplity.fm.core.validn.IValueList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -216,6 +217,10 @@ public abstract class ComponentProvider {
 			this.formRoot = genRootName + DOT + Conventions.App.FOLDER_NAME_FORM + DOT;
 			this.listRoot = genRootName + DOT + Conventions.App.FOLDER_NAME_LIST + DOT;
 			this.serviceRoot = serviceRootName + DOT;
+			/*
+			 * add hard-wired services to the list 
+			 */
+			this.services.put(Conventions.App.SERVICE_LIST, ListService.getInstance());
 		}
 
 		@Override
