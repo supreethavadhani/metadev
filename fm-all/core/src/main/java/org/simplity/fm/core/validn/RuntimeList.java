@@ -113,7 +113,7 @@ public class RuntimeList implements IValueList {
 						@Override
 						public boolean readARow(ResultSet rs) throws SQLException {
 							Object[] row = new Object[2];
-							if (RuntimeList.this.keyIsNumeric) {
+							if (RuntimeList.this.valueIsNumeric) {
 								row[0] = rs.getLong(1);
 							} else {
 								row[0] = rs.getString(1);

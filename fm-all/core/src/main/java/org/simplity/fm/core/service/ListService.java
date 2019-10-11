@@ -22,11 +22,11 @@
 
 package org.simplity.fm.core.service;
 
+import java.io.IOException;
 import java.io.Writer;
 
 import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.JsonUtil;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.validn.IValueList;
 import org.slf4j.Logger;
@@ -90,7 +90,7 @@ public class ListService implements IService{
 			}
 		}
 		Object[][] result = list.getList(key, ctx);
-		if(result == null) {
+		if(result == null || result.length == 0 ) {
 			ctx.addMessage(Message.newError("list " + listName + " did not return any values for key "+ key));
 			return;
 		}
@@ -99,8 +99,32 @@ public class ListService implements IService{
 		Writer writer = ctx.getResponseWriter();
 		writer.write("{\"");
 		writer.write(Conventions.Http.TAG_LIST);
-		writer.write("\":");
-		JsonUtil.write(writer, result);
-		writer.write("}");
+		writer.write("\":[");
+		boolean firstOne = true;
+		for(Object[] row : result) {
+			if(firstOne) {
+			firstOne = false;
+			
+			} else {
+				writer.write(',');
+			}
+			writeRow(writer, row);
+		}
+		writer.write("]}");
+	}
+	
+	private static void  writeRow(Writer writer, Object[] row) throws IOException {
+		writer.write("{\"value\":");
+		Object val = row[0];
+		if(val instanceof Number || val instanceof Boolean) {
+			writer.write(val.toString());
+		}else {
+			writer.write('"');
+			writer.write(val.toString());
+			writer.write('"');
+		}
+		writer.write(",text:\"");
+		writer.write(row[1].toString());
+		writer.write("\"}");
 	}
 }

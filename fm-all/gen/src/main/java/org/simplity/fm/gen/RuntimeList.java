@@ -70,24 +70,26 @@ class RuntimeList {
 		}
 		sbf.append("\";");
 		
-		sbf.append("\n\t private static final boolean HAS_KEY = ");
-		if(this.key == null) {
-			sbf.append("false;");
-		}else {
-			sbf.append("true;");
-			sbf.append("\n\t private static final boolean KEY_IS_NUMERIC = ").append(this.keyIsNumeric).append(";");
-		}
-		sbf.append("\n\t private static final boolean VALUE_IS_NUMERIC = ").append(this.valueIsNumeric).append(";");
-		
 		sbf.append("\n\t/**\n\t *\n\t */\n\tpublic ").append(Util.toClassName(this.name)).append("() {");
 		sbf.append("\n\t\tthis.listSql = LIST_SQL;");
 		sbf.append("\n\t\tthis.checkSql = CHECK_SQL;");
 		sbf.append("\n\t\tthis.name = NAME;");
-		sbf.append("\n\t\tthis.hasKey = HAS_KEY;");
-		sbf.append("\n\t\tthis.valueIsNumeric = VALUE_IS_NUMERIC;");
-		if(this.key != null) {
-			sbf.append("\n\t\tthis.keyIsNumeric = KEY_IS_NUMERIC;");
+		
+		if(this.valueIsNumeric) {
+			sbf.append("\n\t\tthis.valueIsNumeric = true;");
 		}
+		
+		if(this.key != null) {
+			sbf.append("\n\t\tthis.hasKey = true;");
+			if(this.keyIsNumeric) {
+				sbf.append("\n\t\tthis.keyIsNumeric = true;");
+			}
+		}
+		
+		if(this.tenantColumnName != null) {
+			sbf.append("\n\t\tthis.isTenantSpecific = true;");
+		}
+
 		sbf.append("\n\t}\n}\n");
 	}
 }
