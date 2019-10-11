@@ -123,7 +123,7 @@ public class ListService implements IService{
 			writer.write(val.toString());
 			writer.write('"');
 		}
-		writer.write(",text:\"");
+		writer.write(",\"text\":\"");
 		writer.write(row[1].toString());
 		writer.write("\"}");
 	}

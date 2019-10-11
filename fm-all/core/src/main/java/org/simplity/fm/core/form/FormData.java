@@ -548,6 +548,7 @@ public class FormData {
 		if (indexes == null) {
 			return;
 		}
+		
 		Field[] fields = this.form.getFields();
 		int userIdx = this.form.getUserIdFieldIdx();
 		for (int idx : indexes) {
@@ -1025,6 +1026,10 @@ public class FormData {
 		DbMetaData meta = this.form.dbMetaData;
 		if (meta == null) {
 			logger.error("{} is not designed for any db operation", this.form.getFormId());
+			return false;
+		}
+		if (meta.uniqueClause == null) {
+			logger.error("{} has no unque keys defined. can not be fetched with unique keys.", this.form.getFormId());
 			return false;
 		}
 		boolean ok = fetchWorker(handle, meta.selectClause + meta.uniqueClause, this.fieldValues, meta.uniqueParams,
