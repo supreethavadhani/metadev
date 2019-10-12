@@ -130,4 +130,10 @@ public class DefaultContext implements IserviceContext {
 		}
 		return this.objects.get(key);
 	}
+
+	@Override
+	public void resetMessages() {
+		this.messages.clear();
+		this.inError = false;
+	}
 }

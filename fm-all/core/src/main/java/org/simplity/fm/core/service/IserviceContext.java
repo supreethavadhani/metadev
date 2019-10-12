@@ -95,4 +95,9 @@ public interface IserviceContext {
 	 * @return tenantId, if this APP is designed for multi-tenant deployment. null if it is not.
 	 */
 	public Object getTenantId();
+
+	/**
+	 * remove all messages
+	 */
+	public void resetMessages();
 }

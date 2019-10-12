@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.simplity.fm.core.datatypes.ValueType;
-import org.simplity.fm.core.form.FormDbParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +41,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DbHandle {
 	private static final Logger logger = LoggerFactory.getLogger(DbHandle.class);
-	private final Connection con;
+	protected final Connection con;
 
 	/**
 	 * to be created by DbDriver ONLY
@@ -208,7 +207,7 @@ public class DbHandle {
 	 * @return number of rows affected
 	 * @throws SQLException
 	 */
-	public int write(IDbBatchWriter writer) throws SQLException {
+	public int write(IDbMultipleWriter writer) throws SQLException {
 
 		String sql = writer.getPreparedStatement();
 		if (sql == null) {
@@ -295,29 +294,6 @@ public class DbHandle {
 	}
 
 	/**
-	 * API that is close to the JDBC API for insert operation that requires
-	 * generated key to be retrieved
-	 * 
-	 * @param sql
-	 *            a prepared statement that manipulates data.
-	 * @param paramTypes
-	 *            type of parameters to be set the prepared statement
-	 * @param params
-	 *            values to be set to the prepared statement
-	 * @param generatedKeys
-	 *            non-null array. generated key is returned in the first element
-	 * @param keyName
-	 *            non-null name of the key-column that is generated
-	 * @return number of affected rows. -1 if the driver was unable to
-	 *         determine it
-	 * @throws SQLException
-	 */
-	public int insert(String sql, ValueType[] paramTypes, Object[] params, long[] generatedKeys, String keyName)
-			throws SQLException {
-		return doWrite(this.con, sql, paramTypes, params, generatedKeys, keyName);
-	}
-
-	/**
 	 * API that is close to the JDBC API for updating/inserting/deleting
 	 * 
 	 * @param sql
@@ -331,7 +307,7 @@ public class DbHandle {
 	 *         that the driver was unable to determine it
 	 * @throws SQLException
 	 */
-	public int[] writeBatch(String sql, ValueType[] paramTypes, Object[][] paramValues) throws SQLException {
+	public int[] writeMany(String sql, ValueType[] paramTypes, Object[][] paramValues) throws SQLException {
 		logger.info("Generic Batch SQL:{}", sql);
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			for (Object[] row : paramValues) {
@@ -360,133 +336,6 @@ public class DbHandle {
 	 */
 	public Blob createBlob() throws SQLException {
 		return this.con.createBlob();
-	}
-
-	/*
-	 * core worker methods are static. They are called either directly from
-	 * driver (for one-off operation) or from transHandler as part of
-	 * transactions
-	 */
-
-	protected static int doRead(IDbReader reader, Connection con) throws SQLException {
-		String pps = reader.getPreparedStatement();
-		if (pps == null || pps.isEmpty()) {
-			logger.warn("Reader returned no SQL. No read operaiton.");
-			return 0;
-		}
-
-		logger.info("Read SQL:{}", pps);
-		try (PreparedStatement ps = con.prepareStatement(pps)) {
-			reader.setParams(ps);
-			try (ResultSet rs = ps.executeQuery()) {
-				int n = 0;
-				while (rs.next()) {
-					if (reader.readARow(rs) == false) {
-						break;
-					}
-					n++;
-				}
-				logger.info("{} rows read using read()", n);
-				return n;
-			}
-		}
-	}
-
-	/**
-	 * This is a specialized one for form-based i/o where output row may have
-	 * more fields than the fields in the result set, and the order may not be
-	 * the same.
-	 * 
-	 * @param con
-	 * @param sql
-	 * @param whereParams
-	 * @param whereValues
-	 * @param selectParams
-	 * @param nbrFields
-	 * @return
-	 * @throws SQLException
-	 */
-	protected static Object[][] doReadFormRows(Connection con, String sql, FormDbParam[] whereParams,
-			Object[] whereValues, FormDbParam[] selectParams, int nbrFields) throws SQLException {
-		try (PreparedStatement ps = con.prepareStatement(sql)) {
-			int posn = 0;
-			for (FormDbParam p : whereParams) {
-				posn++;
-				p.valueType.setPsParam(ps, posn, whereValues[p.idx]);
-			}
-
-			List<Object[]> result = new ArrayList<>();
-			try (ResultSet rs = ps.executeQuery()) {
-				while (rs.next()) {
-					Object[] row = new Object[nbrFields];
-					result.add(row);
-					posn = 0;
-					for (FormDbParam p : selectParams) {
-						posn++;
-						row[p.idx] = p.valueType.getFromRs(rs, posn);
-					}
-				}
-				if (result.size() == 0) {
-					return null;
-				}
-				return result.toArray(new Object[0][]);
-			}
-		}
-	}
-
-	/**
-	 * This is a specialized one for form-based i/o where output row may have
-	 * more fields than the fields in the result set, and the order may not be
-	 * the same.
-	 * 
-	 * @param con
-	 * @param sql
-	 * @param whereParams
-	 * @param whereValues
-	 * @param selectParams
-	 * @param nbrFields
-	 * @return
-	 * @throws SQLException
-	 */
-	protected static Object[] doReadFormRow(Connection con, String sql, FormDbParam[] whereParams, Object[] whereValues,
-			FormDbParam[] selectParams, int nbrFields) throws SQLException {
-		try (PreparedStatement ps = con.prepareStatement(sql)) {
-			int posn = 0;
-			for (FormDbParam p : whereParams) {
-				posn++;
-				p.valueType.setPsParam(ps, posn, whereValues[p.idx]);
-			}
-
-			try (ResultSet rs = ps.executeQuery()) {
-				if (!rs.next()) {
-					return null;
-				}
-
-				Object[] result = new Object[nbrFields];
-				posn = 0;
-				for (FormDbParam p : selectParams) {
-					posn++;
-					result[p.idx] = p.valueType.getFromRs(rs, posn);
-				}
-				return result;
-			}
-		}
-	}
-
-	protected static int doWrite(Connection con, String sql, ValueType[] paramTypes, Object[] paramValues,
-			long[] generatedKeys, String keyColumnName) throws SQLException {
-		String[] keys = { keyColumnName };
-		try (PreparedStatement ps = con.prepareStatement(sql, keys)) {
-
-			for (int i = 0; i < paramValues.length; i++) {
-				paramTypes[i].setPsParam(ps, i + 1, paramValues[i]);
-			}
-			int result = ps.executeUpdate();
-			if (result > 0) {
-				generatedKeys[0] = getGeneratedKey(ps);
-			}
-			return result;
-		}
 	}
 
 	private static long getGeneratedKey(PreparedStatement ps) throws SQLException {

@@ -22,9 +22,12 @@
 
 package org.simplity.fm.gen;
 
+import java.time.LocalDate;
+import java.time.Month;
 import java.util.function.Consumer;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -38,8 +41,14 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-class XlsUtil {
+public class XlsUtil {
 	private static final Logger logger = LoggerFactory.getLogger(XlsUtil.class);
+
+	/**
+	 * any cell can be converted to local date using
+	 * XLS_EPOCH.add((long)cell.getNumericCellValue()))
+	 */
+	public static LocalDate XLS_EPOCH = LocalDate.of(1899, Month.DECEMBER, 30);
 
 	/**
 	 * get boolean value from a cell.
@@ -48,7 +57,7 @@ class XlsUtil {
 	 * @return true if we are able to get true value in this cell. false
 	 *         otherwise
 	 */
-	static boolean boolValueOf(Cell cell) {
+	public static boolean boolValueOf(Cell cell) {
 		if (cell == null) {
 			return false;
 		}
@@ -76,7 +85,7 @@ class XlsUtil {
 	 * @return value of a cell as text. always non-null. empty string in case of
 	 *         issues
 	 */
-	static String textValueOf(Cell cell) {
+	public static String textValueOf(Cell cell) {
 		if (cell == null) {
 			return null;
 		}
@@ -86,7 +95,7 @@ class XlsUtil {
 		}
 		if (ct == Cell.CELL_TYPE_STRING) {
 			String s = cell.getStringCellValue().trim();
-			if(s == null || s.isEmpty()) {
+			if (s == null || s.isEmpty()) {
 				return null;
 			}
 			return s;
@@ -105,7 +114,7 @@ class XlsUtil {
 	 * @param cell
 	 * @return if cell does not have valid number, then 0
 	 */
-	static long longValueOf(Cell cell) {
+	public static long longValueOf(Cell cell) {
 		if (cell == null) {
 			return 0;
 		}
@@ -128,27 +137,46 @@ class XlsUtil {
 	}
 
 	static Object objectValueOf(Cell cell) {
+		return objectValueOf(cell, false);
+	}
+
+	/**
+	 * 
+	 * @param cell
+	 * @param treatNumberAsDouble
+	 *            if true,all number are returned as Double. else as Long
+	 * @return object that can be null, String, Boolean, Double/Long, LocalDate.
+	 */
+	public static Object objectValueOf(Cell cell, boolean treatNumberAsDouble) {
+
 		if (cell == null) {
 			return null;
 		}
 
 		int ct = cell.getCellType();
 
+		/*
+		 * most common type is tested first
+		 */
 		if (ct == Cell.CELL_TYPE_STRING) {
 			return cell.getStringCellValue();
 		}
 
-		if (ct == Cell.CELL_TYPE_BLANK) {
-			return null;
-		}
-
 		if (ct == Cell.CELL_TYPE_NUMERIC) {
-			return (long) cell.getNumericCellValue();
+			double dbl = cell.getNumericCellValue();
+			if (DateUtil.isCellDateFormatted(cell)) {
+				return XLS_EPOCH.plusDays((long) dbl);
+			}
+			if(treatNumberAsDouble) {
+				return dbl;
+			}
+			return (long) dbl;
 		}
 
 		if (ct == Cell.CELL_TYPE_BOOLEAN) {
 			return cell.getBooleanCellValue();
 		}
+
 		return null;
 	}
 
@@ -174,6 +202,8 @@ class XlsUtil {
 	}
 
 	/**
+	 * forEach() with two additional features. first row is skipped as header.
+	 * iteration ends when an empty row is encountered
 	 * 
 	 * @param sheet
 	 * @param nbrCells
@@ -195,7 +225,15 @@ class XlsUtil {
 		}
 	}
 
-	static Sheet[] readSheets(Workbook book, String[] names) {
+	/**
+	 * 
+	 * @param book
+	 * @param names
+	 *            array of names of sheets to be read, if present in the
+	 *            workbook
+	 * @return array of sheets, possibly nulls
+	 */
+	public static Sheet[] readSheets(Workbook book, String[] names) {
 		Sheet[] sheets = new Sheet[names.length];
 		for (int i = 0; i < sheets.length; i++) {
 			String s = names[i];
@@ -211,5 +249,4 @@ class XlsUtil {
 		}
 		return sheets;
 	}
-
 }

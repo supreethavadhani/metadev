@@ -38,7 +38,7 @@ import org.simplity.fm.core.datatypes.InvalidValueException;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.http.LoggedInUser;
 import org.simplity.fm.core.rdb.DbHandle;
-import org.simplity.fm.core.rdb.IDbBatchWriter;
+import org.simplity.fm.core.rdb.IDbMultipleWriter;
 import org.simplity.fm.core.rdb.IDbReader;
 import org.simplity.fm.core.rdb.IDbWriter;
 import org.simplity.fm.core.service.IserviceContext;
@@ -548,7 +548,7 @@ public class FormData {
 		if (indexes == null) {
 			return;
 		}
-		
+
 		Field[] fields = this.form.getFields();
 		int userIdx = this.form.getUserIdFieldIdx();
 		for (int idx : indexes) {
@@ -704,7 +704,7 @@ public class FormData {
 			int idx = field.getIndex();
 			if (userIdx > -1 && field.getIndex() == userIdx) {
 				this.setUserId(ctx.getUser());
-				userIdx = -1; //we are done
+				userIdx = -1; // we are done
 				continue;
 			}
 			ColumnType ct = field.getColumnType();
@@ -1052,7 +1052,7 @@ public class FormData {
 
 			@Override
 			public void setParams(PreparedStatement ps) throws SQLException {
-				if(setters == null ||setters.length == 0) {
+				if (setters == null || setters.length == 0) {
 					return;
 				}
 				int posn = 1;
@@ -1112,7 +1112,7 @@ public class FormData {
 
 			DbMetaData meta = link.childMeta;
 			Object[] values = this.fieldValues;
-			handle.write(new IDbBatchWriter() {
+			handle.write(new IDbMultipleWriter() {
 				int rowIdx = 0;
 
 				@Override
@@ -1176,5 +1176,43 @@ public class FormData {
 			}
 		});
 		return result.toArray(new FormData[0]);
+	}
+
+	/**
+	 * if any validation fails,error message woudlhave been pushed to teh ctx
+	 * 
+	 * @param values
+	 *            string values for the form in the right order for the
+	 *            fields.That is first element is for the first field in this
+	 *            form etc.. It MUST have exactly the right number of values
+	 * @param ctx
+	 */
+	public void validateAndLoadForInsert(String[] values, IserviceContext ctx) {
+
+		int userIdx = this.form.getUserIdFieldIdx();
+		for (Field field : this.form.getFields()) {
+			int idx = field.getIndex();
+			if (userIdx > -1 && field.getIndex() == userIdx) {
+				this.setUserId(ctx.getUser());
+				userIdx = -1; // we are done
+				continue;
+			}
+			ColumnType ct = field.getColumnType();
+			if (ct != null) {
+				if (!ct.isInput()) {
+					continue;
+				}
+				if (ct == ColumnType.GeneratedPrimaryKey) {
+					continue;
+				}
+				if (ct == ColumnType.ModifiedBy || ct == ColumnType.CreatedBy) {
+					this.fieldValues[idx] = ctx.getUser().getUserId();
+				}
+			}
+
+			String value = values[idx];
+			validateAndSet(field, value, this.fieldValues, field.getIndex(), false, ctx, null, 0);
+		}
+		this.validateForm(ctx);
 	}
 }

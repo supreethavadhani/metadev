@@ -35,13 +35,13 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-
 /**
  * handles request to get drop-down values for a field, typically from a client
+ * 
  * @author simplity.org
  *
  */
-public class ListService implements IService{
+public class ListService implements IService {
 	private static final ListService instance = new ListService();
 	protected static final Logger logger = LoggerFactory.getLogger(ListService.class);
 
@@ -52,79 +52,76 @@ public class ListService implements IService{
 	public static ListService getInstance() {
 		return instance;
 	}
-	
-	private ListService() {
-		//privatised for a singleton pattern
-	}
 
+	private ListService() {
+		// privatised for a singleton pattern
+	}
 
 	@Override
 	public String getId() {
 		return Conventions.App.SERVICE_LIST;
 	}
+
 	@Override
 	public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
 		String listName = null;
 		JsonPrimitive ele = payload.getAsJsonPrimitive("list");
-		if(ele != null) {
+		if (ele != null) {
 			listName = ele.getAsString();
 		}
-		if(listName == null || listName.isEmpty()) {
+		if (listName == null || listName.isEmpty()) {
 			ctx.addMessage(Message.newError("list is required for listService"));
 			return;
 		}
 		IValueList list = ComponentProvider.getProvider().getValueList(listName);
-		if(list == null) {
+		if (list == null) {
 			ctx.addMessage(Message.newError("list " + listName + " is not configured"));
 			return;
 		}
 		String key = null;
-		if(list.isKeyBased()) {
+		if (list.isKeyBased()) {
 			ele = payload.getAsJsonPrimitive("key");
-			if(ele != null) {
+			if (ele != null) {
 				key = ele.getAsString();
 			}
-			if(key == null || key.isEmpty()) {
+			if (key == null || key.isEmpty()) {
 				ctx.addMessage(Message.newError("list " + listName + " is key based. key is missing in the request"));
 				return;
 			}
 		}
 		Object[][] result = list.getList(key, ctx);
-		if(result == null || result.length == 0 ) {
-			ctx.addMessage(Message.newError("list " + listName + " did not return any values for key "+ key));
+		if (result == null || result.length == 0) {
+			ctx.addMessage(Message.newError("list " + listName + " did not return any values for key " + key));
 			return;
 		}
-		
-		@SuppressWarnings("resource")
-		Writer writer = ctx.getResponseWriter();
+		writeOut(ctx.getResponseWriter(), result);
+	}
+
+	private static void writeOut(Writer writer, Object[][] rows) throws IOException {
 		writer.write("{\"");
 		writer.write(Conventions.Http.TAG_LIST);
 		writer.write("\":[");
 		boolean firstOne = true;
-		for(Object[] row : result) {
-			if(firstOne) {
-			firstOne = false;
-			
+		for (Object[] row : rows) {
+			if (firstOne) {
+				firstOne = false;
 			} else {
 				writer.write(',');
 			}
-			writeRow(writer, row);
+
+			writer.write("{\"value\":");
+			Object val = row[0];
+			if (val instanceof Number || val instanceof Boolean) {
+				writer.write(val.toString());
+			} else {
+				writer.write('"');
+				writer.write(val.toString());
+				writer.write('"');
+			}
+			writer.write(",\"text\":\"");
+			writer.write(row[1].toString());
+			writer.write("\"}");
 		}
 		writer.write("]}");
-	}
-	
-	private static void  writeRow(Writer writer, Object[] row) throws IOException {
-		writer.write("{\"value\":");
-		Object val = row[0];
-		if(val instanceof Number || val instanceof Boolean) {
-			writer.write(val.toString());
-		}else {
-			writer.write('"');
-			writer.write(val.toString());
-			writer.write('"');
-		}
-		writer.write(",\"text\":\"");
-		writer.write(row[1].toString());
-		writer.write("\"}");
 	}
 }

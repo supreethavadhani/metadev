@@ -57,7 +57,25 @@ public class RdbDriver {
 		//
 	}
 
-
+	/**
+	 * @param batchClient 
+	 * @throws SQLException
+	 *             if update is attempted after setting readOnly=true, or any
+	 *             other SqlException
+	 * 
+	 */
+	@SuppressWarnings("static-method") // instance has no attributes, but have
+										// made it instance for future sake
+	public void transactBatch(IDbBatchClient batchClient) throws SQLException {
+		if (factory == null) {
+			String msg = "A dummy handle is returned as RDBMS is not set up";
+			logger.error(msg);
+			throw new SQLException(msg);
+		}
+		try (Connection con = factory.getConnection()) {
+			doBatch(con,batchClient);
+		}
+	}
 
 	/**
 	 * @param transactor
@@ -68,6 +86,8 @@ public class RdbDriver {
 	 *             other SqlException
 	 * 
 	 */
+	@SuppressWarnings("static-method") // instance has no attributes, but have
+										// made it instance for future sake
 	public void transact(IDbClient transactor, boolean readOnly) throws SQLException {
 		if (factory == null) {
 			String msg = "A dummy handle is returned as RDBMS is not set up";
@@ -75,38 +95,57 @@ public class RdbDriver {
 			throw new SQLException(msg);
 		}
 		try (Connection con = factory.getConnection()) {
-			this.doTransact(con, transactor, readOnly);
+			doTransact(con, transactor, readOnly);
 		}
 	}
 
-	private void  doTransact(Connection con, IDbClient transactor, boolean readOnly) throws SQLException {
+	private static void doTransact(Connection con, IDbClient transactor, boolean readOnly) throws SQLException {
 		DbHandle handle = new DbHandle(con);
 		try {
-			if(readOnly) {
+			if (readOnly) {
 				con.setReadOnly(true);
 				transactor.transact(handle);
-			}else {
+			} else {
 				con.setAutoCommit(false);
-				if(transactor.transact(handle)) {
+				if (transactor.transact(handle)) {
 					con.commit();
-				}else {
+				} else {
 					con.rollback();
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			logger.error("Exception occurred in the middle of a transaction: {}, {}",e,  e.getMessage());
-			if(!readOnly) {
+			logger.error("Exception occurred in the middle of a transaction: {}, {}", e, e.getMessage());
+			if (!readOnly) {
 				try {
 					con.rollback();
-				}catch(Exception ignore) {
+				} catch (Exception ignore) {
 					//
 				}
 			}
 			throw new SQLException(e.getMessage());
 		}
-		
+
 	}
+
+	private static void doBatch(Connection con, IDbBatchClient batchClient) throws SQLException {
+		DbBatchHandle handle = new DbBatchHandle(con);
+		try {
+			batchClient.doBatch(handle);
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error("Exception thrown by a batch processor. {}, {}", e, e.getMessage());
+			SQLException se = new SQLException(e.getMessage());
+			try {
+				con.rollback();
+			} catch (Exception ignore) {
+				//
+			}
+			throw se;
+		}
+
+	}
+
 	/**
 	 * do transaction on a schema that is not the default schema used by this
 	 * application. Use this ONLY id the schema is different from the default
@@ -121,6 +160,7 @@ public class RdbDriver {
 	 *             other SqlException
 	 * 
 	 */
+	@SuppressWarnings("static-method")
 	public void transactUsingSchema(IDbClient transactor, boolean readOnly, String schemaName) throws SQLException {
 		if (factory == null) {
 			String msg = "A dummy handle is returned as RDBMS is not set up";
@@ -128,7 +168,7 @@ public class RdbDriver {
 			throw new SQLException(msg);
 		}
 		try (Connection con = factory.getConnection(schemaName)) {
-			this.doTransact(con, transactor, readOnly);
+			doTransact(con, transactor, readOnly);
 		}
 	}
 

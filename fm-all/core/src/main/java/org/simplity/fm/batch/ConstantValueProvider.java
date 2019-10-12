@@ -20,35 +20,20 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.batch;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.util.Map;
 
 /**
- * interface for a class that wants to write/update/delete fromthe dta base
- * 
+ * specifies how a field in the form maps to columns in the input row
  * @author simplity.org
  *
  */
-public interface IDbBatchWriter {
+public class ConstantValueProvider implements IValueProvider{
+	String constant;
 
-	/**
-	 * 
-	 * @return the prepared statement that can be used to insert/update/delete
-	 *         rows. null to indicate that the write operation be aborted by
-	 *         design
-	 */
-	public String getPreparedStatement();
-
-	/**
-	 * method that is invoked by the db driver to populate the actual prepared.
-	 * 
-	 * @param ps
-	 *            prepared statement to which params are to be set
-	 * @return true if batch process is to continue. false if the last set got
-	 *         added.
-	 * @throws SQLException
-	 */
-	public boolean setParams(PreparedStatement ps) throws SQLException;
+	@Override
+	public String getValue(Map<String, String> input) {
+		return this.constant;
+	}
 }
