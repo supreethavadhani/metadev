@@ -68,7 +68,7 @@ public class Generator {
 	private static final int NBR_CELLS_LIST = 3;
 	private static final int NBR_CELLS_KEYED_LIST = 4;
 	private static final int NBR_CELLS_DATA_TYPES = 12;
-	private static final int NBR_CELLS_RUNTIME_LIST = 7;
+	private static final int NBR_CELLS_RUNTIME_LIST = 9;
 	private static final String FOLDER = "/";
 
 	/**
@@ -77,12 +77,12 @@ public class Generator {
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
-		if (args.length != 4) {
+		if (args.length != 5) {
 			System.err.println(
-					"Usage : java Generator.class resourceRootFolder generatedSourceRootFolder generatedPackageName tsImportPrefix");
+					"Usage : java Generator.class resourceRootFolder generatedSourceRootFolder generatedPackageName tsImportPrefix tsOutputFolder");
 			return;
 		}
-		generate(args[0], args[1], args[2], args[3]);
+		generate(args[0], args[1], args[2], args[3], args[4]);
 	}
 
 	/**
@@ -98,9 +98,10 @@ public class Generator {
 	 *            relative path of form folder from the folder where named forms
 	 *            are generated.for example ".." in case the two folders are in
 	 *            the same parent folder
+	 * @param tsOutputFolder folder where generated ts files are to be saved
 	 */
 	public static void generate(String inputRootFolder, String outputRootFolder, String rootPackageName,
-			String tsImportPrefix) {
+			String tsImportPrefix, String tsOutputFolder) {
 
 		String resourceRootFolder = inputRootFolder;
 		if (!inputRootFolder.endsWith(FOLDER)) {
@@ -156,7 +157,7 @@ public class Generator {
 		}
 
 		for (File xls : f.listFiles()) {
-			emitForm(xls, generatedSourceRootFolder, project.dataTypes, project, rootPackageName, tsImportPrefix);
+			emitForm(xls, generatedSourceRootFolder, tsOutputFolder, project.dataTypes, project, rootPackageName, tsImportPrefix);
 		}
 	}
 
@@ -174,7 +175,7 @@ public class Generator {
 		return allOk;
 	}
 
-	private static void emitForm(File xls, String outputRoot, Map<String, DataType> typesMap, AppComps project,
+	private static void emitForm(File xls, String outputRoot, String tsOutputFolder, Map<String, DataType> typesMap, AppComps project,
 			String rootPackageName, String tsImportPrefix) {
 		String fn = xls.getName();
 		if (fn.endsWith(EXT) == false) {
@@ -204,7 +205,7 @@ public class Generator {
 
 		sbf.setLength(0);
 		form.emitTs(sbf, typesMap, project.lists, project.keyedLists, tsImportPrefix);
-		outName = outputRoot + "ts/" + fn + ".ts";
+		outName = tsOutputFolder + fn + ".ts";
 		Util.writeOut(outName, sbf);
 	}
 
@@ -321,6 +322,9 @@ public class Generator {
 						rl.tenantColumnName = tenantColumnName;
 					}
 				}
+				rl.parentTable = XlsUtil.textValueOf(row.getCell(8));
+				rl.parentIdColumnName = XlsUtil.textValueOf(row.getCell(9));
+				rl.parentNameColumnName = XlsUtil.textValueOf(row.getCell(10));
 				list.put(rl.name, rl);
 			}
 		});

@@ -61,7 +61,7 @@ class KeyedList {
 				sbf.append(key).append('L');
 			}
 			sbf.append(C);
-			this.emitJavaSet(vals, entry.getValue());
+			emitJavaSet(vals, entry.getValue());
 			vals.append(C);
 		}
 		sbf.setLength(sbf.length() - C.length());
@@ -86,7 +86,7 @@ class KeyedList {
 		sbf.append("\n}\n");
 	}
 
-	private void emitJavaSet(StringBuilder vals, Pair[] ps) {
+	private static void emitJavaSet(StringBuilder vals, Pair[] ps) {
 		vals.append("\n\t\t\t{");
 		for (Pair p : ps) {
 			vals.append("\n\t\t\t\t{");

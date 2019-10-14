@@ -153,6 +153,7 @@ public enum ColumnType {
 	 *         is always true, but the API is created to take care of any new
 	 *         columnType.
 	 */
+	@SuppressWarnings("static-method")
 	public boolean isSelected() {
 		return true;
 	}
@@ -162,6 +163,7 @@ public enum ColumnType {
 	 * @return true if this column is to be included in the SQL for update.
 	 *         For example createdUser field should not be updated
 	 */
+	@SuppressWarnings("static-method")
 	public boolean isUpdated() {
 		return false;
 	}
@@ -172,6 +174,7 @@ public enum ColumnType {
 	 *         Also, if the primary is generated, then it is not part of the sql
 	 *         statement
 	 */
+	@SuppressWarnings("static-method")
 	public boolean isInserted() {
 		return true;
 	}
@@ -182,6 +185,7 @@ public enum ColumnType {
 	 *         because an update operation should not change the parent of a
 	 *         child row.
 	 */
+	@SuppressWarnings("static-method")
 	public boolean isInput() {
 		return true;
 	}
@@ -190,6 +194,7 @@ public enum ColumnType {
 	 * @return true if this column is sent to the client. false if it is not
 	 *         meant to be sent to the client at all. e.g. tenantId.
 	 */
+	@SuppressWarnings("static-method")
 	public boolean isSentToCient() {
 		return true;
 	}
@@ -199,6 +204,7 @@ public enum ColumnType {
 	 *         optional. This is used only if isInput() is true. This attribute
 	 *         is not applicable if isInput() is false;
 	 */
+	@SuppressWarnings("static-method")
 	public boolean isRequired() {
 		return true;
 	}

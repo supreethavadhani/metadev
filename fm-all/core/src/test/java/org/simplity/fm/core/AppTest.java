@@ -31,7 +31,8 @@ public class AppTest
     /**
      * Rigourous Test :-)
      */
-    public void testApp()
+    @SuppressWarnings("static-method")
+	public void testApp()
     {
         assertTrue( true );
     }

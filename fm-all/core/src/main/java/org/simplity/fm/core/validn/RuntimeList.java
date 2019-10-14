@@ -26,7 +26,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.IDbClient;
@@ -46,6 +48,7 @@ public class RuntimeList implements IValueList {
 	protected static final Logger logger = LoggerFactory.getLogger(RuntimeList.class);
 	protected String name;
 	protected String listSql;
+	protected String allSql;
 	protected String checkSql;
 	protected boolean hasKey;
 	protected boolean keyIsNumeric;
@@ -81,7 +84,7 @@ public class RuntimeList implements IValueList {
 		}
 		final long numericValue = l;
 		final List<Object[]> result = new ArrayList<>();
-		final RuntimeList that =this;
+		final RuntimeList that = this;
 		try {
 			RdbDriver.getDriver().transact(new IDbClient() {
 
@@ -104,8 +107,8 @@ public class RuntimeList implements IValueList {
 								}
 								posn++;
 							}
-							if(that.isTenantSpecific) {
-								ps.setLong(posn, (long)ctx.getTenantId());
+							if (that.isTenantSpecific) {
+								ps.setLong(posn, (long) ctx.getTenantId());
 								posn++;
 							}
 						}
@@ -193,5 +196,65 @@ public class RuntimeList implements IValueList {
 			return false;
 		}
 		return result[0];
+	}
+
+	/**
+	 * this is specifically for batch operations where id is to be inserted in
+	 * place of name.
+	 * 
+	 * @param ctx
+	 * @return map to get id from name
+	 */
+	@Override
+	public Map<String, Map<String, String>> getAll(IserviceContext ctx) {
+		Map<String, Map<String, String>> result = new HashMap<>();
+		if (this.hasKey == false) {
+			logger.error("List {} is not keyed. getAll is not pplicable", this.name);
+			return result;
+		}
+
+		try {
+			RdbDriver.getDriver().transact(new IDbClient() {
+
+				@Override
+				public boolean transact(DbHandle handle) throws SQLException {
+					handle.read(new IDbReader() {
+						private String lastKey = null;
+						private Map<String, String> list = new HashMap<>();
+
+						@Override
+						public String getPreparedStatement() {
+							return RuntimeList.this.allSql;
+						}
+
+						@Override
+						public void setParams(PreparedStatement ps) throws SQLException {
+							if (RuntimeList.this.isTenantSpecific) {
+								ps.setLong(1, (long) ctx.getTenantId());
+							}
+						}
+
+						@Override
+						public boolean readARow(ResultSet rs) throws SQLException {
+							String id = rs.getString(1);
+							String nam = rs.getString(2);
+							String key = rs.getString(3);
+							if (key != this.lastKey) {
+								this.list = new HashMap<>();
+								result.put(key, this.list);
+								this.lastKey = key;
+							}
+							this.list.put(nam, id);
+							return true;
+						}
+					});
+					return true;
+				}
+			}, true);
+		} catch (SQLException e) {
+			String msg = e.getMessage();
+			logger.error("Error while getting values for list {}. ERROR: {} ", this.name, msg);
+		}
+		return result;
 	}
 }

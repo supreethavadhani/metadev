@@ -72,6 +72,19 @@ public class KeyedValueList implements IValueList{
 			logger.error("Key {} is not valid for keyed list {}. Null list returned.", keyValue, this.name);
 			return null;
 		}
-		return vl.getList(null, ctx);
+		return vl.valueList;
+	}
+
+	@Override
+	public Map<String, Map<String, String>> getAll(IserviceContext ctx) {
+		final Map<String, Map<String, String>> result = new HashMap<>();
+		for(Map.Entry<Object, ValueList> entry: this.values.entrySet()) {
+			Map<String, String> map = new HashMap<>();
+			result.put(entry.getKey().toString(), map);
+			for(Object[] row : entry.getValue().valueList) {
+				map.put(row[1].toString(), row[0].toString());
+			}
+		}
+		return result;
 	}
 }

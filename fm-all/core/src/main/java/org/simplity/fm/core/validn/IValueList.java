@@ -22,6 +22,8 @@
 
 package org.simplity.fm.core.validn;
 
+import java.util.Map;
+
 import org.simplity.fm.core.service.IserviceContext;
 
 /**
@@ -34,7 +36,8 @@ import org.simplity.fm.core.service.IserviceContext;
 public interface IValueList {
 	/**
 	 * 
-	 * @return unique name of this list
+	 * @return unique name of this list. This is normally string,but it can be
+	 *         long as well.
 	 */
 	public Object getName();
 
@@ -50,7 +53,9 @@ public interface IValueList {
 	 * 
 	 * @param keyValue
 	 *            null if this list is not key-based.
-	 * @param ctx non-null for run-time list. can be null for generated lists (siple and keyed)
+	 * @param ctx
+	 *            non-null for run-time list. can be null for generated lists
+	 *            (simple and keyed)
 	 * @return array of [internalValue, displayValue]. internal value could be
 	 *         string or number. null if no such list
 	 */
@@ -69,4 +74,20 @@ public interface IValueList {
 	 *         these is any error in the validation process
 	 */
 	public boolean isValid(Object fieldVale, Object keyValue);
+
+	/**
+	 * relevant only for keyed lists. used to get all the values for all
+	 * possible keys, Used by batch based reverse look-up algorithms
+	 * 
+	 * 
+	 * @param ctx
+	 *            null if a static list is to be used.must be non-null for
+	 *            runtime lists
+	 * @return map of maps. inner map has key as display text (name/code/desc)
+	 *         and value as internal value. That is, it maps text to internal
+	 *         id.
+	 *         outer map is indexed by keyValues. null is returned by
+	 *         implementations that are not key based.
+	 */
+	public Map<String, Map<String, String>> getAll(IserviceContext ctx);
 }

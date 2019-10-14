@@ -515,24 +515,31 @@ public class FormData {
 	 * @param json
 	 *            non-null
 	 * @param ctx
-	 *            non-null to which any validation errors are added
+	 *            can be null, if validations error need not be recorded into
+	 *            the context. if non-null any validation error is added to it
+	 * @return true of all keys are successfully loaded. false if any error is
+	 *         encountered. Also false if this form has not defined any primary
+	 *         key
 	 */
-	public void loadKeys(JsonObject json, IserviceContext ctx) {
+	public boolean loadKeys(JsonObject json, IserviceContext ctx) {
 		int[] indexes = this.form.getKeyIndexes();
 		if (indexes == null) {
-			return;
+			return false;
 		}
 		Field[] fields = this.form.getFields();
 		int userIdx = this.form.getUserIdFieldIdx();
+		boolean allOk = true;
 		for (int idx : indexes) {
 			if (idx == userIdx) {
 				this.setUserId(ctx.getUser());
 			} else {
 				Field f = fields[idx];
 				String value = getTextAttribute(json, f.getFieldName());
-				validateAndSet(f, value, this.fieldValues, idx, false, ctx, null, 0);
+				boolean ok = validateAndSet(f, value, this.fieldValues, idx, false, ctx, null, 0);
+				allOk = allOk && ok;
 			}
 		}
+		return allOk;
 	}
 
 	/**

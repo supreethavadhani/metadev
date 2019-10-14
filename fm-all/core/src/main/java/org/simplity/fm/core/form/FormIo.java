@@ -27,6 +27,7 @@ import java.io.Writer;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Conventions;
@@ -39,6 +40,7 @@ import org.simplity.fm.core.service.IserviceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -90,6 +92,9 @@ public abstract class FormIo implements IService {
 
 		case UPDATE:
 			return new FormUpdater(form);
+
+		case BULK:
+			return new BulkUpdater(form);
 
 		default:
 			logger.error("Form operation {} not yet implemented", opern);
@@ -229,7 +234,7 @@ public abstract class FormIo implements IService {
 			if (rows == null || rows.length == 0) {
 				logger.info("No data found for the form {}", this.form.getFormId());
 				rows = new FormData[0];
-			}else {
+			} else {
 				logger.info(" {} rows filtered", rows.length);
 			}
 			@SuppressWarnings("resource")
@@ -266,57 +271,7 @@ public abstract class FormIo implements IService {
 		@Override
 		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
 			FormData fd = this.form.newFormData();
-			fd.validateAndLoad(payload, false, false, ctx);
-			/*
-			 * special case of time-stamp check for updates!!
-			 */
-			Field f = this.form.dbMetaData.timestampField;
-			if(f != null) {
-				Object val = null;
-				JsonPrimitive el = payload.getAsJsonPrimitive(f.getFieldName());
-				if(el == null) {
-					ctx.addMessage(Message.newFieldError(f.getFieldName(), Message.FIELD_REQUIRED));
-				}else {
-					val = f.parse(el.getAsString());
-					if(val == null) {
-						ctx.addMessage(Message.newFieldError(f.getFieldName(), Message.INVALID_TIMESTAMP));
-					}else {
-						fd.setObject(f.getIndex(), val);
-					}
-				}
-			}
-			
-			if (!ctx.allOk()) {
-				logger.warn("Update operation stopped due to errors in input data");
-				return;
-			}
-			
-			f = this.form.dbMetaData.tenantField;
-			if (f != null) {
-				fd.setObject(f.getIndex(), ctx.getTenantId());
-			}
-
-			final boolean[] result = new boolean[1];
-			RdbDriver.getDriver().transact(new IDbClient() {
-
-				@Override
-				public boolean transact(DbHandle handle) throws SQLException {
-					result[0] = fd.update(handle);
-					return true;
-				}
-			}, false);
-			
-			if(!result[0]) {
-				/*
-				 * no update? quite
-				 */
-				logger.error("This row is updated by another user. Client has to cancel the operation");
-				ctx.addMessage(Message.newError(Message.CONCURRENT_UPDATE));
-			}
-			/*
-			 * what should be the payload back? As of now, we send nothing.
-			 */
-			return;
+			update(fd, ctx, payload, null);
 		}
 	}
 
@@ -335,31 +290,9 @@ public abstract class FormIo implements IService {
 		@Override
 		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
 			FormData fd = this.form.newFormData();
-			fd.validateAndLoad(payload, false, true, ctx);
-			if (!ctx.allOk()) {
-				return;
-			}
-			Field tenant = this.form.dbMetaData.tenantField;
-			if (tenant != null) {
-				fd.setObject(tenant.getIndex(), ctx.getTenantId());
-			}
-
-			RdbDriver.getDriver().transact(new IDbClient() {
-
-				@Override
-				public boolean transact(DbHandle handle) throws SQLException {
-					fd.insert(handle);
-					return true;
-				}
-			}, false);
-			/*
-			 * as per our protocol, we send the form back as payload, possibly
-			 * because we may have to communicate the generated code back to the
-			 * client
-			 */
-			fd.serializeAsJson(ctx.getResponseWriter());
-			return;
+			insert(fd, ctx, payload, null);
 		}
+
 	}
 
 	protected static class FormDeleter extends FormIo {
@@ -399,4 +332,173 @@ public abstract class FormIo implements IService {
 			return;
 		}
 	}
+
+	protected static class BulkUpdater extends FormIo {
+		protected final Form form;
+
+		protected BulkUpdater(Form form) {
+			this.form = form;
+		}
+
+		@Override
+		public String getId() {
+			return toServiceName(this.form, IoType.BULK);
+		}
+
+		@Override
+		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
+			JsonArray arr = payload.getAsJsonArray(Conventions.Http.TAG_LIST);
+			if (arr == null) {
+				logger.error("Payload did not contain the required member {}", Conventions.Http.TAG_LIST);
+				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+				return;
+			}
+
+			int nbrRows = arr.size();
+			if (nbrRows == 0) {
+				logger.error("Payload has no rows to process");
+				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+				return;
+			}
+			logger.info("Started processing {} rows as bulk", nbrRows);
+			final BulkWorker worker = new BulkWorker(this.form, ctx);
+
+			arr.forEach(worker);
+			if (ctx.allOk()) {
+				logger.info("Bulk operation successful");
+			}
+		}
+	}
+
+	protected static class BulkWorker implements Consumer<JsonElement> {
+		private final Form form;
+		private final IserviceContext ctx;
+		private int idx = -1;
+		protected int nbrInserts = 0;
+		protected int nbrUpdates = 0;
+
+		protected BulkWorker(Form form, IserviceContext ctx) {
+			this.form = form;
+			this.ctx = ctx;
+		}
+
+		@Override
+		public void accept(JsonElement ele) {
+			if (ele == null || ele instanceof JsonObject == false) {
+				this.idx++;
+				logger.error("Bulk row at 0-based index {} is null or not an object. row ignored.", this.idx);
+				return;
+			}
+			JsonObject json = (JsonObject) ele;
+			FormData fd = this.form.newFormData();
+			if (fd.loadKeys(json, this.ctx)) {
+				logger.info("Bulk row {} is being updated", this.idx);
+				// we have to update
+			} else {
+				// we have to insert
+				logger.info("Bulk row {} is being inserted", this.idx);
+			}
+
+		}
+
+	}
+
+	/**
+	 * worker method to allow flexibility in transaction processing.
+	 * To make this part of a transaction started by the caller, a non-null
+	 * handle is to be passed.
+	 * 
+	 * If handle is null, this method cmpletes the update on its own
+	 * connection
+	 */
+	protected static void update(FormData fd, IserviceContext ctx, JsonObject payload, DbHandle handle) throws Exception {
+		Form form = fd.getForm();
+		fd.validateAndLoad(payload, false, false, ctx);
+		/*
+		 * special case of time-stamp check for updates!!
+		 */
+		Field f = form.dbMetaData.timestampField;
+		if (f != null) {
+			Object val = null;
+			JsonPrimitive el = payload.getAsJsonPrimitive(f.getFieldName());
+			if (el == null) {
+				ctx.addMessage(Message.newFieldError(f.getFieldName(), Message.FIELD_REQUIRED));
+			} else {
+				val = f.parse(el.getAsString());
+				if (val == null) {
+					ctx.addMessage(Message.newFieldError(f.getFieldName(), Message.INVALID_TIMESTAMP));
+				} else {
+					fd.setObject(f.getIndex(), val);
+				}
+			}
+		}
+
+		if (!ctx.allOk()) {
+			logger.warn("Update operation stopped due to errors in input data");
+			return;
+		}
+
+		f = form.dbMetaData.tenantField;
+		if (f != null) {
+			fd.setObject(f.getIndex(), ctx.getTenantId());
+		}
+
+		final boolean[] result = new boolean[1];
+		if (handle == null) {
+			RdbDriver.getDriver().transact(new IDbClient() {
+
+				@Override
+				public boolean transact(DbHandle dbHandle) throws SQLException {
+					result[0] = fd.update(dbHandle);
+					return true;
+				}
+			}, false);
+		} else {
+			result[0] = fd.update(handle);
+		}
+
+		if (!result[0]) {
+			/*
+			 * no update? quite
+			 */
+			logger.error("This row is updated by another user. Client has to cancel the operation");
+			ctx.addMessage(Message.newError(Message.CONCURRENT_UPDATE));
+		}
+		/*
+		 * what should be the payload back? As of now, we send nothing.
+		 */
+		return;
+	}
+	static protected void insert(FormData fd, IserviceContext ctx, JsonObject payload, DbHandle handle) throws Exception {
+		Form form = fd.getForm();
+		fd.validateAndLoad(payload, false, true, ctx);
+		if (!ctx.allOk()) {
+			return;
+		}
+		Field tenant = form.dbMetaData.tenantField;
+		if (tenant != null) {
+			fd.setObject(tenant.getIndex(), ctx.getTenantId());
+		}
+
+		if (handle == null) {
+			RdbDriver.getDriver().transact(new IDbClient() {
+
+				@Override
+				public boolean transact(DbHandle dbHandle) throws SQLException {
+					fd.insert(dbHandle);
+					return true;
+				}
+			}, false);
+		} else {
+			fd.insert(handle);
+		}
+		/*
+		 * as per our protocol, we send the form back as payload, possibly
+		 * because we may have to communicate the generated code back to the
+		 * client
+		 */
+		fd.serializeAsJson(ctx.getResponseWriter());
+		return;
+	}
+
 }

@@ -29,11 +29,30 @@ import java.util.Map;
  * @author simplity.org
  *
  */
-public class VariableValueProvider implements IValueProvider{
-	String variableName;
-
+public class ValueProvider implements IValueProvider{
+	private final String variable;
+	private final String constant;
+	
+	/**
+	 * at least one of them should be non-null for this to be useful, though it is not an error
+	 * @param variable can be null
+	 * @param constant can be null
+	 * 
+	 */
+	public ValueProvider(String variable, String constant) {
+		this.variable = variable;
+		this.constant = constant;
+	}
+	
 	@Override
 	public String getValue(Map<String, String> input) {
-		return input.get(this.variableName);
+		String result = null;
+		if(this.variable != null) {
+			result = input.get(this.variable);
+		}
+		if(result == null && this.constant != null) {
+			result = this.constant;
+		}
+		return result;
 	}
 }

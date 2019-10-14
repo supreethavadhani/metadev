@@ -224,7 +224,7 @@ class Form {
 		return names;
 	}
 
-	private String getQualifier(String nam) {
+	private static String getQualifier(String nam) {
 		int idx = nam.lastIndexOf('.');
 		if (idx == -1) {
 			return null;

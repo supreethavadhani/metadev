@@ -48,5 +48,9 @@ public enum IoType {
 	/**
 	 * filter rows based on filter criterion
 	 */
-	FILTER
+	FILTER,
+	/**
+	 * process an array of rows and add/modify them depending on the primry key
+	 */
+	BULK
 }

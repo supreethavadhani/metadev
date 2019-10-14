@@ -82,6 +82,7 @@ public class Agent {
 	 * 
 	 * @param resp
 	 */
+	@SuppressWarnings("static-method")
 	public void setOptions(HttpServletRequest req, HttpServletResponse resp) {
 		for (int i = 0; i < Conventions.Http.HDR_NAMES.length; i++) {
 			resp.setHeader(Conventions.Http.HDR_NAMES[i], Conventions.Http.HDR_TEXTS[i]);
@@ -115,20 +116,20 @@ public class Agent {
 			return;
 		}
 
-		IService service = this.getService(req);
+		IService service = getService(req);
 		if (service == null) {
 			logger.info("No/invalid Service");
 			resp.setStatus(Conventions.Http.STATUS_INVALID_SERVICE);
 			return;
 		}
 
-		JsonObject json = this.readContent(req);
+		JsonObject json = readContent(req);
 		if (json == null) {
 			logger.info("Invalid JSON recd from client ");
 			resp.setStatus(Conventions.Http.STATUS_INVALID_DATA);
 			return;
 		}
-		this.readQueryString(req, json);
+		readQueryString(req, json);
 
 		/*
 		 * We allow the service to use output stream, but not input stream. This
@@ -154,7 +155,7 @@ public class Agent {
 		respond(resp, ctx, writer.toString());
 	}
 
-	private JsonObject readContent(HttpServletRequest req) {
+	private static JsonObject readContent(HttpServletRequest req) {
 		if (req.getContentLength() == 0) {
 			return new JsonObject();
 		}
@@ -228,7 +229,7 @@ public class Agent {
 		writer.write("]");
 	}
 
-	private void readQueryString(HttpServletRequest req, JsonObject json) {
+	private static void readQueryString(HttpServletRequest req, JsonObject json) {
 		String qry = req.getQueryString();
 		if (qry == null) {
 			return;
@@ -240,13 +241,13 @@ public class Agent {
 			if (pair.length == 1) {
 				val = "";
 			} else {
-				val = this.decode(pair[1]);
+				val = decode(pair[1]);
 			}
 			json.addProperty(pair[0].trim(), val);
 		}
 	}
 
-	private IService getService(HttpServletRequest req) {
+	private static IService getService(HttpServletRequest req) {
 		String serviceName = req.getHeader(Conventions.Http.HEADER_SERVICE);
 		if (serviceName == null) {
 			logger.info("header {} not received", Conventions.Http.HEADER_SERVICE);
@@ -288,7 +289,7 @@ public class Agent {
 		return user;
 	}
 
-	private String decode(String text) {
+	private static String decode(String text) {
 		try {
 			return URLDecoder.decode(text, "UTF-8");
 		} catch (UnsupportedEncodingException e) {
