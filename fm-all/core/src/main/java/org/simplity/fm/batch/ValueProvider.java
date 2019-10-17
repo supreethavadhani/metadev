@@ -45,7 +45,7 @@ public class ValueProvider implements IValueProvider{
 	}
 	
 	@Override
-	public String getValue(Map<String, String> input) {
+	public String getValue(Map<String, String> input, Map<String, Map<String, String>> lookupLists) {
 		String result = null;
 		if(this.variable != null) {
 			result = input.get(this.variable);

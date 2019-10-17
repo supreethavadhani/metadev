@@ -76,13 +76,12 @@ public class KeyedValueList implements IValueList{
 	}
 
 	@Override
-	public Map<String, Map<String, String>> getAll(IserviceContext ctx) {
-		final Map<String, Map<String, String>> result = new HashMap<>();
+	public Map<String, String> getAll(IserviceContext ctx) {
+		final Map<String, String> result = new HashMap<>();
 		for(Map.Entry<Object, ValueList> entry: this.values.entrySet()) {
-			Map<String, String> map = new HashMap<>();
-			result.put(entry.getKey().toString(), map);
+			String key = entry.getKey().toString() + '|';
 			for(Object[] row : entry.getValue().valueList) {
-				map.put(row[1].toString(), row[0].toString());
+				result.put(key + row[1].toString(), row[0].toString());
 			}
 		}
 		return result;

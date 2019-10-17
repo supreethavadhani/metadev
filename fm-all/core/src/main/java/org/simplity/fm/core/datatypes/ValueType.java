@@ -27,8 +27,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Instant;
 import java.time.LocalDate;
+
+import org.simplity.fm.core.Conventions;
 
 /**
  * text, number etc..
@@ -48,12 +51,20 @@ public enum ValueType {
 
 		@Override
 		public void setPsParam(PreparedStatement ps, int position, Object value) throws SQLException {
-			ps.setString(position, (String) value);
+			String val = (String) value;
+			if(value == null) {
+				val = Conventions.Db.TEXT_VALUE_OF_NULL;
+			}
+			ps.setString(position, val);
 		}
 
 		@Override
 		public String getFromRs(ResultSet rs, int position) throws SQLException {
-			return rs.getString(position);
+			String val = rs.getString(position);
+			if(val == null ) {
+				val = Conventions.Db.TEXT_VALUE_OF_NULL;
+			}
+			return val;
 		}
 	},
 	/**
@@ -74,13 +85,24 @@ public enum ValueType {
 
 		@Override
 		public void setPsParam(PreparedStatement ps, int position, Object value) throws SQLException {
-			ps.setLong(position, (long) value);
+			if(value == null) {
+				if(Conventions.Db.TREAT_NULL_AS_ZERO) {
+					ps.setLong(position, 0L);
+				}else {
+					ps.setNull(position, Types.INTEGER);
+				}
+			}else {
+				ps.setLong(position, (long) value);
+			}
 		}
 
 		@Override
 		public Long getFromRs(ResultSet rs, int position) throws SQLException {
 			long result = rs.getLong(position);
 			if(rs.wasNull()) {
+				if(Conventions.Db.TREAT_NULL_AS_ZERO) {
+					return 0L;
+				}
 				return null;
 			}
 			return result;
@@ -101,13 +123,24 @@ public enum ValueType {
 
 		@Override
 		public void setPsParam(PreparedStatement ps, int position, Object value) throws SQLException {
-			ps.setDouble(position, (Double) value);
+			if(value == null) {
+				if(Conventions.Db.TREAT_NULL_AS_ZERO) {
+					ps.setDouble(position, 0.0);
+				}else {
+					ps.setNull(position, Types.DECIMAL);
+				}
+			}else {
+				ps.setDouble(position, (Double) value);
+			}
 		}
 
 		@Override
 		public Double getFromRs(ResultSet rs, int position) throws SQLException {
 			double result = rs.getDouble(position);
 			if(rs.wasNull()) {
+				if(Conventions.Db.TREAT_NULL_AS_ZERO) {
+					return 0.0;
+				}
 				return null;
 			}
 			return result;

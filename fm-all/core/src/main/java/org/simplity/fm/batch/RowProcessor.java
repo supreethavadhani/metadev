@@ -27,7 +27,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.form.Form;
 import org.simplity.fm.core.form.FormData;
 import org.simplity.fm.core.rdb.DbBatchHandle;
 import org.simplity.fm.core.rdb.IDbBatchClient;
@@ -43,22 +42,33 @@ import org.simplity.fm.core.validn.IValueList;
  */
 public class RowProcessor {
 	protected final FormMapper[] inserts;
-	protected final IValueList[] lists;
-	protected Map<String, Map<String, String>> simplLists;
-	protected Map<String, Map<String, Map<String, String>>> keyedLists;
+	protected final IValueList[] systemLists;
+	protected final Map<String, Map<String, String>> valueLists;
 	
 
 	/**
 	 * 
 	 * @param inserts
 	 *            forms to be inserted
-	 * @param lists 
+	 * @param valueLists value lists defined for this processors
+	 * @param systemLists app/system defined lists
 	 */
-	public RowProcessor(FormMapper[] inserts, IValueList[] lists) {
+	public RowProcessor(FormMapper[] inserts, Map<String, Map<String, String>> valueLists, IValueList[] systemLists) {
 		this.inserts = inserts;
-		this.lists = lists;
+		this.valueLists = valueLists;
+		this.systemLists = systemLists;
 	}
 
+	protected Map<String, Map<String, String>> getAllLists(IserviceContext ctx){
+		final Map<String, Map<String, String>> result = new HashMap<>();
+		result.putAll(this.valueLists);
+		
+		for(IValueList list : this.systemLists) {
+			String name = list.getName().toString();
+			result.put(name, list.getAll(ctx));
+		}
+		return result;
+	}
 	/**
 	 * @param rowProvider
 	 * @param ctx
@@ -66,30 +76,11 @@ public class RowProcessor {
 	 * @throws SQLException
 	 */
 	public void process(IRowProvider rowProvider, IserviceContext ctx, boolean validationOnly) throws SQLException {
-		if(this.simplLists == null) {
-			this.buildLists(ctx);
-		}
+		
 		if (validationOnly) {
 			new Worker(rowProvider, ctx).process();
 		} else {
 			RdbDriver.getDriver().transactBatch(new DbWorker(rowProvider, ctx));
-		}
-	}
-
-	private void buildLists(IserviceContext ctx) {
-		this.simplLists = new HashMap<>();
-		this.keyedLists = new HashMap<>();
-		for(IValueList list : this.lists) {
-			String name = list.getName().toString();
-			if(list.isKeyBased()) {
-				this.keyedLists.put(name, list.getAll(ctx));
-			}else {
-				Map<String, String> map = new HashMap<>();
-				this.simplLists.put(name, map);
-				for(Object[] row : list.getList(null, ctx)) {
-					map.put(row[1].toString(), row[0].toString());
-				}
-			}
 		}
 	}
 
@@ -126,10 +117,12 @@ public class RowProcessor {
 	protected class Worker {
 		protected final IRowProvider rowProvider;
 		protected final IserviceContext ctx;
+		protected final Map<String, Map<String, String>> allLists;
 
 		protected Worker(IRowProvider rowProvider, IserviceContext ctx) {
 			this.rowProvider = rowProvider;
 			this.ctx = ctx;
+			this.allLists = RowProcessor.this.getAllLists(ctx);
 		}
 
 		protected void process() {
@@ -141,7 +134,7 @@ public class RowProcessor {
 				}
 				this.ctx.resetMessages();
 				for (FormMapper mapper : RowProcessor.this.inserts) {
-					mapper.loadData(values, this.ctx);
+					mapper.loadData(values, this.allLists, this.ctx);
 					String kn = mapper.getGeneratedKeyOutputName();
 					if (kn != null) {
 						/*
@@ -160,10 +153,12 @@ public class RowProcessor {
 	protected class DbWorker implements IDbBatchClient {
 		protected final IRowProvider rowProvider;
 		protected final IserviceContext ctx;
+		protected final Map<String, Map<String, String>> allLists;
 
 		protected DbWorker(IRowProvider rowProvider, IserviceContext ctx) {
 			this.rowProvider = rowProvider;
 			this.ctx = ctx;
+			this.allLists = RowProcessor.this.getAllLists(ctx);
 		}
 
 		@Override
@@ -178,7 +173,7 @@ public class RowProcessor {
 				this.ctx.resetMessages();
 				boolean allOk = true;
 				for (FormMapper mapper : RowProcessor.this.inserts) {
-					FormData fd = mapper.loadData(values, this.ctx);
+					FormData fd = mapper.loadData(values, this.allLists, this.ctx);
 					if (fd == null) {
 						allOk = false;
 						break;
@@ -206,50 +201,5 @@ public class RowProcessor {
 		}
 	}
 	
-	protected class FormMapper {
-		private final Form form;
-		private final String generatedKeyOutputName;
-		private final IValueProvider[] valueProviders;
-
-		protected FormMapper(Form form, String generatedKeyOutputName, IValueProvider[] valueProviders) {
-			this.form = form;
-			this.generatedKeyOutputName = generatedKeyOutputName;
-			this.valueProviders = valueProviders;
-		}
-
-		/**
-		 * @param values
-		 * @param ctx
-		 *            that must have user and tenantKey if the insert operation
-		 *            require these
-		 * @return loaded form data. null in case of any error in loading. Actual
-		 *         error messages are put into the context
-		 */
-		public FormData loadData(Map<String, String> values, IserviceContext ctx) {
-			String[] data = new String[this.valueProviders.length];
-			int idx = 0;
-			for (IValueProvider vp : this.valueProviders) {
-				if (vp != null) {
-					data[idx] = vp.getValue(values);
-				}
-				idx++;
-			}
-			FormData fd = this.form.newFormData();
-			ctx.resetMessages();
-			fd.validateAndLoadForInsert(data, ctx);
-			if (ctx.allOk()) {
-				return fd;
-			}
-
-			return null;
-		}
-
-		/**
-		 * @return the generatedKeyOutputName
-		 */
-		public String getGeneratedKeyOutputName() {
-			return this.generatedKeyOutputName;
-		}
-	}
 	
 }

@@ -32,7 +32,8 @@ public interface IValueProvider {
 	/**
 	 * get the value for this field
 	 * @param input
+	 * @param lookupLists 
 	 * @return the value for this field
 	 */
-	public String getValue(Map<String, String> input);
+	public String getValue(Map<String, String> input, Map<String, Map<String, String>> lookupLists);
 }

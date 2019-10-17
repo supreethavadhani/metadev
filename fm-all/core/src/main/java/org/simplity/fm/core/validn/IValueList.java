@@ -76,18 +76,16 @@ public interface IValueList {
 	public boolean isValid(Object fieldVale, Object keyValue);
 
 	/**
-	 * relevant only for keyed lists. used to get all the values for all
-	 * possible keys, Used by batch based reverse look-up algorithms
+	 * Reverse look-up. get internal id for a display name
 	 * 
 	 * 
 	 * @param ctx
 	 *            null if a static list is to be used.must be non-null for
 	 *            runtime lists
-	 * @return map of maps. inner map has key as display text (name/code/desc)
-	 *         and value as internal value. That is, it maps text to internal
-	 *         id.
-	 *         outer map is indexed by keyValues. null is returned by
-	 *         implementations that are not key based.
+	 * @return map with key = keyName|displayText and value = internal value.
+	 *         e.g if keyId=91. keyName=India, internalValue=KA
+	 *         displyaText=Karnataka, then we will have an entry with
+	 *         key="India|Karnataka" and value="KA"
 	 */
-	public Map<String, Map<String, String>> getAll(IserviceContext ctx);
+	public Map<String, String> getAll(IserviceContext ctx);
 }

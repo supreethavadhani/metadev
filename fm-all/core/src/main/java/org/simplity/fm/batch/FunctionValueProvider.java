@@ -23,6 +23,7 @@
 package org.simplity.fm.batch;
 
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Defines a function that evaluates to give a string
@@ -30,37 +31,24 @@ import java.util.Map;
  * @author simplity.org
  *
  */
-public class FunctionValueProvider implements IValueProvider {
-	IFunction function;
-	IValueProvider[] params;
+class FunctionValueProvider implements IValueProvider {
+	final Function<String[], String> function;
+	final IValueProvider[] params;
+
+	FunctionValueProvider(Function<String[], String> function, IValueProvider[] params){
+		this.function = function;
+		this.params = params;
+	}
 
 	@Override
-	public String getValue(Map<String, String> input) {
+	public String getValue(Map<String, String> input, Map<String, Map<String, String>> lookupLists) {
 		String[] values = null;
 		if (this.params != null) {
 			values = new String[this.params.length];
 			for (int i = 0; i < values.length; i++) {
-				values[i] = this.params[i].getValue(input);
+				values[i] = this.params[i].getValue(input, lookupLists);
 			}
 		}
-		return this.function.evaluate(values);
-	}
-
-	/**
-	 * a function that takes an array of string as params and returns a string
-	 * 
-	 * @author simplity.org
-	 *
-	 */
-	@FunctionalInterface
-	public interface IFunction {
-		/**
-		 * 
-		 * @param params
-		 *            null if this specific instance requires no params. must
-		 *            have the desired number of elements.
-		 * @return resultant string. can be null.
-		 */
-		public String evaluate(String[] params);
+		return this.function.apply(values);
 	}
 }

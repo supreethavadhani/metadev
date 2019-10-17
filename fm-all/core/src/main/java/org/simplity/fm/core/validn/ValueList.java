@@ -22,6 +22,7 @@
 
 package org.simplity.fm.core.validn;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -83,9 +84,13 @@ public class ValueList implements IValueList {
 	public Object[][] getList(Object keyValue, IserviceContext ctx) {
 		return this.valueList;
 	}
+	
 	@Override
-	public Map<String, Map<String, String>> getAll(IserviceContext ctx) {
-		// This is meant for keyed lists only
-		return null;
+	public Map<String, String> getAll(IserviceContext ctx) {
+		Map<String, String> result = new HashMap<>();
+		for(Object[] row : this.valueList) {
+			result.put(row[1].toString(), row[0].toString());
+		}
+		return result;
 	}
 }

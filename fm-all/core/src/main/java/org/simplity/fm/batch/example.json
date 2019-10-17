@@ -1,0 +1,53 @@
+{
+	"name": "example",
+	"params":{
+		"param1" : "value1",
+		"param2" : "value2",
+		"param3" : 3
+	},
+	
+	"lookups":{
+		"aLocalList":{
+			"text1":"internal1",
+			"text2":"internal2"
+		},
+		"aLocalKeyedList" :{
+			"k1":{
+				"t1":"i1",
+				"t2":"i2"
+				},
+			"k2":{
+				"t1":"i3",
+				"t3":"i4"
+			}
+		},
+		"lookup1" : "aSystemDefinedValuseList",
+		"lookup2" : "aSystemDefinedKeyedList",
+		"lookup3" : "aSystemDefinedRuntimeList",
+		"lookup4" : "anotherSystemDefinedList"
+	},
+	"functions":{
+		"f1":"aSystemDefinedFnName",
+		"f2": "anotherSystemDefinedFn"
+	},
+	
+	"inserts":[{
+		"form":"form1",
+		"generatedKeyOutputName":"table1Id",
+		"fields":{
+			"field1":"value1",
+			"f2": 3,
+			"f3": true,
+			"f4": "2019-12-22",
+			"f5": "$a",
+			"f6": "%param1",
+			"f7": "%aLocalList:$b",
+			"f8": "%localKeyedList:$c, $d",
+			"f9": "%lookup1:abcd",
+			"f0": "%lookup2:34, $e"
+		}
+	},
+	{
+		
+	}]
+}

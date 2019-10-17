@@ -206,8 +206,8 @@ public class RuntimeList implements IValueList {
 	 * @return map to get id from name
 	 */
 	@Override
-	public Map<String, Map<String, String>> getAll(IserviceContext ctx) {
-		Map<String, Map<String, String>> result = new HashMap<>();
+	public Map<String, String> getAll(IserviceContext ctx) {
+		Map<String, String> result = new HashMap<>();
 		if (this.hasKey == false) {
 			logger.error("List {} is not keyed. getAll is not pplicable", this.name);
 			return result;
@@ -219,8 +219,6 @@ public class RuntimeList implements IValueList {
 				@Override
 				public boolean transact(DbHandle handle) throws SQLException {
 					handle.read(new IDbReader() {
-						private String lastKey = null;
-						private Map<String, String> list = new HashMap<>();
 
 						@Override
 						public String getPreparedStatement() {
@@ -239,12 +237,7 @@ public class RuntimeList implements IValueList {
 							String id = rs.getString(1);
 							String nam = rs.getString(2);
 							String key = rs.getString(3);
-							if (key != this.lastKey) {
-								this.list = new HashMap<>();
-								result.put(key, this.list);
-								this.lastKey = key;
-							}
-							this.list.put(nam, id);
+							result.put(key + '|' + nam, id);
 							return true;
 						}
 					});

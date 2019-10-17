@@ -47,21 +47,23 @@ public class FormMapper {
 
 	/**
 	 * @param values
+	 * @param lookupLists 
 	 * @param ctx
 	 *            that must have user and tenantKey if the insert operation
 	 *            require these
 	 * @return loaded form data. null in case of any error in loading. Actual
 	 *         error messages are put into the context
 	 */
-	public FormData loadData(Map<String, String> values, IserviceContext ctx) {
+	public FormData loadData(Map<String, String> values, Map<String, Map<String, String>>lookupLists, IserviceContext ctx) {
 		String[] data = new String[this.valueProviders.length];
 		int idx = 0;
 		for (IValueProvider vp : this.valueProviders) {
 			if (vp != null) {
-				data[idx] = vp.getValue(values);
+				data[idx] = vp.getValue(values, lookupLists);
 			}
 			idx++;
 		}
+		
 		FormData fd = this.form.newFormData();
 		ctx.resetMessages();
 		fd.validateAndLoadForInsert(data, ctx);
