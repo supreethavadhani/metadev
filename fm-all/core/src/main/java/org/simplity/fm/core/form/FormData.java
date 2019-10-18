@@ -530,7 +530,7 @@ public class FormData {
 		int userIdx = this.form.getUserIdFieldIdx();
 		boolean allOk = true;
 		for (int idx : indexes) {
-			if (idx == userIdx) {
+			if (idx == userIdx && ctx != null) {
 				this.setUserId(ctx.getUser());
 			} else {
 				Field f = fields[idx];
