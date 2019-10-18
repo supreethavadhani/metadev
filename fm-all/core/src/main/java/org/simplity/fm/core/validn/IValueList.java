@@ -24,7 +24,7 @@ package org.simplity.fm.core.validn;
 
 import java.util.Map;
 
-import org.simplity.fm.core.service.IserviceContext;
+import org.simplity.fm.core.service.IServiceContext;
 
 /**
  * design-time or run-time list that can be used for validating a field value
@@ -59,7 +59,7 @@ public interface IValueList {
 	 * @return array of [internalValue, displayValue]. internal value could be
 	 *         string or number. null if no such list
 	 */
-	public Object[][] getList(Object keyValue, IserviceContext ctx);
+	public Object[][] getList(Object keyValue, IServiceContext ctx);
 
 	/**
 	 * is the field value valid as per this list?
@@ -87,5 +87,5 @@ public interface IValueList {
 	 *         displyaText=Karnataka, then we will have an entry with
 	 *         key="India|Karnataka" and value="KA"
 	 */
-	public Map<String, String> getAll(IserviceContext ctx);
+	public Map<String, String> getAll(IServiceContext ctx);
 }

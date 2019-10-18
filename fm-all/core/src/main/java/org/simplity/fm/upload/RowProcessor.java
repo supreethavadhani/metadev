@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.batch;
+package org.simplity.fm.upload;
 
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -31,7 +31,7 @@ import org.simplity.fm.core.form.FormData;
 import org.simplity.fm.core.rdb.DbBatchHandle;
 import org.simplity.fm.core.rdb.IDbBatchClient;
 import org.simplity.fm.core.rdb.RdbDriver;
-import org.simplity.fm.core.service.IserviceContext;
+import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.IValueList;
 
 /**
@@ -59,7 +59,7 @@ public class RowProcessor {
 		this.systemLists = systemLists;
 	}
 
-	protected Map<String, Map<String, String>> getAllLists(IserviceContext ctx){
+	protected Map<String, Map<String, String>> getAllLists(IServiceContext ctx){
 		final Map<String, Map<String, String>> result = new HashMap<>();
 		result.putAll(this.valueLists);
 		
@@ -75,7 +75,7 @@ public class RowProcessor {
 	 * @param validationOnly
 	 * @throws SQLException
 	 */
-	public void process(IRowProvider rowProvider, IserviceContext ctx, boolean validationOnly) throws SQLException {
+	public void process(IRowProvider rowProvider, IServiceContext ctx, boolean validationOnly) throws SQLException {
 		
 		if (validationOnly) {
 			new Worker(rowProvider, ctx).process();
@@ -116,10 +116,10 @@ public class RowProcessor {
 
 	protected class Worker {
 		protected final IRowProvider rowProvider;
-		protected final IserviceContext ctx;
+		protected final IServiceContext ctx;
 		protected final Map<String, Map<String, String>> allLists;
 
-		protected Worker(IRowProvider rowProvider, IserviceContext ctx) {
+		protected Worker(IRowProvider rowProvider, IServiceContext ctx) {
 			this.rowProvider = rowProvider;
 			this.ctx = ctx;
 			this.allLists = RowProcessor.this.getAllLists(ctx);
@@ -152,10 +152,10 @@ public class RowProcessor {
 
 	protected class DbWorker implements IDbBatchClient {
 		protected final IRowProvider rowProvider;
-		protected final IserviceContext ctx;
+		protected final IServiceContext ctx;
 		protected final Map<String, Map<String, String>> allLists;
 
-		protected DbWorker(IRowProvider rowProvider, IserviceContext ctx) {
+		protected DbWorker(IRowProvider rowProvider, IServiceContext ctx) {
 			this.rowProvider = rowProvider;
 			this.ctx = ctx;
 			this.allLists = RowProcessor.this.getAllLists(ctx);

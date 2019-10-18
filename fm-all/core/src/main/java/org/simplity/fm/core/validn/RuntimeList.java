@@ -34,7 +34,7 @@ import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.IDbClient;
 import org.simplity.fm.core.rdb.IDbReader;
 import org.simplity.fm.core.rdb.RdbDriver;
-import org.simplity.fm.core.service.IserviceContext;
+import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +66,7 @@ public class RuntimeList implements IValueList {
 	}
 
 	@Override
-	public Object[][] getList(final Object key, IserviceContext ctx) {
+	public Object[][] getList(final Object key, IServiceContext ctx) {
 		if (this.hasKey) {
 			if (key == null) {
 				logger.error("Key should have value for list {}", this.name);
@@ -206,7 +206,7 @@ public class RuntimeList implements IValueList {
 	 * @return map to get id from name
 	 */
 	@Override
-	public Map<String, String> getAll(IserviceContext ctx) {
+	public Map<String, String> getAll(IServiceContext ctx) {
 		Map<String, String> result = new HashMap<>();
 		if (this.hasKey == false) {
 			logger.error("List {} is not keyed. getAll is not pplicable", this.name);

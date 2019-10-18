@@ -36,7 +36,7 @@ import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.IDbClient;
 import org.simplity.fm.core.rdb.RdbDriver;
 import org.simplity.fm.core.service.IService;
-import org.simplity.fm.core.service.IserviceContext;
+import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -119,7 +119,7 @@ public abstract class FormIo implements IService {
 		}
 
 		@Override
-		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
+		public void serve(IServiceContext ctx, JsonObject payload) throws Exception {
 			FormData fd = this.form.newFormData();
 			Field tenant = this.form.dbMetaData.tenantField;
 			if (tenant != null) {
@@ -176,7 +176,7 @@ public abstract class FormIo implements IService {
 		}
 
 		@Override
-		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
+		public void serve(IServiceContext ctx, JsonObject payload) throws Exception {
 			logger.info("Startedfiltering form {}", this.form.uniqueName);
 			List<Message> msgs = new ArrayList<>();
 			JsonObject conditions = null;
@@ -269,7 +269,7 @@ public abstract class FormIo implements IService {
 		}
 
 		@Override
-		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
+		public void serve(IServiceContext ctx, JsonObject payload) throws Exception {
 			FormData fd = this.form.newFormData();
 			update(fd, ctx, payload, null);
 		}
@@ -288,7 +288,7 @@ public abstract class FormIo implements IService {
 		}
 
 		@Override
-		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
+		public void serve(IServiceContext ctx, JsonObject payload) throws Exception {
 			FormData fd = this.form.newFormData();
 			insert(fd, ctx, payload, null);
 		}
@@ -308,7 +308,7 @@ public abstract class FormIo implements IService {
 		}
 
 		@Override
-		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
+		public void serve(IServiceContext ctx, JsonObject payload) throws Exception {
 			FormData fd = this.form.newFormData();
 			fd.loadKeys(payload, ctx);
 			if (!ctx.allOk()) {
@@ -346,7 +346,7 @@ public abstract class FormIo implements IService {
 		}
 
 		@Override
-		public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
+		public void serve(IServiceContext ctx, JsonObject payload) throws Exception {
 			JsonArray arr = payload.getAsJsonArray(Conventions.Http.TAG_LIST);
 			if (arr == null) {
 				logger.error("Payload did not contain the required member {}", Conventions.Http.TAG_LIST);
@@ -372,12 +372,12 @@ public abstract class FormIo implements IService {
 
 	protected static class BulkWorker implements Consumer<JsonElement> {
 		private final Form form;
-		private final IserviceContext ctx;
+		private final IServiceContext ctx;
 		private int idx = -1;
 		protected int nbrInserts = 0;
 		protected int nbrUpdates = 0;
 
-		protected BulkWorker(Form form, IserviceContext ctx) {
+		protected BulkWorker(Form form, IServiceContext ctx) {
 			this.form = form;
 			this.ctx = ctx;
 		}
@@ -411,7 +411,7 @@ public abstract class FormIo implements IService {
 	 * If handle is null, this method cmpletes the update on its own
 	 * connection
 	 */
-	protected static void update(FormData fd, IserviceContext ctx, JsonObject payload, DbHandle handle) throws Exception {
+	protected static void update(FormData fd, IServiceContext ctx, JsonObject payload, DbHandle handle) throws Exception {
 		Form form = fd.getForm();
 		fd.validateAndLoad(payload, false, false, ctx);
 		/*
@@ -469,7 +469,7 @@ public abstract class FormIo implements IService {
 		 */
 		return;
 	}
-	static protected void insert(FormData fd, IserviceContext ctx, JsonObject payload, DbHandle handle) throws Exception {
+	static protected void insert(FormData fd, IServiceContext ctx, JsonObject payload, DbHandle handle) throws Exception {
 		Form form = fd.getForm();
 		fd.validateAndLoad(payload, false, true, ctx);
 		if (!ctx.allOk()) {

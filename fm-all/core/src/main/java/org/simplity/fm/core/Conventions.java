@@ -216,10 +216,6 @@ public class Conventions {
 	 */
 	public static class Upload {
 		/**
-		 * file name
-		 */
-		public static final String TAG_NAME = "name";
-		/**
 		 * list of name-value pairs. Note that he value may come from some
 		 * configuration. Hence this is used instead of just constants
 		 */
@@ -251,11 +247,19 @@ public class Conventions {
 		 */
 		public static final String TAG_FIELDS = "fields";
 		/**
+		 * indicates that this is set to a constant value
+		 */
+		public static final char TYPE_CONST = '=';
+		/**
 		 * indicates that this is a variable name whose value is found in the
 		 * variable list. Note that $a..$z,$aa etc.. are the columns from the
 		 * spread sheet
 		 */
 		public static final char TYPE_VAR = '$';
+		/**
+		 * indicates that this is a parameter that is set for this uploader
+		 */
+		public static final char TYPE_PARAM = '@';
 		/**
 		 * indicates that the field value is to be looked-up from this look-up
 		 * list that is already specified at the top.
@@ -265,6 +269,10 @@ public class Conventions {
 		 * indicates that this is a function name
 		 */
 		public static final char TYPE_FN = '%';
+		/**
+		 * in a keyed list, values are flattened for lookup by indexing them with key + '|' + text 
+		 */
+		public static final char KEY_TEXT_SEPARATOR = '|';
 	}
 	
 	/**

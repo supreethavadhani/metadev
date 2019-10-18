@@ -35,7 +35,7 @@ import org.simplity.fm.core.http.LoggedInUser;
  * @author simplity.org
  *
  */
-public interface IserviceContext {
+public interface IServiceContext {
 	
 	/**
 	 * 

@@ -32,7 +32,7 @@ import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.rdb.FilterCondition;
-import org.simplity.fm.core.service.IserviceContext;
+import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.IValidation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -358,7 +358,7 @@ public class Form {
 	 *            mxRows to be read
 	 * @return filter clause that can be used to get rows from the db
 	 */
-	public SqlReader parseForFilter(JsonObject conditions, JsonObject sorts, List<Message> errors, IserviceContext ctx,
+	public SqlReader parseForFilter(JsonObject conditions, JsonObject sorts, List<Message> errors, IServiceContext ctx,
 			int maxRows) {
 		StringBuilder sql = new StringBuilder(this.dbMetaData.selectClause);
 		sql.append(" WHERE ");
@@ -547,5 +547,12 @@ public class Form {
 	 */
 	private static String escapeLike(String string) {
 		return string.replaceAll(WILD_CARD, ESCAPED_WILD_CARD).replaceAll(WILD_CHAR, ESCAPED_WILD_CHAR);
+	}
+
+	/**
+	 * @return number of fields in this form
+	 */
+	public int getNbrFields() {
+		return this.fields.length;
 	}
 }

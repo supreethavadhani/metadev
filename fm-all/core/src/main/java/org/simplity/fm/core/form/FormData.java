@@ -41,7 +41,7 @@ import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.IDbMultipleWriter;
 import org.simplity.fm.core.rdb.IDbReader;
 import org.simplity.fm.core.rdb.IDbWriter;
-import org.simplity.fm.core.service.IserviceContext;
+import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.IValidation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -490,7 +490,7 @@ public class FormData {
 	 * @param ctx
 	 * 
 	 */
-	public void parseField(int idx, String value, IserviceContext ctx) {
+	public void parseField(int idx, String value, IServiceContext ctx) {
 		if (!this.idxOk(idx)) {
 			ctx.addMessage(Message.newError(idx + " is not valid index for form " + this.form.getFormId()));
 			return;
@@ -521,7 +521,7 @@ public class FormData {
 	 *         encountered. Also false if this form has not defined any primary
 	 *         key
 	 */
-	public boolean loadKeys(JsonObject json, IserviceContext ctx) {
+	public boolean loadKeys(JsonObject json, IServiceContext ctx) {
 		int[] indexes = this.form.getKeyIndexes();
 		if (indexes == null) {
 			return false;
@@ -550,7 +550,7 @@ public class FormData {
 	 * @param ctx
 	 *            non-null to which any validation errors are added
 	 */
-	public void loadKeys(Map<String, String> inputValues, IserviceContext ctx) {
+	public void loadKeys(Map<String, String> inputValues, IServiceContext ctx) {
 		int[] indexes = this.form.getKeyIndexes();
 		if (indexes == null) {
 			return;
@@ -613,11 +613,11 @@ public class FormData {
 	 * @param ctx
 	 *            non-null
 	 */
-	public void validateAndLoad(JsonObject json, boolean allFieldsAreOptional, boolean forInsert, IserviceContext ctx) {
+	public void validateAndLoad(JsonObject json, boolean allFieldsAreOptional, boolean forInsert, IServiceContext ctx) {
 		this.loadWorker(json, allFieldsAreOptional, forInsert, ctx, null, 0);
 	}
 
-	private void loadWorker(JsonObject json, boolean allFieldsAreOptional, boolean forInsert, IserviceContext ctx,
+	private void loadWorker(JsonObject json, boolean allFieldsAreOptional, boolean forInsert, IServiceContext ctx,
 			String childName, int rowNbr) {
 		boolean keyIsOptional = false;
 		if (forInsert) {
@@ -638,7 +638,7 @@ public class FormData {
 	}
 
 	private FormData[] validateChild(ChildForm childForm, JsonObject json, boolean allFieldsAreOptional,
-			boolean forInsert, IserviceContext ctx) {
+			boolean forInsert, IServiceContext ctx) {
 		String fieldName = childForm.fieldName;
 		JsonElement childNode = json.get(fieldName);
 		if (childNode == null) {
@@ -703,7 +703,7 @@ public class FormData {
 		return fds.toArray(new FormData[0]);
 	}
 
-	private void setFeilds(JsonObject json, boolean allFieldsAreOptional, boolean keyIsOptional, IserviceContext ctx,
+	private void setFeilds(JsonObject json, boolean allFieldsAreOptional, boolean keyIsOptional, IServiceContext ctx,
 			String childName, int rowNbr) {
 
 		int userIdx = this.form.getUserIdFieldIdx();
@@ -736,7 +736,7 @@ public class FormData {
 	}
 
 	private static boolean validateAndSet(Field field, String value, Object[] row, int idx,
-			boolean allFieldsAreOptional, IserviceContext ctx, String childName, int rowNbr) {
+			boolean allFieldsAreOptional, IServiceContext ctx, String childName, int rowNbr) {
 		if (value == null || value.isEmpty()) {
 			if (allFieldsAreOptional) {
 				row[idx] = null;
@@ -760,7 +760,7 @@ public class FormData {
 	/**
 	 * @param serviceContext
 	 */
-	private void validateForm(IserviceContext ctx) {
+	private void validateForm(IServiceContext ctx) {
 		IValidation[] validations = this.form.getValidations();
 		List<Message> errors = new ArrayList<>();
 		if (validations != null) {
@@ -1194,7 +1194,7 @@ public class FormData {
 	 *            form etc.. It MUST have exactly the right number of values
 	 * @param ctx
 	 */
-	public void validateAndLoadForInsert(String[] values, IserviceContext ctx) {
+	public void validateAndLoadForInsert(String[] values, IServiceContext ctx) {
 
 		int userIdx = this.form.getUserIdFieldIdx();
 		for (Field field : this.form.getFields()) {

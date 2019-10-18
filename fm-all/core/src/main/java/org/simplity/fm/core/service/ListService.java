@@ -63,7 +63,7 @@ public class ListService implements IService {
 	}
 
 	@Override
-	public void serve(IserviceContext ctx, JsonObject payload) throws Exception {
+	public void serve(IServiceContext ctx, JsonObject payload) throws Exception {
 		String listName = null;
 		JsonPrimitive ele = payload.getAsJsonPrimitive("list");
 		if (ele != null) {

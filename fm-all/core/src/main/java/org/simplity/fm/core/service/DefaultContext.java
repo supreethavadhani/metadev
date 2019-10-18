@@ -40,7 +40,7 @@ import org.simplity.fm.core.http.LoggedInUser;
  * @author simplity.org
  *
  */
-public class DefaultContext implements IserviceContext {
+public class DefaultContext implements IServiceContext {
 	protected List<Message> messages = new ArrayList<>();
 	protected boolean inError;
 	protected Writer responseWriter;

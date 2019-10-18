@@ -38,7 +38,7 @@ import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.service.DefaultContext;
 import org.simplity.fm.core.service.IService;
-import org.simplity.fm.core.service.IserviceContext;
+import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -137,7 +137,7 @@ public class Agent {
 		 * receiving payload from an external source
 		 */
 		Writer writer = new StringWriter();
-		IserviceContext ctx = new DefaultContext(user, writer);
+		IServiceContext ctx = new DefaultContext(user, writer);
 		logger.info("Requesting App engine for service:{} with input data:{}", service.getId(), new Gson().toJson(json));
 		try {
 			service.serve(ctx, json);
@@ -174,7 +174,7 @@ public class Agent {
 		}
 	}
 
-	private static void respond(HttpServletResponse resp, IserviceContext ctx, String payload) {
+	private static void respond(HttpServletResponse resp, IServiceContext ctx, String payload) {
 		try (Writer writer = resp.getWriter()) {
 			writer.write("{\"");
 			writer.write(Conventions.Http.TAG_ALL_OK);

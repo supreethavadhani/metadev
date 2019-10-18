@@ -25,7 +25,7 @@ package org.simplity.fm.core.validn;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.simplity.fm.core.service.IserviceContext;
+import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +66,7 @@ public class KeyedValueList implements IValueList{
 	}
 
 	@Override
-	public Object[][] getList(Object keyValue, IserviceContext ctx) {
+	public Object[][] getList(Object keyValue, IServiceContext ctx) {
 		ValueList vl  = this.values.get(keyValue);
 		if (vl == null) {
 			logger.error("Key {} is not valid for keyed list {}. Null list returned.", keyValue, this.name);
@@ -76,7 +76,7 @@ public class KeyedValueList implements IValueList{
 	}
 
 	@Override
-	public Map<String, String> getAll(IserviceContext ctx) {
+	public Map<String, String> getAll(IServiceContext ctx) {
 		final Map<String, String> result = new HashMap<>();
 		for(Map.Entry<Object, ValueList> entry: this.values.entrySet()) {
 			String key = entry.getKey().toString() + '|';

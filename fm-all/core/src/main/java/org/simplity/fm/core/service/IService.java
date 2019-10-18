@@ -45,7 +45,7 @@ public interface IService {
 	 *             so that the caller can wire exceptions to the right exception
 	 *             handler that is configured for the app
 	 */
-	public void serve(IserviceContext ctx, JsonObject inputPayload) throws Exception;
+	public void serve(IServiceContext ctx, JsonObject inputPayload) throws Exception;
 	
 	/**
 	 * 

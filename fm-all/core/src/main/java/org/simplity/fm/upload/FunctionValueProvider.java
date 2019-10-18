@@ -20,39 +20,35 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.batch;
+package org.simplity.fm.upload;
 
 import java.util.Map;
+import java.util.function.Function;
 
 /**
- * specifies how a field in the form maps to columns in the input row
+ * Defines a function that evaluates to give a string
+ * 
  * @author simplity.org
  *
  */
-public class ValueProvider implements IValueProvider{
-	private final String variable;
-	private final String constant;
-	
-	/**
-	 * at least one of them should be non-null for this to be useful, though it is not an error
-	 * @param variable can be null
-	 * @param constant can be null
-	 * 
-	 */
-	public ValueProvider(String variable, String constant) {
-		this.variable = variable;
-		this.constant = constant;
+class FunctionValueProvider implements IValueProvider {
+	final Function<String[], String> function;
+	final IValueProvider[] params;
+
+	FunctionValueProvider(Function<String[], String> function, IValueProvider[] params){
+		this.function = function;
+		this.params = params;
 	}
-	
+
 	@Override
 	public String getValue(Map<String, String> input, Map<String, Map<String, String>> lookupLists) {
-		String result = null;
-		if(this.variable != null) {
-			result = input.get(this.variable);
+		String[] values = null;
+		if (this.params != null) {
+			values = new String[this.params.length];
+			for (int i = 0; i < values.length; i++) {
+				values[i] = this.params[i].getValue(input, lookupLists);
+			}
 		}
-		if(result == null && this.constant != null) {
-			result = this.constant;
-		}
-		return result;
+		return this.function.apply(values);
 	}
 }

@@ -27,7 +27,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.simplity.fm.core.service.IserviceContext;
+import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,12 +81,12 @@ public class ValueList implements IValueList {
 	}
 
 	@Override
-	public Object[][] getList(Object keyValue, IserviceContext ctx) {
+	public Object[][] getList(Object keyValue, IServiceContext ctx) {
 		return this.valueList;
 	}
 	
 	@Override
-	public Map<String, String> getAll(IserviceContext ctx) {
+	public Map<String, String> getAll(IServiceContext ctx) {
 		Map<String, String> result = new HashMap<>();
 		for(Object[] row : this.valueList) {
 			result.put(row[1].toString(), row[0].toString());

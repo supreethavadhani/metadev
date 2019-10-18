@@ -20,20 +20,39 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.batch;
+package org.simplity.fm.upload;
 
 import java.util.Map;
 
 /**
+ * specifies how a field in the form maps to columns in the input row
  * @author simplity.org
  *
  */
-public interface IValueProvider {
+public class ValueProvider implements IValueProvider{
+	private final String variable;
+	private final String constant;
+	
 	/**
-	 * get the value for this field
-	 * @param input
-	 * @param lookupLists 
-	 * @return the value for this field
+	 * at least one of them should be non-null for this to be useful, though it is not an error
+	 * @param variable can be null
+	 * @param constant can be null
+	 * 
 	 */
-	public String getValue(Map<String, String> input, Map<String, Map<String, String>> lookupLists);
+	public ValueProvider(String variable, String constant) {
+		this.variable = variable;
+		this.constant = constant;
+	}
+	
+	@Override
+	public String getValue(Map<String, String> input, Map<String, Map<String, String>> lookupLists) {
+		String result = null;
+		if(this.variable != null) {
+			result = input.get(this.variable);
+		}
+		if(result == null && this.constant != null) {
+			result = this.constant;
+		}
+		return result;
+	}
 }
