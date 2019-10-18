@@ -378,10 +378,17 @@ public abstract class FormIo implements IService {
 		private final List<Boolean> updates = new ArrayList<>();
 		private final Form form;
 		private final IServiceContext ctx;
+		private int tenentIdx;
+		private Object tenantValue;
 
 		protected BulkWorker(Form form, IServiceContext ctx) {
 			this.form = form;
 			this.ctx = ctx;
+			Field tenant = this.form.dbMetaData.tenantField;
+			if (tenant != null) {
+				this.tenantValue = ctx.getTenantId();
+				this.tenentIdx = tenant.getIndex();
+			}
 		}
 
 		@Override
@@ -393,6 +400,11 @@ public abstract class FormIo implements IService {
 			JsonObject json = (JsonObject) ele;
 			FormData fd = this.form.newFormData();
 			boolean toUpdate = fd.loadKeys(json, this.ctx);
+			
+			if(this.tenantValue != null) {
+				fd.fieldValues[this.tenentIdx] = this.tenantValue;
+			}
+			
 			fd.validateAndLoad(json, false, !toUpdate, this.ctx);
 			this.updates.add(toUpdate);
 			this.fds.add(fd);

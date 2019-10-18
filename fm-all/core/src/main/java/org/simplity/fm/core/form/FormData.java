@@ -634,7 +634,6 @@ public class FormData {
 		if (!allFieldsAreOptional) {
 			this.validateForm(ctx);
 		}
-
 	}
 
 	private FormData[] validateChild(ChildForm childForm, JsonObject json, boolean allFieldsAreOptional,
