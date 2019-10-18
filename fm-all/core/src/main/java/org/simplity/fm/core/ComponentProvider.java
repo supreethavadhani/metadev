@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.function.Function;
 
 import org.simplity.fm.core.datatypes.DataType;
 import org.simplity.fm.core.form.Form;
@@ -82,7 +81,7 @@ public abstract class ComponentProvider {
 	 * @param functionName
 	 * @return an instance for this id, or null if is not located
 	 */
-	public abstract Function<String[], String> getFunction(String functionName);
+	public abstract IFunction getFunction(String functionName);
 
 	/**
 	 * 
@@ -113,9 +112,8 @@ public abstract class ComponentProvider {
 		Iterator<IPackageNameProvider> iter = ServiceLoader.load(IPackageNameProvider.class).iterator();
 		if (iter.hasNext()) {
 			IPackageNameProvider p = iter.next();
-			String gen = p.getGeneratedRootPackageName();
-			String ser = p.getServiceRootPackageName();
-			instance = newInstance(gen, ser);
+			String root = p.getCompRootPackageName();
+			instance = newInstance(root);
 			if (instance != null) {
 				logger.info("{} located as IComponentProvider in {} ms.", instance.getClass().getName(),
 						(System.currentTimeMillis() - startedAt));
@@ -136,7 +134,7 @@ public abstract class ComponentProvider {
 	 * @param generatedRootPackageName
 	 * @return
 	 */
-	private static ComponentProvider newInstance(String rootPackageName, String serviceRootName) {
+	private static ComponentProvider newInstance(String rootPackageName) {
 
 		String cls = rootPackageName + DOT + Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
 		IDataTypes types = null;
@@ -155,7 +153,7 @@ public abstract class ComponentProvider {
 			logger.error("Unable to locate class {}  as IMessages", cls);
 		}
 
-		return new CompProvider(types, messages, rootPackageName, serviceRootName);
+		return new CompProvider(types, messages, rootPackageName);
 	}
 
 	/**
@@ -191,7 +189,7 @@ public abstract class ComponentProvider {
 			}
 
 			@Override
-			public Function<String[], String> getFunction(String functionName) {
+			public IFunction getFunction(String functionName) {
 				return null;
 			}
 		};
@@ -219,18 +217,20 @@ public abstract class ComponentProvider {
 		private final String formRoot;
 		private final String listRoot;
 		private final String serviceRoot;
+		private final String fnRoot;
 		private final IMessages messages;
 		private final Map<String, Form> forms = new HashMap<>();
 		private final Map<String, IValueList> lists = new HashMap<>();
 		private final Map<String, IService> services = new HashMap<>();
-		private final Map<String, Function<String[], String>> functions = new HashMap<>();
+		private final Map<String, IFunction> functions = new HashMap<>();
 
-		protected CompProvider(IDataTypes dataTypes, IMessages messages, String genRootName, String serviceRootName) {
+		protected CompProvider(IDataTypes dataTypes, IMessages messages, String rootPackage) {
 			this.dataTypes = dataTypes;
 			this.messages = messages;
-			this.formRoot = genRootName + DOT + Conventions.App.FOLDER_NAME_FORM + DOT;
-			this.listRoot = genRootName + DOT + Conventions.App.FOLDER_NAME_LIST + DOT;
-			this.serviceRoot = serviceRootName + DOT;
+			this.formRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_FORM + DOT;
+			this.listRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_LIST + DOT;
+			this.serviceRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_SERVICE + DOT;
+			this.fnRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_FN + DOT;
 			/*
 			 * add hard-wired services to the list 
 			 */
@@ -325,11 +325,19 @@ public abstract class ComponentProvider {
 		}
 
 		@Override
-		public Function<String[], String> getFunction(String functionName) {
-			Function<String[], String> fn = this.functions.get(functionName);
+		public IFunction getFunction(String functionName) {
+			IFunction fn = this.functions.get(functionName);
 			if (fn != null) {
 				return fn;
 			}
+			String cls = this.fnRoot + toClassName(functionName);
+			try {
+				fn = (IFunction) Class.forName(cls).newInstance();
+			} catch (Exception e) {
+				logger.error("No Function named {} because we could not locate class {}", functionName, cls);
+				return null;
+			}
+			this.functions.put(functionName, fn);
 			return fn;
 		}
 

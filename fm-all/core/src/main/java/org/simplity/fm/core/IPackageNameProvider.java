@@ -35,10 +35,5 @@ public interface IPackageNameProvider {
 	 * 
 	 * @return name of the root package where classes are generated
 	 */
-	public String getGeneratedRootPackageName();
-	/**
-	 * 
-	 * @return name of the root package where service classes are generated
-	 */
-	public String getServiceRootPackageName();
+	public String getCompRootPackageName();
 }

@@ -20,48 +20,39 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.upload;
+package org.simplity.fm.core;
 
-import java.util.Map;
-
-import org.simplity.fm.core.Conventions;
+import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
- * specifies how a field in the form maps to columns in the input row
+ * generic function that takes number of strings as parameters and returns a
+ * string.
+ * 
+ * 
  * @author simplity.org
  *
  */
-public class LookupValueProvider implements IValueProvider{
-	private final Map<String, String> lookup;
-	private final IValueProvider textValue;
-	private final IValueProvider keyValue;
+public interface IFunction {
+	/**
+	 * evaluate this function
+	 * 
+	 * @param ctx
+	 *            service context. Can be null in case this is executed outside
+	 *            of a service context. implementations must take care of this
+	 * 
+	 * @param params
+	 *            must have the right type of values for the function
+	 * @return result, possibly null;
+	 */
+	public String eval(IServiceContext ctx, String... params);
 
 	/**
+	 * meta data about the parameters. Can be used by the caller before calling
+	 * to validate input data
 	 * 
-	 * @param lookup must be non-null
-	 * @param textValue must be non-null
-	 * @param keyValue must be null if this is simple lookup, and non-null if this is keyed lookup
+	 * @return array of value types for each parameter. Note that the function
+	 *         would receive string and parse them into these types.
 	 */
-	public LookupValueProvider(Map<String, String> lookup, IValueProvider textValue, IValueProvider keyValue ) {
-		this.lookup = lookup;
-		this.textValue = textValue;
-		this.keyValue = keyValue;
-	}
-	
-	@Override
-	public String getValue(Map<String, String> input, IServiceContext ctx) {
-		String text = this.textValue.getValue(input, ctx);
-		if(text == null) {
-			return null;
-		}
-		if(this.keyValue != null) {
-			String key = this.keyValue.getValue(input, ctx);
-			if(key == null) {
-				return null;
-			}
-			text = key +Conventions.Upload.KEY_TEXT_SEPARATOR + text;
-		}
-		return this.lookup.get(text);
-	}
+	public ValueType[] getParamTypes();
 }

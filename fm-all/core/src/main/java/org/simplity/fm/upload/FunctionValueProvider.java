@@ -23,7 +23,9 @@
 package org.simplity.fm.upload;
 
 import java.util.Map;
-import java.util.function.Function;
+
+import org.simplity.fm.core.IFunction;
+import org.simplity.fm.core.service.IServiceContext;
 
 /**
  * Defines a function that evaluates to give a string
@@ -32,23 +34,23 @@ import java.util.function.Function;
  *
  */
 class FunctionValueProvider implements IValueProvider {
-	final Function<String[], String> function;
+	final IFunction function;
 	final IValueProvider[] params;
 
-	FunctionValueProvider(Function<String[], String> function, IValueProvider[] params){
+	FunctionValueProvider(IFunction function, IValueProvider[] params){
 		this.function = function;
 		this.params = params;
 	}
 
 	@Override
-	public String getValue(Map<String, String> input) {
+	public String getValue(Map<String, String> input, IServiceContext ctx) {
 		String[] values = null;
 		if (this.params != null) {
 			values = new String[this.params.length];
 			for (int i = 0; i < values.length; i++) {
-				values[i] = this.params[i].getValue(input);
+				values[i] = this.params[i].getValue(input, ctx);
 			}
 		}
-		return this.function.apply(values);
+		return this.function.eval(ctx, values);
 	}
 }

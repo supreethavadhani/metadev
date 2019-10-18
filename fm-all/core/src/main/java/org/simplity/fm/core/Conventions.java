@@ -179,14 +179,22 @@ public class Conventions {
 		public static final String GENERATED_MESSAGES_CLASS_NAME = "DefinedMessages";
 
 		/**
+		 * folder name under which services are defined
+		 */
+		public static final String FOLDER_NAME_SERVICE = "service";
+		/**
+		 * folder name under which services are defined
+		 */
+		public static final String FOLDER_NAME_FN = "fn";
+		/**
 		 * folder name under which classes related to list are generated
 		 */
-		public static final String FOLDER_NAME_LIST = "list";
+		public static final String FOLDER_NAME_LIST = "gen/list";
 
 		/**
 		 * folder name under which form classes are generated
 		 */
-		public static final String FOLDER_NAME_FORM = "form";
+		public static final String FOLDER_NAME_FORM = "gen/form";
 
 		/**
 		 * predefined name for list service

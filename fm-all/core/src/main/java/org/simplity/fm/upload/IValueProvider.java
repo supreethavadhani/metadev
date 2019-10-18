@@ -24,6 +24,8 @@ package org.simplity.fm.upload;
 
 import java.util.Map;
 
+import org.simplity.fm.core.service.IServiceContext;
+
 /**
  * @author simplity.org
  *
@@ -32,7 +34,8 @@ public interface IValueProvider {
 	/**
 	 * get the value for this field
 	 * @param input values
+	 * @param ctx service context
 	 * @return the value for this field
 	 */
-	public String getValue(Map<String, String> input);
+	public String getValue(Map<String, String> input, IServiceContext ctx);
 }

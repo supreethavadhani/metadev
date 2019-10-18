@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Conventions;
+import org.simplity.fm.core.IFunction;
 import org.simplity.fm.core.form.Field;
 import org.simplity.fm.core.form.Form;
 import org.simplity.fm.core.form.FormData;
@@ -148,12 +149,13 @@ public class FormMapper {
 	}
 
 	private IValueProvider parseVp(String value, IServiceContext ctx, boolean fnOk) {
-		if (value.isEmpty()) {
+		if (value == null || value.isEmpty()) {
 			return new ValueProvider(null, "");
 		}
-
-		char c = value.charAt(0);
-		String text = value.substring(1);
+		String input = value.trim();
+		char c = input.charAt(0);
+		String text = value.substring(1).trim();
+		
 		if (c == Conventions.Upload.TYPE_VAR) {
 			return new ValueProvider(text, null);
 		}
@@ -177,45 +179,54 @@ public class FormMapper {
 		if (c == Conventions.Upload.TYPE_LOOKUP) {
 			isFn = false;
 		} else if (c != Conventions.Upload.TYPE_FN) {
-			logger.error("{} is an invalid value. It is starting with an invalid char '{}'", value, c);
-			return null;
+			/*
+			 * first char is not a special character. so the whole input is constant 
+			 */
+			return new ValueProvider(null, input);
 		}
+		/*
+		 * we are left with fn and lookup both use parameters. both are of the form name(p1, p2..)
+		 */
 		if (!fnOk) {
-			logger.error("{} is an invalid paramater. Parameter of a function can not be function again.", value);
+			logger.error("{} is an invalid paramater. Parameter of a function/lookup can not be function/lookup again.", input);
 			return null;
 		}
 
-		String fn = parseName(text);
+		String nam = parseName(text);
 		IValueProvider[] vps = this.parseParams(text, ctx);
-		if (fn == null || vps == null || vps.length == 0) {
+		if (nam == null || vps == null || vps.length == 0) {
 			return null;
 		}
 
 		if (isFn) {
-			logger.error("Sorry, we are not ready yet with functions. Unable to process value ", value);
+			IFunction fn = this.loader.functions.get(nam);
+			if(fn == null) {
+			logger.error("{} is not declared as a function", nam);
 			return null;
+			}
+			return new FunctionValueProvider(fn, vps);
 		}
 
-		Map<String, String> valueList = this.loader.valueLists.get(fn);
+		Map<String, String> valueList = this.loader.valueLists.get(nam);
 		if (valueList == null) {
-			logger.error("{} is not a valid lookup name", fn);
+			logger.error("{} is not a valid lookup name", nam);
 			return null;
 		}
 
 		int nbr = vps.length;
 		IValueProvider vp1 = vps[0];
 		IValueProvider vp2 = null;
-		boolean isKeyed = this.loader.listsRequiringKey.contains(fn);
+		boolean isKeyed = this.loader.listsRequiringKey.contains(nam);
 		if (isKeyed) {
 			if (nbr == 2) {
 				vp2 = vps[1];
 			} else {
-				logger.error("look up {} is used with {} params. It should use 2 parameters as it is a keyed-list", fn,
+				logger.error("look up {} is used with {} params. It should use 2 parameters as it is a keyed-list", nam,
 						nbr);
 				return null;
 			}
 		} else if (nbr > 1) {
-			logger.error("look up {} is used with {} params. It should use only one param as it is not a keyd list", fn,
+			logger.error("look up {} is used with {} params. It should use only one param as it is not a keyd list", nam,
 					nbr);
 			return null;
 		}
@@ -306,7 +317,7 @@ public class FormMapper {
 		int idx = 0;
 		for (IValueProvider vp : this.valueProviders) {
 			if (vp != null) {
-				data[idx] = vp.getValue(values);
+				data[idx] = vp.getValue(values, ctx);
 			}
 			idx++;
 		}

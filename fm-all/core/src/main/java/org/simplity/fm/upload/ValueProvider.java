@@ -24,6 +24,8 @@ package org.simplity.fm.upload;
 
 import java.util.Map;
 
+import org.simplity.fm.core.service.IServiceContext;
+
 /**
  * specifies how a field in the form maps to columns in the input row
  * @author simplity.org
@@ -45,7 +47,7 @@ public class ValueProvider implements IValueProvider{
 	}
 	
 	@Override
-	public String getValue(Map<String, String> input) {
+	public String getValue(Map<String, String> input, IServiceContext ctx) {
 		String result = null;
 		if(this.variable != null) {
 			result = input.get(this.variable);

@@ -26,16 +26,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.JsonUtil;
+import org.simplity.fm.core.IFunction;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.IValueList;
-import org.simplity.fm.core.validn.RuntimeList;
-import org.simplity.fm.core.validn.ValueList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +68,7 @@ public class Uploader {
 	 */
 	Set<String> listsRequiringKey = new HashSet<>();
 	
-	Map<String, Function<String[], String>> functions = new HashMap<>();
+	Map<String, IFunction> functions = new HashMap<>();
 	FormMapper[] inserts;
 
 	private Uploader() {
@@ -117,23 +113,11 @@ public class Uploader {
 		
 		ele = json.get(Conventions.Upload.TAG_INSERTS);
 		if(ele == null || !ele.isJsonArray()) {
-			missingTag(Conventions.Upload.TAG_FUNCTIONS);
+			missingTag(Conventions.Upload.TAG_INSERTS);
 			return false;
 		}
 
-		for(JsonElement t : ((JsonArray)ele)) {
-			if(t == null || t.isJsonObject() == false) {
-				logger.error("{} has an invalid or missing form element", Conventions.Upload.TAG_FUNCTIONS);
-				return false;
-			}
-
-			if(!this.parseInsert((JsonObject)t)) {
-				return false;
-			}
-		}
-		
-		return true;
-		
+		return this.parseInsert((JsonArray)ele, ctx);
 	}
 
 	private boolean parseParams(JsonObject json) {
@@ -148,18 +132,32 @@ public class Uploader {
 		return true;
 	}
 
-	private static boolean parseFunctions(JsonObject json) {
-		logger.error("Sorry. We are not ready yet with functions.");
-		return false;
+	private boolean parseFunctions(JsonObject json) {
+		for(Map.Entry<String, JsonElement> entry : json.entrySet()) {
+			String attr = entry.getKey().trim();
+			JsonElement ele = entry.getValue();
+			if(!ele.isJsonPrimitive()) {
+				logger.error("function name {} should have a string value", attr);
+				return false;
+			}
+			String nam = ele.getAsString().trim();
+			IFunction fn = this.compProvider.getFunction(nam);
+			if(fn == null) {
+				logger.error("{} not defiined as a function in this application", nam);
+				return false;
+			}
+			this.functions.put(nam, fn);
+		}
+		return true;
 	}
 	
 	private boolean parseLookups(JsonObject json, IServiceContext ctx) {
 		for(Map.Entry<String, JsonElement> entry : json.entrySet()) {
-			String attr = entry.getKey();
+			String attr = entry.getKey().trim();
 			JsonElement ele = entry.getValue();
 			boolean ok = true;
 			if(ele.isJsonPrimitive()) {
-				ok = this.parseSystemList(attr, ele.getAsString(), ctx);
+				ok = this.parseSystemList(attr, ele.getAsString().trim(), ctx);
 			}else if(ele.isJsonObject()) {
 				ok = this.parseLocalList(attr, (JsonObject)ele);
 			}else {
@@ -239,9 +237,24 @@ public class Uploader {
 		logger.error("Tag/attribute {} is missing or is not valid", tagName);
 	}
 
-	private boolean parseInsert(JsonObject ele) {
-		
-		// TODO Auto-generated method stub
-		return false;
+	private boolean parseInsert(JsonArray arr,  IServiceContext ctx) {
+		int nbr = arr.size();
+		this.inserts = new FormMapper[nbr];
+		int idx = -1;
+		for(JsonElement t : arr) {
+			idx++;
+			if(t == null || t.isJsonObject() == false) {
+				logger.error("{} has an invalid or missing form element", Conventions.Upload.TAG_INSERTS);
+				return false;
+			}
+			FormMapper mapper = FormMapper.parseMapper((JsonObject)t, this, ctx);
+			if(mapper == null) {
+				logger.error("insert specification has errors.");
+				return false;
+			}
+			this.inserts[idx] = mapper;
+		}
+
+		return true;
 	}
 }
