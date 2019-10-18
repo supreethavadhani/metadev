@@ -364,18 +364,19 @@ public abstract class FormIo implements IService {
 			final BulkWorker worker = new BulkWorker(this.form, ctx);
 
 			arr.forEach(worker);
-			if (ctx.allOk()) {
-				logger.info("Bulk operation successful");
+			if (!ctx.allOk()) {
+				return;
 			}
+			
+			RdbDriver.getDriver().transact(worker, false);
 		}
 	}
 
-	protected static class BulkWorker implements Consumer<JsonElement> {
+	protected static class BulkWorker implements Consumer<JsonElement>, IDbClient {
+		private final List<FormData> fds = new ArrayList<>();
+		private final List<Boolean> updates = new ArrayList<>();
 		private final Form form;
 		private final IServiceContext ctx;
-		private int idx = -1;
-		protected int nbrInserts = 0;
-		protected int nbrUpdates = 0;
 
 		protected BulkWorker(Form form, IServiceContext ctx) {
 			this.form = form;
@@ -385,22 +386,47 @@ public abstract class FormIo implements IService {
 		@Override
 		public void accept(JsonElement ele) {
 			if (ele == null || ele instanceof JsonObject == false) {
-				this.idx++;
-				logger.error("Bulk row at 0-based index {} is null or not an object. row ignored.", this.idx);
+				logger.error("Bulk row is null or not an object. row ignored.");
 				return;
 			}
 			JsonObject json = (JsonObject) ele;
 			FormData fd = this.form.newFormData();
-			if (fd.loadKeys(json, this.ctx)) {
-				logger.info("Bulk row {} is being updated", this.idx);
-				// we have to update
-			} else {
-				// we have to insert
-				logger.info("Bulk row {} is being inserted", this.idx);
-			}
-
+			boolean toUpdate = fd.loadKeys(json, this.ctx);
+			fd.validateAndLoad(json, false, !toUpdate, this.ctx);
+			this.updates.add(toUpdate);
+			this.fds.add(fd);
 		}
-
+		
+		@Override
+		public boolean transact(DbHandle handle) throws SQLException {
+			if(this.fds.size() == 0) {
+				logger.info("Bulk worker has nothing to work on. ");
+				return true;
+			}
+			int nbrInserts = 0;
+			int nbrUpdates = 0;
+			int idx = -1;
+			for(FormData fd :this.fds) {
+				idx++;
+				if(this.updates.get(idx)) {
+					if(fd.update(handle)) {
+						logger.info("bulk row {} updated", idx);
+						nbrUpdates++;
+					}else {
+						logger.info("bulk row {} failed not update", idx);
+					}
+				}else {
+					if(fd.insert(handle)) {
+						logger.info("bulk row {} inserted", idx);
+						nbrInserts++;
+					}else {
+						logger.info("bulk row {} failed not insert", idx);
+					}
+				}
+			}
+			logger.info("Bulk Operation: {} rows inserted and {} rows updated", nbrInserts, nbrUpdates);
+			return true;
+		}
 	}
 
 	/**

@@ -31,9 +31,8 @@ import java.util.Map;
 public interface IValueProvider {
 	/**
 	 * get the value for this field
-	 * @param input
-	 * @param lookupLists 
+	 * @param input values
 	 * @return the value for this field
 	 */
-	public String getValue(Map<String, String> input, Map<String, Map<String, String>> lookupLists);
+	public String getValue(Map<String, String> input);
 }

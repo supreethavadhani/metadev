@@ -23,7 +23,9 @@
 package org.simplity.fm.upload;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -68,7 +70,7 @@ public class Uploader {
 	/*
 	 * for validating a look up: if keyed, then #list(a,b) else #list(a)
 	 */
-	Map<String, String> listsRequiringKey = new HashMap<>();
+	Set<String> listsRequiringKey = new HashSet<>();
 	
 	Map<String, Function<String[], String>> functions = new HashMap<>();
 	FormMapper[] inserts;
@@ -177,6 +179,7 @@ public class Uploader {
 		
 		for(Map.Entry<String, JsonElement> entry : json.entrySet()) {
 			if(entry.getValue().isJsonObject()) {
+				this.listsRequiringKey.add(attr);
 				return parseKeyedList(map, json);
 			}
 			return parseLocalSimpleList(map, json);
@@ -226,6 +229,9 @@ public class Uploader {
 			return false;
 		}
 		this.valueLists.put(lukupName, vl.getAll(ctx));
+		if(vl.isKeyBased()) {
+			this.listsRequiringKey.add(lukupName);
+		}
 		return true;
 	}
 

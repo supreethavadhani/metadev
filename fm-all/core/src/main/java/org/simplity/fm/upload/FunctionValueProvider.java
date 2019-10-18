@@ -41,12 +41,12 @@ class FunctionValueProvider implements IValueProvider {
 	}
 
 	@Override
-	public String getValue(Map<String, String> input, Map<String, Map<String, String>> lookupLists) {
+	public String getValue(Map<String, String> input) {
 		String[] values = null;
 		if (this.params != null) {
 			values = new String[this.params.length];
 			for (int i = 0; i < values.length; i++) {
-				values[i] = this.params[i].getValue(input, lookupLists);
+				values[i] = this.params[i].getValue(input);
 			}
 		}
 		return this.function.apply(values);

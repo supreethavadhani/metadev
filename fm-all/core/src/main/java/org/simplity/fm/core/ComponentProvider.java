@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.function.Function;
 
 import org.simplity.fm.core.datatypes.DataType;
 import org.simplity.fm.core.form.Form;
@@ -75,6 +76,13 @@ public abstract class ComponentProvider {
 	 * @return an instance for this id, or null if is not located
 	 */
 	public abstract IService getService(String serviceName);
+
+	/**
+	 * 
+	 * @param functionName
+	 * @return an instance for this id, or null if is not located
+	 */
+	public abstract Function<String[], String> getFunction(String functionName);
 
 	/**
 	 * 
@@ -181,6 +189,11 @@ public abstract class ComponentProvider {
 			public IService getService(String serviceName) {
 				return null;
 			}
+
+			@Override
+			public Function<String[], String> getFunction(String functionName) {
+				return null;
+			}
 		};
 	}
 
@@ -210,6 +223,7 @@ public abstract class ComponentProvider {
 		private final Map<String, Form> forms = new HashMap<>();
 		private final Map<String, IValueList> lists = new HashMap<>();
 		private final Map<String, IService> services = new HashMap<>();
+		private final Map<String, Function<String[], String>> functions = new HashMap<>();
 
 		protected CompProvider(IDataTypes dataTypes, IMessages messages, String genRootName, String serviceRootName) {
 			this.dataTypes = dataTypes;
@@ -308,6 +322,15 @@ public abstract class ComponentProvider {
 
 			return FormIo.getInstance(opern, serviceName.substring(idx + 1));
 
+		}
+
+		@Override
+		public Function<String[], String> getFunction(String functionName) {
+			Function<String[], String> fn = this.functions.get(functionName);
+			if (fn != null) {
+				return fn;
+			}
+			return fn;
 		}
 
 	}

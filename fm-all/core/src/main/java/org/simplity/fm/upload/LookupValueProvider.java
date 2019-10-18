@@ -24,35 +24,43 @@ package org.simplity.fm.upload;
 
 import java.util.Map;
 
+import org.simplity.fm.core.Conventions;
+
 /**
  * specifies how a field in the form maps to columns in the input row
  * @author simplity.org
  *
  */
-public class ValueProvider implements IValueProvider{
-	private final String variable;
-	private final String constant;
-	
+public class LookupValueProvider implements IValueProvider{
+	private final Map<String, String> lookup;
+	private final IValueProvider textValue;
+	private final IValueProvider keyValue;
+
 	/**
-	 * at least one of them should be non-null for this to be useful, though it is not an error
-	 * @param variable can be null
-	 * @param constant can be null
 	 * 
+	 * @param lookup must be non-null
+	 * @param textValue must be non-null
+	 * @param keyValue must be null if this is simple lookup, and non-null if this is keyed lookup
 	 */
-	public ValueProvider(String variable, String constant) {
-		this.variable = variable;
-		this.constant = constant;
+	public LookupValueProvider(Map<String, String> lookup, IValueProvider textValue, IValueProvider keyValue ) {
+		this.lookup = lookup;
+		this.textValue = textValue;
+		this.keyValue = keyValue;
 	}
 	
 	@Override
 	public String getValue(Map<String, String> input) {
-		String result = null;
-		if(this.variable != null) {
-			result = input.get(this.variable);
+		String text = this.textValue.getValue(input);
+		if(text == null) {
+			return null;
 		}
-		if(result == null && this.constant != null) {
-			result = this.constant;
+		if(this.keyValue != null) {
+			String key = this.keyValue.getValue(input);
+			if(key == null) {
+				return null;
+			}
+			text = key +Conventions.Upload.KEY_TEXT_SEPARATOR + text;
 		}
-		return result;
+		return this.lookup.get(text);
 	}
 }
