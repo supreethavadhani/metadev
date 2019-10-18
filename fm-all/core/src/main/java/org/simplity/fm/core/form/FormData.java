@@ -57,7 +57,7 @@ import com.google.gson.stream.JsonWriter;
  *
  */
 public class FormData {
-	private static final Logger logger = LoggerFactory.getLogger(FormData.class);
+	protected static final Logger logger = LoggerFactory.getLogger(FormData.class);
 	/**
 	 * data structure describes the template for which this object provides
 	 * actual data
@@ -881,10 +881,14 @@ public class FormData {
 					@Override
 					public void setParams(PreparedStatement ps) throws SQLException {
 						int posn = 1;
+						StringBuilder sbf = new StringBuilder("Parameter Values");
 						for (FormDbParam p : meta.insertParams) {
-							p.valueType.setPsParam(ps, posn, values[p.idx]);
+							Object value = values[p.idx];
+							p.valueType.setPsParam(ps, posn, value);
+							sbf.append('\n').append(posn).append('=').append(value);
 							posn++;
 						}
+						logger.info(sbf.toString());
 					}
 
 				}, meta.generatedColumnName, generatedKeys);
@@ -920,6 +924,7 @@ public class FormData {
 			logger.error("Form {} is not designed for db operation", this.form.getFormId());
 			return false;
 		}
+
 		int nbr = writeWorker(handle, meta.updateClause, meta.updateParams, this.fieldValues);
 		return nbr > 0;
 	}
@@ -969,10 +974,14 @@ public class FormData {
 				@Override
 				public void setParams(PreparedStatement ps) throws SQLException {
 					int posn = 1;
+					StringBuilder sbf = new StringBuilder("Parameter Values");
 					for (FormDbParam p : params) {
-						p.valueType.setPsParam(ps, posn, values[p.idx]);
+						Object value = values[p.idx];
+						p.valueType.setPsParam(ps, posn, value);
+						sbf.append('\n').append(posn).append('=').append(value);
 						posn++;
 					}
+					logger.info(sbf.toString());
 				}
 
 			});
@@ -1063,10 +1072,14 @@ public class FormData {
 					return;
 				}
 				int posn = 1;
+				StringBuilder sbf = new StringBuilder("Parameter Values");
 				for (FormDbParam p : setters) {
-					p.valueType.setPsParam(ps, posn, values[p.idx]);
+					Object value = values[p.idx];
+					p.valueType.setPsParam(ps, posn, value);
+					sbf.append('\n').append(posn).append('=').append(value);
 					posn++;
 				}
+				logger.info(sbf.toString());
 			}
 
 			@Override
@@ -1139,10 +1152,14 @@ public class FormData {
 						posn++;
 					}
 					posn = 1;
+					StringBuilder sbf = new StringBuilder("Parameter Values");
 					for (FormDbParam p : meta.insertParams) {
-						p.valueType.setPsParam(ps, posn, fd.fieldValues[p.idx]);
+						Object value = fd.fieldValues[p.idx];
+						p.valueType.setPsParam(ps, posn, value);
+						sbf.append('\n').append(posn).append('=').append(value);
 						posn++;
 					}
+					logger.info(sbf.toString());
 
 					this.rowIdx++;
 					return (this.rowIdx < rows.length);
@@ -1164,10 +1181,14 @@ public class FormData {
 			@Override
 			public void setParams(PreparedStatement ps) throws SQLException {
 				int posn = 1;
+				StringBuilder sbf = new StringBuilder("Parameter Values");
 				for (FormDbParam p : setters) {
-					p.valueType.setPsParam(ps, posn, values[p.idx]);
+					Object value = values[p.idx];
+					p.valueType.setPsParam(ps, posn, value);
+					sbf.append('\n').append(posn).append('=').append(value);
 					posn++;
 				}
+				logger.info(sbf.toString());
 			}
 
 			@Override
@@ -1221,5 +1242,17 @@ public class FormData {
 			validateAndSet(field, value, this.fieldValues, field.getIndex(), false, ctx, null, 0);
 		}
 		this.validateForm(ctx);
+	}
+
+	/**
+	 * log all field values
+	 */
+	public void logValues() {
+		logger.info("Data for form {}", this.form.getFormId());
+		int idx = -1;
+		for (Field field : this.form.fields) {
+			idx++;
+			logger.info("{} : {} = {}", field.getFieldName(), field.getDbColumnName(), this.fieldValues[idx]);
+		}
 	}
 }

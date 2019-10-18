@@ -38,6 +38,26 @@ import com.google.gson.JsonObject;
 
 /**
  * provides mapping of form fields with columns in the input row
+ * rules for parsing a value
+ * <li>$A input from row to be uploaded. In case of spreadsheet, this is the
+ * column name like $a, $b etc.. If the input is anything else, then this
+ * corresponds to the filed name in the input
+ * insensitive</li>
+ * <li>@variable this is a variable/parameter. Value for this parameter is
+ * provided in the uploaded header, or is made available at run time. This may
+ * also be a generated key name that is output by any of the form</li>
+ * 
+ * <li>#lookupName(name) look-up this value in the named list. The list is not
+ * keyed. name can be constant, variable or lookup.
+ * can not be function or lookup</li>
+ * <li>#lookupName(keyName, name) same as above, except that the look up list is
+ * keyed, and hence has two parameters</li>
+ * <li>%functionName(param1, param2...) evaluate the function with these values.
+ * Note that the params can not be a function/lookup. Should be constant,
+ * variable or input.</li>
+ * <li>=constant when constant starts with any of these reserved characters.
+ * e.g. =$ to set '$' or == to set '='
+ * </li>
  * 
  * @author simplity.org
  *
@@ -119,7 +139,7 @@ public class FormMapper {
 				return false;
 			}
 			IValueProvider vp = this.parseVp(ele.getAsString(), ctx, true);
-			if(vp == null) {
+			if (vp == null) {
 				return false;
 			}
 			this.valueProviders[field.getIndex()] = vp;

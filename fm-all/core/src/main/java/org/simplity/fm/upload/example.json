@@ -40,11 +40,13 @@
 			"f3": true,
 			"f4": "2019-12-22",
 			"f5": "$a",
-			"f6": "%param1",
-			"f7": "%aLocalList:$b",
-			"f8": "%localKeyedList:$c, $d",
-			"f9": "%lookup1:abcd",
-			"f0": "%lookup2:34, $e"
+			"f6": "@param1",
+			"f7": "#aLocalList($b)",
+			"f8": "#aLocalKeyedList($c, $d)",
+			"f9": "#lookup1:(abcd, @param1)",
+			"f10": "%aSystemDefinedFnName(12, $a)",
+			"f11": "=$",
+			"f12": "=abcd"
 		}
 	},
 	{

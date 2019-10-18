@@ -363,12 +363,13 @@ public abstract class FormIo implements IService {
 			logger.info("Started processing {} rows as bulk", nbrRows);
 			final BulkWorker worker = new BulkWorker(this.form, ctx);
 
+			//load data into the worker
 			arr.forEach(worker);
-			if (!ctx.allOk()) {
-				return;
+	
+			//push it to db 
+			if (ctx.allOk()) {
+				RdbDriver.getDriver().transact(worker, false);
 			}
-			
-			RdbDriver.getDriver().transact(worker, false);
 		}
 	}
 
@@ -413,14 +414,16 @@ public abstract class FormIo implements IService {
 						logger.info("bulk row {} updated", idx);
 						nbrUpdates++;
 					}else {
-						logger.info("bulk row {} failed not update", idx);
+						logger.info("bulk row {} failed to update row{} with folloing data", idx);
+						fd.logValues();
 					}
 				}else {
 					if(fd.insert(handle)) {
 						logger.info("bulk row {} inserted", idx);
 						nbrInserts++;
 					}else {
-						logger.info("bulk row {} failed not insert", idx);
+						logger.info("bulk row {} failed to insert with following values", idx);
+						fd.logValues();
 					}
 				}
 			}

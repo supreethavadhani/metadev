@@ -203,13 +203,17 @@ public enum ValueType {
 
 		@Override
 		public void setPsParam(PreparedStatement ps, int position, Object value) throws SQLException {
-			ps.setDate(position, Date.valueOf((LocalDate) value));
+			Date date = null;
+			if(value != null) {
+				date = Date.valueOf((LocalDate) value);
+			}
+			ps.setDate(position, date);
 		}
 
 		@Override
 		public LocalDate getFromRs(ResultSet rs, int position) throws SQLException {
 			Date date = rs.getDate(position);
-			if(rs.wasNull()) {
+			if(date == null) {
 				return null;
 			}
 			return date.toLocalDate();
@@ -233,13 +237,17 @@ public enum ValueType {
 
 		@Override
 		public void setPsParam(PreparedStatement ps, int position, Object value) throws SQLException {
-			ps.setTimestamp(position, Timestamp.from((Instant) value));
+			Timestamp stamp = null;
+			if(value != null) {
+				stamp = Timestamp.from((Instant) value);
+			}
+			ps.setTimestamp(position, stamp);
 		}
 
 		@Override
 		public Instant getFromRs(ResultSet rs, int position) throws SQLException {
 			Timestamp stamp = rs.getTimestamp(position);
-			if(rs.wasNull()) {
+			if(stamp == null) {
 				return null;
 			}
 			return stamp.toInstant();
