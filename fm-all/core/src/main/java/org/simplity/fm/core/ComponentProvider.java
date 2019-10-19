@@ -136,9 +136,9 @@ public abstract class ComponentProvider {
 	 */
 	private static ComponentProvider newInstance(String rootPackageName) {
 
-		String cls = rootPackageName + DOT + Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
+		String genRoot = rootPackageName + DOT + Conventions.App.FOLDER_NAME_GEN + DOT;
+		String cls = genRoot + Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
 		IDataTypes types = null;
-		IMessages messages = null;
 		try {
 			types = (IDataTypes) Class.forName(cls).newInstance();
 		} catch (Exception e) {
@@ -146,11 +146,12 @@ public abstract class ComponentProvider {
 			return null;
 		}
 
+		IMessages messages = null;
 		try {
-			cls = rootPackageName + DOT + Conventions.App.GENERATED_MESSAGES_CLASS_NAME;
+			cls = genRoot + Conventions.App.GENERATED_MESSAGES_CLASS_NAME;
 			messages = (IMessages) Class.forName(cls).newInstance();
 		} catch (Exception e) {
-			logger.error("Unable to locate class {}  as IMessages", cls);
+			logger.warn("Unable to locate class {}  as IMessages. YOu will see only message ids, and not message texts", cls);
 		}
 
 		return new CompProvider(types, messages, rootPackageName);
@@ -227,8 +228,9 @@ public abstract class ComponentProvider {
 		protected CompProvider(IDataTypes dataTypes, IMessages messages, String rootPackage) {
 			this.dataTypes = dataTypes;
 			this.messages = messages;
-			this.formRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_FORM + DOT;
-			this.listRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_LIST + DOT;
+			String genRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_GEN + DOT;
+			this.formRoot = genRoot + Conventions.App.FOLDER_NAME_FORM + DOT;
+			this.listRoot = genRoot + Conventions.App.FOLDER_NAME_LIST + DOT;
 			this.serviceRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_SERVICE + DOT;
 			this.fnRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_FN + DOT;
 			/*
@@ -287,13 +289,18 @@ public abstract class ComponentProvider {
 			if (service != null) {
 				return service;
 			}
-			service = this.tryFormIo(serviceId);
-			if (service == null) {
-				String cls = this.serviceRoot + toClassName(serviceId);
-				try {
-					service = (IService) Class.forName(cls).newInstance();
-				} catch (Exception e) {
-					logger.error("No service named {} because we could not locate class {}", serviceId, cls);
+			/*
+			 * we first check for a class. this approach allows us to over-ride standard formIO services
+			 */
+			String cls = this.serviceRoot + toClassName(serviceId);
+			try {
+				service = (IService) Class.forName(cls).newInstance();
+			} catch (Exception e) {
+				logger.info("Service {} is not defined as a java class {}", serviceId, cls);
+
+				service = this.tryFormIo(serviceId);
+				if (service == null) {
+					logger.error("Service {} is not served by this application", serviceId);
 					return null;
 				}
 			}
@@ -302,7 +309,7 @@ public abstract class ComponentProvider {
 		}
 
 		private FormIo tryFormIo(String serviceName) {
-			int idx = serviceName.indexOf('-');
+			int idx = serviceName.indexOf(Conventions.Http.SERVICE_OPER_SEPARATOR);
 			if (idx <= 0) {
 				return null;
 			}
@@ -321,7 +328,6 @@ public abstract class ComponentProvider {
 			}
 
 			return FormIo.getInstance(opern, serviceName.substring(idx + 1));
-
 		}
 
 		@Override
