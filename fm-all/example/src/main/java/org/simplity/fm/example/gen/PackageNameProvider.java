@@ -31,12 +31,7 @@ import org.simplity.fm.core.IPackageNameProvider;
  */
 public class PackageNameProvider implements IPackageNameProvider{
 
-	public String getGeneratedRootPackageName() {
-		return this.getClass().getPackage().getName() + ".gen";
+	public String getCompRootPackageName() {
+		return this.getClass().getPackage().getName();
 	}
-
-	public String getServiceRootPackageName() {
-		return this.getClass().getPackage().getName() + ".service";
-	}
-
 }

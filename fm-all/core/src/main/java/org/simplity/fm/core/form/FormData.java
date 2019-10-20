@@ -131,10 +131,17 @@ public class FormData {
 
 	/**
 	 * 
-	 * @return child data, or null if this form data has no child forms
+	 * @param childIdx 
+	 * @return child data, or null if this form data has no child forms, or the idx is out of range
 	 */
-	public FormData[][] getChildData() {
-		return this.childData;
+	public FormData[] getChildData(int childIdx) {
+		if(this.childData == null) {
+			return null;
+		}
+		if(childIdx < this.childData.length) {
+			return this.childData[childIdx];
+		}
+		return null;
 	}
 
 	/**
@@ -1121,11 +1128,13 @@ public class FormData {
 		for (DbLink link : this.form.dbMetaData.dbLinks) {
 			idx++;
 			if (link == null) {
+				logger.error("Db Link missing for child {}", idx);
 				continue;
 			}
 
 			FormData[] rows = this.childData[idx];
 			if (rows == null || rows.length == 0) {
+				logger.error("Child form at {} has has no data", idx);
 				continue;
 			}
 
