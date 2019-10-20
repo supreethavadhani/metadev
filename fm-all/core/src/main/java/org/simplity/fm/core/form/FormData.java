@@ -732,6 +732,10 @@ public class FormData {
 				}
 				if (ct == ColumnType.ModifiedBy || ct == ColumnType.CreatedBy) {
 					this.fieldValues[idx] = ctx.getUser().getUserId();
+					continue;
+				}
+				if(ct == ColumnType.TenantKey) {
+					this.fieldValues[idx] = ctx.getTenantId();
 				}
 			}
 

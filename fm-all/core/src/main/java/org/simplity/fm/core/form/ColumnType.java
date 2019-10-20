@@ -67,6 +67,11 @@ public enum ColumnType {
 		}
 
 		@Override
+		public boolean isRequired() {
+			return false;
+		}
+
+		@Override
 		public boolean isInput() {
 			return false;
 		}
