@@ -219,9 +219,14 @@ public class DbHandle {
 		logger.info("Batch SQL:{}", sql);
 
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
-			do {
+			while (true) {
+				boolean hasMore = writer.setParams(ps);
 				ps.addBatch();
-			} while (writer.setParams(ps));
+				if(!hasMore) {
+					break;
+				}
+			}
+			
 			int[] nbrs = ps.executeBatch();
 			int n = 0;
 			for (int i : nbrs) {
@@ -251,7 +256,7 @@ public class DbHandle {
 		String[] keys = { keyColumnName };
 
 		String sql = writer.getPreparedStatement();
-		if(sql == null) {
+		if (sql == null) {
 			logger.warn("Writer returned a null SQL, indicating no action.");
 			return 0;
 		}
@@ -260,9 +265,12 @@ public class DbHandle {
 			writer.setParams(ps);
 			int result = ps.executeUpdate();
 			if (result > 0) {
-				generatedKeys[0] = getGeneratedKey(ps);
+				long id = getGeneratedKey(ps);
+				logger.info("Row iinserted with generated key = {}", id);
+				generatedKeys[0] = id;
+			} else {
+				logger.info("{} rows inserted ", result);
 			}
-			logger.info("{} rows inserted ", result);
 			return result;
 		}
 	}

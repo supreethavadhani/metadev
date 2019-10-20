@@ -898,6 +898,13 @@ public class FormData {
 					}
 
 				}, meta.generatedColumnName, generatedKeys);
+				long id = generatedKeys[0];
+				if(id == 0) {
+					logger.error("DB handler did not return generated key");
+				}else {
+					this.fieldValues[this.form.keyIndexes[0]] = generatedKeys[0];
+					logger.info("Generated key {] assigned back to form data", id);
+				}
 			} catch (SQLException e) {
 				String msg = toMessage(e, meta.insertClause, meta.insertParams, values);
 				logger.error(msg);
@@ -1138,8 +1145,24 @@ public class FormData {
 				continue;
 			}
 
+			Form childForm = this.form.childForms[idx].form;
 			DbMetaData meta = link.childMeta;
-			Object[] values = this.fieldValues;
+			/*
+			 * we copy parent key to children. keep them in an array for faster access.
+			 */
+			final int nbrKeys = link.linkParentParams.length;
+			final Object[] parentKeys = new Object[nbrKeys];
+			final int[] childKeyIdexes = new int[nbrKeys];
+			
+			for(int i = 0; i < nbrKeys; i++) {
+				FormDbParam parentParam = link.linkParentParams[i];
+				parentKeys[i] = this.fieldValues[parentParam.idx];
+				
+				Field childKey = childForm.getField(link.childLinkNames[i]);
+				childKeyIdexes[i] = childKey.getIndex();
+			}
+			final int nbrRows = rows.length;
+			
 			handle.write(new IDbMultipleWriter() {
 				int rowIdx = 0;
 
@@ -1151,26 +1174,30 @@ public class FormData {
 				@Override
 				public boolean setParams(PreparedStatement ps) throws SQLException {
 					FormData fd = rows[this.rowIdx];
-					int posn = 0;
 					/*
 					 * copy parent keys to the child row
 					 */
-					for (String nam : link.childLinkNames) {
-						fd.fieldValues[fd.getFieldIndex(nam)] = values[link.linkParentParams[posn].idx];
-						posn++;
+					for (int i = 0; i < nbrKeys; i++) {
+						Object k = parentKeys[i];
+						fd.fieldValues[childKeyIdexes[i]] = k;
+						logger.info("parent key {} copied to child", k);
 					}
-					posn = 1;
-					StringBuilder sbf = new StringBuilder("Parameter Values");
+
+					StringBuilder sbf = new StringBuilder("Parameter Values for batch row ").append(this.rowIdx);
+					int posn = 0;
 					for (FormDbParam p : meta.insertParams) {
+						posn++;
 						Object value = fd.fieldValues[p.idx];
 						p.valueType.setPsParam(ps, posn, value);
 						sbf.append('\n').append(posn).append('=').append(value);
-						posn++;
 					}
 					logger.info(sbf.toString());
 
+					/*
+					 * return true if we have to add more. false if we are done
+					 */
 					this.rowIdx++;
-					return (this.rowIdx < rows.length);
+					return (this.rowIdx < nbrRows);
 				}
 			});
 		}
