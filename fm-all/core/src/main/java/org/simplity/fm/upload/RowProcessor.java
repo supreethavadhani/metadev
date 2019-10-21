@@ -41,7 +41,7 @@ import org.simplity.fm.core.validn.IValueList;
  *
  */
 public class RowProcessor {
-	protected final FormMapper[] inserts;
+	protected final FormLoader[] inserts;
 	protected final IValueList[] systemLists;
 	protected final Map<String, Map<String, String>> valueLists;
 	
@@ -53,7 +53,7 @@ public class RowProcessor {
 	 * @param valueLists value lists defined for this processors
 	 * @param systemLists app/system defined lists
 	 */
-	public RowProcessor(FormMapper[] inserts, Map<String, Map<String, String>> valueLists, IValueList[] systemLists) {
+	public RowProcessor(FormLoader[] inserts, Map<String, Map<String, String>> valueLists, IValueList[] systemLists) {
 		this.inserts = inserts;
 		this.valueLists = valueLists;
 		this.systemLists = systemLists;
@@ -85,12 +85,12 @@ public class RowProcessor {
 	}
 
 	/*
-	 * this is an un-orthodox design. We have clubbed function of two methods
+	 * this is an unusual design. We have clubbed function of two methods
 	 * into one.
 	 * We considered defining an interface with two methods, one to get the next
 	 * row, and the other to give back the result of processing that row. That
 	 * way we will be calling them alternately.
-	 * However, that design does not reflect that fact that they will be called
+	 * However, that design does not reflect the fact that they will be called
 	 * alternately.
 	 *
 	 */
@@ -133,8 +133,8 @@ public class RowProcessor {
 					return;
 				}
 				this.ctx.resetMessages();
-				for (FormMapper mapper : RowProcessor.this.inserts) {
-					mapper.loadData(values, this.allLists, this.ctx);
+				for (FormLoader mapper : RowProcessor.this.inserts) {
+					mapper.loadData(values, this.ctx);
 					String kn = mapper.getGeneratedKeyOutputName();
 					if (kn != null) {
 						/*
@@ -172,8 +172,8 @@ public class RowProcessor {
 				}
 				this.ctx.resetMessages();
 				boolean allOk = true;
-				for (FormMapper mapper : RowProcessor.this.inserts) {
-					FormData fd = mapper.loadData(values, this.allLists, this.ctx);
+				for (FormLoader mapper : RowProcessor.this.inserts) {
+					FormData fd = mapper.loadData(values, this.ctx);
 					if (fd == null) {
 						allOk = false;
 						break;

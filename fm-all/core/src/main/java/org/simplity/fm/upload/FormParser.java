@@ -23,14 +23,13 @@
 package org.simplity.fm.upload;
 
 import java.util.Map;
+import java.util.Set;
 
 import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.IFunction;
 import org.simplity.fm.core.form.Field;
 import org.simplity.fm.core.form.Form;
-import org.simplity.fm.core.form.FormData;
-import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,66 +62,71 @@ import com.google.gson.JsonObject;
  * @author simplity.org
  *
  */
-public class FormMapper {
+class FormParser {
+	private static final Logger logger = LoggerFactory.getLogger(FormParser.class);
 
-	private static final Logger logger = LoggerFactory.getLogger(FormMapper.class);
+	private ComponentProvider compProvider = ComponentProvider.getProvider();
+	/*
+	 * what is defined in this processor
+	 */
+	private final Map<String, String> params;
+	private final Map<String, Map<String, String>> valueLists;
+	private final Set<String> listsRequiringKey;
+	private final Map<String, IFunction> functions ;
 
-	static FormMapper parseMapper(JsonObject json, Uploader loader, IServiceContext ctx) {
-		FormMapper mapper = new FormMapper();
-		mapper.loader = loader;
-		if (mapper.parse(json, ctx)) {
-			return mapper;
-		}
-		return null;
+	/*
+	 * we are going to parse these
+	 */
+	private Form form;
+	private String generatedKeyOutputName;
+	private IValueProvider[] valueProviders;
+
+	FormParser(Map<String, String> params, Map<String, Map<String, String>> valueLists, Set<String> listsRequiringKey, Map<String, IFunction> functions) {
+	this.params = params;
+	this.valueLists = valueLists;
+	this.listsRequiringKey = listsRequiringKey;
+	this.functions = functions;
 	}
 
-	ComponentProvider compProvider = ComponentProvider.getProvider();
-	// parent loader. Used for validations
-	Uploader loader;
-	Form form;
-	String generatedKeyOutputName;
-	IValueProvider[] valueProviders;
-
-	private FormMapper() {
-		//
-	}
-
-	private boolean parse(JsonObject json, IServiceContext ctx) {
+	protected FormLoader parse(JsonObject json) {
 
 		JsonElement ele = json.get(Conventions.Upload.TAG_FORM);
 		if (ele == null || !ele.isJsonPrimitive()) {
 			logger.error("{} is required for an form mapper", Conventions.Upload.TAG_FORM);
-			return false;
+			return null;
 		}
 
-		String text = ele.getAsString();
+		String text = ele.getAsString().trim();
 		this.form = this.compProvider.getForm(text);
 		if (this.form == null) {
 			logger.error("{} is not a valid form name", text);
-			return false;
+			return null;
 		}
 
 		ele = json.get(Conventions.Upload.TAG_GENERATED_KEY);
 		if (ele != null) {
 			if (ele.isJsonPrimitive()) {
-				this.generatedKeyOutputName = ele.getAsString();
+				this.generatedKeyOutputName = ele.getAsString().trim();
 			} else {
 				logger.error("{} has an invalid value", Conventions.Upload.TAG_GENERATED_KEY);
-				return false;
+				return null;
 			}
 		}
 
 		ele = json.get(Conventions.Upload.TAG_FIELDS);
 		if (ele == null || !ele.isJsonObject()) {
 			logger.error("form mapper has {} attribute missing or invalid", Conventions.Upload.TAG_FIELDS);
-			return false;
+			return null;
 		}
 
-		return this.parseFields((JsonObject) ele, ctx);
+		if (!this.parseFields((JsonObject) ele)) {
+			return null;
+		}
+
+		return new FormLoader(this.form, this.generatedKeyOutputName, this.valueProviders);
 	}
 
-	private boolean parseFields(JsonObject json, IServiceContext ctx) {
-
+	private boolean parseFields(JsonObject json) {
 		this.valueProviders = new IValueProvider[this.form.getNbrFields()];
 		for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
 
@@ -135,11 +139,12 @@ public class FormMapper {
 			}
 
 			JsonElement ele = entry.getValue();
-			if (ele.isJsonPrimitive() == false) {
+			if (!ele.isJsonPrimitive()) {
 				logger.error("Field {} in the form {} has an invalid value", fieldName, this.form.getFormId());
 				return false;
 			}
-			IValueProvider vp = this.parseVp(ele.getAsString(), ctx, true);
+
+			IValueProvider vp = this.parseVp(ele.getAsString().trim(), true);
 			if (vp == null) {
 				return false;
 			}
@@ -148,14 +153,14 @@ public class FormMapper {
 		return true;
 	}
 
-	private IValueProvider parseVp(String value, IServiceContext ctx, boolean fnOk) {
+	private IValueProvider parseVp(String value, boolean fnOk) {
 		if (value == null || value.isEmpty()) {
 			return new ValueProvider(null, "");
 		}
-		String input = value.trim();
-		char c = input.charAt(0);
-		String text = value.substring(1).trim();
-		
+
+		char c = value.charAt(0);
+		String text = value.substring(1);
+
 		if (c == Conventions.Upload.TYPE_VAR) {
 			return new ValueProvider(text, null);
 		}
@@ -165,7 +170,7 @@ public class FormMapper {
 		}
 
 		if (c == Conventions.Upload.TYPE_PARAM) {
-			String t = this.loader.params.get(text);
+			String t = this.params.get(text);
 			if (t == null) {
 				logger.error(
 						"{} is used as a paremeter for a field, but it is not defined as a parameter in the parameters list",
@@ -180,34 +185,37 @@ public class FormMapper {
 			isFn = false;
 		} else if (c != Conventions.Upload.TYPE_FN) {
 			/*
-			 * first char is not a special character. so the whole input is constant 
+			 * first char is not a special character. so the whole input is
+			 * constant
 			 */
-			return new ValueProvider(null, input);
+			return new ValueProvider(null, value);
 		}
 		/*
-		 * we are left with fn and lookup both use parameters. both are of the form name(p1, p2..)
+		 * we are left with fn and lookup both use parameters. both are of the
+		 * form name(p1, p2..)
 		 */
 		if (!fnOk) {
-			logger.error("{} is an invalid paramater. Parameter of a function/lookup can not be function/lookup again.", input);
+			logger.error("{} is an invalid paramater. Parameter of a function/lookup can not be function/lookup again.",
+					value);
 			return null;
 		}
 
 		String nam = parseName(text);
-		IValueProvider[] vps = this.parseParams(text, ctx);
+		IValueProvider[] vps = this.parseParams(text);
 		if (nam == null || vps == null || vps.length == 0) {
 			return null;
 		}
 
 		if (isFn) {
-			IFunction fn = this.loader.functions.get(nam);
-			if(fn == null) {
-			logger.error("{} is not declared as a function", nam);
-			return null;
+			IFunction fn = this.functions.get(nam);
+			if (fn == null) {
+				logger.error("{} is not declared as a function", nam);
+				return null;
 			}
 			return new FunctionValueProvider(fn, vps);
 		}
 
-		Map<String, String> valueList = this.loader.valueLists.get(nam);
+		Map<String, String> valueList = this.valueLists.get(nam);
 		if (valueList == null) {
 			logger.error("{} is not a valid lookup name", nam);
 			return null;
@@ -216,7 +224,7 @@ public class FormMapper {
 		int nbr = vps.length;
 		IValueProvider vp1 = vps[0];
 		IValueProvider vp2 = null;
-		boolean isKeyed = this.loader.listsRequiringKey.contains(nam);
+		boolean isKeyed = this.listsRequiringKey.contains(nam);
 		if (isKeyed) {
 			if (nbr == 2) {
 				vp2 = vps[1];
@@ -226,8 +234,8 @@ public class FormMapper {
 				return null;
 			}
 		} else if (nbr > 1) {
-			logger.error("look up {} is used with {} params. It should use only one param as it is not a keyd list", nam,
-					nbr);
+			logger.error("look up {} is used with {} params. It should use only one param as it is not a keyd list",
+					nam, nbr);
 			return null;
 		}
 
@@ -241,7 +249,7 @@ public class FormMapper {
 	private static String parseName(String text) {
 		int idx = text.indexOf('(');
 		if (idx == -1) {
-			logger.error("'(' not found for aa fn/lookup");
+			logger.error("'(' not found for a fn/lookup");
 			invalidFn(text);
 			return null;
 		}
@@ -257,9 +265,7 @@ public class FormMapper {
 	 * text is possibly of the form " abcd ( =a, $b, #c)  " we have to return
 	 * array of three IvalueProviders
 	 */
-	private IValueProvider[] parseParams(String text, IServiceContext ctx) {
-
-		String s = text.trim(); // s="abcd ( =a, $b, #c)"
+	private IValueProvider[] parseParams(String text) {
 		// look for (
 		int idx = text.indexOf('(');
 		if (idx == -1) {
@@ -268,7 +274,7 @@ public class FormMapper {
 			return null;
 		}
 
-		s = s.substring(idx);// s="( =a, $b, #c)"
+		String s = text.substring(idx);// s="( =a, $b, #c)"
 		idx = s.indexOf(')');
 		if (idx == -1) {
 			logger.error("')' not found for fn/lookup ");
@@ -285,7 +291,7 @@ public class FormMapper {
 		s = s.substring(1, idx).trim(); // s="=a, $b, #c"
 
 		if (s.isEmpty()) {
-			logger.error("Fb/lookup has no parameters. We expect at least one parameter");
+			logger.error("Fn/lookup has no parameters. We expect at least one parameter");
 			invalidFn(text);
 			return null;
 		}
@@ -293,49 +299,12 @@ public class FormMapper {
 		String[] arr = s.split(",");
 		IValueProvider[] result = new IValueProvider[arr.length];
 		for (int i = 0; i < arr.length; i++) {
-			IValueProvider vp = this.parseVp(arr[i].trim(), ctx, false);
+			IValueProvider vp = this.parseVp(arr[i].trim(), false);
 			if (vp == null) {
 				return null;
 			}
 			result[i] = vp;
 		}
 		return result;
-	}
-
-	/**
-	 * @param values
-	 * @param lookupLists
-	 * @param ctx
-	 *            that must have user and tenantKey if the insert operation
-	 *            require these
-	 * @return loaded form data. null in case of any error in loading. Actual
-	 *         error messages are put into the context
-	 */
-	public FormData loadData(Map<String, String> values, Map<String, Map<String, String>> lookupLists,
-			IServiceContext ctx) {
-		String[] data = new String[this.valueProviders.length];
-		int idx = 0;
-		for (IValueProvider vp : this.valueProviders) {
-			if (vp != null) {
-				data[idx] = vp.getValue(values, ctx);
-			}
-			idx++;
-		}
-
-		FormData fd = this.form.newFormData();
-		ctx.resetMessages();
-		fd.validateAndLoadForInsert(data, ctx);
-		if (ctx.allOk()) {
-			return fd;
-		}
-
-		return null;
-	}
-
-	/**
-	 * @return the generatedKeyOutputName
-	 */
-	public String getGeneratedKeyOutputName() {
-		return this.generatedKeyOutputName;
 	}
 }

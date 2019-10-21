@@ -131,14 +131,15 @@ public class FormData {
 
 	/**
 	 * 
-	 * @param childIdx 
-	 * @return child data, or null if this form data has no child forms, or the idx is out of range
+	 * @param childIdx
+	 * @return child data, or null if this form data has no child forms, or the
+	 *         idx is out of range
 	 */
 	public FormData[] getChildData(int childIdx) {
-		if(this.childData == null) {
+		if (this.childData == null) {
 			return null;
 		}
-		if(childIdx < this.childData.length) {
+		if (childIdx < this.childData.length) {
 			return this.childData[childIdx];
 		}
 		return null;
@@ -712,36 +713,47 @@ public class FormData {
 	private void setFeilds(JsonObject json, boolean allFieldsAreOptional, boolean keyIsOptional, IServiceContext ctx,
 			String childName, int rowNbr) {
 
+		boolean fieldIsOptional = allFieldsAreOptional;
 		int userIdx = this.form.getUserIdFieldIdx();
 		for (Field field : this.form.getFields()) {
 			int idx = field.getIndex();
+
 			if (userIdx > -1 && field.getIndex() == userIdx) {
 				this.setUserId(ctx.getUser());
 				userIdx = -1; // we are done
 				continue;
 			}
+
+			String fieldName = field.getFieldName();
 			ColumnType ct = field.getColumnType();
 			if (ct != null) {
-				if (!ct.isInput()) {
-					logger.info("Field {} skipped as we do not expect it from client", field.getFieldName());
+				/*
+				 * do we have to set value from our side?
+				 */
+				if (ct == ColumnType.TenantKey) {
+					this.fieldValues[idx] = ctx.getTenantId();
+					logger.info("tenant id set to field {}", fieldName);
 					continue;
 				}
-				if (keyIsOptional && (ct == ColumnType.GeneratedPrimaryKey || ct == ColumnType.PrimaryKey)) {
-					logger.info("key field {} is skipped as we do not expect it from client", field.getFieldName());
-					continue;
-				}
+
 				if (ct == ColumnType.ModifiedBy || ct == ColumnType.CreatedBy) {
 					this.fieldValues[idx] = ctx.getUser().getUserId();
+					logger.info("Field {} is user field, and is assigned value from the context", fieldName);
 					continue;
 				}
-				if(ct == ColumnType.TenantKey) {
-					this.fieldValues[idx] = ctx.getTenantId();
+
+				/*
+				 * should we force this to be optional?
+				 */
+				if (ct == ColumnType.GeneratedPrimaryKey || ct == ColumnType.PrimaryAndParentKey || ct == ColumnType.PrimaryKey) {
+					fieldIsOptional = keyIsOptional;
+				}else if(ct.isInput() == false) {
+					fieldIsOptional = true;
 				}
 			}
 
 			String value = getTextAttribute(json, field.getFieldName());
-			validateAndSet(field, value, this.fieldValues, field.getIndex(), allFieldsAreOptional, ctx, childName,
-					rowNbr);
+			validateAndSet(field, value, this.fieldValues, field.getIndex(), fieldIsOptional, ctx, childName, rowNbr);
 		}
 	}
 
@@ -903,9 +915,9 @@ public class FormData {
 
 				}, meta.generatedColumnName, generatedKeys);
 				long id = generatedKeys[0];
-				if(id == 0) {
+				if (id == 0) {
 					logger.error("DB handler did not return generated key");
-				}else {
+				} else {
 					this.fieldValues[this.form.keyIndexes[0]] = generatedKeys[0];
 					logger.info("Generated key {] assigned back to form data", id);
 				}
@@ -1152,21 +1164,22 @@ public class FormData {
 			Form childForm = this.form.childForms[idx].form;
 			DbMetaData meta = link.childMeta;
 			/*
-			 * we copy parent key to children. keep them in an array for faster access.
+			 * we copy parent key to children. keep them in an array for faster
+			 * access.
 			 */
 			final int nbrKeys = link.linkParentParams.length;
 			final Object[] parentKeys = new Object[nbrKeys];
 			final int[] childKeyIdexes = new int[nbrKeys];
-			
-			for(int i = 0; i < nbrKeys; i++) {
+
+			for (int i = 0; i < nbrKeys; i++) {
 				FormDbParam parentParam = link.linkParentParams[i];
 				parentKeys[i] = this.fieldValues[parentParam.idx];
-				
+
 				Field childKey = childForm.getField(link.childLinkNames[i]);
 				childKeyIdexes[i] = childKey.getIndex();
 			}
 			final int nbrRows = rows.length;
-			
+
 			handle.write(new IDbMultipleWriter() {
 				int rowIdx = 0;
 

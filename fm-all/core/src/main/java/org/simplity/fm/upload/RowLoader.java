@@ -22,39 +22,14 @@
 
 package org.simplity.fm.upload;
 
-import java.util.Map;
-
-import org.simplity.fm.core.service.IServiceContext;
-
 /**
- * specifies how a field in the form maps to columns in the input row
  * @author simplity.org
  *
  */
-public class ValueProvider implements IValueProvider{
-	private final String variable;
-	private final String constant;
-	
-	/**
-	 * at least one of them should be non-null for this to be useful, though it is not an error
-	 * @param variable if no null, a value is tried for this variable first. If null, this is skipped.
-	 * @param constant this value is used if variable is null, or its value is null.
-	 * 
-	 */
-	public ValueProvider(String variable, String constant) {
-		this.variable = variable;
-		this.constant = constant;
-	}
-	
-	@Override
-	public String getValue(Map<String, String> input, IServiceContext ctx) {
-		String result = null;
-		if(this.variable != null) {
-			result = input.get(this.variable);
-		}
-		if(result == null && this.constant != null) {
-			result = this.constant;
-		}
-		return result;
+class RowLoader {
+	private final FormLoader[] inserts;
+
+	RowLoader(FormLoader[] inserts) {
+		this.inserts = inserts;
 	}
 }

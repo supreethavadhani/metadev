@@ -43,49 +43,32 @@ import com.google.gson.JsonObject;
  * @author simplity.org
  *
  */
-public class Uploader {
-	protected static final Logger logger = LoggerFactory.getLogger(Uploader.class);
+public class RowParser {
+	protected static final Logger logger = LoggerFactory.getLogger(RowParser.class);
 
-	/**
-	 * parse the JSON into a parser.
-	 * @param json
-	 * @param ctx
-	 * @return An uploader that is ready to be called repeatedly for upload()
-	 */
-	public static Uploader parseUploader(JsonObject json, IServiceContext ctx) {
-		Uploader ul = new Uploader();
-		if(ul.parse(json, ctx)){
-			return ul;
-		}
-		return null;
-	}
-	
-	ComponentProvider compProvider = ComponentProvider.getProvider();
-	Map<String, String> params = new HashMap<>();
-	Map<String, Map<String, String>> valueLists = new HashMap<>();
-	/*
-	 * for validating a look up: if keyed, then #list(a,b) else #list(a)
-	 */
-	Set<String> listsRequiringKey = new HashSet<>();
-	
-	Map<String, IFunction> functions = new HashMap<>();
-	FormMapper[] inserts;
+	private final ComponentProvider compProvider = ComponentProvider.getProvider();
+	private final Map<String, String> params = new HashMap<>();
+	private final Map<String, Map<String, String>> valueLists = new HashMap<>();
+	private final Set<String> listsRequiringKey = new HashSet<>();
+	private final Map<String, IFunction> functions = new HashMap<>();
 
-	private Uploader() {
+	FormLoader[] inserts;
+
+	private RowParser() {
 		//
 	}
 
-	private boolean parse(JsonObject json, IServiceContext ctx) {
+	RowLoader parse(JsonObject json, IServiceContext ctx) {
 		
 		JsonElement ele = json.get(Conventions.Upload.TAG_PARAMS);
 		if(ele != null ) {
 			if(!ele.isJsonObject()) {
 				missingTag(Conventions.Upload.TAG_PARAMS);
-				return false;
+				return null;
 			}
 			
 			if(!this.parseParams((JsonObject)ele)) {
-				return false;
+				return null;
 			}
 		}
 		
@@ -93,10 +76,10 @@ public class Uploader {
 		if(ele != null ) {
 			if(!ele.isJsonObject()) {
 				missingTag(Conventions.Upload.TAG_LOOKUPS);
-				return false;
+				return null;
 			}
 			if(!this.parseLookups((JsonObject)ele, ctx)) {
-				return false;
+				return null;
 			}
 		}
 		
@@ -104,20 +87,23 @@ public class Uploader {
 		if(ele != null ) {
 			if(!ele.isJsonObject()) {
 				missingTag(Conventions.Upload.TAG_FUNCTIONS);
-				return false;
+				return null;
 			}
 			if(!parseFunctions((JsonObject)ele)) {
-				return false;
+				return null;
 			}
 		}
 		
 		ele = json.get(Conventions.Upload.TAG_INSERTS);
 		if(ele == null || !ele.isJsonArray()) {
 			missingTag(Conventions.Upload.TAG_INSERTS);
-			return false;
+			return null;
 		}
 
-		return this.parseInsert((JsonArray)ele, ctx);
+		if(this.parseInsert((JsonArray)ele)) {
+			return new RowLoader(this.inserts);
+		}
+		return null;
 	}
 
 	private boolean parseParams(JsonObject json) {
@@ -237,22 +223,23 @@ public class Uploader {
 		logger.error("Tag/attribute {} is missing or is not valid", tagName);
 	}
 
-	private boolean parseInsert(JsonArray arr,  IServiceContext ctx) {
+	private boolean parseInsert(JsonArray arr) {
 		int nbr = arr.size();
-		this.inserts = new FormMapper[nbr];
+		this.inserts = new FormLoader[nbr];
 		int idx = -1;
+		FormParser fp = new FormParser(this.params, this.valueLists, this.listsRequiringKey, this.functions);
 		for(JsonElement t : arr) {
 			idx++;
 			if(t == null || t.isJsonObject() == false) {
 				logger.error("{} has an invalid or missing form element", Conventions.Upload.TAG_INSERTS);
 				return false;
 			}
-			FormMapper mapper = FormMapper.parseMapper((JsonObject)t, this, ctx);
-			if(mapper == null) {
+			FormLoader insert = fp.parse((JsonObject)t);
+			if(insert == null) {
 				logger.error("insert specification has errors.");
 				return false;
 			}
-			this.inserts[idx] = mapper;
+			this.inserts[idx] = insert;
 		}
 
 		return true;

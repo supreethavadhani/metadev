@@ -37,7 +37,15 @@ class FunctionValueProvider implements IValueProvider {
 	final IFunction function;
 	final IValueProvider[] params;
 
-	FunctionValueProvider(IFunction function, IValueProvider[] params){
+	/**
+	 * 
+	 * @param function
+	 *            non-null function to be executed
+	 * @param params
+	 *            value providers for the parameters. number must match the
+	 *            desired number of params for the function
+	 */
+	FunctionValueProvider(IFunction function, IValueProvider[] params) {
 		this.function = function;
 		this.params = params;
 	}

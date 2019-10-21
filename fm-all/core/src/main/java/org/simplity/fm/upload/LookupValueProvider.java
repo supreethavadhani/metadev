@@ -39,8 +39,8 @@ public class LookupValueProvider implements IValueProvider{
 
 	/**
 	 * 
-	 * @param lookup must be non-null
-	 * @param textValue must be non-null
+	 * @param lookup used for looking up internal value for the input text
+	 * @param textValue non-null value provider for text to look up.
 	 * @param keyValue must be null if this is simple lookup, and non-null if this is keyed lookup
 	 */
 	public LookupValueProvider(Map<String, String> lookup, IValueProvider textValue, IValueProvider keyValue ) {
@@ -55,6 +55,7 @@ public class LookupValueProvider implements IValueProvider{
 		if(text == null) {
 			return null;
 		}
+		
 		if(this.keyValue != null) {
 			String key = this.keyValue.getValue(input, ctx);
 			if(key == null) {
