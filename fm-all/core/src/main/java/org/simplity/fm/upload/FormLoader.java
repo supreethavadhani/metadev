@@ -22,10 +22,13 @@
 
 package org.simplity.fm.upload;
 
+import java.sql.SQLException;
 import java.util.Map;
 
+import org.simplity.fm.core.Message;
 import org.simplity.fm.core.form.Form;
 import org.simplity.fm.core.form.FormData;
+import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
@@ -45,6 +48,8 @@ class FormLoader {
 	 */
 	private final IValueProvider[] valueProviders;
 
+	private final int keyIdx;
+
 	/**
 	 * 
 	 * @param form
@@ -61,17 +66,29 @@ class FormLoader {
 		this.form = form;
 		this.generatedKeyOutputName = generatedKeyOutputName;
 		this.valueProviders = valueProviders;
+		if (this.generatedKeyOutputName == null) {
+			this.keyIdx = -1;
+		} else {
+			this.keyIdx = this.form.getKeyIndexes()[0];
+		}
 	}
 
 	/**
+	 * validate data
+	 * 
 	 * @param values
 	 * @param ctx
 	 *            that must have user and tenantKey if the insert operation
-	 *            require these
-	 * @return loaded form data. null in case of any error in loading. Actual
-	 *         error messages are put into the context
+	 *            require these. errors, if any are added to this.
+	 * @return true of all ok. false otherwise, in which case ctx will have the
+	 *         errors
 	 */
-	FormData loadData(Map<String, String> values, IServiceContext ctx) {
+	boolean validate(Map<String, String> values, IServiceContext ctx){
+		return this.parseInput(values, ctx) != null;
+
+	}
+
+	private FormData parseInput(Map<String, String> values, IServiceContext ctx) {
 		String[] data = new String[this.valueProviders.length];
 		int idx = -1;
 		for (IValueProvider vp : this.valueProviders) {
@@ -82,19 +99,43 @@ class FormLoader {
 		}
 
 		FormData fd = this.form.newFormData();
-		ctx.resetMessages();
+		int nbrExistingErrors = ctx.getNbrErrors();
 		fd.validateAndLoadForInsert(data, ctx);
-		if (ctx.allOk()) {
-			return fd;
+		int nbrErrors = ctx.getNbrErrors();
+		if (nbrErrors > nbrExistingErrors) {
+			return null;
 		}
-
-		return null;
+		return fd;
 	}
 
 	/**
-	 * @return the generatedKeyOutputName
+	 * 
+	 * @param values
+	 * @param ctx
+	 *            that must have user and tenantKey if the insert operation
+	 *            require these. errors, if any are added to this.
+	 * @return true of all ok. false otherwise, in which case ctx will have the
+	 *         errors
+	 * @throws SQLException
 	 */
-	String getGeneratedKeyOutputName() {
-		return this.generatedKeyOutputName;
+	boolean loadData(Map<String, String> values, DbHandle handle, IServiceContext ctx) throws SQLException {
+		FormData fd = this.parseInput(values, ctx);
+		if (fd == null) {
+			return false;
+		}
+
+		if (!fd.insert(handle)) {
+			ctx.addMessage(Message.newError("Row not inserted, probably because of database constraints"));
+			return false;
+		}
+
+		if (this.generatedKeyOutputName != null) {
+			Object key = fd.getObject(this.keyIdx);
+			if (key != null) {
+				values.put(this.generatedKeyOutputName, key.toString());
+			}
+		}
+		return true;
 	}
+
 }

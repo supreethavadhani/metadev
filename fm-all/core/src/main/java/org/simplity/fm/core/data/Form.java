@@ -20,16 +20,15 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.upload;
+package org.simplity.fm.core.data;
 
 /**
+ * represents a schema for input from a client or output to a client
+ * 
  * @author simplity.org
  *
  */
-class RowLoader {
-	private final FormLoader[] inserts;
-
-	RowLoader(FormLoader[] inserts) {
-		this.inserts = inserts;
-	}
+public class Form {
+	protected final DbSchema schema;
+	protected final LinkedForm[] linkedForms;
 }

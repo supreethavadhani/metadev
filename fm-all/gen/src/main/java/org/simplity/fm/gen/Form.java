@@ -29,22 +29,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.simplity.fm.core.validn.FromToValidation;
-import org.simplity.fm.core.validn.IValidation;
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.form.DbLink;
 import org.simplity.fm.core.form.ColumnType;
+import org.simplity.fm.core.form.DbLink;
 import org.simplity.fm.core.form.DbMetaData;
 import org.simplity.fm.core.form.IoType;
 import org.simplity.fm.core.validn.DependentListValidation;
 import org.simplity.fm.core.validn.ExclusiveValidation;
+import org.simplity.fm.core.validn.FromToValidation;
+import org.simplity.fm.core.validn.IValidation;
 import org.simplity.fm.core.validn.InclusiveValidation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * represents the contents of a spread sheet for a form
- * 
+ *
  * @author simplity.org
  *
  */
@@ -95,17 +95,17 @@ class Form {
 		Field createdAt = null;
 
 		if (this.fields != null) {
-			List<Field> list = new ArrayList<>();
-			List<Field> keyList = new ArrayList<>();
-			List<Field> uniqueList = new ArrayList<>();
+			final List<Field> list = new ArrayList<>();
+			final List<Field> keyList = new ArrayList<>();
+			final List<Field> uniqueList = new ArrayList<>();
 
-			for (Field field : this.fields) {
+			for (final Field field : this.fields) {
 				this.fieldMap.put(field.name, field);
 				if (field.listName != null) {
 					list.add(field);
 				}
 
-				ColumnType ct = field.columnType;
+				final ColumnType ct = field.columnType;
 				if (ct == null) {
 					continue;
 				}
@@ -215,25 +215,25 @@ class Form {
 	}
 
 	Set<String> getNameSet() {
-		Set<String> names = new HashSet<>();
+		final Set<String> names = new HashSet<>();
 		if (this.fields != null) {
-			for (Field field : this.fields) {
+			for (final Field field : this.fields) {
 				names.add(field.name);
 			}
 		}
 		return names;
 	}
 
-	private static String getQualifier(String nam) {
-		int idx = nam.lastIndexOf('.');
+	private static String getQualifier(final String nam) {
+		final int idx = nam.lastIndexOf('.');
 		if (idx == -1) {
 			return null;
 		}
 		return nam.substring(0, idx);
 	}
 
-	void emitJavaClass(StringBuilder sbf, String generatedPackage) {
-		String typesName = Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
+	void emitJavaClass(final StringBuilder sbf, final String generatedPackage) {
+		final String typesName = Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
 		String pck = getQualifier(this.name);
 		String cls = null;
 		if (pck == null) {
@@ -293,9 +293,9 @@ class Form {
 		/*
 		 * userIdFieldName
 		 */
-		Object obj = this.params.get("userIdFieldName");
+		final Object obj = this.params.get("userIdFieldName");
 		if (obj != null) {
-			String t = obj.toString().trim();
+			final String t = obj.toString().trim();
 			if (!t.isEmpty()) {
 				sbf.append("\n\t\tthis.userIdFieldName = \"").append(t).append("\";");
 			}
@@ -319,8 +319,8 @@ class Form {
 		sbf.append("\n\t}\n}\n");
 	}
 
-	private void emitDbStuff(StringBuilder sbf) {
-		String tableName = (String) this.params.get("dbTableName");
+	private void emitDbStuff(final StringBuilder sbf) {
+		final String tableName = (String) this.params.get("dbTableName");
 		if (tableName == null) {
 			logger.warn("dbTableName not set. no db related code generated for this form");
 			sbf.append("\n\n\tprivate void setDbMeta(){\n\t\t//\n\t}");
@@ -337,11 +337,11 @@ class Form {
 			/*
 			 * indexes is to be built like "1,2,3,4"
 			 */
-			StringBuilder indexes = new StringBuilder();
+			final StringBuilder indexes = new StringBuilder();
 			/*
 			 * clause is going to be like " WHERE k1=? AND k2=?...."
 			 */
-			StringBuilder clause = new StringBuilder();
+			final StringBuilder clause = new StringBuilder();
 			this.makeWhere(clause, indexes, this.keyFields);
 
 			sbf.append(P).append("String WHERE = \"").append(clause.toString()).append("\";");
@@ -352,10 +352,10 @@ class Form {
 		}
 
 		if (this.uniqueFields != null) {
-			StringBuilder idxBuf = new StringBuilder();
+			final StringBuilder idxBuf = new StringBuilder();
 			sbf.append(P).append("String UNIQUE = \" WHERE ");
 			boolean isFirst = true;
-			for (Field f : this.uniqueFields) {
+			for (final Field f : this.uniqueFields) {
 				if (isFirst) {
 					isFirst = false;
 				} else {
@@ -372,18 +372,18 @@ class Form {
 		this.emitChildDbDeclarations(sbf);
 
 		sbf.append("\n\n\tprivate void setDbMeta(){");
-		String t = "\n\t\tm.";
+		final String t = "\n\t\tm.";
 		sbf.append("\n\t\tDbMetaData m = new DbMetaData();");
 		/*
 		 * set dbOperationOk[] to true for auto-service
 		 */
-		Object obj = this.params.get("allowDbOperations");
+		final Object obj = this.params.get("allowDbOperations");
 		if (obj != null) {
-			for (String op : obj.toString().split(",")) {
+			for (final String op : obj.toString().split(",")) {
 				try {
-					IoType opn = IoType.valueOf(op.trim().toUpperCase());
+					final IoType opn = IoType.valueOf(op.trim().toUpperCase());
 					sbf.append(t).append("dbOperationOk[").append(opn.ordinal()).append("] = true;");
-				} catch (Exception e) {
+				} catch (final Exception e) {
 					logger.error("{} is not a valid dbOperation. directive in allowDbOperations ignored", op);
 				}
 			}
@@ -432,16 +432,16 @@ class Form {
 	/**
 	 * @param sbf
 	 */
-	private void emitChildDbParam(StringBuilder sbf) {
+	private void emitChildDbParam(final StringBuilder sbf) {
 		if (this.childForms == null) {
 			return;
 		}
 		sbf.append("\n\t\tDbLink[] cm = {");
-		for (ChildForm child : this.childForms) {
+		for (final ChildForm child : this.childForms) {
 			if (child.linkChildFields == null) {
 				sbf.append("null, ");
 			} else {
-				String f = child.formName.toUpperCase();
+				final String f = child.formName.toUpperCase();
 				sbf.append("this.newDbLink(").append(f).append("_LINK, ");
 				sbf.append(f).append("_IDX), ");
 			}
@@ -454,24 +454,24 @@ class Form {
 	/**
 	 * @param sbf
 	 */
-	private void emitChildDbDeclarations(StringBuilder sbf) {
+	private void emitChildDbDeclarations(final StringBuilder sbf) {
 		if (this.childForms == null) {
 			return;
 		}
-		for (ChildForm child : this.childForms) {
+		for (final ChildForm child : this.childForms) {
 			if (child.linkChildFields == null) {
 				continue;
 			}
 			sbf.append("\n\n\tprivate static final String[] ").append(child.formName.toUpperCase()).append("_LINK = {");
-			for (String txt : child.linkChildFields) {
+			for (final String txt : child.linkChildFields) {
 				sbf.append('"').append(txt).append("\", ");
 			}
 			sbf.setLength(sbf.length() - 2);
 			sbf.append("};");
 
 			sbf.append("\n\tprivate static final int[] ").append(child.formName.toUpperCase()).append("_IDX = {");
-			for (String txt : child.linkParentFields) {
-				Field field = this.fieldMap.get(txt);
+			for (final String txt : child.linkParentFields) {
+				final Field field = this.fieldMap.get(txt);
 				if (field == null) {
 					logger.error(
 							"{} is not a valid field. It is specified as a link parent field in th echild form {}, (form name = {})",
@@ -487,30 +487,30 @@ class Form {
 
 	}
 
-	private void emitJavaConstants(StringBuilder sbf) {
+	private void emitJavaConstants(final StringBuilder sbf) {
 		if (this.fields != null) {
-			for (Field field : this.fields) {
+			for (final Field field : this.fields) {
 				sbf.append("\n\tpublic static final int ").append(field.name).append(EQ).append(field.index)
 						.append(';');
 			}
 		}
 
 		if (this.childForms != null) {
-			for (ChildForm child : this.childForms) {
+			for (final ChildForm child : this.childForms) {
 				sbf.append("\n\tpublic static final int ").append(child.name).append(EQ).append(child.index)
 						.append(';');
 			}
 		}
 	}
 
-	private void emitJavaFields(StringBuilder sbf, String dataTypesName) {
+	private void emitJavaFields(final StringBuilder sbf, final String dataTypesName) {
 		if (this.fields == null) {
 			sbf.append("\n\t\tthis.fields = null;");
 			return;
 		}
 		sbf.append("\n\n\t\tField[] flds = {");
 		boolean isFirst = true;
-		for (Field field : this.fields) {
+		for (final Field field : this.fields) {
 			if (isFirst) {
 				isFirst = false;
 			} else {
@@ -525,14 +525,14 @@ class Form {
 		sbf.append("\n\t\t};\n\t\tthis.fields = flds;");
 	}
 
-	private void emitJavaChildren(StringBuilder sbf) {
+	private void emitJavaChildren(final StringBuilder sbf) {
 		if (this.childForms == null) {
 			sbf.append("\n\t\tthis.childForms = null;");
 			return;
 		}
 		sbf.append("\n\n\t\tChildForm[] chlds = {");
 		boolean isFirst = true;
-		for (ChildForm child : this.childForms) {
+		for (final ChildForm child : this.childForms) {
 			if (isFirst) {
 				isFirst = false;
 			} else {
@@ -544,26 +544,26 @@ class Form {
 		sbf.append("\n\t\tthis.childForms = chlds;");
 	}
 
-	private void emitJavaValidations(StringBuilder sbf) {
+	private void emitJavaValidations(final StringBuilder sbf) {
 		sbf.append("\n\n\t\tIValidation[] vlds = {");
-		int n = sbf.length();
-		String sufix = ",\n\t\t\t";
+		final int n = sbf.length();
+		final String sufix = ",\n\t\t\t";
 		if (this.fromToPairs != null) {
-			for (FromToPair pair : this.fromToPairs) {
+			for (final FromToPair pair : this.fromToPairs) {
 				pair.emitJavaCode(sbf);
 				sbf.append(sufix);
 			}
 		}
 
 		if (this.exclusivePairs != null) {
-			for (ExclusivePair pair : this.exclusivePairs) {
+			for (final ExclusivePair pair : this.exclusivePairs) {
 				pair.emitJavaCode(sbf);
 				sbf.append(sufix);
 			}
 		}
 
 		if (this.inclusivePairs != null) {
-			for (InclusivePair pair : this.inclusivePairs) {
+			for (final InclusivePair pair : this.inclusivePairs) {
 				pair.emitJavaCode(sbf);
 				sbf.append(sufix);
 			}
@@ -573,11 +573,11 @@ class Form {
 		 * dependent lists
 		 */
 		if (this.fieldsWithList != null) {
-			for (Field field : this.fieldsWithList) {
+			for (final Field field : this.fieldsWithList) {
 				if (field.listKey == null) {
 					continue;
 				}
-				Field f = this.fieldMap.get(field.listKey);
+				final Field f = this.fieldMap.get(field.listKey);
 				if (f == null) {
 					logger.error("Field {} specifies {} as listKey, but that field is not defined");
 					continue;
@@ -607,23 +607,23 @@ class Form {
 		sbf.append("\n\t\tthis.validations = vlds;");
 	}
 
-	void emitTs(StringBuilder sbf, Map<String, DataType> dataTypes, Map<String, ValueList> valueLists,
-			Map<String, KeyedList> keyedLists, String tsImportPrefix) {
+	void emitTs(final StringBuilder sbf, final Map<String, DataType> dataTypes, final Map<String, ValueList> valueLists,
+			final Map<String, KeyedList> keyedLists, final String tsImportPrefix) {
 
 		sbf.append("\nimport { Form , Field, ChildForm } from '").append(tsImportPrefix).append("form';");
-		sbf.append("\nimport { SelectOption } from '").append(tsImportPrefix).append("types';");
+		sbf.append("\nimport { SelectOption, Vo } from '").append(tsImportPrefix).append("types';");
 		sbf.append("\nimport { Validators } from '@angular/forms'");
 		/*
 		 * import for child forms being referred
 		 */
 		if (this.childForms != null) {
-			for (ChildForm child : this.childForms) {
-				String fn = child.getFormName();
+			for (final ChildForm child : this.childForms) {
+				final String fn = child.getFormName();
 				sbf.append("\nimport { ").append(Util.toClassName(fn)).append(" } from './").append(fn).append("';");
 			}
 		}
 
-		String cls = Util.toClassName(this.name);
+		final String cls = Util.toClassName(this.name);
 		sbf.append("\n\nexport class ").append(cls).append(" extends Form {");
 		sbf.append("\n\tprivate static _instance = new ").append(cls).append("();");
 
@@ -631,7 +631,7 @@ class Form {
 		 * fields as members
 		 */
 		if (this.fields != null && this.fields.length > 0) {
-			for (Field field : this.fields) {
+			for (final Field field : this.fields) {
 				field.emitTs(sbf, dataTypes.get(field.dataType), valueLists, keyedLists);
 			}
 		}
@@ -641,7 +641,7 @@ class Form {
 		 */
 		if (this.childForms != null && this.childForms.length != 0) {
 			sbf.append("\n");
-			for (ChildForm child : this.childForms) {
+			for (final ChildForm child : this.childForms) {
 				child.emitTs(sbf);
 			}
 		}
@@ -662,9 +662,9 @@ class Form {
 		 * put fields into a map.
 		 */
 		sbf.append("\n\t\tthis.fields = new Map();");
-		StringBuilder altSbf = new StringBuilder("\n\t\tthis.controls = new Map();");
+		final StringBuilder altSbf = new StringBuilder("\n\t\tthis.controls = new Map();");
 		if (this.fields != null && this.fields.length > 0) {
-			for (Field field : this.fields) {
+			for (final Field field : this.fields) {
 				sbf.append("\n\t\tthis.fields.set('").append(field.name).append("', this.").append(field.name)
 						.append(");");
 				if (field.isEditable) {
@@ -682,7 +682,7 @@ class Form {
 		 */
 		if (this.childForms != null && this.childForms.length != 0) {
 			sbf.append("\n\n\t\tthis.childForms = new Map();");
-			for (ChildForm child : this.childForms) {
+			for (final ChildForm child : this.childForms) {
 				sbf.append("\n\t\tthis.childForms.set('").append(child.name).append("', this.").append(child.name)
 						.append(");");
 			}
@@ -691,9 +691,9 @@ class Form {
 		/*
 		 * inter field validations
 		 */
-		StringBuilder valBuf = new StringBuilder();
+		final StringBuilder valBuf = new StringBuilder();
 		if (this.fromToPairs != null) {
-			for (FromToPair pair : this.fromToPairs) {
+			for (final FromToPair pair : this.fromToPairs) {
 				if (valBuf.length() > 0) {
 					valBuf.append(C);
 				}
@@ -702,7 +702,7 @@ class Form {
 		}
 
 		if (this.exclusivePairs != null) {
-			for (ExclusivePair pair : this.exclusivePairs) {
+			for (final ExclusivePair pair : this.exclusivePairs) {
 				if (valBuf.length() > 0) {
 					valBuf.append(C);
 				}
@@ -711,7 +711,7 @@ class Form {
 		}
 
 		if (this.inclusivePairs != null) {
-			for (InclusivePair pair : this.inclusivePairs) {
+			for (final InclusivePair pair : this.inclusivePairs) {
 				if (valBuf.length() > 0) {
 					valBuf.append(C);
 				}
@@ -727,7 +727,7 @@ class Form {
 		 */
 		if (this.fieldsWithList != null) {
 			sbf.append("\n\t\tthis.listFields = [");
-			for (Field f : this.fieldsWithList) {
+			for (final Field f : this.fieldsWithList) {
 				sbf.append(Util.escapeTs(f.name));
 				sbf.append(C);
 			}
@@ -739,7 +739,7 @@ class Form {
 		 */
 		if (this.keyFields != null) {
 			sbf.append("\n\t\tthis.keyFields = [");
-			for (Field f : this.keyFields) {
+			for (final Field f : this.keyFields) {
 				sbf.append(Util.escapeTs(f.name));
 				sbf.append(C);
 			}
@@ -748,7 +748,7 @@ class Form {
 		}
 		if (this.uniqueFields != null) {
 			sbf.append("\n\t\tthis.uniqueFields = [");
-			for (Field f : this.uniqueFields) {
+			for (final Field f : this.uniqueFields) {
 				sbf.append(Util.escapeTs(f.name));
 				sbf.append(C);
 			}
@@ -758,11 +758,11 @@ class Form {
 		/*
 		 * auto-service operations?
 		 */
-		Object obj = this.params.get("allowDbOperations");
+		final Object obj = this.params.get("allowDbOperations");
 		if (obj != null) {
 			sbf.append("\n\t\tthis.opsAllowed = {");
 			boolean first = true;
-			for (String op : obj.toString().split(",")) {
+			for (final String op : obj.toString().split(",")) {
 				try {
 					IoType.valueOf(op.trim().toUpperCase());
 					if (first) {
@@ -771,7 +771,7 @@ class Form {
 						sbf.append(C);
 					}
 					sbf.append(op.trim().toLowerCase()).append(": true");
-				} catch (Exception e) {
+				} catch (final Exception e) {
 					logger.error("{} is not a valid dbOperation. directive in allowDbOperations ignored", op);
 				}
 			}
@@ -787,12 +787,14 @@ class Form {
 		sbf.append("\n\t}");
 
 		sbf.append("\n}\n");
+
+		this.emitTsFormData(sbf, dataTypes);
 	}
 
-	private void makeWhere(StringBuilder clause, StringBuilder indexes, Field[] keys) {
+	private void makeWhere(final StringBuilder clause, final StringBuilder indexes, final Field[] keys) {
 		clause.append(" WHERE ");
 		boolean firstOne = true;
-		for (Field field : keys) {
+		for (final Field field : keys) {
 			if (firstOne) {
 				firstOne = false;
 			} else {
@@ -811,14 +813,14 @@ class Form {
 		}
 	}
 
-	private void emitSelect(StringBuilder sbf, String tableName) {
-		StringBuilder idxSbf = new StringBuilder();
+	private void emitSelect(final StringBuilder sbf, final String tableName) {
+		final StringBuilder idxSbf = new StringBuilder();
 		sbf.append(P).append("String SELECT = \"SELECT ");
 
 		boolean firstOne = true;
-		for (Field field : this.fields) {
-			ColumnType ct = field.columnType;
-			if (ct == null || ct.isSelected() == false) {
+		for (final Field field : this.fields) {
+			final ColumnType ct = field.columnType;
+			if (ct == null) {
 				continue;
 			}
 			if (firstOne) {
@@ -837,15 +839,15 @@ class Form {
 
 	}
 
-	private void emitInsert(StringBuilder sbf, String tableName) {
+	private void emitInsert(final StringBuilder sbf, final String tableName) {
 		sbf.append(P).append(" String INSERT = \"INSERT INTO ").append(tableName).append('(');
-		StringBuilder idxSbf = new StringBuilder();
+		final StringBuilder idxSbf = new StringBuilder();
 		idxSbf.append(P).append("int[] INSERT_IDX = {");
-		StringBuilder vbf = new StringBuilder();
+		final StringBuilder vbf = new StringBuilder();
 		boolean firstOne = true;
 		boolean firstField = true;
-		for (Field field : this.fields) {
-			ColumnType ct = field.columnType;
+		for (final Field field : this.fields) {
+			final ColumnType ct = field.columnType;
 			if (ct == null || ct.isInserted() == false) {
 				continue;
 			}
@@ -873,15 +875,16 @@ class Form {
 		sbf.append(idxSbf).append("};");
 	}
 
-	private void emitUpdate(StringBuilder sbf, String whereClause, String whereIndexes, String tableName) {
-		StringBuilder updateBuf = new StringBuilder();
+	private void emitUpdate(final StringBuilder sbf, final String whereClause, final String whereIndexes,
+			final String tableName) {
+		final StringBuilder updateBuf = new StringBuilder();
 		updateBuf.append(P).append(" String UPDATE = \"UPDATE ").append(tableName).append(" SET ");
-		StringBuilder idxBuf = new StringBuilder();
+		final StringBuilder idxBuf = new StringBuilder();
 		idxBuf.append(P).append(" int[] UPDATE_IDX = {");
 		boolean firstOne = true;
 		boolean firstField = true;
-		for (Field field : this.fields) {
-			ColumnType ct = field.columnType;
+		for (final Field field : this.fields) {
+			final ColumnType ct = field.columnType;
 			if (ct == null || ct.isUpdated() == false) {
 				continue;
 			}
@@ -924,4 +927,46 @@ class Form {
 		updateBuf.append("\";");
 		sbf.append(updateBuf.toString()).append(idxBuf.toString()).append("};");
 	}
+
+	/**
+	 * create an interface for the data model of this form
+	 */
+	private void emitTsFormData(final StringBuilder sbf, final Map<String, DataType> dataTypes) {
+		sbf.append("\n\nexport interface ").append(Util.toClassName(this.name)).append("Data extends Vo {");
+		boolean isFirst = true;
+		for (final Field field : this.fields) {
+			if (isFirst) {
+				isFirst = false;
+			} else {
+				sbf.append(C);
+			}
+			final DataType dt = dataTypes.get(field.dataType);
+			sbf.append("\n\t").append(field.name).append("?: ").append(getTsValueType(dt));
+		}
+		sbf.append("\n}\n");
+
+	}
+
+	private static String getTsValueType(final DataType dt) {
+		if (dt == null) {
+			return "string";
+		}
+		switch (dt.valueType) {
+		case TEXT:
+		case DATE:
+		case TIMESTAMP:
+			return "string";
+
+		case INTEGER:
+		case DECIMAL:
+			return "number";
+
+		case BOOLEAN:
+			return "boolean";
+
+		default:
+			return "string";
+		}
+	}
+
 }

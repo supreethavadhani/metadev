@@ -20,39 +20,37 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.form;
+package org.simplity.fm.upload;
+
+import java.util.Map;
+
+import org.simplity.fm.core.service.IServiceContext;
 
 /**
- * data structure for meta data for a child form
- *
+ * client for an upload process
+ * 
  * @author simplity.org
  *
  */
-public class DbLink {
-	/**
-	 * field names from the parent form that form the parent-key for the child
-	 * form
-	 */
-	public String[] childLinkNames;
-	/**
-	 * column names are from the child table, but the values for the parameter
-	 * would come from the parent form
-	 * e.g. where childCol1=? and childCll2=?
-	 */
-	public String linkWhereClause;
-	/**
-	 * db parameters for the where clause
-	 */
-	public FormDbParam[] linkParentParams;
-	/**
-	 * db meta data of the child form
-	 */
-	public DbMetaData childMeta;
-	/**
-	 * number of fields in the child form. This is the total of all fields, not
-	 * just the fields that are linked to the DB. This is used to create an
-	 * array of values for the form data
-	 */
-	public int nbrChildFields;
+@FunctionalInterface
+public interface IUploadClient {
 
+	/**
+	 * called by the server to get the next row. This is an unusual method that
+	 * combines two methods into one.
+	 * This is a call-back method called by the uploader to get the next row to
+	 * be uploaded. while doing so, it also provides the result of uploading the
+	 * last row
+	 * 
+	 * @param ctx
+	 *            the service context in which this process is running
+	 * 
+	 * @return field/column values for this row. The caller may add some more
+	 *         variables to this collection in the upload process for this row.
+	 *         It is quite safe for you to clear it and re-use it for next
+	 *         call-back though.
+	 * 
+	 *         null to imply end of data.
+	 */
+	public Map<String, String> nextRow(IServiceContext ctx);
 }

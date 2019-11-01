@@ -20,39 +20,58 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.form;
+package org.simplity.fm.upload;
+
+import java.time.Instant;
+
+import org.simplity.fm.core.Message;
 
 /**
- * data structure for meta data for a child form
- *
+ * result of an upload process
+ * 
  * @author simplity.org
  *
  */
-public class DbLink {
+public class UploadResult {
 	/**
-	 * field names from the parent form that form the parent-key for the child
-	 * form
+	 * instance a which first row was started(after any set-up)
 	 */
-	public String[] childLinkNames;
+	public final Instant startedAt;
 	/**
-	 * column names are from the child table, but the values for the parameter
-	 * would come from the parent form
-	 * e.g. where childCol1=? and childCll2=?
+	 * instance at which last row is processed
 	 */
-	public String linkWhereClause;
+	public final Instant doneAt;
 	/**
-	 * db parameters for the where clause
+	 * total rows processed
 	 */
-	public FormDbParam[] linkParentParams;
+	public final int nbrRowsProcessed;
 	/**
-	 * db meta data of the child form
+	 * number of rows in error.
 	 */
-	public DbMetaData childMeta;
+	public final int nbrRowsInError;
 	/**
-	 * number of fields in the child form. This is the total of all fields, not
-	 * just the fields that are linked to the DB. This is used to create an
-	 * array of values for the form data
+	 * error messages if any. Could be empty, but not null
 	 */
-	public int nbrChildFields;
+	public Message[] errors;
 
+	/**
+	 * 
+	 * @param startedAt
+	 *            instance a which first row was started(after any set-up)
+	 * @param doneAt
+	 *            instance at which last row is processed
+	 * @param nbrRowsProcessed
+	 *            total rows processed
+	 * @param nbrRowsInError
+	 *            number of rows in error
+	 * @param errors
+	 *            error messages if any. Could be empty, but not null
+	 */
+	public UploadResult(Instant startedAt, Instant doneAt, int nbrRowsProcessed, int nbrRowsInError,
+			Message[] errors) {
+		this.startedAt = startedAt;
+		this.doneAt = doneAt;
+		this.nbrRowsProcessed = nbrRowsProcessed;
+		this.nbrRowsInError = nbrRowsInError;
+	}
 }

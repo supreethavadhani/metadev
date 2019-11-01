@@ -42,7 +42,7 @@ import org.simplity.fm.core.http.LoggedInUser;
  */
 public class DefaultContext implements IServiceContext {
 	protected List<Message> messages = new ArrayList<>();
-	protected boolean inError;
+	protected int nbrErrors = 0;
 	protected Writer responseWriter;
 	protected LoggedInUser loggedInUser;
 	protected Object tenantId;
@@ -84,7 +84,7 @@ public class DefaultContext implements IServiceContext {
 
 	@Override
 	public boolean allOk() {
-		return !this.inError;
+		return this.nbrErrors == 0;
 	}
 
 	@Override
@@ -92,8 +92,8 @@ public class DefaultContext implements IServiceContext {
 		if (message == null) {
 			return;
 		}
-		if (!this.inError && message.messageType == MessageType.ERROR) {
-			this.inError = true;
+		if (message.messageType == MessageType.ERROR) {
+			this.nbrErrors++;
 		}
 		this.messages.add(message);
 	}
@@ -132,8 +132,7 @@ public class DefaultContext implements IServiceContext {
 	}
 
 	@Override
-	public void resetMessages() {
-		this.messages.clear();
-		this.inError = false;
+	public int getNbrErrors() {
+		return this.nbrErrors;
 	}
 }

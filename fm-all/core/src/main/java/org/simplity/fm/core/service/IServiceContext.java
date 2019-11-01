@@ -36,7 +36,7 @@ import org.simplity.fm.core.http.LoggedInUser;
  *
  */
 public interface IServiceContext {
-	
+
 	/**
 	 * 
 	 * @param key
@@ -44,7 +44,7 @@ public interface IServiceContext {
 	 *         value is null
 	 */
 	public Object getValue(String key);
-	
+
 	/**
 	 * put an name-value pair in the context
 	 * 
@@ -55,49 +55,58 @@ public interface IServiceContext {
 	 *            provided.
 	 */
 	public void setValue(String key, Object value);
-	
+
 	/**
 	 * @return non-null user on whose behalf this service is requested
 	 */
 	public LoggedInUser getUser();
-	
+
 	/**
 	 * 
-	 * @return non-null writer for sending response to the request. 
+	 * @return non-null writer for sending response to the request.
 	 */
 	public Writer getResponseWriter();
-	
+
 	/**
 	 * 
-	 * @return true if all ok. false if at least one error message is added to the context;
+	 * @return true if all ok. false if at least one error message is added to
+	 *         the context;
 	 */
 	public boolean allOk();
-	
+
 	/**
 	 * 
-	 * @param message non-null message
+	 * @param message
+	 *            non-null message
 	 */
 	public void addMessage(Message message);
-	
+
 	/**
 	 * 
-	 * @param messages non-null messages
+	 * @param messages
+	 *            non-null messages
 	 */
 	public void addMessages(Collection<Message> messages);
-	
+
 	/**
 	 * 
-	 * @return non-null array all messages added so far. empty if no message added so far;
+	 * @return non-null array all messages added so far. empty if no message
+	 *         added so far;
 	 */
 	public Message[] getMessages();
 
 	/**
-	 * @return tenantId, if this APP is designed for multi-tenant deployment. null if it is not.
+	 * @return tenantId, if this APP is designed for multi-tenant deployment.
+	 *         null if it is not.
 	 */
 	public Object getTenantId();
 
 	/**
-	 * remove all messages
+	 * messages is not necessarily all errors. Some clients may want to track
+	 * errors.
+	 * 
+	 * @return number errors accumulated in the context. Note that the count
+	 *         gets reset if the messages are reset
 	 */
-	public void resetMessages();
+	public int getNbrErrors();
 }

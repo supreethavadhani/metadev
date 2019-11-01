@@ -62,11 +62,6 @@ public enum ColumnType {
 	 */
 	TenantKey {
 		@Override
-		public boolean isSentToCient() {
-			return false;
-		}
-
-		@Override
 		public boolean isRequired() {
 			return false;
 		}
@@ -84,6 +79,11 @@ public enum ColumnType {
 		public boolean isInput() {
 			return false;
 		}
+
+		@Override
+		public boolean isRequired() {
+			return false;
+		}
 	},
 	/**
 	 * time-stamp at creation. (one of the "standard fields"). This is not set
@@ -92,6 +92,11 @@ public enum ColumnType {
 	CreatedAt {
 		@Override
 		public boolean isInput() {
+			return false;
+		}
+
+		@Override
+		public boolean isRequired() {
 			return false;
 		}
 	},
@@ -106,6 +111,11 @@ public enum ColumnType {
 
 		@Override
 		public boolean isInput() {
+			return false;
+		}
+
+		@Override
+		public boolean isRequired() {
 			return false;
 		}
 	},
@@ -125,6 +135,11 @@ public enum ColumnType {
 		 */
 		@Override
 		public boolean isInput() {
+			return false;
+		}
+
+		@Override
+		public boolean isRequired() {
 			return false;
 		}
 	},
@@ -153,18 +168,7 @@ public enum ColumnType {
 	};
 
 	/**
-	 * 
-	 * @return true if this column is to be selected in a query. As of now, this
-	 *         is always true, but the API is created to take care of any new
-	 *         columnType.
-	 */
-	@SuppressWarnings("static-method")
-	public boolean isSelected() {
-		return true;
-	}
-
-	/**
-	 * 
+	 *
 	 * @return true if this column is to be included in the SQL for update.
 	 *         For example createdUser field should not be updated
 	 */
@@ -192,15 +196,6 @@ public enum ColumnType {
 	 */
 	@SuppressWarnings("static-method")
 	public boolean isInput() {
-		return true;
-	}
-
-	/**
-	 * @return true if this column is sent to the client. false if it is not
-	 *         meant to be sent to the client at all. e.g. tenantId.
-	 */
-	@SuppressWarnings("static-method")
-	public boolean isSentToCient() {
 		return true;
 	}
 
