@@ -27,10 +27,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.ServiceLoader;
 
+import org.simplity.fm.core.data.Form;
+import org.simplity.fm.core.data.IoType;
+import org.simplity.fm.core.data.Schema;
 import org.simplity.fm.core.datatypes.DataType;
-import org.simplity.fm.core.form.Form;
-import org.simplity.fm.core.form.FormIo;
-import org.simplity.fm.core.form.IoType;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.ListService;
 import org.simplity.fm.core.validn.IValueList;
@@ -42,49 +42,56 @@ import org.slf4j.LoggerFactory;
  * set before any request is made.
  * Uses a default empty provider instead of throwing exception. That is, if no
  * provider is available, all requests will responded with null, after logging
- * an error mesage.
- * 
+ * an error message.
+ *
  * @author simplity.org
  *
  */
 public abstract class ComponentProvider {
 	/**
-	 * 
+	 *
 	 * @param formId
 	 * @return form instance, or null if such a form is not located
 	 */
 	public abstract Form getForm(String formId);
 
 	/**
-	 * 
+	 *
+	 * @param schemaName
+	 * @return form instance, or null if such a form is not located
+	 */
+	public abstract Schema getSchema(String schemaName);
+
+	/**
+	 *
 	 * @param dataTypeId
 	 * @return a data type instance, or null if it is not located.
 	 */
 	public abstract DataType getDataType(String dataTypeId);
 
 	/**
-	 * 
+	 *
 	 * @param listId
 	 * @return an instance for this id, or null if is not located
 	 */
 	public abstract IValueList getValueList(String listId);
 
 	/**
-	 * 
+	 *
 	 * @param serviceName
 	 * @return an instance for this id, or null if is not located
 	 */
 	public abstract IService getService(String serviceName);
 
 	/**
-	 * 
+	 *
 	 * @param functionName
 	 * @return an instance for this id, or null if is not located
 	 */
 	public abstract IFunction getFunction(String functionName);
 
 	/**
-	 * 
+	 *
 	 * @param messageId
 	 * @return message or null if no such message is located.
 	 */
@@ -97,7 +104,7 @@ public abstract class ComponentProvider {
 	private static ComponentProvider instance = null;
 
 	/**
-	 * 
+	 *
 	 * @return non-null component provider. A default provider if no provider is
 	 *         located on the class-path. this default provider will return null
 	 *         for all requests, after reporting an error, but will not throw
@@ -108,11 +115,11 @@ public abstract class ComponentProvider {
 			return instance;
 		}
 
-		long startedAt = System.currentTimeMillis();
-		Iterator<IPackageNameProvider> iter = ServiceLoader.load(IPackageNameProvider.class).iterator();
+		final long startedAt = System.currentTimeMillis();
+		final Iterator<IPackageNameProvider> iter = ServiceLoader.load(IPackageNameProvider.class).iterator();
 		if (iter.hasNext()) {
-			IPackageNameProvider p = iter.next();
-			String root = p.getCompRootPackageName();
+			final IPackageNameProvider p = iter.next();
+			final String root = p.getCompRootPackageName();
 			instance = newInstance(root);
 			if (instance != null) {
 				logger.info("{} located as IComponentProvider in {} ms.", instance.getClass().getName(),
@@ -134,14 +141,14 @@ public abstract class ComponentProvider {
 	 * @param generatedRootPackageName
 	 * @return
 	 */
-	private static ComponentProvider newInstance(String rootPackageName) {
+	private static ComponentProvider newInstance(final String rootPackageName) {
 
-		String genRoot = rootPackageName + DOT + Conventions.App.FOLDER_NAME_GEN + DOT;
+		final String genRoot = rootPackageName + DOT + Conventions.App.FOLDER_NAME_GEN + DOT;
 		String cls = genRoot + Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
 		IDataTypes types = null;
 		try {
 			types = (IDataTypes) Class.forName(cls).newInstance();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error("Unable to locate class {}  as IDataTypes", cls);
 			return null;
 		}
@@ -150,53 +157,59 @@ public abstract class ComponentProvider {
 		try {
 			cls = genRoot + Conventions.App.GENERATED_MESSAGES_CLASS_NAME;
 			messages = (IMessages) Class.forName(cls).newInstance();
-		} catch (Exception e) {
-			logger.warn("Unable to locate class {}  as IMessages. YOu will see only message ids, and not message texts", cls);
+		} catch (final Exception e) {
+			logger.warn("Unable to locate class {}  as IMessages. YOu will see only message ids, and not message texts",
+					cls);
 		}
 
 		return new CompProvider(types, messages, rootPackageName);
 	}
 
 	/**
-	 * 
+	 *
 	 * @return a provider who responds with null for all requests.
 	 */
 	private static ComponentProvider getStandinProvider() {
 		return new ComponentProvider() {
 
 			@Override
-			public IValueList getValueList(String listId) {
+			public IValueList getValueList(final String listId) {
 				return null;
 			}
 
 			@Override
-			public Form getForm(String formId) {
+			public Form getForm(final String formId) {
 				return null;
 			}
 
 			@Override
-			public DataType getDataType(String dataTypeId) {
+			public DataType getDataType(final String dataTypeId) {
 				return null;
 			}
 
 			@Override
-			public Message getMessage(String messageId) {
+			public Message getMessage(final String messageId) {
 				return null;
 			}
 
 			@Override
-			public IService getService(String serviceName) {
+			public IService getService(final String serviceName) {
 				return null;
 			}
 
 			@Override
-			public IFunction getFunction(String functionName) {
+			public IFunction getFunction(final String functionName) {
+				return null;
+			}
+
+			@Override
+			public Schema getSchema(final String schemaName) {
 				return null;
 			}
 		};
 	}
 
-	static boolean isPackage(String name) {
+	static boolean isPackage(final String name) {
 		if (Package.getPackage(name) != null) {
 			return true;
 		}
@@ -204,7 +217,7 @@ public abstract class ComponentProvider {
 		return false;
 	}
 
-	protected static String toClassName(String name) {
+	protected static String toClassName(final String name) {
 		int idx = name.lastIndexOf('.');
 		if (idx == -1) {
 			return name.substring(0, 1).toUpperCase() + name.substring(1);
@@ -216,39 +229,42 @@ public abstract class ComponentProvider {
 	private static class CompProvider extends ComponentProvider {
 		private final IDataTypes dataTypes;
 		private final String formRoot;
+		private final String schemaRoot;
 		private final String listRoot;
 		private final String serviceRoot;
 		private final String fnRoot;
 		private final IMessages messages;
 		private final Map<String, Form> forms = new HashMap<>();
+		private final Map<String, Schema> schemas = new HashMap<>();
 		private final Map<String, IValueList> lists = new HashMap<>();
 		private final Map<String, IService> services = new HashMap<>();
 		private final Map<String, IFunction> functions = new HashMap<>();
 
-		protected CompProvider(IDataTypes dataTypes, IMessages messages, String rootPackage) {
+		protected CompProvider(final IDataTypes dataTypes, final IMessages messages, final String rootPackage) {
 			this.dataTypes = dataTypes;
 			this.messages = messages;
-			String genRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_GEN + DOT;
+			final String genRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_GEN + DOT;
 			this.formRoot = genRoot + Conventions.App.FOLDER_NAME_FORM + DOT;
+			this.schemaRoot = genRoot + Conventions.App.FOLDER_NAME_SCHEMA + DOT;
 			this.listRoot = genRoot + Conventions.App.FOLDER_NAME_LIST + DOT;
 			this.serviceRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_SERVICE + DOT;
 			this.fnRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_FN + DOT;
 			/*
-			 * add hard-wired services to the list 
+			 * add hard-wired services to the list
 			 */
 			this.services.put(Conventions.App.SERVICE_LIST, ListService.getInstance());
 		}
 
 		@Override
-		public Form getForm(String formId) {
+		public Form getForm(final String formId) {
 			Form form = this.forms.get(formId);
 			if (form != null) {
 				return form;
 			}
-			String cls = this.formRoot + toClassName(formId);
+			final String cls = this.formRoot + toClassName(formId);
 			try {
 				form = (Form) Class.forName(cls).newInstance();
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				logger.error("No form named {} because we could not locate class {}", formId, cls);
 				return null;
 			}
@@ -257,20 +273,37 @@ public abstract class ComponentProvider {
 		}
 
 		@Override
-		public DataType getDataType(String dataTypeId) {
+		public Schema getSchema(final String schemaName) {
+			Schema schema = this.schemas.get(schemaName);
+			if (schema != null) {
+				return schema;
+			}
+			final String cls = this.schemaRoot + toClassName(schemaName);
+			try {
+				schema = (Schema) Class.forName(cls).newInstance();
+			} catch (final Exception e) {
+				logger.error("No form named {} because we could not locate class {}", schemaName, cls);
+				return null;
+			}
+			this.schemas.put(schemaName, schema);
+			return schema;
+		}
+
+		@Override
+		public DataType getDataType(final String dataTypeId) {
 			return this.dataTypes.getDataType(dataTypeId);
 		}
 
 		@Override
-		public IValueList getValueList(String listId) {
+		public IValueList getValueList(final String listId) {
 			IValueList list = this.lists.get(listId);
 			if (list != null) {
 				return list;
 			}
-			String cls = this.listRoot + toClassName(listId);
+			final String cls = this.listRoot + toClassName(listId);
 			try {
 				list = (IValueList) Class.forName(cls).newInstance();
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				logger.error("No list named {} because we could not locate class {}", listId, cls);
 				return null;
 			}
@@ -279,23 +312,24 @@ public abstract class ComponentProvider {
 		}
 
 		@Override
-		public Message getMessage(String messageId) {
+		public Message getMessage(final String messageId) {
 			return this.messages.getMessage(messageId);
 		}
 
 		@Override
-		public IService getService(String serviceId) {
+		public IService getService(final String serviceId) {
 			IService service = this.services.get(serviceId);
 			if (service != null) {
 				return service;
 			}
 			/*
-			 * we first check for a class. this approach allows us to over-ride standard formIO services
+			 * we first check for a class. this approach allows us to over-ride
+			 * standard formIO services
 			 */
-			String cls = this.serviceRoot + toClassName(serviceId);
+			final String cls = this.serviceRoot + toClassName(serviceId);
 			try {
 				service = (IService) Class.forName(cls).newInstance();
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				logger.info("Service {} is not defined as a java class {}", serviceId, cls);
 
 				service = this.tryFormIo(serviceId);
@@ -308,38 +342,38 @@ public abstract class ComponentProvider {
 			return service;
 		}
 
-		private FormIo tryFormIo(String serviceName) {
-			int idx = serviceName.indexOf(Conventions.Http.SERVICE_OPER_SEPARATOR);
+		private IService tryFormIo(final String serviceName) {
+			final int idx = serviceName.indexOf(Conventions.Http.SERVICE_OPER_SEPARATOR);
 			if (idx <= 0) {
 				return null;
 			}
 
-			String formName = serviceName.substring(idx + 1);
-			Form fs = this.getForm(formName);
-			if (fs == null) {
+			final String formName = serviceName.substring(idx + 1);
+			final Form form = this.getForm(formName);
+			if (form == null) {
 				return null;
 			}
 
 			IoType opern = null;
 			try {
 				opern = IoType.valueOf(serviceName.substring(0, idx).toUpperCase());
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				return null;
 			}
 
-			return FormIo.getInstance(opern, serviceName.substring(idx + 1));
+			return form.getService(opern);
 		}
 
 		@Override
-		public IFunction getFunction(String functionName) {
+		public IFunction getFunction(final String functionName) {
 			IFunction fn = this.functions.get(functionName);
 			if (fn != null) {
 				return fn;
 			}
-			String cls = this.fnRoot + toClassName(functionName);
+			final String cls = this.fnRoot + toClassName(functionName);
 			try {
 				fn = (IFunction) Class.forName(cls).newInstance();
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				logger.error("No Function named {} because we could not locate class {}", functionName, cls);
 				return null;
 			}

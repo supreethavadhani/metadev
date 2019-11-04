@@ -28,8 +28,8 @@ import java.util.Set;
 import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.IFunction;
-import org.simplity.fm.core.form.Field;
-import org.simplity.fm.core.form.Form;
+import org.simplity.fm.core.data.Field;
+import org.simplity.fm.core.data.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +46,7 @@ import com.google.gson.JsonObject;
  * <li>@variable this is a variable/parameter. Value for this parameter is
  * provided in the uploaded header, or is made available at run time. This may
  * also be a generated key name that is output by any of the form</li>
- * 
+ *
  * <li>#lookupName(name) look-up this value in the named list. The list is not
  * keyed. name can be constant, variable or lookup.
  * can not be function or lookup</li>
@@ -58,37 +58,38 @@ import com.google.gson.JsonObject;
  * <li>=constant when constant starts with any of these reserved characters.
  * e.g. =$ to set '$' or == to set '='
  * </li>
- * 
+ *
  * @author simplity.org
  *
  */
 class FormParser {
 	private static final Logger logger = LoggerFactory.getLogger(FormParser.class);
 
-	private ComponentProvider compProvider = ComponentProvider.getProvider();
+	private final ComponentProvider compProvider = ComponentProvider.getProvider();
 	/*
 	 * what is defined in this processor
 	 */
 	private final Map<String, String> params;
 	private final Map<String, Map<String, String>> valueLists;
 	private final Set<String> listsRequiringKey;
-	private final Map<String, IFunction> functions ;
+	private final Map<String, IFunction> functions;
 
 	/*
 	 * we are going to parse these
 	 */
-	private Form form;
+	private Schema schema;
 	private String generatedKeyOutputName;
 	private IValueProvider[] valueProviders;
 
-	FormParser(Map<String, String> params, Map<String, Map<String, String>> valueLists, Set<String> listsRequiringKey, Map<String, IFunction> functions) {
-	this.params = params;
-	this.valueLists = valueLists;
-	this.listsRequiringKey = listsRequiringKey;
-	this.functions = functions;
+	FormParser(final Map<String, String> params, final Map<String, Map<String, String>> valueLists,
+			final Set<String> listsRequiringKey, final Map<String, IFunction> functions) {
+		this.params = params;
+		this.valueLists = valueLists;
+		this.listsRequiringKey = listsRequiringKey;
+		this.functions = functions;
 	}
 
-	protected FormLoader parse(JsonObject json) {
+	protected FormLoader parse(final JsonObject json) {
 
 		JsonElement ele = json.get(Conventions.Upload.TAG_FORM);
 		if (ele == null || !ele.isJsonPrimitive()) {
@@ -96,9 +97,9 @@ class FormParser {
 			return null;
 		}
 
-		String text = ele.getAsString().trim();
-		this.form = this.compProvider.getForm(text);
-		if (this.form == null) {
+		final String text = ele.getAsString().trim();
+		this.schema = this.compProvider.getSchema(text);
+		if (this.schema == null) {
 			logger.error("{} is not a valid form name", text);
 			return null;
 		}
@@ -123,28 +124,28 @@ class FormParser {
 			return null;
 		}
 
-		return new FormLoader(this.form, this.generatedKeyOutputName, this.valueProviders);
+		return new FormLoader(this.schema, this.generatedKeyOutputName, this.valueProviders);
 	}
 
-	private boolean parseFields(JsonObject json) {
-		this.valueProviders = new IValueProvider[this.form.getNbrFields()];
-		for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+	private boolean parseFields(final JsonObject json) {
+		this.valueProviders = new IValueProvider[this.schema.getNbrFields()];
+		for (final Map.Entry<String, JsonElement> entry : json.entrySet()) {
 
-			String fieldName = entry.getKey();
-			Field field = this.form.getField(fieldName);
+			final String fieldName = entry.getKey();
+			final Field field = this.schema.getField(fieldName);
 
 			if (field == null) {
-				logger.error("{} is not a valid field name in the form {}", fieldName, this.form.getFormId());
+				logger.error("{} is not a valid field name in the form {}", fieldName, this.schema.getName());
 				return false;
 			}
 
-			JsonElement ele = entry.getValue();
+			final JsonElement ele = entry.getValue();
 			if (!ele.isJsonPrimitive()) {
-				logger.error("Field {} in the form {} has an invalid value", fieldName, this.form.getFormId());
+				logger.error("Field {} in the form {} has an invalid value", fieldName, this.schema.getName());
 				return false;
 			}
 
-			IValueProvider vp = this.parseVp(ele.getAsString().trim(), true);
+			final IValueProvider vp = this.parseVp(ele.getAsString().trim(), true);
 			if (vp == null) {
 				return false;
 			}
@@ -153,13 +154,13 @@ class FormParser {
 		return true;
 	}
 
-	private IValueProvider parseVp(String value, boolean fnOk) {
+	private IValueProvider parseVp(final String value, final boolean fnOk) {
 		if (value == null || value.isEmpty()) {
 			return new ValueProvider(null, "");
 		}
 
-		char c = value.charAt(0);
-		String text = value.substring(1);
+		final char c = value.charAt(0);
+		final String text = value.substring(1);
 
 		if (c == Conventions.Upload.TYPE_VAR) {
 			return new ValueProvider(text, null);
@@ -170,7 +171,7 @@ class FormParser {
 		}
 
 		if (c == Conventions.Upload.TYPE_PARAM) {
-			String t = this.params.get(text);
+			final String t = this.params.get(text);
 			if (t == null) {
 				logger.error(
 						"{} is used as a paremeter for a field, but it is not defined as a parameter in the parameters list",
@@ -200,14 +201,14 @@ class FormParser {
 			return null;
 		}
 
-		String nam = parseName(text);
-		IValueProvider[] vps = this.parseParams(text);
+		final String nam = parseName(text);
+		final IValueProvider[] vps = this.parseParams(text);
 		if (nam == null || vps == null || vps.length == 0) {
 			return null;
 		}
 
 		if (isFn) {
-			IFunction fn = this.functions.get(nam);
+			final IFunction fn = this.functions.get(nam);
 			if (fn == null) {
 				logger.error("{} is not declared as a function", nam);
 				return null;
@@ -215,16 +216,16 @@ class FormParser {
 			return new FunctionValueProvider(fn, vps);
 		}
 
-		Map<String, String> valueList = this.valueLists.get(nam);
+		final Map<String, String> valueList = this.valueLists.get(nam);
 		if (valueList == null) {
 			logger.error("{} is not a valid lookup name", nam);
 			return null;
 		}
 
-		int nbr = vps.length;
-		IValueProvider vp1 = vps[0];
+		final int nbr = vps.length;
+		final IValueProvider vp1 = vps[0];
 		IValueProvider vp2 = null;
-		boolean isKeyed = this.listsRequiringKey.contains(nam);
+		final boolean isKeyed = this.listsRequiringKey.contains(nam);
 		if (isKeyed) {
 			if (nbr == 2) {
 				vp2 = vps[1];
@@ -246,8 +247,8 @@ class FormParser {
 	 * text is possibly of the form " abcd ( a, b, c)  " we have to return
 	 * "abcd"
 	 */
-	private static String parseName(String text) {
-		int idx = text.indexOf('(');
+	private static String parseName(final String text) {
+		final int idx = text.indexOf('(');
 		if (idx == -1) {
 			logger.error("'(' not found for a fn/lookup");
 			invalidFn(text);
@@ -257,7 +258,7 @@ class FormParser {
 		return text.substring(0, idx).trim();
 	}
 
-	private static void invalidFn(String fn) {
+	private static void invalidFn(final String fn) {
 		logger.error("{} is not a valid function/lookup. expect text of the form fname(p1,p2,..)", fn);
 	}
 
@@ -265,7 +266,7 @@ class FormParser {
 	 * text is possibly of the form " abcd ( =a, $b, #c)  " we have to return
 	 * array of three IvalueProviders
 	 */
-	private IValueProvider[] parseParams(String text) {
+	private IValueProvider[] parseParams(final String text) {
 		// look for (
 		int idx = text.indexOf('(');
 		if (idx == -1) {
@@ -296,10 +297,10 @@ class FormParser {
 			return null;
 		}
 
-		String[] arr = s.split(",");
-		IValueProvider[] result = new IValueProvider[arr.length];
+		final String[] arr = s.split(",");
+		final IValueProvider[] result = new IValueProvider[arr.length];
 		for (int i = 0; i < arr.length; i++) {
-			IValueProvider vp = this.parseVp(arr[i].trim(), false);
+			final IValueProvider vp = this.parseVp(arr[i].trim(), false);
 			if (vp == null) {
 				return null;
 			}

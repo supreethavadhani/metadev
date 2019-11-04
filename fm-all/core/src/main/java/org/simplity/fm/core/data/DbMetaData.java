@@ -20,14 +20,16 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.form;
+package org.simplity.fm.core.data;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.IDbReader;
 import org.simplity.fm.core.rdb.IDbWriter;
@@ -48,14 +50,6 @@ public class DbMetaData {
 	 * db parameters to be used for the where clause
 	 */
 	public FormDbParam[] whereParams;
-	/**
-	 * e.g. where a=? and b=?
-	 */
-	public String uniqueClause;
-	/**
-	 * db parameters to be used for the where clause
-	 */
-	public FormDbParam[] uniqueParams;
 	/**
 	 * e.g. select a,b,c from t
 	 */
@@ -98,10 +92,6 @@ public class DbMetaData {
 	 *
 	 */
 	public int generatedKeyIdx = -1;
-	/**
-	 * meta data for the child form. null if
-	 */
-	public DbLink[] dbLinks;
 
 	/**
 	 * array index corresponds to DbOperation.orinal(). true if that operation
@@ -144,7 +134,7 @@ public class DbMetaData {
 					}
 
 					@Override
-					public void setParams(final PreparedStatement ps) throws SQLException {
+					public boolean setParams(final PreparedStatement ps) throws SQLException {
 						int posn = 1;
 						final StringBuilder sbf = new StringBuilder("Parameter Values");
 						for (final FormDbParam p : DbMetaData.this.insertParams) {
@@ -154,6 +144,7 @@ public class DbMetaData {
 							posn++;
 						}
 						logger.info(sbf.toString());
+						return true;
 					}
 
 				}, this.generatedColumnName, generatedKeys);
@@ -219,7 +210,7 @@ public class DbMetaData {
 				}
 
 				@Override
-				public void setParams(final PreparedStatement ps) throws SQLException {
+				public boolean setParams(final PreparedStatement ps) throws SQLException {
 					int posn = 1;
 					final StringBuilder sbf = new StringBuilder("Parameter Values");
 					for (final FormDbParam p : params) {
@@ -229,6 +220,7 @@ public class DbMetaData {
 						posn++;
 					}
 					logger.info(sbf.toString());
+					return true;
 				}
 
 			});
@@ -238,6 +230,146 @@ public class DbMetaData {
 			logger.error(msg);
 			throw new SQLException(msg, e);
 		}
+	}
+
+	/**
+	 * save all rows into the db. A row is inserted if it has no primary key,
+	 * and is updated if it has primary key.
+	 * NOTE: if any of the operation fails, we return a false. this may be used
+	 * to roll-back the transaction.
+	 *
+	 * @param handle
+	 *
+	 * @param rows
+	 *            data to be saved
+	 * @return true if all ok. false in case of any problem, caller shoudl
+	 *         roll-back if this is false
+	 * @throws SQLException
+	 */
+	public boolean saveAll(final DbHandle handle, final Object[][] rows) throws SQLException {
+		if (this.generatedKeyIdx == -1) {
+			logger.error(
+					"This schema has no generated key, and hence meta-data can not determine whether to insert or update a row.");
+			return false;
+		}
+		final int nbrRows = rows.length;
+		/*
+		 * we create array with max length rather than list
+		 */
+		final Object[][] inserts = new Object[nbrRows][];
+		final Object[][] updates = new Object[nbrRows][];
+		int nbrInserts = 0;
+		int nbrUpdates = 0;
+
+		for (final Object[] row : rows) {
+			if (row[this.generatedKeyIdx] == null) {
+				inserts[nbrInserts] = row;
+				nbrInserts++;
+			} else {
+				updates[nbrUpdates] = row;
+				nbrUpdates++;
+			}
+		}
+
+		if (nbrUpdates == 0) {
+			return this.insertAll(handle, rows);
+		}
+
+		if (nbrInserts == 0) {
+			return this.updateAll(handle, rows);
+		}
+
+		final boolean insertOk = this.insertAll(handle, Arrays.copyOf(inserts, nbrInserts));
+		final boolean updateOk = this.updateAll(handle, Arrays.copyOf(updates, nbrUpdates));
+		return insertOk && updateOk;
+	}
+
+	/**
+	 * insert all rows. NOTE: caller must consider rolling-back if false is
+	 * returned
+	 *
+	 * @param handle
+	 *
+	 * @param rows
+	 *            data to be saved
+	 * @return true if every one row was inserted. false if any one row failed
+	 *         to insert.
+	 * @throws SQLException
+	 */
+	public boolean insertAll(final DbHandle handle, final Object[][] rows) throws SQLException {
+
+		return writeMany(handle, this.insertClause, this.insertParams, rows);
+	}
+
+	/**
+	 * update all rows. NOTE: caller must consider rolling-back if false is
+	 * returned
+	 *
+	 * @param handle
+	 *
+	 * @param rows
+	 *            data to be saved
+	 * @return true if every one row was successfully updated. false if any one
+	 *         row failed to update
+	 * @throws SQLException
+	 */
+	public boolean updateAll(final DbHandle handle, final Object[][] rows) throws SQLException {
+
+		return writeMany(handle, this.updateClause, this.updateParams, rows);
+	}
+
+	private static boolean writeMany(final DbHandle handle, final String sql, final FormDbParam[] params,
+			final Object[][] values) throws SQLException {
+
+		final int nbrParams = params.length;
+		final int nbrRows = values.length;
+		/*
+		 * create valueTypes array
+		 */
+		final ValueType[] types = new ValueType[nbrParams];
+		final Object[][] rows = new Object[nbrRows][nbrParams];
+		int idx = -1;
+		for (final FormDbParam p : params) {
+			idx++;
+			types[idx] = p.valueType;
+		}
+
+		/*
+		 * create a new list of array, based on the params. Note that a row in
+		 * values[] is based on the fields in the schema, but we need the array
+		 * based on the columns in the params. Hence we create a new list by
+		 * copying values in te right order
+		 *
+		 */
+		idx = -1;
+		for (final Object[] target : rows) {
+			idx++;
+			final Object[] source = values[idx];
+
+			int targetIdx = -1;
+			for (final FormDbParam p : params) {
+				targetIdx++;
+				target[targetIdx] = source[p.idx];
+			}
+		}
+
+		final int[] nbrs = handle.writeMany(sql, types, rows);
+
+		/*
+		 * we expect each element in nbrs to be 1.some times, rdbms returns -1
+		 * stating that it is not sure, which means that the operation was
+		 * actually successful. hence 0 means that the row failed to update
+		 */
+		idx = -1;
+		boolean allOk = true;
+		for (final int n : nbrs) {
+			idx++;
+			if (n == 0) {
+				logger.error("Row at index {} failed to write to eh data base");
+				allOk = false;
+			}
+		}
+		return allOk;
 	}
 
 	private static String toMessage(final SQLException e, final String sql, final FormDbParam[] params,
@@ -269,25 +401,25 @@ public class DbMetaData {
 	 * @throws SQLException
 	 */
 	public boolean fetch(final DbHandle handle, final Object[] values) throws SQLException {
-		return fetchWorker(handle, this.selectClause + this.whereClause, values, this.whereParams, this.selectParams);
+		return fetch(handle, this.selectClause + this.whereClause, values, this.whereParams, this.selectParams, values);
 	}
 
 	/**
+	 * general read rows from this using a filter
+	 *
 	 * @param handle
-	 * @param values
-	 * @return true if read is successful. false otherwise
+	 * @param sqlReader
+	 * @param outputRow
+	 * @return true of a row was read. false otherwise
 	 * @throws SQLException
 	 */
-	public boolean fetchUsingUniqueKeys(final DbHandle handle, final Object[] values) throws SQLException {
-		if (this.uniqueClause == null) {
-			logger.error("No unique keys defined. can not be fetched with unique keys.");
-			return false;
-		}
-		return fetchWorker(handle, this.selectClause + this.uniqueClause, values, this.uniqueParams, this.selectParams);
+	public boolean fetch(final DbHandle handle, final FilterSql sqlReader, final Object[] outputRow)
+			throws SQLException {
+		return fetch(handle, sqlReader.sql, sqlReader.whereValues, sqlReader.whereParams, this.selectParams, outputRow);
 	}
 
-	private static boolean fetchWorker(final DbHandle driver, final String sql, final Object[] values,
-			final FormDbParam[] setters, final FormDbParam[] getters) throws SQLException {
+	private static boolean fetch(final DbHandle driver, final String sql, final Object[] whereValues,
+			final FormDbParam[] setters, final FormDbParam[] getters, final Object[] output) throws SQLException {
 		final boolean[] result = new boolean[1];
 		driver.read(new IDbReader() {
 
@@ -304,7 +436,7 @@ public class DbMetaData {
 				int posn = 1;
 				final StringBuilder sbf = new StringBuilder("Parameter Values");
 				for (final FormDbParam p : setters) {
-					final Object value = values[p.idx];
+					final Object value = whereValues[p.idx];
 					p.valueType.setPsParam(ps, posn, value);
 					sbf.append('\n').append(posn).append('=').append(value);
 					posn++;
@@ -316,7 +448,7 @@ public class DbMetaData {
 			public boolean readARow(final ResultSet rs) throws SQLException {
 				int posn = 1;
 				for (final FormDbParam p : getters) {
-					values[p.idx] = p.valueType.getFromRs(rs, posn);
+					output[p.idx] = p.valueType.getFromRs(rs, posn);
 					posn++;
 				}
 				result[0] = true;
@@ -326,14 +458,29 @@ public class DbMetaData {
 		return result[0];
 	}
 
-	static FormData[] fetchDataWorker(final DbHandle handle, final Form form, final String sql, final Object[] values,
-			final FormDbParam[] setters, final FormDbParam[] getters) throws SQLException {
-		final List<FormData> result = new ArrayList<>();
+	/**
+	 * get a filtered rows based on a parsed sql reader
+	 *
+	 * @param handle
+	 * @param nbrFields
+	 * @param reader
+	 * @return non-null. rows of data extracted as per filtering criterion.
+	 *         could be empty, but not null
+	 * @throws SQLException
+	 */
+	public Object[][] fetchTable(final DbHandle handle, final int nbrFields, final FilterSql reader)
+			throws SQLException {
+		return fetchTable(handle, nbrFields, reader.sql, reader.whereValues, reader.whereParams, this.selectParams);
+	}
+
+	private static Object[][] fetchTable(final DbHandle handle, final int nbrFields, final String selectSql,
+			final Object[] whereValues, final FormDbParam[] setters, final FormDbParam[] getters) throws SQLException {
+		final List<Object[]> result = new ArrayList<>();
 		handle.read(new IDbReader() {
 
 			@Override
 			public String getPreparedStatement() {
-				return sql;
+				return selectSql;
 			}
 
 			@Override
@@ -341,7 +488,7 @@ public class DbMetaData {
 				int posn = 1;
 				final StringBuilder sbf = new StringBuilder("Parameter Values");
 				for (final FormDbParam p : setters) {
-					final Object value = values[p.idx];
+					final Object value = whereValues[p.idx];
 					p.valueType.setPsParam(ps, posn, value);
 					sbf.append('\n').append(posn).append('=').append(value);
 					posn++;
@@ -351,17 +498,16 @@ public class DbMetaData {
 
 			@Override
 			public boolean readARow(final ResultSet rs) throws SQLException {
-				final FormData fd = form.newFormData();
-				result.add(fd);
+				final Object[] row = new Object[nbrFields];
+				result.add(row);
 				int posn = 1;
 				for (final FormDbParam p : getters) {
-					fd.fieldValues[p.idx] = p.valueType.getFromRs(rs, posn);
+					row[p.idx] = p.valueType.getFromRs(rs, posn);
 					posn++;
 				}
 				return true;
 			}
 		});
-		return result.toArray(new FormData[0]);
+		return result.toArray(new Object[0][]);
 	}
-
 }

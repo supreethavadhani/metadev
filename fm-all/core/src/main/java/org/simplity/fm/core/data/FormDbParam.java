@@ -20,34 +20,34 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.data;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import org.simplity.fm.core.datatypes.ValueType;
 
 /**
- * interface for a class that wants to write/update/delete fromthe dta base
- *
  * @author simplity.org
  *
  */
-public interface IDbWriter {
+public class FormDbParam {
+	/**
+	 * 0-based index in the form-fields that this parameter corresponds to (for getting/setting value in form data array)
+	 */
+	public final int idx;
+	/**
+	 * value type of this parameter based on which set/get method is ssued
+	 * on the statement
+	 */
+	public final ValueType valueType;
 
 	/**
-	 *
-	 * @return the prepared statement that can be used to insert/update/delete
-	 *         rows. null to indicate that the write operation be aborted by
-	 *         design
+	 * create this parameter as an immutable data structure
+	 * 
+	 * @param idx
+	 * @param valueType
 	 */
-	String getPreparedStatement();
+	public FormDbParam(int idx, ValueType valueType) {
+		this.idx = idx;
+		this.valueType = valueType;
+	}
 
-	/**
-	 * method that is invoked by the db driver to populate the actual prepared.
-	 *
-	 * @param ps
-	 *            prepared statement to which params are to be set
-	 * @return true to continue, false to abandon the operation
-	 * @throws SQLException
-	 */
-	boolean setParams(PreparedStatement ps) throws SQLException;
 }

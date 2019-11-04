@@ -36,7 +36,7 @@ public class LinkedForm {
 	 */
 	protected final Form form;
 	/**
-	 * does this form cotaan multipl rows of data?
+	 * does this form contain multiple rows of data?
 	 */
 	protected final boolean isTabular;
 	/**
@@ -83,17 +83,23 @@ public class LinkedForm {
 	 * @param maxRows
 	 *            for validation of data. though 0 means unlimited, we strongly
 	 *            encourage a reasonable limit
+	 * @param childLinkNames
+	 * @param parentLinkNames
+	 * @param linkWhereClause
 	 * @param errorMessageId
 	 *            message id to be used if number of data rows fails validation
 	 */
 	public LinkedForm(final String linkName, final Form form, final boolean isTabular, final int minRows,
-			final int maxRows, final String errorMessageId) {
+			final int maxRows, final String[] childLinkNames, final String[] parentLinkNames,
+			final String linkWhereClause, final String errorMessageId) {
 		this.linkName = linkName;
 		this.form = form;
 		this.isTabular = isTabular;
 		this.minRows = minRows;
 		this.maxRows = maxRows;
 		this.errorMessageId = errorMessageId;
+		this.childLinkNames = childLinkNames;
+		this.parentLinkNames = parentLinkNames;
+		this.linkWhereClause = linkWhereClause;
 	}
-
 }

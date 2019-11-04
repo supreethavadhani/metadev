@@ -30,6 +30,10 @@ import java.util.Map.Entry;
 
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.data.ColumnType;
+import org.simplity.fm.core.data.DbMetaData;
+import org.simplity.fm.core.data.FormDbParam;
+import org.simplity.fm.core.data.FilterSql;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.rdb.FilterCondition;
 import org.simplity.fm.core.service.IServiceContext;
@@ -44,8 +48,8 @@ import com.google.gson.JsonObject;
  * @author simplity.org
  *
  */
-public class Form {
-	private static final Logger logger = LoggerFactory.getLogger(Form.class);
+public class FormNotUsed {
+	private static final Logger logger = LoggerFactory.getLogger(FormNotUsed.class);
 	private static final String IN = " IN (";
 	private static final String LIKE = " LIKE ? escape '\\'";
 	private static final String BETWEEN = " BETWEEN ? and ?";
@@ -65,7 +69,7 @@ public class Form {
 	/**
 	 * Fields in this form.
 	 */
-	protected Field[] fields;
+	protected FieldNotUsed[] fields;
 
 	/**
 	 * field name that has the user id. Used for access control
@@ -76,7 +80,7 @@ public class Form {
 	 * name of grids/tabular dta. null if there are no grids. grid name is the
 	 * "fieldName" used in this form for the tabular data. like orderLines.;
 	 */
-	protected ChildForm[] childForms;
+	protected ChildFormNotUsed[] childForms;
 
 	/**
 	 * describes all the inter-field validations, and form-level validations
@@ -96,11 +100,11 @@ public class Form {
 	/**
 	 * fields are also stored as Maps for ease of access
 	 */
-	protected Map<String, Field> fieldMap;
+	protected Map<String, FieldNotUsed> fieldMap;
 	/**
 	 * indexes of tabular fields are also stored in map for ease of access
 	 */
-	protected Map<String, ChildForm> childMap;
+	protected Map<String, ChildFormNotUsed> childMap;
 
 	/**
 	 * index to the field that represents the userId. User access may be
@@ -125,7 +129,7 @@ public class Form {
 			int[] uniqs = new int[n];
 			int keyIdx = 0;
 			int uniqIdx = 0;
-			for (Field field : this.fields) {
+			for (FieldNotUsed field : this.fields) {
 				this.fieldMap.put(field.getFieldName(), field);
 				if (field.isKeyField()) {
 					keys[keyIdx] = field.getIndex();
@@ -147,13 +151,13 @@ public class Form {
 		if (this.childForms != null) {
 			int n = this.childForms.length;
 			this.childMap = new HashMap<>(n, 1);
-			for (ChildForm child : this.childForms) {
+			for (ChildFormNotUsed child : this.childForms) {
 				this.childMap.put(child.fieldName, child);
 			}
 		}
 
 		if (this.userIdFieldName != null) {
-			Field field = this.fieldMap.get(this.userIdFieldName);
+			FieldNotUsed field = this.fieldMap.get(this.userIdFieldName);
 			if (field == null) {
 				logger.error("userIdField {} specified, but not defined", this.userIdFieldName);
 			} else {
@@ -177,14 +181,14 @@ public class Form {
 		boolean foundOne = false;
 		StringBuilder sbf = new StringBuilder(WH);
 		for (int i = 0; i < this.childForms.length; i++) {
-			DbLink link = this.dbMetaData.dbLinks[i];
-			Form childForm = this.childForms[i].form;
+			DbLinkNotUsed link = this.dbMetaData.dbLinks[i];
+			FormNotUsed childForm = this.childForms[i].form;
 			if (link == null) {
 				logger.info("Form {} has a child {} but has no childMeta entry for it", this.getFormId(),
 						childForm.getFormId());
 				continue;
 			}
-			Form form = this.childForms[i].form;
+			FormNotUsed form = this.childForms[i].form;
 			if (form.dbMetaData == null) {
 				logger.warn("Child {} has no db meta data. It will not particiapte in db I/O of its parent",
 						childForm.getFormId());
@@ -198,7 +202,7 @@ public class Form {
 			 */
 			sbf.setLength(WH.length());
 			for (String f : link.childLinkNames) {
-				Field field = form.getField(f);
+				FieldNotUsed field = form.getField(f);
 				if (field == null) {
 					logger.error(
 							"Child link field {} is specified in parent form, but is not defiined as a field in the child form {}",
@@ -259,14 +263,14 @@ public class Form {
 	/**
 	 * @return the fieldNames. non-null. could be empty
 	 */
-	public Field[] getFields() {
+	public FieldNotUsed[] getFields() {
 		return this.fields;
 	}
 
 	/**
 	 * @return the grid names. non-null. could be empty
 	 */
-	public ChildForm[] getChildForms() {
+	public ChildFormNotUsed[] getChildForms() {
 		return this.childForms;
 	}
 
@@ -274,7 +278,7 @@ public class Form {
 	 * @param fieldName
 	 * @return data element or null if there is no such field
 	 */
-	public Field getField(String fieldName) {
+	public FieldNotUsed getField(String fieldName) {
 		return this.fieldMap.get(fieldName);
 	}
 
@@ -283,7 +287,7 @@ public class Form {
 	 * @param childName
 	 * @return child-form structure that represents the sub-form in this form
 	 */
-	public ChildForm getChildForm(String childName) {
+	public ChildFormNotUsed getChildForm(String childName) {
 		return this.childMap.get(childName);
 	}
 
@@ -316,16 +320,16 @@ public class Form {
 	 * @param rows
 	 * @return child data for this form based on rows of data
 	 */
-	public FormData[] createChildData(Object[][] rows) {
-		FormData[] result = new FormData[rows.length];
+	public FormDataNotUsed[] createChildData(Object[][] rows) {
+		FormDataNotUsed[] result = new FormDataNotUsed[rows.length];
 		for (int i = 0; i < result.length; i++) {
-			result[i] = new FormData(this, rows[i], null);
+			result[i] = new FormDataNotUsed(this, rows[i], null);
 		}
 		return result;
 	}
 
-	protected DbLink newDbLink(String[] names, int[] indexes) {
-		DbLink c = new DbLink();
+	protected DbLinkNotUsed newDbLink(String[] names, int[] indexes) {
+		DbLinkNotUsed c = new DbLinkNotUsed();
 		c.linkParentParams = this.getParams(indexes);
 		c.childLinkNames = names;
 		return c;
@@ -334,15 +338,15 @@ public class Form {
 	/**
 	 * @return a data structure
 	 */
-	public FormData newFormData() {
+	public FormDataNotUsed newFormData() {
 		Object[] row = new Object[this.fields.length];
-		for (Field field : this.fields) {
+		for (FieldNotUsed field : this.fields) {
 			Object val = field.getDefaultValue();
 			if (val != null) {
 				row[field.getIndex()] = val;
 			}
 		}
-		return new FormData(this, row, null);
+		return new FormDataNotUsed(this, row, null);
 	}
 
 	/**
@@ -358,7 +362,7 @@ public class Form {
 	 *            mxRows to be read
 	 * @return filter clause that can be used to get rows from the db
 	 */
-	public SqlReader parseForFilter(JsonObject conditions, JsonObject sorts, List<Message> errors, IServiceContext ctx,
+	public FilterSql parseForFilter(JsonObject conditions, JsonObject sorts, List<Message> errors, IServiceContext ctx,
 			int maxRows) {
 		StringBuilder sql = new StringBuilder(this.dbMetaData.selectClause);
 		sql.append(" WHERE ");
@@ -368,7 +372,7 @@ public class Form {
 		/*
 		 * force a condition on tenant id id required
 		 */
-		Field tenant = this.dbMetaData.tenantField;
+		FieldNotUsed tenant = this.dbMetaData.tenantField;
 		if (tenant != null) {
 			sql.append(tenant.getDbColumnName()).append("=?");
 			values.add(ctx.getTenantId());
@@ -381,7 +385,7 @@ public class Form {
 		 */
 		for (Map.Entry<String, JsonElement> entry : conditions.entrySet()) {
 			String fieldName = entry.getKey();
-			Field field = this.getField(fieldName);
+			FieldNotUsed field = this.getField(fieldName);
 			if (field == null) {
 				logger.warn("Input has value for a field named {} that is not part of this form", fieldName);
 				continue;
@@ -517,7 +521,7 @@ public class Form {
 			boolean isFirst = true;
 			for (Entry<String, JsonElement> entry : sorts.entrySet()) {
 				String f = entry.getKey();
-				Field field = this.fieldMap.get(f);
+				FieldNotUsed field = this.fieldMap.get(f);
 				if (field == null) {
 					logger.error("{} is not a field in teh form. Sort order ignored");
 					continue;
@@ -536,7 +540,7 @@ public class Form {
 		}
 		String sqlText = sql.toString();
 		logger.info("Filter sql = {}", sqlText);
-		return new SqlReader(sql.toString(), params.toArray(new FormDbParam[0]), values.toArray(new Object[0]));
+		return new FilterSql(sql.toString(), params.toArray(new FormDbParam[0]), values.toArray(new Object[0]));
 	}
 
 	/**

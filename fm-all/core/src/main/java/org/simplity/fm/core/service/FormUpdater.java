@@ -20,33 +20,50 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.form;
+package org.simplity.fm.core.service;
 
-import org.simplity.fm.core.validn.IValidation;
+import org.simplity.fm.core.Message;
+import org.simplity.fm.core.data.DataRow;
+import org.simplity.fm.core.data.Form;
+import org.simplity.fm.core.data.IoType;
+import org.simplity.fm.core.rdb.RdbDriver;
+
+import com.google.gson.JsonObject;
 
 /**
- * 
  * @author simplity.org
  *
  */
-public abstract class FormValidation implements IValidation {
-
-	protected final String name1;
-	protected final String name2;
-	protected final boolean boolValue;
-	protected final String errorMessageId;
+public class FormUpdater extends FormOperator {
 
 	/**
-	 * 
-	 * @param fieldNam1
-	 * @param fieldName2
-	 * @param boolValue
-	 * @param errorMessageId
+	 *
+	 * @param form
 	 */
-	public FormValidation(String fieldNam1, String fieldName2, boolean boolValue, String errorMessageId) {
-		this.name1 = fieldNam1;
-		this.name2 = fieldName2;
-		this.boolValue = boolValue;
-		this.errorMessageId = errorMessageId;
+	public FormUpdater(final Form form) {
+		this.form = form;
+		this.ioType = IoType.UPDATE;
+	}
+
+	@Override
+	public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
+		final DataRow dataRow = this.form.getSchema().parseRow(payload, false, ctx, null, 0);
+		if (!ctx.allOk()) {
+			logger.error("Error while reading fields from the input payload");
+			return;
+		}
+		final boolean[] result = new boolean[1];
+
+		RdbDriver.getDriver().transact(handle -> {
+			result[0] = dataRow.update(handle);
+			return true;
+		}, true);
+
+		if (!result[0]) {
+			logger.error("Row not updated, possibly because of time-stamp issues");
+			ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+		}
+
+		return;
 	}
 }

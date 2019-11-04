@@ -26,18 +26,18 @@ import java.sql.SQLException;
 import java.util.Map;
 
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.form.Form;
-import org.simplity.fm.core.form.FormData;
+import org.simplity.fm.core.data.DataRow;
+import org.simplity.fm.core.data.Schema;
 import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
- * 
+ *
  * @author simplity.org
  *
  */
 class FormLoader {
-	private final Form form;
+	private final Schema form;
 	/**
 	 * if non-null, generated key is copied to the value with this name
 	 */
@@ -51,7 +51,7 @@ class FormLoader {
 	private final int keyIdx;
 
 	/**
-	 * 
+	 *
 	 * @param form
 	 *            to be used for inserting row
 	 * @param generatedKeyOutputName
@@ -62,7 +62,7 @@ class FormLoader {
 	 *            must have exactly the right number and in the same order for
 	 *            the form fields
 	 */
-	FormLoader(Form form, String generatedKeyOutputName, IValueProvider[] valueProviders) {
+	FormLoader(final Schema form, final String generatedKeyOutputName, final IValueProvider[] valueProviders) {
 		this.form = form;
 		this.generatedKeyOutputName = generatedKeyOutputName;
 		this.valueProviders = valueProviders;
@@ -75,7 +75,7 @@ class FormLoader {
 
 	/**
 	 * validate data
-	 * 
+	 *
 	 * @param values
 	 * @param ctx
 	 *            that must have user and tenantKey if the insert operation
@@ -83,33 +83,32 @@ class FormLoader {
 	 * @return true of all ok. false otherwise, in which case ctx will have the
 	 *         errors
 	 */
-	boolean validate(Map<String, String> values, IServiceContext ctx){
+	boolean validate(final Map<String, String> values, final IServiceContext ctx) {
 		return this.parseInput(values, ctx) != null;
 
 	}
 
-	private FormData parseInput(Map<String, String> values, IServiceContext ctx) {
-		String[] data = new String[this.valueProviders.length];
+	private DataRow parseInput(final Map<String, String> values, final IServiceContext ctx) {
+		final String[] data = new String[this.valueProviders.length];
 		int idx = -1;
-		for (IValueProvider vp : this.valueProviders) {
+		for (final IValueProvider vp : this.valueProviders) {
 			idx++;
 			if (vp != null) {
 				data[idx] = vp.getValue(values, ctx);
 			}
 		}
 
-		FormData fd = this.form.newFormData();
-		int nbrExistingErrors = ctx.getNbrErrors();
-		fd.validateAndLoadForInsert(data, ctx);
-		int nbrErrors = ctx.getNbrErrors();
+		final int nbrExistingErrors = ctx.getNbrErrors();
+		final DataRow dataRow = this.form.parseForInsert(data, ctx);
+		final int nbrErrors = ctx.getNbrErrors();
 		if (nbrErrors > nbrExistingErrors) {
 			return null;
 		}
-		return fd;
+		return dataRow;
 	}
 
 	/**
-	 * 
+	 *
 	 * @param values
 	 * @param ctx
 	 *            that must have user and tenantKey if the insert operation
@@ -118,8 +117,9 @@ class FormLoader {
 	 *         errors
 	 * @throws SQLException
 	 */
-	boolean loadData(Map<String, String> values, DbHandle handle, IServiceContext ctx) throws SQLException {
-		FormData fd = this.parseInput(values, ctx);
+	boolean loadData(final Map<String, String> values, final DbHandle handle, final IServiceContext ctx)
+			throws SQLException {
+		final DataRow fd = this.parseInput(values, ctx);
 		if (fd == null) {
 			return false;
 		}
@@ -130,7 +130,7 @@ class FormLoader {
 		}
 
 		if (this.generatedKeyOutputName != null) {
-			Object key = fd.getObject(this.keyIdx);
+			final Object key = fd.getObject(this.keyIdx);
 			if (key != null) {
 				values.put(this.generatedKeyOutputName, key.toString());
 			}

@@ -20,35 +20,26 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.form;
+package org.simplity.fm.core.service;
+
+import org.simplity.fm.core.data.Form;
+import org.simplity.fm.core.data.IoType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * just data structure to collect and pass info fromForm to FormData
  * @author simplity.org
  *
  */
-public class SqlReader {
-	final String sql;
-	final Object[] whereValues;
-	final FormDbParam[] whereParams;
+public abstract class FormOperator implements IService {
+	protected static final Logger logger = LoggerFactory.getLogger(FormOperator.class);
 
-	/**
-	 * constructor with all attributes
-	 *
-	 * @param sql
-	 *            non-null prepared statement
-	 * @param whereParams
-	 *            non-null array with valueTypes of parameters in the SQL in the
-	 *            right order. Empty array in case the SQL has no parameters.
-	 * @param whereValues
-	 *            non-null array of values for the parameters in the sql. Each
-	 *            element should be of the right type for the corresponding
-	 *            parameter.
-	 * 
-	 */
-	public SqlReader(String sql, FormDbParam[] whereParams, Object[] whereValues) {
-		this.sql = sql;
-		this.whereParams = whereParams;
-		this.whereValues = whereValues;
+	protected IoType ioType;
+	protected Form form;
+
+	@Override
+	public String getId() {
+		return this.ioType.name() + '_' + this.form.getFormId();
 	}
+
 }

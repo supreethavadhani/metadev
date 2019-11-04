@@ -31,7 +31,7 @@ import org.simplity.fm.core.ComponentProvider;
  * @author simplity.org
  *
  */
-public class ChildForm {
+public class ChildFormNotUsed {
 	/**
 	 * name of this field
 	 */
@@ -40,7 +40,7 @@ public class ChildForm {
 	 * columns in this table. or fields in this sub-form is described in a
 	 * separate form
 	 */
-	public final Form form;
+	public final FormNotUsed form;
 
 	/**
 	 * is this tabular data, or just a sub-form (section)
@@ -79,7 +79,7 @@ public class ChildForm {
 	 * @param errorMessageId
 	 *            message id to be used if number of data rows fails validation
 	 */
-	public ChildForm(String fieldName, String formName, boolean isTabular, int minRows, int maxRows,
+	public ChildFormNotUsed(String fieldName, String formName, boolean isTabular, int minRows, int maxRows,
 			String errorMessageId) {
 		this.fieldName = fieldName;
 		this.form = ComponentProvider.getProvider().getForm(formName);

@@ -20,34 +20,33 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
+package org.simplity.fm.core.data;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import org.simplity.fm.core.validn.IValidation;
 
 /**
- * interface for a class that wants to write/update/delete fromthe dta base
- *
+ * 
  * @author simplity.org
  *
  */
-public interface IDbWriter {
+public abstract class FormValidation implements IValidation {
+
+	protected final String name1;
+	protected final String name2;
+	protected final boolean boolValue;
+	protected final String errorMessageId;
 
 	/**
-	 *
-	 * @return the prepared statement that can be used to insert/update/delete
-	 *         rows. null to indicate that the write operation be aborted by
-	 *         design
+	 * 
+	 * @param fieldNam1
+	 * @param fieldName2
+	 * @param boolValue
+	 * @param errorMessageId
 	 */
-	String getPreparedStatement();
-
-	/**
-	 * method that is invoked by the db driver to populate the actual prepared.
-	 *
-	 * @param ps
-	 *            prepared statement to which params are to be set
-	 * @return true to continue, false to abandon the operation
-	 * @throws SQLException
-	 */
-	boolean setParams(PreparedStatement ps) throws SQLException;
+	public FormValidation(String fieldNam1, String fieldName2, boolean boolValue, String errorMessageId) {
+		this.name1 = fieldNam1;
+		this.name2 = fieldName2;
+		this.boolValue = boolValue;
+		this.errorMessageId = errorMessageId;
+	}
 }

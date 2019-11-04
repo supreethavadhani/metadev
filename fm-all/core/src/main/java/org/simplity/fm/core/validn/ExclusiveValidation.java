@@ -22,15 +22,14 @@
 
 package org.simplity.fm.core.validn;
 
-import java.util.List;
-
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.form.FormData;
+import org.simplity.fm.core.data.DataRow;
+import org.simplity.fm.core.service.IServiceContext;
 
 /**
  * a pair of fields that are mutually exclusive. That is, both should
  * not be specified
- * 
+ *
  * @author simplity.org
  *
  */
@@ -41,16 +40,22 @@ public class ExclusiveValidation implements IValidation {
 	private final boolean oneOfThemIsRequired;
 	private final String messageId;
 
-
 	/**
-	 * 
-	 * @param index1 index of first field in the form.
-	 * @param index2 index of second field in the form
-	 * @param oneOfThemIsRequired if true, at least one of them must have value. if false, both not having value is OK.
-	 * @param fieldName with which message is to be added
-	 * @param messageId error message id
+	 *
+	 * @param index1
+	 *            index of first field in the form.
+	 * @param index2
+	 *            index of second field in the form
+	 * @param oneOfThemIsRequired
+	 *            if true, at least one of them must have value. if false, both
+	 *            not having value is OK.
+	 * @param fieldName
+	 *            with which message is to be added
+	 * @param messageId
+	 *            error message id
 	 */
-	public ExclusiveValidation(int index1, int index2, boolean oneOfThemIsRequired, String fieldName, String messageId) {
+	public ExclusiveValidation(final int index1, final int index2, final boolean oneOfThemIsRequired,
+			final String fieldName, final String messageId) {
 		this.index1 = index1;
 		this.index2 = index2;
 		this.oneOfThemIsRequired = oneOfThemIsRequired;
@@ -59,25 +64,24 @@ public class ExclusiveValidation implements IValidation {
 	}
 
 	@Override
-	public boolean isValid(FormData formData, List<Message> messages) {
-		Object val1 = formData.getObject(this.index1);
-		Object val2 = formData.getObject(this.index2);
-		
-		if(val1 == null) {
-			if(val2 == null && this.oneOfThemIsRequired) {
-				messages.add(Message.newFieldError(this.fieldName, this.messageId));
+	public boolean isValid(final DataRow dataRow, final IServiceContext ctx) {
+		final Object val1 = dataRow.getObject(this.index1);
+		final Object val2 = dataRow.getObject(this.index2);
+
+		if (val1 == null) {
+			if (val2 == null && this.oneOfThemIsRequired) {
+				ctx.addMessage(Message.newFieldError(this.fieldName, this.messageId));
 				return false;
 			}
 			return true;
-			
+
 		}
-		if(val2 == null) {
+		if (val2 == null) {
 			return true;
 		}
-		messages.add(Message.newFieldError(this.fieldName, this.messageId));
+		ctx.addMessage(Message.newFieldError(this.fieldName, this.messageId));
 		return false;
 	}
-
 
 	@Override
 	public String getFieldName() {

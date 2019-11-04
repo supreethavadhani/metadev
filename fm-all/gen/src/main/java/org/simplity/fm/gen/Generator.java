@@ -39,8 +39,8 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.simplity.fm.core.Conventions;
+import org.simplity.fm.core.data.ColumnType;
 import org.simplity.fm.core.datatypes.ValueType;
-import org.simplity.fm.core.form.ColumnType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

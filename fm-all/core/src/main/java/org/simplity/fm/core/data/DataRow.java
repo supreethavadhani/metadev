@@ -24,21 +24,15 @@ package org.simplity.fm.core.data;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
-import org.simplity.fm.core.Message;
 import org.simplity.fm.core.datatypes.ValueType;
-import org.simplity.fm.core.service.IServiceContext;
-import org.simplity.fm.core.validn.IValidation;
+import org.simplity.fm.core.rdb.DbHandle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonWriter;
 
 /**
@@ -47,12 +41,12 @@ import com.google.gson.stream.JsonWriter;
  * @author simplity.org
  *
  */
-public class DbData {
-	protected final Logger logger = LoggerFactory.getLogger(DbData.class);
+public class DataRow {
+	protected static final Logger logger = LoggerFactory.getLogger(DataRow.class);
 	/**
 	 * schema for which this data is created
 	 */
-	protected final DbSchema schema;
+	protected final Schema schema;
 	/**
 	 * data for (or from) the schema. Each element is the value of the
 	 * corresponding field in the schema
@@ -64,7 +58,7 @@ public class DbData {
 	 * @param schema
 	 *            non-null
 	 */
-	public DbData(final DbSchema schema) {
+	public DataRow(final Schema schema) {
 		this.schema = schema;
 		this.dataRow = new Object[this.schema.getNbrFields()];
 	}
@@ -77,7 +71,7 @@ public class DbData {
 	 *            non-null. note that the number and type of elements must be as
 	 *            per the schema, failing which a runtime exception is thrown
 	 */
-	public DbData(final DbSchema schema, final Object[] row) {
+	public DataRow(final Schema schema, final Object[] row) {
 		this.schema = schema;
 		final int nbrFields = schema.getNbrFields();
 		if (nbrFields == row.length) {
@@ -98,8 +92,21 @@ public class DbData {
 	/**
 	 * @return the db schema
 	 */
-	public DbSchema getSchema() {
+	public Schema getSchema() {
 		return this.schema;
+	}
+
+	/**
+	 *
+	 * @param fieldName
+	 * @return Field in this form. null if no such field
+	 */
+	public int getFieldIndex(final String fieldName) {
+		final Field field = this.schema.getField(fieldName);
+		if (field != null) {
+			return field.getIndex();
+		}
+		return -1;
 	}
 
 	/**
@@ -427,152 +434,92 @@ public class DbData {
 	}
 
 	/**
-	 * load keys from a JSON. input is suspect.
-	 *
-	 * @param json
-	 *            non-null
-	 * @param ctx
-	 *            can be null, if validations error need not be recorded into
-	 *            the context. if non-null any validation error is added to it
-	 */
-	public void loadKeys(final JsonObject json, final IServiceContext ctx) {
-		final int[] indexes = this.schema.getKeyIndexes();
-		if (indexes == null) {
-			return;
-		}
-		final Field[] fields = this.schema.getFields();
-		for (final int idx : indexes) {
-			final Field f = fields[idx];
-			final String value = getTextAttribute(json, f.getName());
-			validateAndSet(f, value, this.dataRow, idx, false, ctx, null, 0);
-		}
-	}
-
-	/**
-	 * load keys from a JSON. input is suspect.
-	 *
-	 * @param inputValues
-	 *            non-null collection of field values
-	 * @param ctx
-	 *            non-null to which any validation errors are added
-	 */
-	public void loadKeys(final Map<String, String> inputValues, final IServiceContext ctx) {
-		final int[] indexes = this.schema.getKeyIndexes();
-		if (indexes == null) {
-			return;
-		}
-
-		final Field[] fields = this.schema.getFields();
-		for (final int idx : indexes) {
-			final Field f = fields[idx];
-			final String value = inputValues.get(f.getName());
-			validateAndSet(f, value, this.dataRow, idx, false, ctx, null, 0);
-		}
-	}
-
-	private static String getTextAttribute(final JsonObject json, final String fieldName) {
-		final JsonElement node = json.get(fieldName);
-		if (node == null) {
-			return null;
-		}
-		if (node.isJsonPrimitive()) {
-			return node.getAsString();
-		}
-		return null;
-	}
-
-	private static void validateAndSet(final Field field, final String value, final Object[] row, final int idx,
-			final boolean forInsert, final IServiceContext ctx, final String tableName, final int rowNbr) {
-		if (value == null || value.isEmpty()) {
-			row[idx] = null;
-			field.validateNull(forInsert, ctx, tableName, rowNbr);
-			return;
-		}
-		row[idx] = field.parse(value, ctx, tableName, rowNbr);
-	}
-
-	public void parse(final JsonObject json, final boolean forInsert, final IServiceContext ctx, final String tableName,
-			final int rowNbr) {
-		this.setFeilds(json, forInsert, ctx, tableName, rowNbr);
-
-		this.validateForm(ctx);
-	}
-
-	private void setFeilds(final JsonObject json, final boolean forInsert, final IServiceContext ctx,
-			final String childName, final int rowNbr) {
-
-		for (final Field field : this.schema.getFields()) {
-			final int idx = field.getIndex();
-
-			final String fieldName = field.getName();
-			/*
-			 * do we have to set value from our side?
-			 */
-			if (field.isTenantKey()) {
-				this.dataRow[idx] = ctx.getTenantId();
-				this.logger.info("tenant id set to field {}", fieldName);
-				continue;
-			}
-
-			if (field.isUserId()) {
-				this.dataRow[idx] = ctx.getUser().getUserId();
-				this.logger.info("Field {} is user field, and is assigned value from the context", fieldName);
-				continue;
-			}
-
-			final String value = getTextAttribute(json, fieldName);
-			validateAndSet(field, value, this.dataRow, field.getIndex(), forInsert, ctx, childName, rowNbr);
-		}
-	}
-
-	private void validateForm(final IServiceContext ctx) {
-		final IValidation[] validations = this.schema.getValidations();
-		final List<Message> errors = new ArrayList<>();
-		if (validations != null) {
-			for (final IValidation vln : validations) {
-				final boolean ok = vln.isValid(this, errors);
-				if (!ok) {
-					this.logger.error("field {} failed an inter-field validaiton associated with it",
-							vln.getFieldName());
-				}
-			}
-		}
-		if (errors.size() > 0) {
-			ctx.addMessages(errors);
-		}
-	}
-
-	/**
 	 * @param writer
 	 * @throws IOException
 	 */
 	public void serializeAsJson(final Writer writer) throws IOException {
-		try (JsonWriter gen = new JsonWriter(writer)) {
-			gen.beginObject();
-			this.writeFields(gen);
-			gen.endObject();
+		try (JsonWriter jw = new JsonWriter(writer)) {
+			jw.beginObject();
+			this.schema.serializeToJson(this.dataRow, jw);
+			jw.endObject();
 		}
 	}
 
-	private void writeFields(final JsonWriter gen) throws IOException {
-		for (final Field field : this.schema.getFields()) {
-			writeField(gen, this.dataRow[field.getIndex()], field.getValueType());
+	/*
+	 * ************ DB Operations ************
+	 */
+	/**
+	 * insert/create this form data into the db.
+	 *
+	 * @param handle
+	 *
+	 * @return true if it is created. false in case it failed because of an an
+	 *         existing form with the same id/key
+	 * @throws SQLException
+	 */
+	public boolean insert(final DbHandle handle) throws SQLException {
+		final DbMetaData meta = this.schema.getDbMetaData();
+		if (meta == null) {
+			this.noOps();
+			return false;
 		}
+		return meta.insert(handle, this.dataRow);
 	}
 
-	private static void writeField(final JsonWriter writer, final Object value, final ValueType vt) throws IOException {
-		if (value == null) {
-			writer.nullValue();
-			return;
+	private void noOps() {
+		logger.error("Form {} is not designed for db operation", this.schema.name);
+	}
+
+	/**
+	 * update this form data back into the db.
+	 *
+	 * @param handle
+	 *
+	 * @return true if it is indeed updated. false in case there was no row to
+	 *         update
+	 * @throws SQLException
+	 */
+	public boolean update(final DbHandle handle) throws SQLException {
+		final DbMetaData meta = this.schema.getDbMetaData();
+		if (meta == null) {
+			this.noOps();
+			return false;
 		}
-		if (vt == ValueType.INTEGER || vt == ValueType.DECIMAL) {
-			writer.value((Number) (value));
-			return;
+		return meta.update(handle, this.dataRow);
+	}
+
+	/**
+	 * remove this form data from the db
+	 *
+	 * @param handle
+	 *
+	 * @return true if it is indeed deleted happened. false otherwise
+	 * @throws SQLException
+	 */
+	public boolean deleteFromDb(final DbHandle handle) throws SQLException {
+		final DbMetaData meta = this.schema.getDbMetaData();
+		if (meta == null) {
+			this.noOps();
+			return false;
 		}
-		if (vt == ValueType.BOOLEAN) {
-			writer.value((boolean) (value));
-			return;
+		return meta.deleteFromDb(handle, this.dataRow);
+	}
+
+	/**
+	 * fetch data for this form from a db
+	 *
+	 * @param handle
+	 *
+	 * @return true if it is read.false if no data found for this form (key not
+	 *         found...)
+	 * @throws SQLException
+	 */
+	public boolean fetch(final DbHandle handle) throws SQLException {
+		final DbMetaData meta = this.schema.getDbMetaData();
+		if (meta == null) {
+			this.noOps();
+			return false;
 		}
-		writer.value(value.toString());
+		return meta.fetch(handle, this.dataRow);
 	}
 }

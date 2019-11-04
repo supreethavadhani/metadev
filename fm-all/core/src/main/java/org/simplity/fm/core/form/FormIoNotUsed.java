@@ -32,6 +32,9 @@ import java.util.function.Consumer;
 import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.data.DbMetaData;
+import org.simplity.fm.core.data.IoType;
+import org.simplity.fm.core.data.FilterSql;
 import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.IDbClient;
 import org.simplity.fm.core.rdb.RdbDriver;
@@ -51,8 +54,8 @@ import com.google.gson.JsonPrimitive;
  * @author simplity.org
  *
  */
-public abstract class FormIo implements IService {
-	protected static final Logger logger = LoggerFactory.getLogger(FormIo.class);
+public abstract class FormIoNotUsed implements IService {
+	protected static final Logger logger = LoggerFactory.getLogger(FormIoNotUsed.class);
 
 	/**
 	 * 
@@ -60,8 +63,8 @@ public abstract class FormIo implements IService {
 	 * @param formName
 	 * @return non-null instance
 	 */
-	public static FormIo getInstance(IoType opern, String formName) {
-		Form form = ComponentProvider.getProvider().getForm(formName);
+	public static FormIoNotUsed getInstance(IoType opern, String formName) {
+		FormNotUsed form = ComponentProvider.getProvider().getForm(formName);
 		if (form == null) {
 			logger.error("No form named {}.", formName);
 			return null;
@@ -102,14 +105,14 @@ public abstract class FormIo implements IService {
 		}
 	}
 
-	protected static String toServiceName(Form form, IoType oper) {
+	protected static String toServiceName(FormNotUsed form, IoType oper) {
 		return oper.name() + '-' + form.getFormId();
 	}
 
-	protected static class FormReader extends FormIo {
-		private final Form form;
+	protected static class FormReader extends FormIoNotUsed {
+		private final FormNotUsed form;
 
-		protected FormReader(Form form) {
+		protected FormReader(FormNotUsed form) {
 			this.form = form;
 		}
 
@@ -120,8 +123,8 @@ public abstract class FormIo implements IService {
 
 		@Override
 		public void serve(IServiceContext ctx, JsonObject payload) throws Exception {
-			FormData fd = this.form.newFormData();
-			Field tenant = this.form.dbMetaData.tenantField;
+			FormDataNotUsed fd = this.form.newFormData();
+			FieldNotUsed tenant = this.form.dbMetaData.tenantField;
 			if (tenant != null) {
 				fd.setObject(tenant.getIndex(), ctx.getTenantId());
 			}
@@ -163,10 +166,10 @@ public abstract class FormIo implements IService {
 		}
 	}
 
-	protected static class FormFilter extends FormIo {
-		private final Form form;
+	protected static class FormFilter extends FormIoNotUsed {
+		private final FormNotUsed form;
 
-		protected FormFilter(Form form) {
+		protected FormFilter(FormNotUsed form) {
 			this.form = form;
 		}
 
@@ -205,7 +208,7 @@ public abstract class FormIo implements IService {
 				nbrRows = node.getAsInt();
 			}
 
-			SqlReader reader = this.form.parseForFilter(conditions, sorts, msgs, ctx, nbrRows);
+			FilterSql reader = this.form.parseForFilter(conditions, sorts, msgs, ctx, nbrRows);
 
 			if (msgs.size() > 0) {
 				logger.warn("Filering aborted due to errors in nuput data");
@@ -219,21 +222,21 @@ public abstract class FormIo implements IService {
 				return;
 			}
 
-			FormData[][] data = new FormData[1][];
-			Form f = this.form;
+			FormDataNotUsed[][] data = new FormDataNotUsed[1][];
+			FormNotUsed f = this.form;
 			RdbDriver.getDriver().transact(new IDbClient() {
 
 				@Override
 				public boolean transact(DbHandle handle) throws SQLException {
-					data[0] = FormData.fetchDataWorker(handle, f, reader.sql, reader.whereValues, reader.whereParams,
+					data[0] = FormDataNotUsed.fetchDataWorker(handle, f, reader.sql, reader.whereValues, reader.whereParams,
 							f.dbMetaData.selectParams);
 					return true;
 				}
 			}, true);
-			FormData[] rows = data[0];
+			FormDataNotUsed[] rows = data[0];
 			if (rows == null || rows.length == 0) {
 				logger.info("No data found for the form {}", this.form.getFormId());
-				rows = new FormData[0];
+				rows = new FormDataNotUsed[0];
 			} else {
 				logger.info(" {} rows filtered", rows.length);
 			}
@@ -244,7 +247,7 @@ public abstract class FormIo implements IService {
 			writer.write(Conventions.Http.TAG_LIST);
 			writer.write("\":[");
 			boolean firstOne = true;
-			for (FormData fd : rows) {
+			for (FormDataNotUsed fd : rows) {
 				if (firstOne) {
 					firstOne = false;
 				} else {
@@ -256,10 +259,10 @@ public abstract class FormIo implements IService {
 		}
 	}
 
-	protected static class FormUpdater extends FormIo {
-		private final Form form;
+	protected static class FormUpdater extends FormIoNotUsed {
+		private final FormNotUsed form;
 
-		protected FormUpdater(Form form) {
+		protected FormUpdater(FormNotUsed form) {
 			this.form = form;
 		}
 
@@ -270,15 +273,15 @@ public abstract class FormIo implements IService {
 
 		@Override
 		public void serve(IServiceContext ctx, JsonObject payload) throws Exception {
-			FormData fd = this.form.newFormData();
+			FormDataNotUsed fd = this.form.newFormData();
 			update(fd, ctx, payload, null);
 		}
 	}
 
-	protected static class FormInserter extends FormIo {
-		private final Form form;
+	protected static class FormInserter extends FormIoNotUsed {
+		private final FormNotUsed form;
 
-		protected FormInserter(Form form) {
+		protected FormInserter(FormNotUsed form) {
 			this.form = form;
 		}
 
@@ -289,16 +292,16 @@ public abstract class FormIo implements IService {
 
 		@Override
 		public void serve(IServiceContext ctx, JsonObject payload) throws Exception {
-			FormData fd = this.form.newFormData();
+			FormDataNotUsed fd = this.form.newFormData();
 			insert(fd, ctx, payload, null);
 		}
 
 	}
 
-	protected static class FormDeleter extends FormIo {
-		private final Form form;
+	protected static class FormDeleter extends FormIoNotUsed {
+		private final FormNotUsed form;
 
-		protected FormDeleter(Form form) {
+		protected FormDeleter(FormNotUsed form) {
 			this.form = form;
 		}
 
@@ -309,12 +312,12 @@ public abstract class FormIo implements IService {
 
 		@Override
 		public void serve(IServiceContext ctx, JsonObject payload) throws Exception {
-			FormData fd = this.form.newFormData();
+			FormDataNotUsed fd = this.form.newFormData();
 			fd.loadKeys(payload, ctx);
 			if (!ctx.allOk()) {
 				return;
 			}
-			Field tenant = this.form.dbMetaData.tenantField;
+			FieldNotUsed tenant = this.form.dbMetaData.tenantField;
 			if (tenant != null) {
 				fd.setObject(tenant.getIndex(), ctx.getTenantId());
 			}
@@ -333,10 +336,10 @@ public abstract class FormIo implements IService {
 		}
 	}
 
-	protected static class BulkUpdater extends FormIo {
-		protected final Form form;
+	protected static class BulkUpdater extends FormIoNotUsed {
+		protected final FormNotUsed form;
 
-		protected BulkUpdater(Form form) {
+		protected BulkUpdater(FormNotUsed form) {
 			this.form = form;
 		}
 
@@ -374,17 +377,17 @@ public abstract class FormIo implements IService {
 	}
 
 	protected static class BulkWorker implements Consumer<JsonElement>, IDbClient {
-		private final List<FormData> fds = new ArrayList<>();
+		private final List<FormDataNotUsed> fds = new ArrayList<>();
 		private final List<Boolean> updates = new ArrayList<>();
-		private final Form form;
+		private final FormNotUsed form;
 		private final IServiceContext ctx;
 		private int tenentIdx;
 		private Object tenantValue;
 
-		protected BulkWorker(Form form, IServiceContext ctx) {
+		protected BulkWorker(FormNotUsed form, IServiceContext ctx) {
 			this.form = form;
 			this.ctx = ctx;
-			Field tenant = this.form.dbMetaData.tenantField;
+			FieldNotUsed tenant = this.form.dbMetaData.tenantField;
 			if (tenant != null) {
 				this.tenantValue = ctx.getTenantId();
 				this.tenentIdx = tenant.getIndex();
@@ -398,7 +401,7 @@ public abstract class FormIo implements IService {
 				return;
 			}
 			JsonObject json = (JsonObject) ele;
-			FormData fd = this.form.newFormData();
+			FormDataNotUsed fd = this.form.newFormData();
 			boolean toUpdate = fd.loadKeys(json, null);
 			
 			if(this.tenantValue != null) {
@@ -419,7 +422,7 @@ public abstract class FormIo implements IService {
 			int nbrInserts = 0;
 			int nbrUpdates = 0;
 			int idx = -1;
-			for(FormData fd :this.fds) {
+			for(FormDataNotUsed fd :this.fds) {
 				idx++;
 				if(this.updates.get(idx)) {
 					if(fd.update(handle)) {
@@ -452,13 +455,13 @@ public abstract class FormIo implements IService {
 	 * If handle is null, this method cmpletes the update on its own
 	 * connection
 	 */
-	protected static void update(FormData fd, IServiceContext ctx, JsonObject payload, DbHandle handle) throws Exception {
-		Form form = fd.getForm();
+	protected static void update(FormDataNotUsed fd, IServiceContext ctx, JsonObject payload, DbHandle handle) throws Exception {
+		FormNotUsed form = fd.getForm();
 		fd.validateAndLoad(payload, false, false, ctx);
 		/*
 		 * special case of time-stamp check for updates!!
 		 */
-		Field f = form.dbMetaData.timestampField;
+		FieldNotUsed f = form.dbMetaData.timestampField;
 		if (f != null) {
 			Object val = null;
 			JsonPrimitive el = payload.getAsJsonPrimitive(f.getFieldName());
@@ -510,13 +513,13 @@ public abstract class FormIo implements IService {
 		 */
 		return;
 	}
-	static protected void insert(FormData fd, IServiceContext ctx, JsonObject payload, DbHandle handle) throws Exception {
-		Form form = fd.getForm();
+	static protected void insert(FormDataNotUsed fd, IServiceContext ctx, JsonObject payload, DbHandle handle) throws Exception {
+		FormNotUsed form = fd.getForm();
 		fd.validateAndLoad(payload, false, true, ctx);
 		if (!ctx.allOk()) {
 			return;
 		}
-		Field tenant = form.dbMetaData.tenantField;
+		FieldNotUsed tenant = form.dbMetaData.tenantField;
 		if (tenant != null) {
 			fd.setObject(tenant.getIndex(), ctx.getTenantId());
 		}

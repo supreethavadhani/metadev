@@ -30,10 +30,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.form.ColumnType;
-import org.simplity.fm.core.form.DbLink;
-import org.simplity.fm.core.form.DbMetaData;
-import org.simplity.fm.core.form.IoType;
+import org.simplity.fm.core.data.ColumnType;
+import org.simplity.fm.core.data.DbMetaData;
+import org.simplity.fm.core.data.IoType;
+import org.simplity.fm.core.form.DbLinkNotUsed;
 import org.simplity.fm.core.validn.DependentListValidation;
 import org.simplity.fm.core.validn.ExclusiveValidation;
 import org.simplity.fm.core.validn.FromToValidation;
@@ -248,12 +248,12 @@ class Form {
 		/*
 		 * imports
 		 */
-		Util.emitImport(sbf, org.simplity.fm.core.form.Field.class);
-		Util.emitImport(sbf, org.simplity.fm.core.form.Form.class);
+		Util.emitImport(sbf, org.simplity.fm.core.form.FieldNotUsed.class);
+		Util.emitImport(sbf, org.simplity.fm.core.form.FormNotUsed.class);
 		Util.emitImport(sbf, IValidation.class);
-		Util.emitImport(sbf, org.simplity.fm.core.form.ChildForm.class);
+		Util.emitImport(sbf, org.simplity.fm.core.form.ChildFormNotUsed.class);
 		Util.emitImport(sbf, DbMetaData.class);
-		Util.emitImport(sbf, DbLink.class);
+		Util.emitImport(sbf, DbLinkNotUsed.class);
 		Util.emitImport(sbf, ColumnType.class);
 
 		/*

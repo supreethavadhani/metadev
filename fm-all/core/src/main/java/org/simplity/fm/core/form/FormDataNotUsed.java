@@ -34,6 +34,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.data.ColumnType;
+import org.simplity.fm.core.data.DbMetaData;
+import org.simplity.fm.core.data.FormDbParam;
 import org.simplity.fm.core.datatypes.InvalidValueException;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.rdb.DbHandle;
@@ -55,13 +58,13 @@ import com.google.gson.stream.JsonWriter;
  * @author simplity.org
  *
  */
-public class FormData {
-	protected static final Logger logger = LoggerFactory.getLogger(FormData.class);
+public class FormDataNotUsed {
+	protected static final Logger logger = LoggerFactory.getLogger(FormDataNotUsed.class);
 	/**
 	 * data structure describes the template for which this object provides
 	 * actual data
 	 */
-	protected final Form form;
+	protected final FormNotUsed form;
 	/**
 	 * field values. null if this template has no fields
 	 */
@@ -69,7 +72,7 @@ public class FormData {
 	/**
 	 * data for child forms. null if this form has no children
 	 */
-	protected final FormData[][] childData;
+	protected final FormDataNotUsed[][] childData;
 
 	/**
 	 *
@@ -77,7 +80,7 @@ public class FormData {
 	 * @param fieldValues
 	 * @param childData
 	 */
-	public FormData(final Form form, final Object[] fieldValues, final FormData[][] childData) {
+	public FormDataNotUsed(final FormNotUsed form, final Object[] fieldValues, final FormDataNotUsed[][] childData) {
 		this.form = form;
 		if (form.fields == null) {
 			this.fieldValues = null;
@@ -90,7 +93,7 @@ public class FormData {
 		if (form.childForms == null) {
 			this.childData = null;
 		} else if (childData == null) {
-			this.childData = new FormData[form.childForms.length][];
+			this.childData = new FormDataNotUsed[form.childForms.length][];
 		} else {
 			this.childData = childData;
 		}
@@ -109,7 +112,7 @@ public class FormData {
 	 * @return child data, or null if this form data has no child forms, or the
 	 *         idx is out of range
 	 */
-	public FormData[] getChildData(final int childIdx) {
+	public FormDataNotUsed[] getChildData(final int childIdx) {
 		if (this.childData == null) {
 			return null;
 		}
@@ -122,7 +125,7 @@ public class FormData {
 	/**
 	 * @return form for which data is carried
 	 */
-	public Form getForm() {
+	public FormNotUsed getForm() {
 		return this.form;
 	}
 
@@ -136,7 +139,7 @@ public class FormData {
 	 * @return Field in this form. null if no such field
 	 */
 	public ValueType getValueType(final String fieldName) {
-		final Field field = this.form.getField(fieldName);
+		final FieldNotUsed field = this.form.getField(fieldName);
 		if (field == null) {
 			return null;
 		}
@@ -149,7 +152,7 @@ public class FormData {
 	 * @return Field in this form. null if no such field
 	 */
 	public int getFieldIndex(final String fieldName) {
-		final Field field = this.form.getField(fieldName);
+		final FieldNotUsed field = this.form.getField(fieldName);
 		if (field != null) {
 			return field.getIndex();
 		}
@@ -462,7 +465,7 @@ public class FormData {
 			ctx.addMessage(Message.newError(idx + " is not valid index for form " + this.form.getFormId()));
 			return;
 		}
-		final Field f = this.form.getFields()[idx];
+		final FieldNotUsed f = this.form.getFields()[idx];
 		validateAndSet(f, value, this.fieldValues, idx, false, ctx, null, 0);
 	}
 
@@ -493,10 +496,10 @@ public class FormData {
 		if (indexes == null) {
 			return false;
 		}
-		final Field[] fields = this.form.getFields();
+		final FieldNotUsed[] fields = this.form.getFields();
 		boolean allOk = true;
 		for (final int idx : indexes) {
-			final Field f = fields[idx];
+			final FieldNotUsed f = fields[idx];
 			final String value = getTextAttribute(json, f.getFieldName());
 			final boolean ok = validateAndSet(f, value, this.fieldValues, idx, false, ctx, null, 0);
 			allOk = allOk && ok;
@@ -518,9 +521,9 @@ public class FormData {
 			return;
 		}
 
-		final Field[] fields = this.form.getFields();
+		final FieldNotUsed[] fields = this.form.getFields();
 		for (final int idx : indexes) {
-			final Field f = fields[idx];
+			final FieldNotUsed f = fields[idx];
 			final String value = inputValues.get(f.getFieldName());
 			validateAndSet(f, value, this.fieldValues, idx, false, ctx, null, 0);
 		}
@@ -538,9 +541,9 @@ public class FormData {
 		if (indexes == null) {
 			return false;
 		}
-		final Field[] fields = this.form.getFields();
+		final FieldNotUsed[] fields = this.form.getFields();
 		for (final int idx : indexes) {
-			final Field f = fields[idx];
+			final FieldNotUsed f = fields[idx];
 			String value = null;
 			final JsonPrimitive ele = inputData.getAsJsonPrimitive(f.getFieldName());
 			if (ele != null) {
@@ -583,7 +586,7 @@ public class FormData {
 		}
 		this.setFeilds(json, allFieldsAreOptional, keyIsOptional, ctx, childName, rowNbr);
 
-		final ChildForm[] children = this.form.getChildForms();
+		final ChildFormNotUsed[] children = this.form.getChildForms();
 		if (children != null) {
 			for (int i = 0; i < children.length; i++) {
 				this.childData[i] = this.validateChild(children[i], json, allFieldsAreOptional, keyIsOptional, ctx);
@@ -594,7 +597,7 @@ public class FormData {
 		}
 	}
 
-	private FormData[] validateChild(final ChildForm childForm, final JsonObject json,
+	private FormDataNotUsed[] validateChild(final ChildFormNotUsed childForm, final JsonObject json,
 			final boolean allFieldsAreOptional, final boolean forInsert, final IServiceContext ctx) {
 		final String fieldName = childForm.fieldName;
 		final JsonElement childNode = json.get(fieldName);
@@ -613,9 +616,9 @@ public class FormData {
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 				return null;
 			}
-			final FormData fd = childForm.form.newFormData();
+			final FormDataNotUsed fd = childForm.form.newFormData();
 			fd.loadWorker((JsonObject) childNode, allFieldsAreOptional, forInsert, ctx, null, 0);
-			final FormData[] result = { fd };
+			final FormDataNotUsed[] result = { fd };
 			return result;
 		}
 
@@ -642,7 +645,7 @@ public class FormData {
 		if (n == 0) {
 			return null;
 		}
-		final List<FormData> fds = new ArrayList<>();
+		final List<FormDataNotUsed> fds = new ArrayList<>();
 		for (int j = 0; j < n; j++) {
 			final JsonElement col = arr.get(j);
 
@@ -650,21 +653,21 @@ public class FormData {
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 				continue;
 			}
-			final FormData fd = childForm.form.newFormData();
+			final FormDataNotUsed fd = childForm.form.newFormData();
 			fds.add(fd);
 			fd.loadWorker((JsonObject) col, allFieldsAreOptional, forInsert, ctx, fieldName, j);
 		}
 		if (fds.size() == 0) {
 			return null;
 		}
-		return fds.toArray(new FormData[0]);
+		return fds.toArray(new FormDataNotUsed[0]);
 	}
 
 	private void setFeilds(final JsonObject json, final boolean allFieldsAreOptional, final boolean keyIsOptional,
 			final IServiceContext ctx, final String childName, final int rowNbr) {
 
 		boolean fieldIsOptional = allFieldsAreOptional;
-		for (final Field field : this.form.getFields()) {
+		for (final FieldNotUsed field : this.form.getFields()) {
 			final int idx = field.getIndex();
 
 			final String fieldName = field.getFieldName();
@@ -701,7 +704,7 @@ public class FormData {
 		}
 	}
 
-	private static boolean validateAndSet(final Field field, final String value, final Object[] row, final int idx,
+	private static boolean validateAndSet(final FieldNotUsed field, final String value, final Object[] row, final int idx,
 			final boolean allFieldsAreOptional, final IServiceContext ctx, final String childName, final int rowNbr) {
 		if (value == null || value.isEmpty()) {
 			if (allFieldsAreOptional) {
@@ -764,15 +767,15 @@ public class FormData {
 
 	private void serializeChildren(final JsonWriter gen) throws IOException {
 		int i = 0;
-		for (final ChildForm cf : this.form.childForms) {
-			final FormData[] fd = this.childData[i];
+		for (final ChildFormNotUsed cf : this.form.childForms) {
+			final FormDataNotUsed[] fd = this.childData[i];
 			if (fd == null) {
 				continue;
 			}
 			gen.name(cf.fieldName);
 			if (cf.isTabular) {
 				gen.beginArray();
-				for (final FormData cd : fd) {
+				for (final FormDataNotUsed cd : fd) {
 					cd.serialize(gen);
 				}
 				gen.endArray();
@@ -784,7 +787,7 @@ public class FormData {
 	}
 
 	private void writeFields(final JsonWriter gen) throws IOException {
-		for (final Field field : this.form.getFields()) {
+		for (final FieldNotUsed field : this.form.getFields()) {
 			final Object value = this.fieldValues[field.getIndex()];
 			if (value == null) {
 				continue;
@@ -919,7 +922,7 @@ public class FormData {
 		final String sql = meta.deleteClause + meta.whereClause;
 		final int nbr = writeWorker(handle, sql, meta.whereParams, this.fieldValues);
 		if (nbr > 0 && meta.dbLinks != null) {
-			for (final DbLink link : meta.dbLinks) {
+			for (final DbLinkNotUsed link : meta.dbLinks) {
 				if (link != null) {
 					final DbMetaData cm = link.childMeta;
 					/*
@@ -1076,9 +1079,9 @@ public class FormData {
 	 */
 	private void fetchChildren(final DbHandle handle) throws SQLException {
 		int idx = 0;
-		for (final DbLink link : this.form.dbMetaData.dbLinks) {
+		for (final DbLinkNotUsed link : this.form.dbMetaData.dbLinks) {
 			if (link != null) {
-				final Form childForm = this.form.childForms[idx].form;
+				final FormNotUsed childForm = this.form.childForms[idx].form;
 				final DbMetaData meta = link.childMeta;
 				this.childData[idx] = fetchDataWorker(handle, childForm, meta.selectClause + link.linkWhereClause,
 						this.fieldValues, link.linkParentParams, meta.selectParams);
@@ -1093,20 +1096,20 @@ public class FormData {
 	 */
 	private void insertChildren(final DbHandle handle) throws SQLException {
 		int idx = -1;
-		for (final DbLink link : this.form.dbMetaData.dbLinks) {
+		for (final DbLinkNotUsed link : this.form.dbMetaData.dbLinks) {
 			idx++;
 			if (link == null) {
 				logger.error("Db Link missing for child {}", idx);
 				continue;
 			}
 
-			final FormData[] rows = this.childData[idx];
+			final FormDataNotUsed[] rows = this.childData[idx];
 			if (rows == null || rows.length == 0) {
 				logger.error("Child form at {} has has no data", idx);
 				continue;
 			}
 
-			final Form childForm = this.form.childForms[idx].form;
+			final FormNotUsed childForm = this.form.childForms[idx].form;
 			final DbMetaData meta = link.childMeta;
 			/*
 			 * we copy parent key to children. keep them in an array for faster
@@ -1120,7 +1123,7 @@ public class FormData {
 				final FormDbParam parentParam = link.linkParentParams[i];
 				parentKeys[i] = this.fieldValues[parentParam.idx];
 
-				final Field childKey = childForm.getField(link.childLinkNames[i]);
+				final FieldNotUsed childKey = childForm.getField(link.childLinkNames[i]);
 				childKeyIdexes[i] = childKey.getIndex();
 			}
 			final int nbrRows = rows.length;
@@ -1135,7 +1138,7 @@ public class FormData {
 
 				@Override
 				public boolean setParams(final PreparedStatement ps) throws SQLException {
-					final FormData fd = rows[this.rowIdx];
+					final FormDataNotUsed fd = rows[this.rowIdx];
 					/*
 					 * copy parent keys to the child row
 					 */
@@ -1165,9 +1168,9 @@ public class FormData {
 		}
 	}
 
-	static FormData[] fetchDataWorker(final DbHandle handle, final Form form, final String sql, final Object[] values,
+	static FormDataNotUsed[] fetchDataWorker(final DbHandle handle, final FormNotUsed form, final String sql, final Object[] values,
 			final FormDbParam[] setters, final FormDbParam[] getters) throws SQLException {
-		final List<FormData> result = new ArrayList<>();
+		final List<FormDataNotUsed> result = new ArrayList<>();
 		handle.read(new IDbReader() {
 
 			@Override
@@ -1190,7 +1193,7 @@ public class FormData {
 
 			@Override
 			public boolean readARow(final ResultSet rs) throws SQLException {
-				final FormData fd = form.newFormData();
+				final FormDataNotUsed fd = form.newFormData();
 				result.add(fd);
 				int posn = 1;
 				for (final FormDbParam p : getters) {
@@ -1200,7 +1203,7 @@ public class FormData {
 				return true;
 			}
 		});
-		return result.toArray(new FormData[0]);
+		return result.toArray(new FormDataNotUsed[0]);
 	}
 
 	/**
@@ -1214,7 +1217,7 @@ public class FormData {
 	 */
 	public void validateAndLoadForInsert(final String[] values, final IServiceContext ctx) {
 
-		for (final Field field : this.form.getFields()) {
+		for (final FieldNotUsed field : this.form.getFields()) {
 			final int idx = field.getIndex();
 			final ColumnType ct = field.getColumnType();
 			if (ct != null) {
@@ -1241,7 +1244,7 @@ public class FormData {
 	public void logValues() {
 		logger.info("Data for form {}", this.form.getFormId());
 		int idx = -1;
-		for (final Field field : this.form.fields) {
+		for (final FieldNotUsed field : this.form.fields) {
 			idx++;
 			logger.info("{} : {} = {}", field.getFieldName(), field.getDbColumnName(), this.fieldValues[idx]);
 		}

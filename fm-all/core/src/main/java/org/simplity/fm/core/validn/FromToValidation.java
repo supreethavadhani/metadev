@@ -24,14 +24,14 @@ package org.simplity.fm.core.validn;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.List;
 
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.form.FormData;
+import org.simplity.fm.core.data.DataRow;
+import org.simplity.fm.core.service.IServiceContext;
 
 /**
  * pair of fields that form a range of values
- * 
+ *
  * @author simplity.org
  *
  */
@@ -43,14 +43,15 @@ public class FromToValidation implements IValidation {
 	private final String messageId;
 
 	/**
-	 * 
+	 *
 	 * @param fromIndex
 	 * @param toIndex
 	 * @param equalOk
-	 * @param fieldName 
+	 * @param fieldName
 	 * @param messageId
 	 */
-	public FromToValidation(int fromIndex, int toIndex, boolean equalOk, String fieldName, String messageId) {
+	public FromToValidation(final int fromIndex, final int toIndex, final boolean equalOk, final String fieldName,
+			final String messageId) {
 		this.fromIndex = fromIndex;
 		this.toIndex = toIndex;
 		this.equalOk = equalOk;
@@ -59,30 +60,30 @@ public class FromToValidation implements IValidation {
 	}
 
 	@Override
-	public boolean isValid(FormData formData, List<Message> messages) {
-		Object fm = formData.getObject(this.fromIndex);
-		Object to = formData.getObject(this.toIndex);
-		if(fm == null || to == null) {
-			return true;
-		}
-		
-		boolean ok = false;
-		if(fm instanceof Long) {
-			ok = this.longOk((long) fm, (long)to);
-		}else if(fm instanceof LocalDate) {
-			ok = this.dateOk((LocalDate)fm, (LocalDate)to);
-		}else if(fm instanceof Double) {
-			ok = this.doubleOk((double)fm, (double)to);
-		}else if(fm instanceof Instant) {
-			ok = this.timestampOk((Instant)fm, (Instant)to);
-		}else {
-			ok = this.textOk(fm.toString(), to.toString());
-		}
-		if(ok) {
+	public boolean isValid(final DataRow dataRow, final IServiceContext ctx) {
+		final Object fm = dataRow.getObject(this.fromIndex);
+		final Object to = dataRow.getObject(this.toIndex);
+		if (fm == null || to == null) {
 			return true;
 		}
 
-		messages.add(Message.newFieldError(this.fieldName, this.messageId));
+		boolean ok = false;
+		if (fm instanceof Long) {
+			ok = this.longOk((long) fm, (long) to);
+		} else if (fm instanceof LocalDate) {
+			ok = this.dateOk((LocalDate) fm, (LocalDate) to);
+		} else if (fm instanceof Double) {
+			ok = this.doubleOk((double) fm, (double) to);
+		} else if (fm instanceof Instant) {
+			ok = this.timestampOk((Instant) fm, (Instant) to);
+		} else {
+			ok = this.textOk(fm.toString(), to.toString());
+		}
+		if (ok) {
+			return true;
+		}
+
+		ctx.addMessage(Message.newFieldError(this.fieldName, this.messageId));
 		return false;
 	}
 
@@ -91,42 +92,41 @@ public class FromToValidation implements IValidation {
 	 * @param to
 	 * @return
 	 */
-	private boolean timestampOk(Instant fm, Instant to) {
+	private boolean timestampOk(final Instant fm, final Instant to) {
 		if (this.equalOk) {
 			return !fm.isAfter(to);
 		}
 		return to.isAfter(fm);
 	}
 
-	private boolean longOk(long fm, long to) {
+	private boolean longOk(final long fm, final long to) {
 		if (this.equalOk) {
 			return to >= fm;
 		}
 		return to > fm;
 	}
 
-	private boolean doubleOk(double fm, double to) {
+	private boolean doubleOk(final double fm, final double to) {
 		if (this.equalOk) {
 			return to >= fm;
 		}
 		return to > fm;
 	}
 
-	private boolean dateOk(LocalDate fm, LocalDate to) {
+	private boolean dateOk(final LocalDate fm, final LocalDate to) {
 		if (this.equalOk) {
 			return !fm.isAfter(to);
 		}
 		return to.isAfter(fm);
 	}
 
-	private boolean textOk(String fm, String to) {
-		int n = to.compareToIgnoreCase(fm);
+	private boolean textOk(final String fm, final String to) {
+		final int n = to.compareToIgnoreCase(fm);
 		if (this.equalOk) {
 			return n >= 0;
 		}
 		return n > 0;
 	}
-
 
 	@Override
 	public String getFieldName() {

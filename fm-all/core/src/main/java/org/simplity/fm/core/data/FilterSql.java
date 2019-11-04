@@ -20,37 +20,35 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.form;
+package org.simplity.fm.core.data;
 
 /**
- * db operation
- * 
+ * just data structure to collect and pass info fromForm to FormData
  * @author simplity.org
  *
  */
-public enum IoType {
+public class FilterSql {
+	final String sql;
+	final Object[] whereValues;
+	final FormDbParam[] whereParams;
+
 	/**
-	 * read/fetch/get  one row for the primary key 
+	 * constructor with all attributes
+	 *
+	 * @param sql
+	 *            non-null prepared statement
+	 * @param whereParams
+	 *            non-null array with valueTypes of parameters in the SQL in the
+	 *            right order. Empty array in case the SQL has no parameters.
+	 * @param whereValues
+	 *            non-null array of values for the parameters in the sql. Each
+	 *            element should be of the right type for the corresponding
+	 *            parameter.
+	 * 
 	 */
-	GET,
-	/**
-	 * insert/new/create one row
-	 */
-	CREATE,
-	/**
-	 * edit/update/save/submit one row based identified by primary key
-	 */
-	UPDATE,
-	/**
-	 * delete/remove/archive one row based on primary key
-	 */
-	DELETE,
-	/**
-	 * filter rows based on filter criterion
-	 */
-	FILTER,
-	/**
-	 * process an array of rows and add/modify them depending on the primry key
-	 */
-	BULK
+	public FilterSql(String sql, FormDbParam[] whereParams, Object[] whereValues) {
+		this.sql = sql;
+		this.whereParams = whereParams;
+		this.whereValues = whereValues;
+	}
 }

@@ -20,34 +20,37 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.form;
-
-import org.simplity.fm.core.datatypes.ValueType;
+package org.simplity.fm.core.data;
 
 /**
+ * db operation
+ * 
  * @author simplity.org
  *
  */
-public class FormDbParam {
+public enum IoType {
 	/**
-	 * 0-based index in the form-fields that this parameter corresponds to (for getting/setting value in form data array)
+	 * read/fetch/get  one row for the primary key 
 	 */
-	public final int idx;
+	GET,
 	/**
-	 * value type of this parameter based on which set/get method is ssued
-	 * on the statement
+	 * insert/new/create one row
 	 */
-	public final ValueType valueType;
-
+	CREATE,
 	/**
-	 * create this parameter as an immutable data structure
-	 * 
-	 * @param idx
-	 * @param valueType
+	 * edit/update/save/submit one row based identified by primary key
 	 */
-	public FormDbParam(int idx, ValueType valueType) {
-		this.idx = idx;
-		this.valueType = valueType;
-	}
-
+	UPDATE,
+	/**
+	 * delete/remove/archive one row based on primary key
+	 */
+	DELETE,
+	/**
+	 * filter rows based on filter criterion
+	 */
+	FILTER,
+	/**
+	 * process an array of rows and add/modify them depending on the primry key
+	 */
+	BULK
 }

@@ -22,6 +22,7 @@
 package org.simplity.fm.core.form;
 
 import org.simplity.fm.core.ComponentProvider;
+import org.simplity.fm.core.data.ColumnType;
 import org.simplity.fm.core.datatypes.DataType;
 import org.simplity.fm.core.datatypes.InvalidValueException;
 import org.simplity.fm.core.datatypes.ValueType;
@@ -33,8 +34,8 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-public class Field {
-	private static final Logger logger = LoggerFactory.getLogger(Field.class);
+public class FieldNotUsed {
+	private static final Logger logger = LoggerFactory.getLogger(FieldNotUsed.class);
 	/**
 	 * field name is unique within a form/template. However, it is strongly
 	 * advised that the same name is used in different forms if they actually
@@ -128,7 +129,7 @@ public class Field {
 	 *            column name in the data base, if this is linked to one
 	 * @param columnType
 	 */
-	public Field(String fieldName, int index, DataType dataType, String defaultValue, String messageId,
+	public FieldNotUsed(String fieldName, int index, DataType dataType, String defaultValue, String messageId,
 			boolean isRequired, boolean isEditable, String valueListName, String dbColumnName, ColumnType columnType) {
 		this.fieldName = fieldName;
 		this.index = index;
@@ -161,7 +162,7 @@ public class Field {
 	 * @param dbColumnName
 	 * @param columnType
 	 */
-	public Field(String fieldName, int index, DataType dataType, String dbColumnName, ColumnType columnType) {
+	public FieldNotUsed(String fieldName, int index, DataType dataType, String dbColumnName, ColumnType columnType) {
 		this.fieldName = fieldName;
 		this.index = index;
 		this.dataType = dataType;

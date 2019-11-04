@@ -23,7 +23,6 @@
 package org.simplity.fm.core.data;
 
 import org.simplity.fm.core.datatypes.DataType;
-import org.simplity.fm.core.form.ColumnType;
 
 /**
  * @author simplity.org
@@ -79,9 +78,7 @@ public class DbField extends Field {
 		this.columnType = columnType;
 	}
 
-	/**
-	 * @return the db column name
-	 */
+	@Override
 	public String getColumnName() {
 		return this.columnName;
 	}
@@ -104,6 +101,7 @@ public class DbField extends Field {
 	/**
 	 * @return true if this column is part of the primary key
 	 */
+	@Override
 	public boolean isPrimaryKey() {
 		return this.columnType == ColumnType.PrimaryKey || this.columnType == ColumnType.GeneratedPrimaryKey;
 	}

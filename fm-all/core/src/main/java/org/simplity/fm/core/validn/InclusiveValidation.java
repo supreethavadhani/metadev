@@ -22,23 +22,22 @@
 
 package org.simplity.fm.core.validn;
 
-import java.util.List;
-
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.form.FormData;
+import org.simplity.fm.core.data.DataRow;
+import org.simplity.fm.core.service.IServiceContext;
 
 /**
  * a pair of fields that are mutually inclusive. Either both re present, or both
  * are absent.
  * There is also flexibility to use a specific value for field1 for this rule to
  * be used.
- * 
+ *
  * for e.g. machineName and description.In this case, if machine is specified,
  * it must be described. And you should not describe an unspecified machine
- * 
+ *
  * if country-code is 91, then pin code must be specified, otherwise it should
  * not be specified
- * 
+ *
  * @author simplity.org
  *
  */
@@ -63,15 +62,15 @@ public class InclusiveValidation implements IValidation {
 	private final String messageId;
 
 	/**
-	 * 
+	 *
 	 * @param mainIndex
 	 * @param dependentIndex
 	 * @param mainValue
 	 * @param fieldName
 	 * @param messageId
 	 */
-	public InclusiveValidation(int mainIndex, int dependentIndex, String mainValue, String fieldName,
-			String messageId) {
+	public InclusiveValidation(final int mainIndex, final int dependentIndex, final String mainValue,
+			final String fieldName, final String messageId) {
 		this.mainIndex = mainIndex;
 		this.dependentIndex = dependentIndex;
 		this.mainValue = mainValue;
@@ -80,9 +79,9 @@ public class InclusiveValidation implements IValidation {
 	}
 
 	@Override
-	public boolean isValid(FormData formData, List<Message> messages) {
-		Object main = formData.getObject(this.mainIndex);
-		Object dep = formData.getObject(this.dependentIndex);
+	public boolean isValid(final DataRow dataRow, final IServiceContext ctx) {
+		final Object main = dataRow.getObject(this.mainIndex);
+		final Object dep = dataRow.getObject(this.dependentIndex);
 
 		boolean mainSpecified = false;
 		if (main != null) {
@@ -92,20 +91,19 @@ public class InclusiveValidation implements IValidation {
 				mainSpecified = this.mainValue.equals(main.toString());
 			}
 		}
-		
-		if(mainSpecified) {
-			if(dep != null) {
+
+		if (mainSpecified) {
+			if (dep != null) {
 				return true;
 			}
-		}else {
-			if(dep == null) {
+		} else {
+			if (dep == null) {
 				return true;
 			}
 		}
-		messages.add(Message.newFieldError(this.fieldName, this.messageId));
+		ctx.addMessage(Message.newFieldError(this.fieldName, this.messageId));
 		return false;
 	}
-
 
 	@Override
 	public String getFieldName() {

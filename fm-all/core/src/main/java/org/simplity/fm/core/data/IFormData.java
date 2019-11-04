@@ -20,34 +20,12 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
-
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+package org.simplity.fm.core.data;
 
 /**
- * interface for a class that wants to write/update/delete fromthe dta base
- *
  * @author simplity.org
  *
  */
-public interface IDbWriter {
+public interface IFormData {
 
-	/**
-	 *
-	 * @return the prepared statement that can be used to insert/update/delete
-	 *         rows. null to indicate that the write operation be aborted by
-	 *         design
-	 */
-	String getPreparedStatement();
-
-	/**
-	 * method that is invoked by the db driver to populate the actual prepared.
-	 *
-	 * @param ps
-	 *            prepared statement to which params are to be set
-	 * @return true to continue, false to abandon the operation
-	 * @throws SQLException
-	 */
-	boolean setParams(PreparedStatement ps) throws SQLException;
 }

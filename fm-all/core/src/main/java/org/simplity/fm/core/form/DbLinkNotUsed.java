@@ -22,13 +22,16 @@
 
 package org.simplity.fm.core.form;
 
+import org.simplity.fm.core.data.DbMetaData;
+import org.simplity.fm.core.data.FormDbParam;
+
 /**
  * data structure for meta data for a child form
  *
  * @author simplity.org
  *
  */
-public class DbLink {
+public class DbLinkNotUsed {
 	/**
 	 * field names from the parent form that form the parent-key for the child
 	 * form

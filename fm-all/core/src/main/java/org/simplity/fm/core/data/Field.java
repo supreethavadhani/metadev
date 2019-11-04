@@ -180,6 +180,14 @@ public class Field {
 	}
 
 	/**
+	 * @return true if this field is the tenant key.
+	 */
+	@SuppressWarnings("static-method")
+	public boolean isPrimaryKey() {
+		return false;
+	}
+
+	/**
 	 * @return true if this field is user id, like createdBy and modifiedBy.
 	 */
 	@SuppressWarnings("static-method")
@@ -235,4 +243,55 @@ public class Field {
 		return obj;
 	}
 
+	/**
+	 *
+	 * @param value
+	 *            string value that is to be parsed. can be null or empty
+	 * @param row
+	 *            into which parsed values is to be set to. MUST be array with
+	 *            the right number of elements
+	 * @param forInsert
+	 *            true if this parsing is for an insert operation
+	 * @param ctx
+	 *            into which any error message is added
+	 * @param tableName
+	 *            if this row is inside a table. used for reporting error
+	 * @param rowNbr
+	 *            used for reporting error is this is part of table
+	 */
+	public void parseIntoRow(final String value, final Object[] row, final boolean forInsert, final IServiceContext ctx,
+			final String tableName, final int rowNbr) {
+		/*
+		 * do we have to set value from our side?
+		 */
+		if (this.isTenantKey()) {
+			row[this.index] = ctx.getTenantId();
+			logger.info("tenant id set to field {}", this.name);
+			return;
+		}
+
+		if (this.isUserId()) {
+			row[this.index] = ctx.getUser().getUserId();
+			logger.info("Field {} is user field, and is assigned value from the context", this.name);
+			return;
+		}
+
+		if (value == null || value.isEmpty()) {
+			row[this.index] = null;
+			this.validateNull(forInsert, ctx, tableName, rowNbr);
+			return;
+		}
+
+		row[this.index] = this.parse(value, ctx, tableName, rowNbr);
+	}
+
+	/**
+	 *
+	 * @return column name if this is relevant. null if column name is not
+	 *         relevant. Is non-null in case of DbField instances
+	 */
+	@SuppressWarnings("static-method")
+	public Object getColumnName() {
+		return null;
+	}
 }
