@@ -57,7 +57,7 @@ public class FormInserter extends FormOperator {
 		RdbDriver.getDriver().transact(handle -> {
 			result[0] = dataRow.insert(handle);
 			return true;
-		}, true);
+		}, false);
 
 		if (!result[0]) {
 			logger.error("Row not inserted, possibly because of issues with key");

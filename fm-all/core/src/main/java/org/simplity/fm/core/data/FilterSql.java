@@ -24,13 +24,13 @@ package org.simplity.fm.core.data;
 
 /**
  * just data structure to collect and pass info fromForm to FormData
+ *
  * @author simplity.org
  *
  */
 public class FilterSql {
-	final String sql;
-	final Object[] whereValues;
-	final FormDbParam[] whereParams;
+	final private String sql;
+	final private PreparedStatementParam[] whereParams;
 
 	/**
 	 * constructor with all attributes
@@ -40,15 +40,24 @@ public class FilterSql {
 	 * @param whereParams
 	 *            non-null array with valueTypes of parameters in the SQL in the
 	 *            right order. Empty array in case the SQL has no parameters.
-	 * @param whereValues
-	 *            non-null array of values for the parameters in the sql. Each
-	 *            element should be of the right type for the corresponding
-	 *            parameter.
-	 * 
+	 *
 	 */
-	public FilterSql(String sql, FormDbParam[] whereParams, Object[] whereValues) {
+	public FilterSql(final String sql, final PreparedStatementParam[] whereParams) {
 		this.sql = sql;
 		this.whereParams = whereParams;
-		this.whereValues = whereValues;
+	}
+
+	/**
+	 * @return the sql
+	 */
+	public String getSql() {
+		return this.sql;
+	}
+
+	/**
+	 * @return the whereParams
+	 */
+	public PreparedStatementParam[] getWhereParams() {
+		return this.whereParams;
 	}
 }

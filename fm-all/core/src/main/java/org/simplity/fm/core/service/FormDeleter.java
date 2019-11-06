@@ -57,7 +57,7 @@ public class FormDeleter extends FormOperator {
 		RdbDriver.getDriver().transact(handle -> {
 			result[0] = dataRow.deleteFromDb(handle);
 			return true;
-		}, true);
+		}, false);
 
 		if (!result[0]) {
 			logger.error("Row not deleted. Key issues?");

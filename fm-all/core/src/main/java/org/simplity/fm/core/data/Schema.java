@@ -375,8 +375,7 @@ public class Schema {
 			final IServiceContext ctx, final int maxRows) {
 		final StringBuilder sql = new StringBuilder(this.dbMetaData.selectClause);
 		sql.append(" WHERE ");
-		final List<FormDbParam> params = new ArrayList<>();
-		final List<Object> values = new ArrayList<>();
+		final List<PreparedStatementParam> params = new ArrayList<>();
 
 		/*
 		 * force a condition on tenant id id required
@@ -384,8 +383,7 @@ public class Schema {
 		final Field tenant = this.dbMetaData.tenantField;
 		if (tenant != null) {
 			sql.append(tenant.getColumnName()).append("=?");
-			values.add(ctx.getTenantId());
-			params.add(new FormDbParam(0, tenant.getValueType()));
+			params.add(new PreparedStatementParam(ctx.getTenantId(), tenant.getValueType()));
 		}
 
 		/*
@@ -441,7 +439,7 @@ public class Schema {
 				value2 = ele.getAsString();
 			}
 
-			int idx = params.size();
+			final int idx = params.size();
 			if (idx > 0) {
 				sql.append(" and ");
 			}
@@ -463,13 +461,11 @@ public class Schema {
 				}
 
 				sql.append(LIKE);
-				params.add(new FormDbParam(idx++, vt));
-				value = escapeLike(value);
+				value = WILD_CARD + escapeLike(value);
 				if (condn == FilterCondition.Contains) {
-					values.add(WILD_CARD + value + WILD_CARD);
-				} else {
-					values.add(WILD_CARD + value);
+					value += WILD_CARD;
 				}
+				params.add(new PreparedStatementParam(value, vt));
 				continue;
 			}
 
@@ -483,14 +479,13 @@ public class Schema {
 						errors.add(Message.newError(Message.MSG_INVALID_DATA));
 						return null;
 					}
-					params.add(new FormDbParam(idx++, vt));
-					values.add(obj);
 					if (firstOne) {
 						sql.append('?');
 						firstOne = false;
 					} else {
 						sql.append(",?");
 					}
+					params.add(new PreparedStatementParam(obj, vt));
 				}
 				sql.append(')');
 				continue;
@@ -514,16 +509,13 @@ public class Schema {
 					return null;
 				}
 				sql.append(BETWEEN);
-				values.add(obj);
-				params.add(new FormDbParam(idx++, vt));
-				values.add(obj2);
-				params.add(new FormDbParam(idx++, vt));
+				params.add(new PreparedStatementParam(obj, vt));
+				params.add(new PreparedStatementParam(obj2, vt));
 				continue;
 			}
 
 			sql.append(' ').append(condnText).append(" ?");
-			params.add(new FormDbParam(idx++, vt));
-			values.add(obj);
+			params.add(new PreparedStatementParam(obj, vt));
 		}
 
 		if (sorts != null) {
@@ -549,7 +541,7 @@ public class Schema {
 		}
 		final String sqlText = sql.toString();
 		logger.info("Filter sql = {}", sqlText);
-		return new FilterSql(sql.toString(), params.toArray(new FormDbParam[0]), values.toArray(new Object[0]));
+		return new FilterSql(sql.toString(), params.toArray(new PreparedStatementParam[0]));
 	}
 
 	/**
@@ -561,5 +553,4 @@ public class Schema {
 	private static String escapeLike(final String string) {
 		return string.replaceAll(WILD_CARD, ESCAPED_WILD_CARD).replaceAll(WILD_CHAR, ESCAPED_WILD_CHAR);
 	}
-
 }

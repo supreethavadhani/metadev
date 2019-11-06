@@ -22,14 +22,14 @@
 
 package org.simplity.fm.core.service;
 
-import java.io.IOException;
-
+import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.data.DataRow;
+import org.simplity.fm.core.data.DataTable;
 import org.simplity.fm.core.data.Form;
 import org.simplity.fm.core.data.IoType;
 import org.simplity.fm.core.rdb.RdbDriver;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 /**
@@ -44,36 +44,33 @@ public class FormBulkUpdater extends FormOperator {
 	 */
 	public FormBulkUpdater(final Form form) {
 		this.form = form;
-		this.ioType = IoType.GET;
+		this.ioType = IoType.BULK;
 	}
 
 	@Override
 	public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final DataRow dataRow = this.form.schema.parseKeys(payload, ctx);
+		final JsonArray arr = payload.getAsJsonArray(Conventions.Http.TAG_LIST);
+		if (arr == null || arr.size() == 0) {
+			logger.error("No data or data is empty");
+			ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+			return;
+		}
+
+		final DataTable dataTable = this.form.getSchema().parseTable(arr, true, ctx, null);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading keys from the input payload");
 			return;
 		}
-		final boolean[] result = new boolean[1];
 
 		RdbDriver.getDriver().transact(handle -> {
-			result[0] = dataRow.fetch(handle);
-			return true;
-		}, true);
-
-		if (result[0]) {
-			try {
-				dataRow.serializeAsJson(ctx.getResponseWriter());
-			} catch (final IOException e) {
-				final String msg = "I/O error while serializing e=" + e + ". message=" + e.getMessage();
-				logger.error(msg);
-				ctx.addMessage(Message.newError(msg));
+			final boolean ok = dataTable.save(handle);
+			if (!ok) {
+				logger.error("Error while saving rows into the DB. Operation abandoned and transaction is rolled back");
+				ctx.addMessage(Message.newError(Message.MSG_INTERNAL_ERROR));
+				return false;
 			}
-		} else {
-			logger.error("No data found for the requested keys");
-			ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
-		}
-
-		return;
+			logger.info("Data table saved all rows");
+			return true;
+		}, false);
 	}
 }

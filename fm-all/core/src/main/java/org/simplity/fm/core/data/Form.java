@@ -22,15 +22,22 @@
 
 package org.simplity.fm.core.data;
 
-import org.simplity.fm.core.service.FormBulkUpdater;
-import org.simplity.fm.core.service.FormDeleter;
-import org.simplity.fm.core.service.FormFilterer;
-import org.simplity.fm.core.service.FormInserter;
-import org.simplity.fm.core.service.FormReader;
-import org.simplity.fm.core.service.FormUpdater;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.simplity.fm.core.Conventions;
+import org.simplity.fm.core.Message;
+import org.simplity.fm.core.rdb.RdbDriver;
 import org.simplity.fm.core.service.IService;
+import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonWriter;
 
 /**
  * represents a schema for input from a client or output to a client
@@ -43,57 +50,15 @@ public class Form {
 
 	protected final String name;
 	protected final Schema schema;
-	protected final LinkedForm[] linkedForms;
 
 	/**
 	 *
 	 * @param name
 	 * @param schema
-	 * @param linkedForms
 	 */
-	public Form(final String name, final Schema schema, final LinkedForm[] linkedForms) {
+	public Form(final String name, final Schema schema) {
 		this.schema = schema;
-		this.linkedForms = linkedForms;
 		this.name = name;
-	}
-
-	/**
-	 * get the service instance for the desired operation on this form
-	 *
-	 * @param opern
-	 * @return service, or null if this form is not designed for this opetatio
-	 */
-	public IService getService(final IoType opern) {
-		final DbMetaData meta = this.schema.getDbMetaData();
-
-		if (meta == null || meta.dbOperationOk[opern.ordinal()] == false) {
-			return null;
-		}
-
-		switch (opern) {
-		case CREATE:
-			return new FormInserter(this);
-
-		case DELETE:
-			return new FormDeleter(this);
-
-		case FILTER:
-			return new FormFilterer(this);
-
-		case GET:
-			return new FormReader(this);
-
-		case UPDATE:
-			return new FormUpdater(this);
-
-		case BULK:
-			return new FormBulkUpdater(this);
-
-		default:
-			logger.error("Form operation {} not yet implemented", opern);
-			return null;
-		}
-
 	}
 
 	/**
@@ -109,6 +74,279 @@ public class Form {
 	 */
 	public Schema getSchema() {
 		return this.schema;
+	}
+
+	/**
+	 * get the service instance for the desired operation on this form
+	 *
+	 * @param opern
+	 * @return service, or null if this form is not designed for this operation
+	 */
+	public IService getService(final IoType opern) {
+		final DbMetaData meta = this.schema.getDbMetaData();
+
+		if (meta == null || meta.dbOperationOk[opern.ordinal()] == false) {
+			return null;
+		}
+
+		switch (opern) {
+		case CREATE:
+			return new FormInserter();
+
+		case DELETE:
+			return new FormDeleter();
+
+		case FILTER:
+			return new FormFilterer();
+
+		case GET:
+			return new FormReader();
+
+		case UPDATE:
+			return new FormUpdater();
+
+		case BULK:
+			return new FormBulkUpdater();
+
+		default:
+			logger.error("Form operation {} not yet implemented", opern);
+			return null;
+		}
+
+	}
+
+	protected String getServiceName(final IoType opern) {
+		return opern.name() + '_' + this.name;
+	}
+
+	protected abstract class FormService implements IService {
+		protected IoType opern;
+
+		@Override
+		public String getId() {
+			return Form.this.getServiceName(this.opern);
+		}
+	}
+
+	protected class FormReader extends FormService {
+		protected FormReader() {
+			this.opern = IoType.GET;
+		}
+
+		@Override
+		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
+			final DataRow dataRow = Form.this.getSchema().parseKeys(payload, ctx);
+			if (!ctx.allOk()) {
+				logger.error("Error while reading keys from the input payload");
+				return;
+			}
+			final boolean[] result = new boolean[1];
+
+			RdbDriver.getDriver().transact(handle -> {
+				result[0] = dataRow.fetch(handle);
+				return true;
+			}, true);
+
+			if (result[0]) {
+				try {
+					dataRow.serializeAsJson(ctx.getResponseWriter());
+				} catch (final IOException e) {
+					final String msg = "I/O error while serializing e=" + e + ". message=" + e.getMessage();
+					logger.error(msg);
+					ctx.addMessage(Message.newError(msg));
+				}
+			} else {
+				logger.error("No data found for the requested keys");
+				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+			}
+
+			return;
+		}
+	}
+
+	protected class FormUpdater extends FormService {
+		public FormUpdater() {
+			this.opern = IoType.UPDATE;
+		}
+
+		@Override
+		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
+			final DataRow dataRow = Form.this.getSchema().parseRow(payload, false, ctx, null, 0);
+			if (!ctx.allOk()) {
+				logger.error("Error while reading fields from the input payload");
+				return;
+			}
+			final boolean[] result = new boolean[1];
+
+			RdbDriver.getDriver().transact(handle -> {
+				result[0] = dataRow.update(handle);
+				return true;
+			}, false);
+
+			if (!result[0]) {
+				logger.error("Row not updated, possibly because of time-stamp issues");
+				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+			}
+
+			return;
+		}
+	}
+
+	protected class FormInserter extends FormService {
+		protected FormInserter() {
+			this.opern = IoType.CREATE;
+		}
+
+		@Override
+		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
+			final DataRow dataRow = Form.this.getSchema().parseRow(payload, true, ctx, null, 0);
+			if (!ctx.allOk()) {
+				logger.error("Error while reading fields from the input payload");
+				return;
+			}
+			final boolean[] result = new boolean[1];
+
+			RdbDriver.getDriver().transact(handle -> {
+				result[0] = dataRow.insert(handle);
+				return true;
+			}, false);
+
+			if (!result[0]) {
+				logger.error("Row not inserted, possibly because of issues with key");
+				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+			}
+
+			return;
+		}
+	}
+
+	protected class FormFilterer extends FormService {
+
+		public FormFilterer() {
+			this.opern = IoType.FILTER;
+		}
+
+		@Override
+		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
+			final List<Message> msgs = new ArrayList<>();
+			JsonObject conditions = null;
+			JsonElement node = payload.get(Conventions.Http.TAG_CONDITIONS);
+			if (node != null && node.isJsonObject()) {
+				conditions = (JsonObject) node;
+			} else {
+				logger.error("payload for filter should have attribute named {} to contain conditions",
+						Conventions.Http.TAG_CONDITIONS);
+				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+				return;
+			}
+
+			/*
+			 * sort order
+			 */
+			JsonObject sorts = null;
+			node = payload.get(Conventions.Http.TAG_SORT);
+			if (node != null && node.isJsonObject()) {
+				sorts = (JsonObject) node;
+			}
+
+			int nbrRows = Conventions.Http.DEFAULT_NBR_ROWS;
+			node = payload.get(Conventions.Http.TAG_MAX_ROWS);
+			if (node != null && node.isJsonPrimitive()) {
+				nbrRows = node.getAsInt();
+			}
+
+			final FilterSql reader = Form.this.schema.parseForFilter(conditions, sorts, msgs, ctx, nbrRows);
+
+			if (msgs.size() > 0) {
+				logger.warn("Filering aborted due to errors in nuput data");
+				ctx.addMessages(msgs);
+				return;
+			}
+
+			if (reader == null) {
+				logger.error("DESIGN ERROR: form.parseForFilter() returned null, but failed to put ay error message. ");
+				ctx.addMessage(Message.newError(Message.MSG_INTERNAL_ERROR));
+				return;
+			}
+
+			final DataTable dataTable = new DataTable(Form.this.schema);
+			RdbDriver.getDriver().transact(handle -> {
+				dataTable.fetch(handle, reader);
+				return true;
+			}, true);
+
+			logger.info(" {} rows filtered", dataTable.length());
+
+			try (JsonWriter writer = new JsonWriter(ctx.getResponseWriter())) {
+				writer.beginObject();
+				writer.name(Conventions.Http.TAG_LIST);
+				dataTable.serializeAsJson(writer);
+				writer.endObject();
+			}
+		}
+	}
+
+	protected class FormDeleter extends FormService {
+		public FormDeleter() {
+			this.opern = IoType.DELETE;
+		}
+
+		@Override
+		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
+			final DataRow dataRow = Form.this.schema.parseKeys(payload, ctx);
+			if (!ctx.allOk()) {
+				logger.error("Error while reading keys from the input payload");
+				return;
+			}
+			final boolean[] result = new boolean[1];
+
+			RdbDriver.getDriver().transact(handle -> {
+				result[0] = dataRow.deleteFromDb(handle);
+				return true;
+			}, false);
+
+			if (!result[0]) {
+				logger.error("Row not deleted. Key issues?");
+				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+			}
+
+			return;
+		}
+	}
+
+	protected class FormBulkUpdater extends FormService {
+
+		public FormBulkUpdater() {
+			this.opern = IoType.BULK;
+		}
+
+		@Override
+		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
+			final JsonArray arr = payload.getAsJsonArray(Conventions.Http.TAG_LIST);
+			if (arr == null || arr.size() == 0) {
+				logger.error("No data or data is empty");
+				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+				return;
+			}
+
+			final DataTable dataTable = Form.this.getSchema().parseTable(arr, true, ctx, null);
+			if (!ctx.allOk()) {
+				logger.error("Error while reading keys from the input payload");
+				return;
+			}
+
+			RdbDriver.getDriver().transact(handle -> {
+				final boolean ok = dataTable.save(handle);
+				if (!ok) {
+					logger.error(
+							"Error while saving rows into the DB. Operation abandoned and transaction is rolled back");
+					ctx.addMessage(Message.newError(Message.MSG_INTERNAL_ERROR));
+					return false;
+				}
+				logger.info("Data table saved all rows");
+				return true;
+			}, false);
+		}
 	}
 
 }

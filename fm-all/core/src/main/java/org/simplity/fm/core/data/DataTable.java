@@ -57,13 +57,17 @@ public class DataTable implements Iterable<DataRow> {
 	public DataTable(final Schema schema, final Object[][] data) {
 		this.schema = schema;
 		final int nbr = this.schema.getNbrFields();
-		for (final Object[] row : data) {
-			if (row == null || row.length != nbr) {
-				throw new RuntimeException("Data table needs " + nbr
-						+ " fields in each of its row but is supplied woth invalid number of elements in one of its rows");
+		if (data == null || data.length == 0) {
+			this.dataTable = new Object[0][];
+		} else {
+			for (final Object[] row : data) {
+				if (row == null || row.length != nbr) {
+					throw new RuntimeException("Data table needs " + nbr
+							+ " fields in each of its row but is supplied woth invalid number of elements in one of its rows");
+				}
 			}
+			this.dataTable = data;
 		}
-		this.dataTable = data;
 	}
 
 	/**
@@ -156,8 +160,7 @@ public class DataTable implements Iterable<DataRow> {
 	 * @throws SQLException
 	 */
 	public boolean fetch(final DbHandle handle, final FilterSql reader) throws SQLException {
-		final int nbrFields = this.schema.getNbrFields();
-		this.dataTable = this.schema.getDbMetaData().fetchTable(handle, nbrFields, reader);
+		this.dataTable = this.schema.getDbMetaData().filter(handle, reader.getSql(), reader.getWhereParams());
 		return (this.dataTable.length > 0);
 	}
 

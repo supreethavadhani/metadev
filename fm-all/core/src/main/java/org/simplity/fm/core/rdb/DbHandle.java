@@ -31,6 +31,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.simplity.fm.core.data.PreparedStatementParam;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -303,6 +304,31 @@ public class DbHandle {
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			for (int i = 0; i < paramValues.length; i++) {
 				paramTypes[i].setPsParam(ps, i + 1, paramValues[i]);
+			}
+			final int n = ps.executeUpdate();
+			logger.info("{} rows affected ", n);
+			return n;
+		}
+	}
+
+	/**
+	 * API that is close to the JDBC API for updating/inserting/deleting
+	 *
+	 * @param sql
+	 *            a prepared statement that manipulates data.
+	 * @param params
+	 *            parameters to be set the prepared statement
+	 * @return number of affected rows. -1 if the driver was unable to
+	 *         determine it
+	 * @throws SQLException
+	 */
+	public int write(final String sql, final PreparedStatementParam[] params) throws SQLException {
+		logger.info("Generic Write SQL:{}", sql);
+
+		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
+			final int posn = 0;
+			for (final PreparedStatementParam p : params) {
+				p.valueType.setPsParam(ps, posn, p.value);
 			}
 			final int n = ps.executeUpdate();
 			logger.info("{} rows affected ", n);

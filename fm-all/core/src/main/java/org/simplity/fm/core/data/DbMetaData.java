@@ -112,6 +112,11 @@ public class DbMetaData {
 	public Field timestampField;
 
 	/**
+	 * number of fields in the schema to which this meta data is attached
+	 */
+	int nbrFieldsInARow;
+
+	/**
 	 * insert/create this form data into the db.
 	 *
 	 * @param handle
@@ -401,42 +406,20 @@ public class DbMetaData {
 	 * @throws SQLException
 	 */
 	public boolean fetch(final DbHandle handle, final Object[] values) throws SQLException {
-		return fetch(handle, this.selectClause + this.whereClause, values, this.whereParams, this.selectParams, values);
-	}
-
-	/**
-	 * general read rows from this using a filter
-	 *
-	 * @param handle
-	 * @param sqlReader
-	 * @param outputRow
-	 * @return true of a row was read. false otherwise
-	 * @throws SQLException
-	 */
-	public boolean fetch(final DbHandle handle, final FilterSql sqlReader, final Object[] outputRow)
-			throws SQLException {
-		return fetch(handle, sqlReader.sql, sqlReader.whereValues, sqlReader.whereParams, this.selectParams, outputRow);
-	}
-
-	private static boolean fetch(final DbHandle driver, final String sql, final Object[] whereValues,
-			final FormDbParam[] setters, final FormDbParam[] getters, final Object[] output) throws SQLException {
 		final boolean[] result = new boolean[1];
-		driver.read(new IDbReader() {
+		handle.read(new IDbReader() {
 
 			@Override
 			public String getPreparedStatement() {
-				return sql;
+				return DbMetaData.this.selectClause + DbMetaData.this.whereClause;
 			}
 
 			@Override
 			public void setParams(final PreparedStatement ps) throws SQLException {
-				if (setters == null || setters.length == 0) {
-					return;
-				}
 				int posn = 1;
 				final StringBuilder sbf = new StringBuilder("Parameter Values");
-				for (final FormDbParam p : setters) {
-					final Object value = whereValues[p.idx];
+				for (final FormDbParam p : DbMetaData.this.whereParams) {
+					final Object value = values[p.idx];
 					p.valueType.setPsParam(ps, posn, value);
 					sbf.append('\n').append(posn).append('=').append(value);
 					posn++;
@@ -447,8 +430,8 @@ public class DbMetaData {
 			@Override
 			public boolean readARow(final ResultSet rs) throws SQLException {
 				int posn = 1;
-				for (final FormDbParam p : getters) {
-					output[p.idx] = p.valueType.getFromRs(rs, posn);
+				for (final FormDbParam p : DbMetaData.this.selectParams) {
+					values[p.idx] = p.valueType.getFromRs(rs, posn);
 					posn++;
 				}
 				result[0] = true;
@@ -459,51 +442,43 @@ public class DbMetaData {
 	}
 
 	/**
-	 * get a filtered rows based on a parsed sql reader
+	 * select multiple rows from the db based on the filtering criterion
 	 *
 	 * @param handle
-	 * @param nbrFields
-	 * @param reader
-	 * @return non-null. rows of data extracted as per filtering criterion.
-	 *         could be empty, but not null
+	 * @param filterWhereClause
+	 *            like "WHERE a=? and b=?"
+	 * @param whereValues
+	 *            one for each parameter in the where clause
+	 * @return non-null, possibly empty array of rows
 	 * @throws SQLException
 	 */
-	public Object[][] fetchTable(final DbHandle handle, final int nbrFields, final FilterSql reader)
-			throws SQLException {
-		return fetchTable(handle, nbrFields, reader.sql, reader.whereValues, reader.whereParams, this.selectParams);
-	}
-
-	private static Object[][] fetchTable(final DbHandle handle, final int nbrFields, final String selectSql,
-			final Object[] whereValues, final FormDbParam[] setters, final FormDbParam[] getters) throws SQLException {
+	public Object[][] filter(final DbHandle handle, final String filterWhereClause,
+			final PreparedStatementParam[] whereValues) throws SQLException {
 		final List<Object[]> result = new ArrayList<>();
 		handle.read(new IDbReader() {
 
 			@Override
 			public String getPreparedStatement() {
-				return selectSql;
+				return DbMetaData.this.selectClause + filterWhereClause;
 			}
 
 			@Override
 			public void setParams(final PreparedStatement ps) throws SQLException {
-				int posn = 1;
-				final StringBuilder sbf = new StringBuilder("Parameter Values");
-				for (final FormDbParam p : setters) {
-					final Object value = whereValues[p.idx];
-					p.valueType.setPsParam(ps, posn, value);
-					sbf.append('\n').append(posn).append('=').append(value);
+				int posn = 0;
+				for (final PreparedStatementParam p : whereValues) {
 					posn++;
+					p.valueType.setPsParam(ps, posn, p.value);
 				}
-				logger.info(sbf.toString());
 			}
 
 			@Override
 			public boolean readARow(final ResultSet rs) throws SQLException {
-				final Object[] row = new Object[nbrFields];
+				final Object[] row = new Object[DbMetaData.this.nbrFieldsInARow];
 				result.add(row);
-				int posn = 1;
-				for (final FormDbParam p : getters) {
-					row[p.idx] = p.valueType.getFromRs(rs, posn);
+				int posn = 0;
+				for (final FormDbParam p : DbMetaData.this.selectParams) {
 					posn++;
+					row[p.idx] = p.valueType.getFromRs(rs, posn);
 				}
 				return true;
 			}

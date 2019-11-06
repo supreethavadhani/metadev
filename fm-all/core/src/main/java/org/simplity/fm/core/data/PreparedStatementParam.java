@@ -20,50 +20,42 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.service;
+package org.simplity.fm.core.data;
 
-import org.simplity.fm.core.Message;
-import org.simplity.fm.core.data.DataRow;
-import org.simplity.fm.core.data.Form;
-import org.simplity.fm.core.data.IoType;
-import org.simplity.fm.core.rdb.RdbDriver;
-
-import com.google.gson.JsonObject;
+import org.simplity.fm.core.datatypes.ValueType;
 
 /**
  * @author simplity.org
  *
  */
-public class FormUpdater extends FormOperator {
+public class PreparedStatementParam {
+	/**
+	 * value to be set/get to/from the prepared statement)
+	 */
+	public Object value;
+	/**
+	 * value type of this parameter
+	 */
+	public final ValueType valueType;
 
 	/**
+	 * create this parameter as an immutable data structure
 	 *
-	 * @param form
+	 * @param value
+	 * @param valueType
 	 */
-	public FormUpdater(final Form form) {
-		this.form = form;
-		this.ioType = IoType.UPDATE;
+	public PreparedStatementParam(final Object value, final ValueType valueType) {
+		this.value = value;
+		this.valueType = valueType;
 	}
 
-	@Override
-	public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final DataRow dataRow = this.form.getSchema().parseRow(payload, false, ctx, null, 0);
-		if (!ctx.allOk()) {
-			logger.error("Error while reading fields from the input payload");
-			return;
-		}
-		final boolean[] result = new boolean[1];
-
-		RdbDriver.getDriver().transact(handle -> {
-			result[0] = dataRow.update(handle);
-			return true;
-		}, false);
-
-		if (!result[0]) {
-			logger.error("Row not updated, possibly because of time-stamp issues");
-			ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
-		}
-
-		return;
+	/**
+	 * create this parameter as an immutable data structure
+	 *
+	 * @param valueType
+	 */
+	public PreparedStatementParam(final ValueType valueType) {
+		this.valueType = valueType;
 	}
+
 }
