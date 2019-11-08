@@ -41,7 +41,7 @@ class AppComps {
 	static final Object TENANT_COLUMN = "tenantKeyColumnName";
 	static final Object TENANT_FIELD = "tenantKeyFieldName";
 
-	Map<String, DataType> dataTypes;
+	Map<String, DataTypes> dataTypes;
 	Map<String, ValueList> lists;
 	Map<String, KeyedList> keyedLists;
 	Map<String, RuntimeList> runtimeLists;
@@ -89,7 +89,7 @@ class AppComps {
 		sbf.append("\npublic class ").append(cls).append(" implements IDataTypes {");
 
 		StringBuilder dtNames = new StringBuilder();
-		for (DataType dt : this.dataTypes.values()) {
+		for (DataTypes dt : this.dataTypes.values()) {
 			dt.emitJava(sbf);
 			dtNames.append(dt.name).append(C);
 		}

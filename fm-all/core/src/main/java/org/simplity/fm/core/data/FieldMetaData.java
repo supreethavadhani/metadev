@@ -22,31 +22,47 @@
 
 package org.simplity.fm.core.data;
 
-import org.simplity.fm.core.validn.IValidation;
+import org.simplity.fm.core.datatypes.ValueType;
 
 /**
- * 
  * @author simplity.org
  *
  */
-public abstract class FormValidation implements IValidation {
-
-	protected final String name1;
-	protected final String name2;
-	protected final boolean boolValue;
-	protected final String errorMessageId;
+public class FieldMetaData {
+	/**
+	 * 0-based index in the form-fields that this parameter corresponds to (for
+	 * getting/setting value in form data array)
+	 */
+	protected final int idx;
+	/**
+	 * value type of this parameter based on which set/get method is ssued
+	 * on the statement
+	 */
+	protected final ValueType valueType;
 
 	/**
-	 * 
-	 * @param fieldNam1
-	 * @param fieldName2
-	 * @param boolValue
-	 * @param errorMessageId
+	 * create this parameter as an immutable data structure
+	 *
+	 * @param idx
+	 * @param valueType
 	 */
-	public FormValidation(String fieldNam1, String fieldName2, boolean boolValue, String errorMessageId) {
-		this.name1 = fieldNam1;
-		this.name2 = fieldName2;
-		this.boolValue = boolValue;
-		this.errorMessageId = errorMessageId;
+	public FieldMetaData(final int idx, final ValueType valueType) {
+		this.idx = idx;
+		this.valueType = valueType;
+	}
+
+	/**
+	 *
+	 * @return index of this field in the data row
+	 */
+	public int getIndex() {
+		return this.idx;
+	}
+
+	/**
+	 * @return the valueType
+	 */
+	public ValueType getValueType() {
+		return this.valueType;
 	}
 }

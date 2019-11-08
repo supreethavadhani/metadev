@@ -45,76 +45,76 @@ public class DbMetaData {
 	/**
 	 * e.g. where a=? and b=?
 	 */
-	public String whereClause;
+	protected String whereClause;
 	/**
 	 * db parameters to be used for the where clause
 	 */
-	public FormDbParam[] whereParams;
+	protected FieldMetaData[] whereParams;
 	/**
 	 * e.g. select a,b,c from t
 	 */
-	public String selectClause;
+	protected String selectClause;
 	/**
 	 * db parameters to be used to receive data from the result set of the
 	 * select query
 	 */
-	public FormDbParam[] selectParams;
+	protected FieldMetaData[] selectParams;
 	/**
 	 * e.g insert a,b,c,d into table1 values(?,?,?,?)
 	 */
-	public String insertClause;
+	protected String insertClause;
 	/**
 	 * db parameters for the insert sql
 	 */
-	public FormDbParam[] insertParams;
+	protected FieldMetaData[] insertParams;
 
 	/**
 	 * e.g. update table1 set a=?, b=?, c=?
 	 */
-	public String updateClause;
+	protected String updateClause;
 	/**
 	 * db parameters for the update sql
 	 */
-	public FormDbParam[] updateParams;
+	protected FieldMetaData[] updateParams;
 
 	/**
 	 * e.g. delete from table1. Note that where is not part of this.
 	 */
-	public String deleteClause;
+	protected String deleteClause;
 
 	/**
 	 * db column name that is generated as internal key. null if this is not
 	 * relevant
 	 */
-	public String generatedColumnName;
+	protected String generatedColumnName;
 
 	/**
 	 *
 	 */
-	public int generatedKeyIdx = -1;
+	protected int generatedKeyIdx = -1;
 
 	/**
 	 * array index corresponds to DbOperation.orinal(). true if that operation
 	 * is allowed
 	 */
-	public boolean[] dbOperationOk = new boolean[IoType.values().length];
+	protected boolean[] dbOperationOk = new boolean[IoType.values().length];
 
 	/**
 	 * if this APP is designed for multi-tenant deployment, and this table has
 	 * data across tenants..
 	 */
-	public Field tenantField;
+	protected Field tenantField;
 
 	/**
 	 * if this table allows update, and needs to use time-stamp-match technique
 	 * to avoid concurrent updates..
 	 */
-	public Field timestampField;
+	protected Field timestampField;
 
 	/**
 	 * number of fields in the schema to which this meta data is attached
 	 */
-	int nbrFieldsInARow;
+	protected int nbrFieldsInARow;
 
 	/**
 	 * insert/create this form data into the db.
@@ -142,7 +142,7 @@ public class DbMetaData {
 					public boolean setParams(final PreparedStatement ps) throws SQLException {
 						int posn = 1;
 						final StringBuilder sbf = new StringBuilder("Parameter Values");
-						for (final FormDbParam p : DbMetaData.this.insertParams) {
+						for (final FieldMetaData p : DbMetaData.this.insertParams) {
 							final Object value = values[p.idx];
 							p.valueType.setPsParam(ps, posn, value);
 							sbf.append('\n').append(posn).append('=').append(value);
@@ -204,7 +204,7 @@ public class DbMetaData {
 		return nbr > 0;
 	}
 
-	private static int writeWorker(final DbHandle handle, final String sql, final FormDbParam[] params,
+	private static int writeWorker(final DbHandle handle, final String sql, final FieldMetaData[] params,
 			final Object[] values) throws SQLException {
 		try {
 			final int n = handle.write(new IDbWriter() {
@@ -218,7 +218,7 @@ public class DbMetaData {
 				public boolean setParams(final PreparedStatement ps) throws SQLException {
 					int posn = 1;
 					final StringBuilder sbf = new StringBuilder("Parameter Values");
-					for (final FormDbParam p : params) {
+					for (final FieldMetaData p : params) {
 						final Object value = values[p.idx];
 						p.valueType.setPsParam(ps, posn, value);
 						sbf.append('\n').append(posn).append('=').append(value);
@@ -323,7 +323,7 @@ public class DbMetaData {
 		return writeMany(handle, this.updateClause, this.updateParams, rows);
 	}
 
-	private static boolean writeMany(final DbHandle handle, final String sql, final FormDbParam[] params,
+	private static boolean writeMany(final DbHandle handle, final String sql, final FieldMetaData[] params,
 			final Object[][] values) throws SQLException {
 
 		final int nbrParams = params.length;
@@ -334,7 +334,7 @@ public class DbMetaData {
 		final ValueType[] types = new ValueType[nbrParams];
 		final Object[][] rows = new Object[nbrRows][nbrParams];
 		int idx = -1;
-		for (final FormDbParam p : params) {
+		for (final FieldMetaData p : params) {
 			idx++;
 			types[idx] = p.valueType;
 		}
@@ -352,7 +352,7 @@ public class DbMetaData {
 			final Object[] source = values[idx];
 
 			int targetIdx = -1;
-			for (final FormDbParam p : params) {
+			for (final FieldMetaData p : params) {
 				targetIdx++;
 				target[targetIdx] = source[p.idx];
 			}
@@ -377,7 +377,7 @@ public class DbMetaData {
 		return allOk;
 	}
 
-	private static String toMessage(final SQLException e, final String sql, final FormDbParam[] params,
+	private static String toMessage(final SQLException e, final String sql, final FieldMetaData[] params,
 			final Object[] values) {
 		final StringBuilder buf = new StringBuilder();
 		buf.append("Sql Exception : ").append(e.getMessage());
@@ -387,7 +387,7 @@ public class DbMetaData {
 			buf.append("\nLinked to the SqlExcpetion: ").append(e1.getMessage());
 		}
 		int idx = 1;
-		for (final FormDbParam p : params) {
+		for (final FieldMetaData p : params) {
 			buf.append('\n').append(idx).append(". type=").append(p.valueType);
 			buf.append(" value=").append(values[p.idx]);
 			idx++;
@@ -418,7 +418,7 @@ public class DbMetaData {
 			public void setParams(final PreparedStatement ps) throws SQLException {
 				int posn = 1;
 				final StringBuilder sbf = new StringBuilder("Parameter Values");
-				for (final FormDbParam p : DbMetaData.this.whereParams) {
+				for (final FieldMetaData p : DbMetaData.this.whereParams) {
 					final Object value = values[p.idx];
 					p.valueType.setPsParam(ps, posn, value);
 					sbf.append('\n').append(posn).append('=').append(value);
@@ -430,8 +430,8 @@ public class DbMetaData {
 			@Override
 			public boolean readARow(final ResultSet rs) throws SQLException {
 				int posn = 1;
-				for (final FormDbParam p : DbMetaData.this.selectParams) {
-					values[p.idx] = p.valueType.getFromRs(rs, posn);
+				for (final FieldMetaData p : DbMetaData.this.selectParams) {
+					values[p.getIndex()] = p.getValueType().getFromRs(rs, posn);
 					posn++;
 				}
 				result[0] = true;
@@ -476,7 +476,7 @@ public class DbMetaData {
 				final Object[] row = new Object[DbMetaData.this.nbrFieldsInARow];
 				result.add(row);
 				int posn = 0;
-				for (final FormDbParam p : DbMetaData.this.selectParams) {
+				for (final FieldMetaData p : DbMetaData.this.selectParams) {
 					posn++;
 					row[p.idx] = p.valueType.getFromRs(rs, posn);
 				}

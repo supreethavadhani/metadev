@@ -1,0 +1,17 @@
+{
+	"name":"form1",
+	"schemaName":"schemaName",
+	"operations":{
+		"get":true,
+		"update":true
+	},
+	"fields":{
+		"schemaFields" : {
+			"label":
+		},
+		"localFields":{
+			"field1":{"dataType"}
+		}
+	}
+	
+}

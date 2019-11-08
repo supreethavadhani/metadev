@@ -20,42 +20,33 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.form;
+package org.simplity.fm.core.data;
 
-import org.simplity.fm.core.data.DbMetaData;
-import org.simplity.fm.core.data.FormDbParam;
+import org.simplity.fm.core.validn.IValidation;
 
 /**
- * data structure for meta data for a child form
- *
+ * 
  * @author simplity.org
  *
  */
-public class DbLinkNotUsed {
-	/**
-	 * field names from the parent form that form the parent-key for the child
-	 * form
-	 */
-	public String[] childLinkNames;
-	/**
-	 * column names are from the child table, but the values for the parameter
-	 * would come from the parent form
-	 * e.g. where childCol1=? and childCll2=?
-	 */
-	public String linkWhereClause;
-	/**
-	 * db parameters for the where clause
-	 */
-	public FormDbParam[] linkParentParams;
-	/**
-	 * db meta data of the child form
-	 */
-	public DbMetaData childMeta;
-	/**
-	 * number of fields in the child form. This is the total of all fields, not
-	 * just the fields that are linked to the DB. This is used to create an
-	 * array of values for the form data
-	 */
-	public int nbrChildFields;
+public abstract class InterFieldValidation implements IValidation {
 
+	protected final String name1;
+	protected final String name2;
+	protected final boolean boolValue;
+	protected final String errorMessageId;
+
+	/**
+	 * 
+	 * @param fieldNam1
+	 * @param fieldName2
+	 * @param boolValue
+	 * @param errorMessageId
+	 */
+	public InterFieldValidation(String fieldNam1, String fieldName2, boolean boolValue, String errorMessageId) {
+		this.name1 = fieldNam1;
+		this.name2 = fieldName2;
+		this.boolValue = boolValue;
+		this.errorMessageId = errorMessageId;
+	}
 }

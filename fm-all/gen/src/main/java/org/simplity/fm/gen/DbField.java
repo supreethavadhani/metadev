@@ -20,34 +20,29 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.data;
+package org.simplity.fm.gen;
 
-import org.simplity.fm.core.datatypes.ValueType;
+import org.simplity.fm.core.data.ColumnType;
 
 /**
+ * represents a Field row in fields sheet of a forms work book
+ *
  * @author simplity.org
  *
  */
-public class FormDbParam {
-	/**
-	 * 0-based index in the form-fields that this parameter corresponds to (for getting/setting value in form data array)
-	 */
-	public final int idx;
-	/**
-	 * value type of this parameter based on which set/get method is ssued
-	 * on the statement
-	 */
-	public final ValueType valueType;
+class DbField extends Field {
 
-	/**
-	 * create this parameter as an immutable data structure
-	 * 
-	 * @param idx
-	 * @param valueType
-	 */
-	public FormDbParam(int idx, ValueType valueType) {
-		this.idx = idx;
-		this.valueType = valueType;
+	String dbColumnName;
+	ColumnType columnType;
+
+	@Override
+	protected void emitJavaSpecific(final StringBuilder sbf) {
+		sbf.append(C).append(Util.escape(this.dbColumnName));
+		sbf.append(C);
+		if (this.columnType == null) {
+			sbf.append("null");
+		} else {
+			sbf.append("ColumnType.").append(this.columnType.name());
+		}
 	}
-
 }

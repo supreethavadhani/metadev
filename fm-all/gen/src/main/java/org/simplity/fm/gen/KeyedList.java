@@ -34,12 +34,12 @@ class KeyedList {
 	final String name;
 	final Map<Object, Pair[]> lists;
 
-	KeyedList(String name, Map<Object, Pair[]> lists) {
+	KeyedList(final String name, final Map<Object, Pair[]> lists) {
 		this.name = name;
 		this.lists = lists;
 	}
 
-	void emitJava(StringBuilder sbf, String packageName) {
+	void emitJava(final StringBuilder sbf, final String packageName) {
 		AppComps.logger.info("Started generating java for keyed list {} with {} keys", this.name, this.lists.size());
 		sbf.append("package ").append(packageName).append(';');
 		sbf.append('\n');
@@ -51,13 +51,13 @@ class KeyedList {
 		sbf.append("\npublic class ").append(Util.toClassName(this.name)).append(" extends KeyedValueList {");
 
 		sbf.append("\n\tprivate static final Object[] KEYS = {");
-		StringBuilder vals = new StringBuilder();
+		final StringBuilder vals = new StringBuilder();
 		vals.append("\n\tprivate static final Object[][][] VALUES = {");
-		for (Map.Entry<Object, Pair[]> entry : this.lists.entrySet()) {
-			Object key = entry.getKey();
-			if(key instanceof String) {
+		for (final Map.Entry<Object, Pair[]> entry : this.lists.entrySet()) {
+			final Object key = entry.getKey();
+			if (key instanceof String) {
 				sbf.append(Util.escape(key.toString()));
-			}else {
+			} else {
 				sbf.append(key).append('L');
 			}
 			sbf.append(C);
@@ -86,13 +86,13 @@ class KeyedList {
 		sbf.append("\n}\n");
 	}
 
-	private static void emitJavaSet(StringBuilder vals, Pair[] ps) {
+	private static void emitJavaSet(final StringBuilder vals, final Pair[] ps) {
 		vals.append("\n\t\t\t{");
-		for (Pair p : ps) {
+		for (final Pair p : ps) {
 			vals.append("\n\t\t\t\t{");
-			if(p.value instanceof String) {
+			if (p.value instanceof String) {
 				vals.append(Util.escape(p.value.toString()));
-			}else {
+			} else {
 				vals.append(p.value).append('L');
 			}
 			vals.append(C).append(Util.escape(p.label)).append("}");
@@ -102,9 +102,9 @@ class KeyedList {
 		vals.append("\n\t\t\t}");
 	}
 
-	protected void emitTs(StringBuilder sbf, String indent) {
+	protected void emitTs(final StringBuilder sbf, final String indent) {
 		boolean firstOne = true;
-		for (Map.Entry<Object, Pair[]> entry : this.lists.entrySet()) {
+		for (final Map.Entry<Object, Pair[]> entry : this.lists.entrySet()) {
 			if (firstOne) {
 				firstOne = false;
 			} else {
@@ -112,18 +112,18 @@ class KeyedList {
 			}
 			sbf.append(indent);
 			sbf.append(entry.getKey()).append(" : [");
-			String newIndent = indent + '\t';
+			final String newIndent = indent + '\t';
 			boolean f = true;
-			for (Pair p : entry.getValue()) {
+			for (final Pair p : entry.getValue()) {
 				if (f) {
 					f = false;
 				} else {
 					sbf.append(C);
 				}
 				sbf.append(newIndent).append("{value:");
-				if(p.value instanceof String) {
+				if (p.value instanceof String) {
 					sbf.append(Util.escapeTs(p.value));
-				}else {
+				} else {
 					sbf.append(p.value);
 				}
 				sbf.append(",text:").append(Util.escapeTs(p.label)).append("}");

@@ -22,16 +22,91 @@
 
 package org.simplity.fm.gen;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.simplity.fm.core.JsonUtil;
 import org.simplity.fm.core.datatypes.ValueType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.gson.JsonObject;
 
 /**
  * represents a row in our spreadsheet for each data type
- * 
+ *
  * @author simplity.org
  *
  */
-class DataType {
+class DataTypes {
+	protected static final Logger logger = LoggerFactory.getLogger(DataTypes.class);
 	private static final String C = ", ";
+	private static final String NAME = "name";
+
+	Map<String, DataType> dataTypes;
+
+	public void fromJson(final JsonObject json) {
+		this.dataTypes = new HashMap<>();
+		this.accumulate(json, TextType.class);
+		this.accumulate(json, IntegerType.class);
+		this.accumulate(json, DecimalType.class);
+		this.accumulate(json, BooleanType.class);
+		this.accumulate(json, DateType.class);
+		this.accumulate(json, TimestampType.class);
+	}
+
+	private void accumulate(final JsonObject json, final Class<? extends DataType> cls) {
+		String nam = cls.getSimpleName();
+		nam = nam.substring(0, 1).toLowerCase() + nam.substring(1) + 's';
+		final Map<String, ? extends DataType> map = JsonUtil.fromJson(json, nam, cls, NAME);
+		final int n = map.size();
+		if (n == 0) {
+			logger.info("No {} defiined", nam);
+			return;
+		}
+
+		logger.info("{} {} extracted", map.size(), nam);
+		this.dataTypes.putAll(map);
+
+	}
+
+	protected abstract static class DataType {
+		String name;
+		String errorId;
+	}
+
+	protected static class BooleanType extends DataType {
+		String trueLabel;
+		String falseLabel;
+	}
+
+	protected static class DateType extends DataType {
+		String maxPastDays;
+		String maxFutureDays;
+	}
+
+	protected static class IntegerType extends DataType {
+		long minValue;
+		long maxValue;
+	}
+
+	protected static class DecimalType extends DataType {
+		long minValue;
+		long maxVakue;
+		int nbrFractions;
+	}
+
+	protected static class TimestampType extends DataType {
+		String maxPastDays;
+		String maxFutureDays;
+	}
+
+	protected static class TextType extends DataType {
+		String regex;
+		int minLength;
+		int maxLength;
+	}
+
 	/*
 	 * all columns in the fields sheet
 	 */
@@ -48,8 +123,8 @@ class DataType {
 	String falseLabel;
 	int nbrFractions;
 
-	void emitJava(StringBuilder sbf) {
-		String cls = Util.getDataTypeClass(this.valueType).getSimpleName();
+	void emitJava(final StringBuilder sbf) {
+		final String cls = Util.getDataTypeClass(this.valueType).getSimpleName();
 		/*
 		 * following is the type of line to be output
 		 * public static final {className} {fieldName} = new
@@ -69,7 +144,7 @@ class DataType {
 		sbf.append(");");
 	}
 
-	private void appendDtParams(StringBuilder sbf) {
+	private void appendDtParams(final StringBuilder sbf) {
 		switch (this.valueType) {
 		case TIMESTAMP:
 		case BOOLEAN:
@@ -93,4 +168,5 @@ class DataType {
 			return;
 		}
 	}
+
 }

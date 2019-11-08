@@ -35,7 +35,7 @@ import org.simplity.fm.core.Conventions;
 
 /**
  * text, number etc..
- * 
+ *
  * @author simplity.org
  *
  */
@@ -45,23 +45,23 @@ public enum ValueType {
 	 */
 	TEXT {
 		@Override
-		public String parse(String value) {
+		public String parse(final String value) {
 			return value;
 		}
 
 		@Override
-		public void setPsParam(PreparedStatement ps, int position, Object value) throws SQLException {
+		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
 			String val = (String) value;
-			if(value == null) {
+			if (value == null) {
 				val = Conventions.Db.TEXT_VALUE_OF_NULL;
 			}
 			ps.setString(position, val);
 		}
 
 		@Override
-		public String getFromRs(ResultSet rs, int position) throws SQLException {
+		public String getFromRs(final ResultSet rs, final int position) throws SQLException {
 			String val = rs.getString(position);
-			if(val == null ) {
+			if (val == null) {
 				val = Conventions.Db.TEXT_VALUE_OF_NULL;
 			}
 			return val;
@@ -72,35 +72,35 @@ public enum ValueType {
 	 */
 	INTEGER {
 		@Override
-		public Long parse(String value) {
+		public Long parse(final String value) {
 			/*
 			 * we are okay with decimals but we take the long value of that
 			 */
 			try {
 				return ((Number) Double.parseDouble(value)).longValue();
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				return null;
 			}
 		}
 
 		@Override
-		public void setPsParam(PreparedStatement ps, int position, Object value) throws SQLException {
-			if(value == null) {
-				if(Conventions.Db.TREAT_NULL_AS_ZERO) {
+		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
+			if (value == null) {
+				if (Conventions.Db.TREAT_NULL_AS_ZERO) {
 					ps.setLong(position, 0L);
-				}else {
+				} else {
 					ps.setNull(position, Types.INTEGER);
 				}
-			}else {
+			} else {
 				ps.setLong(position, (long) value);
 			}
 		}
 
 		@Override
-		public Long getFromRs(ResultSet rs, int position) throws SQLException {
-			long result = rs.getLong(position);
-			if(rs.wasNull()) {
-				if(Conventions.Db.TREAT_NULL_AS_ZERO) {
+		public Long getFromRs(final ResultSet rs, final int position) throws SQLException {
+			final long result = rs.getLong(position);
+			if (rs.wasNull()) {
+				if (Conventions.Db.TREAT_NULL_AS_ZERO) {
 					return 0L;
 				}
 				return null;
@@ -113,32 +113,32 @@ public enum ValueType {
 	 */
 	DECIMAL {
 		@Override
-		public Double parse(String value) {
+		public Double parse(final String value) {
 			try {
 				return Double.parseDouble(value);
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				return null;
 			}
 		}
 
 		@Override
-		public void setPsParam(PreparedStatement ps, int position, Object value) throws SQLException {
-			if(value == null) {
-				if(Conventions.Db.TREAT_NULL_AS_ZERO) {
+		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
+			if (value == null) {
+				if (Conventions.Db.TREAT_NULL_AS_ZERO) {
 					ps.setDouble(position, 0.0);
-				}else {
+				} else {
 					ps.setNull(position, Types.DECIMAL);
 				}
-			}else {
+			} else {
 				ps.setDouble(position, (Double) value);
 			}
 		}
 
 		@Override
-		public Double getFromRs(ResultSet rs, int position) throws SQLException {
-			double result = rs.getDouble(position);
-			if(rs.wasNull()) {
-				if(Conventions.Db.TREAT_NULL_AS_ZERO) {
+		public Double getFromRs(final ResultSet rs, final int position) throws SQLException {
+			final double result = rs.getDouble(position);
+			if (rs.wasNull()) {
+				if (Conventions.Db.TREAT_NULL_AS_ZERO) {
 					return 0.0;
 				}
 				return null;
@@ -151,14 +151,14 @@ public enum ValueType {
 	 */
 	BOOLEAN {
 		@Override
-		public Boolean parse(String value) {
+		public Boolean parse(final String value) {
 			if ("1".equals(value)) {
 				return true;
 			}
 			if ("0".equals(value)) {
 				return false;
 			}
-			String v = value.toUpperCase();
+			final String v = value.toUpperCase();
 			if ("TRUE".equals(v)) {
 				return true;
 			}
@@ -169,18 +169,18 @@ public enum ValueType {
 		}
 
 		@Override
-		public void setPsParam(PreparedStatement ps, int position, Object value) throws SQLException {
+		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
 			boolean val = false;
-			if(value != null) {
-				val = (boolean)value;
+			if (value != null) {
+				val = (boolean) value;
 			}
 			ps.setBoolean(position, val);
 		}
 
 		@Override
-		public Boolean getFromRs(ResultSet rs, int position) throws SQLException {
-			boolean result = rs.getBoolean(position);
-			if(rs.wasNull()) {
+		public Boolean getFromRs(final ResultSet rs, final int position) throws SQLException {
+			final boolean result = rs.getBoolean(position);
+			if (rs.wasNull()) {
 				return null;
 			}
 			return result;
@@ -192,28 +192,28 @@ public enum ValueType {
 	 */
 	DATE {
 		@Override
-		public LocalDate parse(String value) {
+		public LocalDate parse(final String value) {
 			try {
 				return LocalDate.parse(value);
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				//
 			}
 			return null;
 		}
 
 		@Override
-		public void setPsParam(PreparedStatement ps, int position, Object value) throws SQLException {
+		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
 			Date date = null;
-			if(value != null) {
+			if (value != null) {
 				date = Date.valueOf((LocalDate) value);
 			}
 			ps.setDate(position, date);
 		}
 
 		@Override
-		public LocalDate getFromRs(ResultSet rs, int position) throws SQLException {
-			Date date = rs.getDate(position);
-			if(date == null) {
+		public LocalDate getFromRs(final ResultSet rs, final int position) throws SQLException {
+			final Date date = rs.getDate(position);
+			if (date == null) {
 				return null;
 			}
 			return date.toLocalDate();
@@ -226,28 +226,28 @@ public enum ValueType {
 	 */
 	TIMESTAMP {
 		@Override
-		public Instant parse(String value) {
+		public Instant parse(final String value) {
 			try {
 				return Instant.parse(value);
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				//
 			}
 			return null;
 		}
 
 		@Override
-		public void setPsParam(PreparedStatement ps, int position, Object value) throws SQLException {
+		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
 			Timestamp stamp = null;
-			if(value != null) {
+			if (value != null) {
 				stamp = Timestamp.from((Instant) value);
 			}
 			ps.setTimestamp(position, stamp);
 		}
 
 		@Override
-		public Instant getFromRs(ResultSet rs, int position) throws SQLException {
-			Timestamp stamp = rs.getTimestamp(position);
-			if(stamp == null) {
+		public Instant getFromRs(final ResultSet rs, final int position) throws SQLException {
+			final Timestamp stamp = rs.getTimestamp(position);
+			if (stamp == null) {
 				return null;
 			}
 			return stamp.toInstant();
@@ -256,7 +256,7 @@ public enum ValueType {
 
 	/**
 	 * parse this value type from a string
-	 * 
+	 *
 	 * @param value
 	 *            non-null
 	 * @return parsed value of this type. null if value is null or the value can
@@ -273,7 +273,7 @@ public enum ValueType {
 	public abstract void setPsParam(PreparedStatement ps, int position, Object value) throws SQLException;
 
 	/**
-	 * 
+	 *
 	 * @param rs
 	 * @param position
 	 * @return object returned in the result set

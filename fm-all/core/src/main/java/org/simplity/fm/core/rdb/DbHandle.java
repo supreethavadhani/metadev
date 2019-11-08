@@ -328,7 +328,7 @@ public class DbHandle {
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			final int posn = 0;
 			for (final PreparedStatementParam p : params) {
-				p.valueType.setPsParam(ps, posn, p.value);
+				p.getValueType().setPsParam(ps, posn, p.getValue());
 			}
 			final int n = ps.executeUpdate();
 			logger.info("{} rows affected ", n);

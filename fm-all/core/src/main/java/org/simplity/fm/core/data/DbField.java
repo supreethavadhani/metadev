@@ -50,9 +50,6 @@ public class DbField extends Field {
 	 * @param dataType
 	 *            pre-defined data type. used for validating data coming from a
 	 *            client
-	 * @param isRequired
-	 *            is this field mandatory. used for validating data coming from
-	 *            a client
 	 * @param defaultValue
 	 *            value to be used in case the client has not sent a value for
 	 *            this. This e is used ONLY if isRequired is false. That is,
@@ -71,9 +68,8 @@ public class DbField extends Field {
 	 *            db column type. non-null
 	 */
 	public DbField(final String fieldName, final int index, final DataType dataType, final String defaultValue,
-			final String messageId, final boolean isRequired, final String valueListName, final String columnName,
-			final ColumnType columnType) {
-		super(fieldName, index, dataType, defaultValue, messageId, columnType.isRequired(), valueListName);
+			final String messageId, final String valueListName, final String columnName, final ColumnType columnType) {
+		super(fieldName, index, dataType, defaultValue, messageId, valueListName, columnType.isRequired());
 		this.columnName = columnName;
 		this.columnType = columnType;
 	}

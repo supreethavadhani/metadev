@@ -69,6 +69,12 @@ public class FormWithChildren extends Form {
 		return this.schema;
 	}
 
+	/**
+	 *
+	 * @param ctx
+	 * @param payload
+	 * @throws Exception
+	 */
 	public void fetch(final IServiceContext ctx, final JsonObject payload) throws Exception {
 		final DataRow dataRow = this.getSchema().parseKeys(payload, ctx);
 		if (!ctx.allOk()) {
@@ -122,10 +128,24 @@ public class FormWithChildren extends Form {
 		}
 	}
 
+	/**
+	 * update/save the data coming in form a client to the database
+	 * 
+	 * @param ctx
+	 * @param payload
+	 * @throws Exception
+	 */
 	public void update(final IServiceContext ctx, final JsonObject payload) throws Exception {
 		this.writeWorker(ctx, payload, false);
 	}
 
+	/**
+	 * insert the data that has come from a client into the database
+	 *
+	 * @param ctx
+	 * @param payload
+	 * @throws Exception
+	 */
 	public void insert(final IServiceContext ctx, final JsonObject payload) throws Exception {
 		this.writeWorker(ctx, payload, true);
 	}
@@ -190,6 +210,13 @@ public class FormWithChildren extends Form {
 		return;
 	}
 
+	/**
+	 * delete rows from the database based on the data sent from a client
+	 * 
+	 * @param ctx
+	 * @param payload
+	 * @throws Exception
+	 */
 	public void delete(final IServiceContext ctx, final JsonObject payload) throws Exception {
 		final DataRow dataRow = this.getSchema().parseKeys(payload, ctx);
 		if (!ctx.allOk()) {
@@ -205,9 +232,8 @@ public class FormWithChildren extends Form {
 			if (!ok) {
 				return false;
 			}
-			int idx = -1;
+
 			for (final LinkedForm lf : this.linkedForms) {
-				idx++;
 				ok = lf.delete(handle, dataRow.dataRow);
 				if (!ok) {
 					return false;

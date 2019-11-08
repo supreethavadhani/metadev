@@ -32,11 +32,11 @@ public class PreparedStatementParam {
 	/**
 	 * value to be set/get to/from the prepared statement)
 	 */
-	public Object value;
+	protected Object value;
 	/**
 	 * value type of this parameter
 	 */
-	public final ValueType valueType;
+	protected final ValueType valueType;
 
 	/**
 	 * create this parameter as an immutable data structure
@@ -56,6 +56,28 @@ public class PreparedStatementParam {
 	 */
 	public PreparedStatementParam(final ValueType valueType) {
 		this.valueType = valueType;
+	}
+
+	/**
+	 * @return the value
+	 */
+	public Object getValue() {
+		return this.value;
+	}
+
+	/**
+	 * @param value
+	 *            the value to set
+	 */
+	public void setValue(final Object value) {
+		this.value = value;
+	}
+
+	/**
+	 * @return the valueType
+	 */
+	public ValueType getValueType() {
+		return this.valueType;
 	}
 
 }

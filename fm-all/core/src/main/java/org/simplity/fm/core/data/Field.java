@@ -81,9 +81,6 @@ public class Field {
 	 * @param dataType
 	 *            pre-defined data type. used for validating data coming from a
 	 *            client
-	 * @param isRequired
-	 *            is this field mandatory. used for validating data coming from
-	 *            a client
 	 * @param defaultValue
 	 *            value to be used in case the client has not sent a value for
 	 *            this. This e is used ONLY if isRequired is false. That is,
@@ -96,9 +93,12 @@ public class Field {
 	 *            rendered in a drop-down. If the value list depends on value of
 	 *            another field, then it is part of inter-field validation, and
 	 *            not part of this field.
+	 * @param isRequired
+	 *            is this field mandatory. used for validating data coming from
+	 *            a client
 	 */
 	public Field(final String fieldName, final int index, final DataType dataType, final String defaultValue,
-			final String messageId, final boolean isRequired, final String valueListName) {
+			final String messageId, final String valueListName, final boolean isRequired) {
 		this.name = fieldName;
 		this.index = index;
 		this.isRequired = isRequired;

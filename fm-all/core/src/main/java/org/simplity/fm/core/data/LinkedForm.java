@@ -80,7 +80,7 @@ public class LinkedForm {
 	 * has the details to set params values for a prepared statement from a
 	 * parent data row
 	 */
-	protected FormDbParam[] linkWhereParams;
+	protected FieldMetaData[] linkWhereParams;
 	protected String deletePart = "delete etc...";
 
 	/**
@@ -135,7 +135,7 @@ public class LinkedForm {
 	private PreparedStatementParam[] createParams(final Object[] parentRow) {
 		final PreparedStatementParam[] params = new PreparedStatementParam[this.linkWhereParams.length];
 		int idx = -1;
-		for (final FormDbParam p : this.linkWhereParams) {
+		for (final FieldMetaData p : this.linkWhereParams) {
 			idx++;
 			params[idx] = new PreparedStatementParam(parentRow[p.idx], p.valueType);
 		}
