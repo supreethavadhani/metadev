@@ -20,22 +20,28 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.example;
+package org.simplity.fm.gen;
+
+import org.simplity.fm.core.data.Field;
+import org.simplity.fm.core.data.FieldMetaData;
 
 /**
  * @author simplity.org
  *
  */
-public class Gen {
-	/**
-	 *
-	 * @param args
-	 */
-	public static void main(final String[] args) {
-		final String root = "C:/Users/raghu/eclipse-workspace/fm-example/src/main/";
-		// Generator.generate(root+"spec/",root+"java/"
-		// ,"org.simplity.fm.example.gen", "./",
-		// "c:/C:/Users/raghu/eclipse-workspace/fm-example/src/ts/");
-	}
-
+public class DbMeta {
+	String whereClause;
+	FieldMetaData[] whereParams;
+	String selectClause;
+	FieldMetaData[] selectParams;
+	String insertClause;
+	FieldMetaData[] insertParams;
+	String updateClause;
+	FieldMetaData[] updateParams;
+	String deleteClause;
+	String generatedColumnName;
+	int generatedKeyIdx;
+	Field tenantField;
+	Field timestampField;
+	int nbrFieldsInARow;
 }

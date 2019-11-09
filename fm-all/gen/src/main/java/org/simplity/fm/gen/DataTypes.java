@@ -25,6 +25,7 @@ package org.simplity.fm.gen;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.JsonUtil;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.slf4j.Logger;
@@ -70,103 +71,142 @@ class DataTypes {
 
 	}
 
+	void emitJava(final String rootFolder, final String packageName, final String dataTypesFileName) {
+		/*
+		 * create DataTypes.java in the root folder.
+		 */
+		final StringBuilder sbf = new StringBuilder();
+		this.emitJavaTypes(sbf, packageName);
+		Util.writeOut(rootFolder + dataTypesFileName + ".java", sbf);
+	}
+
+	void emitJavaTypes(final StringBuilder sbf, final String packageName) {
+		sbf.append("package ").append(packageName).append(';');
+		sbf.append('\n');
+
+		Util.emitImport(sbf, HashMap.class);
+		Util.emitImport(sbf, Map.class);
+		sbf.append("\n");
+
+		Util.emitImport(sbf, org.simplity.fm.core.IDataTypes.class);
+		Util.emitImport(sbf, org.simplity.fm.core.datatypes.DataType.class);
+		for (final ValueType vt : ValueType.values()) {
+			Util.emitImport(sbf, Util.getDataTypeClass(vt));
+		}
+
+		final String cls = Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
+
+		sbf.append(
+				"\n\n/**\n * class that has static attributes for all data types defined for this project. It also extends <code>DataTypes</code>");
+		sbf.append("\n */ ");
+		sbf.append("\npublic class ").append(cls).append(" implements IDataTypes {");
+
+		final StringBuilder dtNames = new StringBuilder();
+		for (final DataType dt : this.dataTypes.values()) {
+			dt.emitJava(sbf);
+			dtNames.append(dt.name).append(C);
+		}
+		dtNames.setLength(dtNames.length() - C.length());
+
+		sbf.append("\n\n\tpublic static final DataType[] allTypes = {").append(dtNames.toString()).append("};");
+
+		sbf.append("\n\t private Map<String, DataType> typesMap;");
+
+		sbf.append("\n\t/**\n\t * default constructor\n\t */");
+
+		sbf.append("\n\tpublic ").append(cls).append("() {");
+		sbf.append("\n\t\tthis.typesMap = new HashMap<>();");
+		sbf.append("\n\t\tfor(DataType dt: allTypes) {");
+		sbf.append("\n\t\t\tthis.typesMap.put(dt.getName(), dt);");
+		sbf.append("\n\t\t}\n\t}");
+
+		sbf.append("\n\n@Override");
+		sbf.append("\n\tpublic DataType getDataType(String name) {");
+		sbf.append("\n\t\treturn this.typesMap.get(name);");
+		sbf.append("\n\t}");
+
+		sbf.append("\n}\n");
+	}
+
 	protected abstract static class DataType {
+		private static final String P = "\n\tpublic static final ";
 		String name;
 		String errorId;
+
+		/**
+		 * @param sbf
+		 */
+		protected void emitJava(final StringBuilder sbf) {
+			final String cls = this.getClass().getSimpleName();
+			sbf.append(P).append(cls).append(' ').append(this.name);
+			sbf.append(" = new ").append(cls).append("(").append(Util.escape(this.name));
+			sbf.append(C).append(Util.escape(this.errorId));
+			this.emitIstanceParams(sbf);
+			sbf.append(");");
+		}
+
+		protected abstract void emitIstanceParams(StringBuilder sbf);
 	}
 
 	protected static class BooleanType extends DataType {
-		String trueLabel;
-		String falseLabel;
+		@Override
+		protected void emitIstanceParams(final StringBuilder sbf) {
+			//
+		}
 	}
 
 	protected static class DateType extends DataType {
-		String maxPastDays;
-		String maxFutureDays;
+		int maxPastDays;
+		int maxFutureDays;
+
+		@Override
+		protected void emitIstanceParams(final StringBuilder sbf) {
+			sbf.append(C).append(this.maxPastDays);
+			sbf.append(C).append(this.maxFutureDays);
+		}
 	}
 
 	protected static class IntegerType extends DataType {
 		long minValue;
 		long maxValue;
+
+		@Override
+		protected void emitIstanceParams(final StringBuilder sbf) {
+			sbf.append(C).append(this.minValue).append('L');
+			sbf.append(C).append(this.maxValue).append('L');
+		}
 	}
 
 	protected static class DecimalType extends DataType {
 		long minValue;
-		long maxVakue;
+		long maxValue;
 		int nbrFractions;
+
+		@Override
+		protected void emitIstanceParams(final StringBuilder sbf) {
+			sbf.append(C).append(this.minValue).append('L');
+			sbf.append(C).append(this.maxValue).append('L');
+			sbf.append(C).append(this.nbrFractions);
+		}
 	}
 
 	protected static class TimestampType extends DataType {
-		String maxPastDays;
-		String maxFutureDays;
+		@Override
+		protected void emitIstanceParams(final StringBuilder sbf) {
+			//
+		}
 	}
 
 	protected static class TextType extends DataType {
 		String regex;
 		int minLength;
 		int maxLength;
-	}
 
-	/*
-	 * all columns in the fields sheet
-	 */
-	String name;
-	ValueType valueType;
-	String errorId;
-	String regexDesc;
-	String regex;
-	int minLength;
-	int maxLength;
-	long minValue;
-	long maxValue;
-	String trueLabel;
-	String falseLabel;
-	int nbrFractions;
-
-	void emitJava(final StringBuilder sbf) {
-		final String cls = Util.getDataTypeClass(this.valueType).getSimpleName();
-		/*
-		 * following is the type of line to be output
-		 * public static final {className} {fieldName} = new
-		 * {className}({errorMessageId}.......);
-		 */
-		sbf.append("\n\tpublic static final ").append(cls).append(" ").append(this.name);
-		sbf.append(" = new ").append(cls).append("(");
-		sbf.append(Util.escape(this.name));
-		sbf.append(C).append(Util.escape(this.errorId));
-		/*
-		 * append parameters list based on the data type
-		 */
-		this.appendDtParams(sbf);
-		/*
-		 * close the constructor and we are done
-		 */
-		sbf.append(");");
-	}
-
-	private void appendDtParams(final StringBuilder sbf) {
-		switch (this.valueType) {
-		case TIMESTAMP:
-		case BOOLEAN:
-			return;
-
-		case DATE:
-		case INTEGER:
-			sbf.append(C).append(this.minValue).append("L, ").append(this.maxValue).append('L');
-			return;
-
-		case DECIMAL:
-			sbf.append(C).append(this.minValue).append("L, ").append(this.maxValue).append('L').append(C)
-					.append(this.nbrFractions);
-			return;
-		case TEXT:
-			sbf.append(C).append(this.minLength).append(C).append(this.maxLength).append(C)
-					.append(Util.escape(this.regex));
-			return;
-		default:
-			sbf.append(" generating compilation error on valueType=" + this.valueType);
-			return;
+		@Override
+		protected void emitIstanceParams(final StringBuilder sbf) {
+			sbf.append(C).append(this.minLength);
+			sbf.append(C).append(this.maxLength);
+			sbf.append(C).append(Util.escape(this.regex));
 		}
 	}
-
 }

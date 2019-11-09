@@ -70,7 +70,7 @@ class Schema {
 	boolean useTimeStampCheck;
 	String customValidationName;
 	/*
-	 * reason we have it as an array rather than a MAPis that teh sequence,
+	 * reason we have it as an array rather than a MAP is that the sequence,
 	 * though not recommended, could be hard-coded by some coders
 	 */
 	DbField[] fields;
@@ -87,7 +87,7 @@ class Schema {
 
 	DbField tenantField;
 	DbField timestampField;
-	String generatedColumnName;
+	DbField generatedKeyField;
 
 	/*
 	 * some tables may have primary key, but not have anything to update
@@ -119,9 +119,10 @@ class Schema {
 				if (ct == null) {
 					continue;
 				}
+
 				field.isRequired = ct.isRequired();
 				if (ct == ColumnType.GeneratedPrimaryKey) {
-					if (this.generatedColumnName != null) {
+					if (this.generatedKeyField != null) {
 						logger.error("ONly one generated key please. Found {} as well as {} as generated primary keys.",
 								field.name, keyList.get(0).name);
 					} else {
@@ -132,13 +133,13 @@ class Schema {
 							keyList.clear();
 						}
 						keyList.add(field);
-						this.generatedColumnName = field.dbColumnName;
+						this.generatedKeyField = field;
 					}
 					continue;
 				}
 
 				if (ct == ColumnType.PrimaryKey) {
-					if (this.generatedColumnName != null) {
+					if (this.generatedKeyField != null) {
 						logger.error(
 								"{} is defined as a generated primary key, but {} is also defined as a primary key.",
 								keyList.get(0).name, field.name);
@@ -227,24 +228,18 @@ class Schema {
 		return names;
 	}
 
-	private static String getQualifier(final String nam) {
-		final int idx = nam.lastIndexOf('.');
-		if (idx == -1) {
-			return null;
-		}
-		return nam.substring(0, idx);
-	}
-
 	void emitJavaClass(final StringBuilder sbf, final String generatedPackage) {
 		final String typesName = Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
-		String pck = getQualifier(this.name);
-		String cls = null;
-		if (pck == null) {
-			pck = generatedPackage + ".form";
-			cls = Util.toClassName(this.name);
-		} else {
-			cls = Util.toClassName(this.generatedColumnName.substring(pck.length() + 1));
-			pck = generatedPackage + ".form." + pck;
+		/*
+		 * our package name is rootPAckage + any prefix/qualifier in our name
+		 *
+		 * e.g. if name a.b.schema1 then prefix is a.b and className is Schema1
+		 */
+		final String cls = Util.toClassName(this.name);
+		String pck = generatedPackage + ".schema";
+		final String qual = Util.getClassQualifier(this.name);
+		if (qual != null && qual.isEmpty() == false) {
+			pck += '.' + qual;
 		}
 		sbf.append("package ").append(pck).append(";\n");
 
@@ -271,6 +266,9 @@ class Schema {
 			Util.emitImport(sbf, InclusiveValidation.class);
 		}
 		Util.emitImport(sbf, DependentListValidation.class);
+		/*
+		 * data types are directly referred to the static declarations
+		 */
 		sbf.append("\nimport ").append(generatedPackage).append('.').append(typesName).append(';');
 		/*
 		 * class definition
@@ -278,11 +276,8 @@ class Schema {
 
 		sbf.append("\n\n/**\n * class that represents structure of ").append(this.name);
 		sbf.append("\n */ ");
-		sbf.append("\npublic class ").append(cls).append(" extends Form {");
+		sbf.append("\npublic class ").append(cls).append(" extends Schema {");
 
-		/*
-		 * all fields and child forms indexes are available as constants
-		 */
 		this.emitJavaConstants(sbf);
 		this.emitDbStuff(sbf);
 
@@ -291,16 +286,27 @@ class Schema {
 		 */
 		sbf.append("\n\n\t/**\n\t *\n\t */");
 		sbf.append("\n\tpublic ").append(cls).append("() {");
-		sbf.append("\n\t\tthis.uniqueName = \"").append(this.name).append("\";");
+		sbf.append("\n\t\tthis.name = \"").append(this.name).append("\";");
 
 		this.emitJavaFields(sbf, typesName);
 
 		this.emitJavaValidations(sbf);
-
-		sbf.append("\n\n\t\tthis.setDbMeta();");
+		this.emitDbMeta(sbf);
 		sbf.append("\n\t\tthis.initialize();");
 
 		sbf.append("\n\t}\n}\n");
+	}
+
+	private void emitJavaConstants(final StringBuilder sbf) {
+		/*
+		 * all fields and child forms indexes are available as constants. To
+		 * avoid name-clash, we create another class for this
+		 */
+		sbf.append("\n\tpublic static class Indexes {");
+		for (final DbField field : this.fields) {
+			sbf.append("\n\tpublic static final int ").append(field.name).append(EQ).append(field.index).append(';');
+		}
+		sbf.append("\n\t}\n");
 	}
 
 	private void emitDbStuff(final StringBuilder sbf) {
@@ -333,46 +339,6 @@ class Schema {
 			this.emitUpdate(sbf, clause.toString(), indexes.toString());
 			sbf.append(P).append("String DELETE = \"DELETE FROM ").append(this.dbName).append("\";");
 		}
-
-		sbf.append("\n\n\tprivate void setDbMeta(){");
-		final String t = "\n\t\tm.";
-		sbf.append("\n\t\tDbMetaData m = new DbMetaData();");
-
-		sbf.append(t).append("selectClause = SELECT;");
-		if (this.keyFields != null) {
-
-			sbf.append(t).append("selectParams = this.getParams(SELECT_IDX);");
-			sbf.append(t).append("insertClause = INSERT;");
-			sbf.append(t).append("insertParams = this.getParams(INSERT_IDX);");
-
-			sbf.append(t).append("whereClause = WHERE;");
-			sbf.append(t).append("whereParams = this.getParams(WHERE_IDX);");
-			if (this.isUpdatable) {
-				sbf.append(t).append("updateClause = UPDATE;");
-				sbf.append(t).append("updateParams = this.getParams(UPDATE_IDX);");
-			}
-			sbf.append(t).append("deleteClause = DELETE;");
-			if (this.generatedColumnName != null) {
-				sbf.append(t).append("generatedColumnName = \"").append(this.generatedColumnName).append("\";");
-			}
-		}
-
-		if (this.useTimeStampCheck) {
-			sbf.append(t).append("timestampField = this.fields[").append(this.timestampField.index).append("];");
-		}
-
-		if (this.tenantField != null) {
-			sbf.append(t).append("tenantField = this.fields[").append(this.tenantField.index).append("];");
-		}
-
-		sbf.append("\n\t\tthis.dbMetaData = m;");
-		sbf.append("\n\t}");
-	}
-
-	private void emitJavaConstants(final StringBuilder sbf) {
-		for (final DbField field : this.fields) {
-			sbf.append("\n\tpublic static final int ").append(field.name).append(EQ).append(field.index).append(';');
-		}
 	}
 
 	private void emitJavaFields(final StringBuilder sbf, final String dataTypesName) {
@@ -380,7 +346,7 @@ class Schema {
 			sbf.append("\n\t\tthis.fields = null;");
 			return;
 		}
-		sbf.append("\n\n\t\tField[] flds = {");
+		sbf.append("\n\n\t\tDbField[] flds = {");
 		boolean isFirst = true;
 		for (final DbField field : this.fields) {
 			if (isFirst) {
@@ -451,6 +417,45 @@ class Schema {
 
 		sbf.append("};");
 		sbf.append("\n\t\tthis.validations = vlds;");
+	}
+
+	private void emitDbMeta(final StringBuilder sbf) {
+
+		sbf.append("\n\n\t\tthis.dbMetaData = ");
+
+		if (this.dbName == null) {
+			sbf.append("null;");
+			return;
+		}
+
+		sbf.append("new DbMetaData(");
+		sbf.append(this.fields.length);
+		if (this.tenantField == null) {
+			sbf.append(", null");
+		} else {
+			sbf.append(", this.fields[").append(this.tenantField.index).append("]");
+		}
+		sbf.append(", SELECT, this.getParams(SELECT_IDX)");
+		if (this.keyFields != null) {
+
+			sbf.append("WHERE, this.getParams(WHERE_IDX)");
+			sbf.append(", INSERT, this.getParams(INSERT_IDX)");
+			sbf.append(", UPDATE, this.getParams(UPDATE_IDX)");
+			sbf.append(", DELETE");
+			if (this.generatedKeyField == null) {
+				sbf.append(", null, -1");
+			} else {
+				sbf.append(C).append(Util.escape(this.generatedKeyField.dbColumnName));
+				sbf.append(C).append(this.generatedKeyField.index);
+			}
+			if (this.useTimeStampCheck) {
+				sbf.append(", this.fields[").append(this.timestampField.index).append("]");
+			} else {
+				sbf.append(", null");
+			}
+		}
+		sbf.append(");");
+
 	}
 
 	private void makeWhere(final StringBuilder clause, final StringBuilder indexes, final DbField[] keys) {

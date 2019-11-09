@@ -23,10 +23,8 @@
 package org.simplity.fm.gen;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
-import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.datatypes.ValueType;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +35,7 @@ import org.slf4j.LoggerFactory;
 class AppComps {
 	static final Logger logger = LoggerFactory.getLogger(AppComps.class);
 	private static final String C = ", ";
-	
+
 	static final Object TENANT_COLUMN = "tenantKeyColumnName";
 	static final Object TENANT_FIELD = "tenantKeyFieldName";
 
@@ -47,75 +45,26 @@ class AppComps {
 	Map<String, RuntimeList> runtimeLists;
 	Map<String, Object> params;
 
-
-	void emitJava(String rootFolder, String packageName, String dataTypesFileName) {
+	void emitJava(final String rootFolder, final String packageName, final String dataTypesFileName) {
 		/*
 		 * create DataTypes.java in the root folder.
 		 */
-		StringBuilder sbf = new StringBuilder();
-		this.emitJavaTypes(sbf, packageName);
+		final StringBuilder sbf = new StringBuilder();
+		// this.emitJavaTypes(sbf, packageName);
 		Util.writeOut(rootFolder + dataTypesFileName + ".java", sbf);
-		String pck = packageName + ".list";
-		String fldr = rootFolder + "list/";
-		
-		File dir = new File(fldr);
+		final String pck = packageName + ".list";
+		final String fldr = rootFolder + "list/";
+
+		final File dir = new File(fldr);
 		if (dir.exists() == false) {
 			dir.mkdirs();
 		}
-		emitJavaLists(pck, fldr);
-		emitJavaKlists(pck, fldr);
-		emitJavaRlists(pck, fldr);
-	}
-	
-	void emitJavaTypes(StringBuilder sbf, String packageName) {
-		sbf.append("package ").append(packageName).append(';');
-		sbf.append('\n');
-
-		Util.emitImport(sbf, HashMap.class);
-		Util.emitImport(sbf, Map.class);
-		sbf.append("\n");
-
-		Util.emitImport(sbf, org.simplity.fm.core.IDataTypes.class);
-		Util.emitImport(sbf, org.simplity.fm.core.datatypes.DataType.class);
-		for (ValueType vt : ValueType.values()) {
-			Util.emitImport(sbf, Util.getDataTypeClass(vt));
-		}
-
-		String cls = Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
-
-		sbf.append(
-				"\n\n/**\n * class that has static attributes for all data types defined for this project. It also extends <code>DataTypes</code>");
-		sbf.append("\n */ ");
-		sbf.append("\npublic class ").append(cls).append(" implements IDataTypes {");
-
-		StringBuilder dtNames = new StringBuilder();
-		for (DataTypes dt : this.dataTypes.values()) {
-			dt.emitJava(sbf);
-			dtNames.append(dt.name).append(C);
-		}
-		dtNames.setLength(dtNames.length() - C.length());
-
-		sbf.append("\n\n\tpublic static final DataType[] allTypes = {").append(dtNames.toString()).append("};");
-
-		sbf.append("\n\t private Map<String, DataType> typesMap;");
-
-		sbf.append("\n\t/**\n\t * default constructor\n\t */");
-
-		sbf.append("\n\tpublic ").append(cls).append("() {");
-		sbf.append("\n\t\tthis.typesMap = new HashMap<>();");
-		sbf.append("\n\t\tfor(DataType dt: allTypes) {");
-		sbf.append("\n\t\t\tthis.typesMap.put(dt.getName(), dt);");
-		sbf.append("\n\t\t}\n\t}");
-
-		sbf.append("\n\n@Override");
-		sbf.append("\n\tpublic DataType getDataType(String name) {");
-		sbf.append("\n\t\treturn this.typesMap.get(name);");
-		sbf.append("\n\t}");
-
-		sbf.append("\n}\n");
+		this.emitJavaLists(pck, fldr);
+		this.emitJavaKlists(pck, fldr);
+		this.emitJavaRlists(pck, fldr);
 	}
 
-	void emitJavaLists(String pack, String folder) {
+	void emitJavaLists(final String pack, final String folder) {
 		/**
 		 * lists are created under list sub-package
 		 */
@@ -123,15 +72,15 @@ class AppComps {
 			logger.warn("No lists created for this project");
 			return;
 		}
-		StringBuilder sbf = new StringBuilder();
-		for (ValueList list : this.lists.values()) {
+		final StringBuilder sbf = new StringBuilder();
+		for (final ValueList list : this.lists.values()) {
 			sbf.setLength(0);
 			list.emitJava(sbf, pack);
 			Util.writeOut(folder + Util.toClassName(list.name) + ".java", sbf);
 		}
 	}
-	
-	void emitJavaKlists(String pack, String folder) {
+
+	void emitJavaKlists(final String pack, final String folder) {
 		/**
 		 * keyed lists
 		 */
@@ -140,15 +89,15 @@ class AppComps {
 			return;
 		}
 
-		StringBuilder sbf = new StringBuilder();
-		for (KeyedList list : this.keyedLists.values()) {
+		final StringBuilder sbf = new StringBuilder();
+		for (final KeyedList list : this.keyedLists.values()) {
 			sbf.setLength(0);
 			list.emitJava(sbf, pack);
 			Util.writeOut(folder + Util.toClassName(list.name) + ".java", sbf);
 		}
 	}
-	
-	void emitJavaRlists(String pack, String folder) {
+
+	void emitJavaRlists(final String pack, final String folder) {
 		/**
 		 * runtime lists
 		 */
@@ -156,8 +105,8 @@ class AppComps {
 			logger.warn("No runtime lists created for this project");
 			return;
 		}
-		StringBuilder sbf = new StringBuilder();
-		for (RuntimeList list : this.runtimeLists.values()) {
+		final StringBuilder sbf = new StringBuilder();
+		for (final RuntimeList list : this.runtimeLists.values()) {
 			sbf.setLength(0);
 			list.emitJava(sbf, pack);
 			Util.writeOut(folder + Util.toClassName(list.name) + ".java", sbf);

@@ -22,6 +22,7 @@
 
 package org.simplity.fm.gen;
 
+import java.io.File;
 import java.util.Map;
 
 import org.simplity.fm.core.JsonUtil;
@@ -31,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.JsonObject;
 
 /**
- * attributes read from application.json
+ * attributes read from application.json are output as generated sources
  *
  * @author simplity.org
  *
@@ -76,5 +77,74 @@ public class Application {
 		this.valueLists = JsonUtil.fromJson(json, "valueLists", ValueList.class, "name");
 		this.keyedLists = JsonUtil.fromJson(json, "keyedLists", KeyedList.class, "name");
 		this.runtimeLists = JsonUtil.fromJson(json, "runtimeLists", RuntimeList.class, "name");
+	}
+
+	void emitJava(final String rootFolder, final String packageName, final String dataTypesFileName) {
+		/*
+		 * create DataTypes.java in the root folder.
+		 */
+		final StringBuilder sbf = new StringBuilder();
+		this.dataTypes.emitJava(rootFolder, packageName, dataTypesFileName);
+		Util.writeOut(rootFolder + dataTypesFileName + ".java", sbf);
+
+		final String pck = packageName + ".list";
+		final String fldr = rootFolder + "list/";
+
+		final File dir = new File(fldr);
+		if (dir.exists() == false) {
+			dir.mkdirs();
+		}
+		this.emitJavaLists(pck, fldr);
+		this.emitJavaKlists(pck, fldr);
+		this.emitJavaRlists(pck, fldr);
+	}
+
+	void emitJavaLists(final String pack, final String folder) {
+		/**
+		 * lists are created under list sub-package
+		 */
+		if (this.valueLists == null || this.valueLists.size() == 0) {
+			logger.warn("No value lists created for this project");
+			return;
+		}
+		final StringBuilder sbf = new StringBuilder();
+		for (final ValueList list : this.valueLists.values()) {
+			sbf.setLength(0);
+			list.emitJava(sbf, pack);
+			Util.writeOut(folder + Util.toClassName(list.name) + ".java", sbf);
+		}
+	}
+
+	void emitJavaKlists(final String pack, final String folder) {
+		/**
+		 * keyed lists
+		 */
+		if (this.keyedLists == null || this.keyedLists.size() == 0) {
+			logger.warn("No keyed lists created for this project");
+			return;
+		}
+
+		final StringBuilder sbf = new StringBuilder();
+		for (final KeyedList list : this.keyedLists.values()) {
+			sbf.setLength(0);
+			list.emitJava(sbf, pack);
+			Util.writeOut(folder + Util.toClassName(list.name) + ".java", sbf);
+		}
+	}
+
+	void emitJavaRlists(final String pack, final String folder) {
+		/**
+		 * runtime lists
+		 */
+		if (this.runtimeLists == null || this.runtimeLists.size() == 0) {
+			logger.warn("No runtime lists created for this project");
+			return;
+		}
+		final StringBuilder sbf = new StringBuilder();
+		for (final RuntimeList list : this.runtimeLists.values()) {
+			sbf.setLength(0);
+			list.emitJava(sbf, pack);
+			Util.writeOut(folder + Util.toClassName(list.name) + ".java", sbf);
+		}
 	}
 }

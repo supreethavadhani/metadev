@@ -26,7 +26,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.Writer;
 
-
 import org.simplity.fm.core.datatypes.BooleanType;
 import org.simplity.fm.core.datatypes.DateType;
 import org.simplity.fm.core.datatypes.DecimalType;
@@ -39,7 +38,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Utility methods for dealing with work book
- * 
+ *
  * @author simplity.org
  *
  */
@@ -48,12 +47,12 @@ class Util {
 
 	/**
 	 * this is actually just string escape, nothing to do with XLSX
-	 * 
+	 *
 	 * @param s
 	 * @return string with \ and " escaped for it to be printed inside quotes as
 	 *         java literal
 	 */
-	static String escape(String s) {
+	static String escape(final String s) {
 		if (s == null || s.isEmpty()) {
 			return "null";
 		}
@@ -63,7 +62,7 @@ class Util {
 	/**
 	 * type-script prefers single quotes
 	 */
-	static String escapeTs(String s) {
+	static String escapeTs(final String s) {
 		if (s == null) {
 			return "null";
 		}
@@ -73,46 +72,63 @@ class Util {
 	/**
 	 * type-script prefers single quotes
 	 */
-	static String escapeTs(Object obj) {
+	static String escapeTs(final Object obj) {
 		if (obj == null) {
 			return "null";
 		}
-		if(obj instanceof String) {
-			return escapeTs((String)obj);
+		if (obj instanceof String) {
+			return escapeTs((String) obj);
 		}
 		return obj.toString();
 	}
 
 	/**
 	 * write an import statement for the class
-	 * 
+	 *
 	 * @param sbf
 	 * @param cls
 	 */
-	static void emitImport(StringBuilder sbf, Class<?> cls) {
+	static void emitImport(final StringBuilder sbf, final Class<?> cls) {
 		sbf.append("\nimport ").append(cls.getName()).append(';');
 	}
 
-	static String toClassName(String name) {
-		return name.substring(0, 1).toUpperCase() + name.substring(1);
+	static String toClassName(final String name) {
+		String nam = name;
+		int idx = name.lastIndexOf('.');
+		if (idx != -1) {
+			idx++;
+			if (idx == nam.length()) {
+				return "";
+			}
+			nam = name.substring(idx);
+		}
+		return nam.substring(0, 1).toUpperCase() + nam.substring(1);
 	}
 
-	static void writeOut(String fileName, StringBuilder sbf) {
+	static String getClassQualifier(final String name) {
+		final int idx = name.lastIndexOf('.');
+		if (idx == -1) {
+			return "";
+		}
+		return name.substring(0, idx);
+	}
+
+	static void writeOut(final String fileName, final StringBuilder sbf) {
 		try (Writer writer = new FileWriter(new File(fileName))) {
 			writer.write(sbf.toString());
 			logger.info("File {} generated.", fileName);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error("Error while writing file {} \n {}", fileName, e.getMessage());
 		}
 
 	}
 
 	/**
-	 * 
+	 *
 	 * @param obj
 	 * @return value of this object, quoted if required
 	 */
-	static Object escapeObject(Object obj) {
+	static Object escapeObject(final Object obj) {
 		if (obj == null) {
 			return "null";
 		}
@@ -125,11 +141,11 @@ class Util {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param valueType
 	 * @return data type class name for this value type
 	 */
-	static Class<?> getDataTypeClass(ValueType valueType) {
+	static Class<?> getDataTypeClass(final ValueType valueType) {
 		switch (valueType) {
 		case BOOLEAN:
 			return BooleanType.class;
@@ -150,11 +166,11 @@ class Util {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param valueType
 	 * @return get index used by the client for this value type
 	 */
-	static int getValueTypeIdx(ValueType valueType) {
+	static int getValueTypeIdx(final ValueType valueType) {
 		switch (valueType) {
 		case TEXT:
 			return 0;
@@ -172,5 +188,4 @@ class Util {
 			return -1;
 		}
 	}
-
 }

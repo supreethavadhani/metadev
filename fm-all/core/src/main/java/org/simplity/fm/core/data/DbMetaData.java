@@ -45,76 +45,134 @@ public class DbMetaData {
 	/**
 	 * e.g. where a=? and b=?
 	 */
-	protected String whereClause;
+	protected final String whereClause;
 	/**
 	 * db parameters to be used for the where clause
 	 */
-	protected FieldMetaData[] whereParams;
+	protected final FieldMetaData[] whereParams;
 	/**
 	 * e.g. select a,b,c from t
 	 */
-	protected String selectClause;
+	protected final String selectClause;
 	/**
 	 * db parameters to be used to receive data from the result set of the
 	 * select query
 	 */
-	protected FieldMetaData[] selectParams;
+	protected final FieldMetaData[] selectParams;
 	/**
 	 * e.g insert a,b,c,d into table1 values(?,?,?,?)
 	 */
-	protected String insertClause;
+	protected final String insertClause;
 	/**
 	 * db parameters for the insert sql
 	 */
-	protected FieldMetaData[] insertParams;
+	protected final FieldMetaData[] insertParams;
 
 	/**
 	 * e.g. update table1 set a=?, b=?, c=?
 	 */
-	protected String updateClause;
+	protected final String updateClause;
 	/**
 	 * db parameters for the update sql
 	 */
-	protected FieldMetaData[] updateParams;
+	protected final FieldMetaData[] updateParams;
 
 	/**
 	 * e.g. delete from table1. Note that where is not part of this.
 	 */
-	protected String deleteClause;
+	protected final String deleteClause;
 
 	/**
 	 * db column name that is generated as internal key. null if this is not
 	 * relevant
 	 */
-	protected String generatedColumnName;
+	protected final String generatedColumnName;
 
 	/**
 	 *
 	 */
-	protected int generatedKeyIdx = -1;
-
-	/**
-	 * array index corresponds to DbOperation.orinal(). true if that operation
-	 * is allowed
-	 */
-	protected boolean[] dbOperationOk = new boolean[IoType.values().length];
+	protected final int generatedKeyIdx;
 
 	/**
 	 * if this APP is designed for multi-tenant deployment, and this table has
 	 * data across tenants..
 	 */
-	protected Field tenantField;
+	protected final Field tenantField;
 
 	/**
 	 * if this table allows update, and needs to use time-stamp-match technique
 	 * to avoid concurrent updates..
 	 */
-	protected Field timestampField;
+	protected final Field timestampField;
 
 	/**
 	 * number of fields in the schema to which this meta data is attached
 	 */
-	protected int nbrFieldsInARow;
+	protected final int nbrFieldsInARow;
+
+	/**
+	 * constructor when there is no key. only filter will be allowed
+	 *
+	 * @param nbrFieldsInARow
+	 * @param tenantField
+	 * @param selectClause
+	 * @param selectParams
+	 */
+	public DbMetaData(final int nbrFieldsInARow, final Field tenantField, final String selectClause,
+			final FieldMetaData[] selectParams) {
+		this.nbrFieldsInARow = nbrFieldsInARow;
+		this.tenantField = tenantField;
+		this.selectClause = selectClause;
+		this.selectParams = selectParams;
+		this.whereClause = null;
+		this.whereParams = null;
+		this.insertClause = null;
+		this.insertParams = null;
+		this.updateClause = null;
+		this.updateParams = null;
+		this.deleteClause = null;
+		this.generatedColumnName = null;
+		this.generatedKeyIdx = -1;
+		this.timestampField = null;
+	}
+
+	/**
+	 *
+	 * @param nbrFieldsInARow
+	 * @param tenantField
+	 * @param selectClause
+	 * @param selectParams
+	 * @param whereClause
+	 * @param whereParams
+	 * @param insertClause
+	 * @param insertParams
+	 * @param updateClause
+	 * @param updateParams
+	 * @param deleteClause
+	 * @param generatedColumnName
+	 * @param generatedKeyIdx
+	 * @param timestampField
+	 */
+	public DbMetaData(final int nbrFieldsInARow, final Field tenantField, final String selectClause,
+			final FieldMetaData[] selectParams, final String whereClause, final FieldMetaData[] whereParams,
+			final String insertClause, final FieldMetaData[] insertParams, final String updateClause,
+			final FieldMetaData[] updateParams, final String deleteClause, final String generatedColumnName,
+			final int generatedKeyIdx, final Field timestampField) {
+		this.whereClause = whereClause;
+		this.whereParams = whereParams;
+		this.selectClause = selectClause;
+		this.selectParams = selectParams;
+		this.insertClause = insertClause;
+		this.insertParams = insertParams;
+		this.updateClause = updateClause;
+		this.updateParams = updateParams;
+		this.deleteClause = deleteClause;
+		this.generatedColumnName = generatedColumnName;
+		this.generatedKeyIdx = generatedKeyIdx;
+		this.tenantField = tenantField;
+		this.timestampField = timestampField;
+		this.nbrFieldsInARow = nbrFieldsInARow;
+	}
 
 	/**
 	 * insert/create this form data into the db.
