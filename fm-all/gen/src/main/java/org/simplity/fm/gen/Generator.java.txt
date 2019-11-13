@@ -70,7 +70,6 @@ public class Generator {
 	private static final int NBR_CELLS_KEYED_LIST = 4;
 	private static final int NBR_CELLS_DATA_TYPES = 12;
 	private static final int NBR_CELLS_RUNTIME_LIST = 9;
-	private static final String FOLDER = "/";
 
 	/**
 	 *

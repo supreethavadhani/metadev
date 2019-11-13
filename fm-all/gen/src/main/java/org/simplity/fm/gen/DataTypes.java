@@ -22,16 +22,17 @@
 
 package org.simplity.fm.gen;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.JsonUtil;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 
 /**
  * represents a row in our spreadsheet for each data type
@@ -42,33 +43,44 @@ import com.google.gson.JsonObject;
 class DataTypes {
 	protected static final Logger logger = LoggerFactory.getLogger(DataTypes.class);
 	private static final String C = ", ";
-	private static final String NAME = "name";
 
-	Map<String, DataType> dataTypes;
+	Map<String, DataType> dataTypes = new HashMap<>();
 
-	public void fromJson(final JsonObject json) {
-		this.dataTypes = new HashMap<>();
-		this.accumulate(json, TextType.class);
-		this.accumulate(json, IntegerType.class);
-		this.accumulate(json, DecimalType.class);
-		this.accumulate(json, BooleanType.class);
-		this.accumulate(json, DateType.class);
-		this.accumulate(json, TimestampType.class);
-	}
+	public void fromJson(final JsonReader reader) throws IOException {
+		reader.beginObject();
+		while (true) {
+			final JsonToken token = reader.peek();
+			if (token == JsonToken.END_OBJECT) {
+				reader.endObject();
+				return;
+			}
 
-	private void accumulate(final JsonObject json, final Class<? extends DataType> cls) {
-		String nam = cls.getSimpleName();
-		nam = nam.substring(0, 1).toLowerCase() + nam.substring(1) + 's';
-		final Map<String, ? extends DataType> map = JsonUtil.fromJson(json, nam, cls, NAME);
-		final int n = map.size();
-		if (n == 0) {
-			logger.info("No {} defiined", nam);
-			return;
+			final String key = reader.nextName();
+			switch (key) {
+			case "textTypes":
+				Util.addToMap(this.dataTypes, reader, TextType.class);
+				continue;
+			case "integerTypes":
+				Util.addToMap(this.dataTypes, reader, IntegerType.class);
+				continue;
+			case "decimalTypes":
+				Util.addToMap(this.dataTypes, reader, DecimalType.class);
+				continue;
+			case "booleanTypes":
+				Util.addToMap(this.dataTypes, reader, BooleanType.class);
+				continue;
+			case "dateTypes":
+				Util.addToMap(this.dataTypes, reader, DateType.class);
+				continue;
+			case "timestampTypes":
+				Util.addToMap(this.dataTypes, reader, TimestampType.class);
+				continue;
+			default:
+				logger.warn("{} is not a valid attribute of DataTypes. Ignored", key);
+				continue;
+			}
+
 		}
-
-		logger.info("{} {} extracted", map.size(), nam);
-		this.dataTypes.putAll(map);
-
 	}
 
 	void emitJava(final String rootFolder, final String packageName, final String dataTypesFileName) {
@@ -106,7 +118,9 @@ class DataTypes {
 			dt.emitJava(sbf);
 			dtNames.append(dt.name).append(C);
 		}
-		dtNames.setLength(dtNames.length() - C.length());
+		if (dtNames.length() > 0) {
+			dtNames.setLength(dtNames.length() - C.length());
+		}
 
 		sbf.append("\n\n\tpublic static final DataType[] allTypes = {").append(dtNames.toString()).append("};");
 
@@ -128,10 +142,15 @@ class DataTypes {
 		sbf.append("\n}\n");
 	}
 
-	protected abstract static class DataType {
+	protected abstract static class DataType implements Util.INamedMember {
 		private static final String P = "\n\tpublic static final ";
 		String name;
 		String errorId;
+
+		@Override
+		public void setNameAndIdx(final String name, final int idx) {
+			this.name = name;
+		}
 
 		/**
 		 * @param sbf
@@ -153,6 +172,7 @@ class DataTypes {
 		protected void emitIstanceParams(final StringBuilder sbf) {
 			//
 		}
+
 	}
 
 	protected static class DateType extends DataType {

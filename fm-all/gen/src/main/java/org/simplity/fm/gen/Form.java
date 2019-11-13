@@ -24,21 +24,106 @@ package org.simplity.fm.gen;
 
 import java.util.Map;
 
+import org.simplity.fm.core.ComponentProvider;
+import org.simplity.fm.core.JsonUtil;
+import org.simplity.fm.core.data.IoType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
 /**
  * @author simplity.org
  *
  */
 public class Form {
+	protected static final Logger logger = LoggerFactory.getLogger(Form.class);
 
-	public String name;
+	String name;
+	String schemaName;
+	boolean[] dbOperations;
 
-	/**
-	 * @param sbf
-	 * @param rootPackageName
-	 */
-	public void emitJavaClass(final StringBuilder sbf, final String rootPackageName) {
-		// TODO Auto-generated method stub
+	boolean fromJson(final JsonObject json, final String fileName) {
+		boolean allOk = true;
+		this.name = JsonUtil.getStringMember(json, "name");
+		this.schemaName = JsonUtil.getStringMember(json, "schemaName");
+		if (this.name == null) {
+			logger.error("form has no name");
+			allOk = false;
+		} else if (this.name.equals(fileName) == false) {
+			logger.error("File {} has a form named {}. This is not allowed. file name must matchthe form name",
+					fileName, this.name);
+			allOk = false;
+		}
+		if (this.schemaName == null) {
+			logger.warn("form has no schemaName. Will be useful for client specific activity only");
+		}
 
+		this.parseOps(json.getAsJsonObject("operations"));
+
+		return allOk;
+	}
+
+	private void parseOps(final JsonObject json) {
+		this.dbOperations = new boolean[IoType.values().length];
+		if (json == null) {
+			logger.warn("No bb operations are enabled. Form will not be processed on its own");
+			return;
+		}
+		for (final Map.Entry<String, JsonElement> entry : json.entrySet()) {
+			try {
+				if (entry.getValue().getAsBoolean()) {
+					this.dbOperations[IoType.valueOf(entry.getKey()).ordinal()] = true;
+				}
+			} catch (final Exception e) {
+				logger.error(e.getMessage());
+			}
+		}
+	}
+
+	void emitJavaClass(final StringBuilder sbf, final String packageName) {
+		String pck = packageName;
+		final String prefix = Util.getClassQualifier(this.name);
+		if (prefix != null) {
+			pck += '.' + prefix;
+		}
+		sbf.append("package ").append(pck).append(";\n");
+		Util.emitImport(sbf, ComponentProvider.class);
+		Util.emitImport(sbf, org.simplity.fm.core.data.Form.class);
+		/*
+		 * classdeclaration
+		 */
+		final String cls = Util.toClassName(this.name);
+		sbf.append("\n/**\n *\n */\npublic class ").append(cls).append(" extends Form {");
+
+		/*
+		 * static fields
+		 */
+		final String p = "\n\tprotected static final ";
+		sbf.append(p).append("String NAME = ").append(Util.escape(this.name));
+		sbf.append(p).append("String SCHEMA = ").append(Util.escape(this.schemaName));
+		sbf.append(p).append("boolean[] OPS = {");
+		boolean firstOne = true;
+		for (final boolean b : this.dbOperations) {
+			if (firstOne) {
+				firstOne = false;
+			} else {
+				sbf.append(", ");
+			}
+			sbf.append(b);
+		}
+		sbf.append("};");
+
+		/*
+		 * constructor
+		 */
+		sbf.append("\n\t/**\n * constructor\n */\npublic ").append(cls).append(" {");
+		sbf.append("\n\t\tthis.name = NAME;");
+		sbf.append("\n\t\tthis.schema = ComponentProvider.getProvider().getSchema(SCHEMA);");
+		sbf.append("\n\t\tthis.operations = OPS;");
+
+		sbf.append("\n\t}\n}\n");
 	}
 
 	/**

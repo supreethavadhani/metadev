@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-class Field {
+class Field implements Util.INamedMember {
 	protected static final Logger logger = LoggerFactory.getLogger(Field.class);
 	protected static final String C = ", ";
 
@@ -43,6 +43,12 @@ class Field {
 	String listName;
 	String listKey;
 	int index;
+
+	@Override
+	public void setNameAndIdx(final String name, final int idx) {
+		this.name = name;
+		this.index = idx;
+	}
 
 	void emitJavaCode(final StringBuilder sbf, final String dataTypesName) {
 		sbf.append("\n\t\t\tnew ").append(this.getClass().getSimpleName()).append("(\"");

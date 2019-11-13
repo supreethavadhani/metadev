@@ -22,11 +22,13 @@
 
 package org.simplity.fm.gen;
 
+import org.simplity.fm.gen.Util.INamedMember;
+
 /**
  * @author simplity.org
  *
  */
-class RuntimeList {
+class RuntimeList implements INamedMember {
 	private static final String C = ", ";
 	String name;
 	String table;
@@ -43,7 +45,12 @@ class RuntimeList {
 	String parentIdColumnName;
 	String parentNameColumnName;
 
-	void emitJava(StringBuilder sbf, String packageName) {
+	@Override
+	public void setNameAndIdx(final String name, final int idx) {
+		this.name = name;
+	}
+
+	void emitJava(final StringBuilder sbf, final String packageName) {
 		sbf.append("package ").append(packageName).append(';');
 		sbf.append('\n');
 
@@ -89,9 +96,9 @@ class RuntimeList {
 		}
 
 		sbf.append("\n\t/**\n\t *\n\t */\n\tpublic ").append(Util.toClassName(this.name)).append("() {");
+		sbf.append("\n\t\tthis.name = NAME;");
 		sbf.append("\n\t\tthis.listSql = LIST_SQL;");
 		sbf.append("\n\t\tthis.checkSql = CHECK_SQL;");
-		sbf.append("\n\t\tthis.name = NAME;");
 
 		if (this.valueIsNumeric) {
 			sbf.append("\n\t\tthis.valueIsNumeric = true;");

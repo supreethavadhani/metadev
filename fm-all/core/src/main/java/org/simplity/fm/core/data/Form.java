@@ -48,18 +48,13 @@ import com.google.gson.stream.JsonWriter;
 public class Form {
 	static protected final Logger logger = LoggerFactory.getLogger(Form.class);
 
-	protected final String name;
-	protected final Schema schema;
-
-	/**
-	 *
-	 * @param name
-	 * @param schema
+	protected String name;
+	protected Schema schema;
+	/*
+	 * db operations that are to be exposed thru this form. array corresponds to
+	 * the ordinals of IoType
 	 */
-	public Form(final String name, final Schema schema) {
-		this.schema = schema;
-		this.name = name;
-	}
+	protected boolean[] operations;
 
 	/**
 	 *
@@ -83,9 +78,7 @@ public class Form {
 	 * @return service, or null if this form is not designed for this operation
 	 */
 	public IService getService(final IoType opern) {
-		final DbMetaData meta = this.schema.getDbMetaData();
-
-		if (meta == null || meta.dbOperationOk[opern.ordinal()] == false) {
+		if (this.operations[opern.ordinal()] == false) {
 			return null;
 		}
 

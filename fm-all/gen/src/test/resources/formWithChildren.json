@@ -1,0 +1,37 @@
+{
+	"name":"form2",
+	"schemaName":"schemaName",
+	"operations":{
+		"get":true,
+		"update":true
+	},
+	"localFields":[
+		{
+			"name":"local1"
+		},{
+			"name":"local2"
+		}
+	],
+	"fields":[
+		{
+			"name":"f1",
+			"label":""
+		}
+	],
+	"sections":[
+		{
+			"label":"label",
+			"type":"ss",
+			"fields":[
+				{
+					"name":"naaa"
+				}
+			]
+		}
+	],
+	"childForms":[
+		{"child1":"",
+		"kkk": "formName"
+		}
+	]
+}

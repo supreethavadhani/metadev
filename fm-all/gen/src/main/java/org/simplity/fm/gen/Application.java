@@ -23,13 +23,15 @@
 package org.simplity.fm.gen;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
-import org.simplity.fm.core.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 
 /**
  * attributes read from application.json are output as generated sources
@@ -39,20 +41,65 @@ import com.google.gson.JsonObject;
  */
 public class Application {
 	protected static final String ERROR = "ERROR";
+	protected static final String NAME = "name";
 	protected static final Logger logger = LoggerFactory.getLogger(Application.class);
 
 	String name;
 	String tenantFieldName;
 	String tenantDbName;
 	DataTypes dataTypes = new DataTypes();
-	Map<String, ValueList> valueLists;
-	Map<String, KeyedList> keyedLists;
-	Map<String, RuntimeList> runtimeLists;
+	Map<String, ValueList> valueLists = new HashMap<>();
+	Map<String, KeyedList> keyedLists = new HashMap<>();
+	Map<String, RuntimeList> runtimeLists = new HashMap<>();
 
-	void fromJson(final JsonObject json) {
-		this.name = JsonUtil.getStringMember(json, "name");
-		this.tenantFieldName = JsonUtil.getStringMember(json, "tenantFieldName");
-		this.tenantDbName = JsonUtil.getStringMember(json, "tenantDbName");
+	void fromJson(final JsonReader reader) throws IOException {
+		reader.beginObject();
+		while (true) {
+			final JsonToken token = reader.peek();
+			if (token == JsonToken.END_OBJECT) {
+				logger.info("We have reached the end of application.json");
+				reader.endObject();
+				break;
+			}
+			final String key = reader.nextName();
+			logger.info("Processing key {}", key);
+			switch (key) {
+			case NAME:
+				this.name = reader.nextString();
+				continue;
+
+			case "tenantFieldName":
+				this.tenantFieldName = reader.nextString();
+				continue;
+
+			case "tenantDbName":
+				this.tenantDbName = reader.nextString();
+				continue;
+
+			case "dataTypes":
+				this.dataTypes.fromJson(reader);
+				logger.info("DataTypes done. Next token is {}", reader.peek().name());
+				continue;
+
+			case "valueLists":
+				Util.loadMap(this.valueLists, reader, ValueList.class);
+				logger.info("{} keyed lists added. next token is {} ", this.valueLists.size(), reader.peek().name());
+				continue;
+
+			case "keyedLists":
+				Util.loadMap(this.keyedLists, reader, KeyedList.class);
+				logger.info("{} keyed lists added ", this.keyedLists.size());
+				continue;
+
+			case "runtimeLists":
+				Util.addToMap(this.runtimeLists, reader, RuntimeList.class);
+				continue;
+
+			default:
+				logger.warn("{} is not a vallid attribute of application.ignored", key);
+				continue;
+			}
+		}
 		if (this.name == null) {
 			logger.error("name is required");
 			this.name = ERROR;
@@ -66,26 +113,13 @@ public class Application {
 				this.tenantDbName = ERROR;
 			}
 		}
-
-		final JsonObject ele = json.getAsJsonObject("dataTypes");
-		if (ele == null) {
-			logger.error("No data types defined for the application");
-		} else {
-			this.dataTypes.fromJson(json);
-		}
-
-		this.valueLists = JsonUtil.fromJson(json, "valueLists", ValueList.class, "name");
-		this.keyedLists = JsonUtil.fromJson(json, "keyedLists", KeyedList.class, "name");
-		this.runtimeLists = JsonUtil.fromJson(json, "runtimeLists", RuntimeList.class, "name");
 	}
 
 	void emitJava(final String rootFolder, final String packageName, final String dataTypesFileName) {
 		/*
 		 * create DataTypes.java in the root folder.
 		 */
-		final StringBuilder sbf = new StringBuilder();
 		this.dataTypes.emitJava(rootFolder, packageName, dataTypesFileName);
-		Util.writeOut(rootFolder + dataTypesFileName + ".java", sbf);
 
 		final String pck = packageName + ".list";
 		final String fldr = rootFolder + "list/";

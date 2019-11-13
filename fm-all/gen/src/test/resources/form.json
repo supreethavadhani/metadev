@@ -5,13 +5,10 @@
 		"get":true,
 		"update":true
 	},
-	"fields":{
-		"schemaFields" : {
-			"label":
-		},
-		"localFields":{
-			"field1":{"dataType"}
-		}
-	}
+	"localFields":{
+		"field1":{"dataType"}
+	},
+	fields:[],
+	sections:[]
 	
 }

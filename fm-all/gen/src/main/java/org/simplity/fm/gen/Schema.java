@@ -23,6 +23,7 @@
 package org.simplity.fm.gen;
 
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,6 +45,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 
 /**
  * represents the contents of a spread sheet for a form
@@ -56,7 +59,7 @@ class Schema {
 	 * this logger is used by all related classes of form to give the programmer
 	 * the right stream of logs to look for any issue in the workbook
 	 */
-	static final Logger logger = LoggerFactory.getLogger("Form");
+	static final Logger logger = LoggerFactory.getLogger(Schema.class);
 
 	private static final String C = ", ";
 	private static final String EQ = " = ";
@@ -68,12 +71,12 @@ class Schema {
 	String name;
 	String dbName;
 	boolean useTimeStampCheck;
-	String customValidationName;
+	String customValidation;
 	/*
 	 * reason we have it as an array rather than a MAP is that the sequence,
 	 * though not recommended, could be hard-coded by some coders
 	 */
-	DbField[] fields;
+	Map<String, DbField> fieldMap = new HashMap<>();
 	FromToPair[] fromToPairs;
 	ExclusivePair[] exclusivePairs;
 	InclusivePair[] inclusivePairs;
@@ -81,7 +84,7 @@ class Schema {
 	/*
 	 * derived fields required for generating java/ts
 	 */
-	Map<String, DbField> fieldMap;
+	DbField[] fields;
 	DbField[] fieldsWithList;
 	DbField[] keyFields;
 
@@ -94,8 +97,50 @@ class Schema {
 	 */
 	transient boolean isUpdatable;
 
+	void fromJson(final JsonReader reader) throws IOException {
+		reader.beginObject();
+		while (true) {
+			final JsonToken token = reader.peek();
+			if (token == JsonToken.END_OBJECT) {
+				logger.info("We have reached the end of application.json");
+				reader.endObject();
+				break;
+			}
+
+			final String key = reader.nextName();
+			logger.info("Processing key {}", key);
+			switch (key) {
+			case "name":
+				this.name = reader.nextString();
+				continue;
+
+			case "dbName":
+				this.dbName = reader.nextString();
+				continue;
+
+			case "customValidation":
+				this.customValidation = reader.nextString();
+				continue;
+
+			case "useTimeStampCheck":
+				this.useTimeStampCheck = reader.nextBoolean();
+				continue;
+
+			case "fields":
+				Util.addToMap(this.fieldMap, reader, DbField.class);
+				continue;
+			default:
+				logger.warn("{} is not a vallid attribute of application.ignored", key);
+				Util.swallowAToken(reader);
+				continue;
+			}
+		}
+		this.init();
+	}
+
 	void init() {
-		this.fieldMap = new HashMap<>();
+		final int nbr = this.fieldMap.size();
+		this.fields = new DbField[nbr];
 
 		/*
 		 * we want to check for duplicate definition of standard fields
@@ -109,8 +154,8 @@ class Schema {
 			final List<DbField> list = new ArrayList<>();
 			final List<DbField> keyList = new ArrayList<>();
 
-			for (final DbField field : this.fields) {
-				this.fieldMap.put(field.name, field);
+			for (final DbField field : this.fieldMap.values()) {
+				this.fields[field.index] = field;
 				if (field.listName != null) {
 					list.add(field);
 				}
@@ -123,7 +168,7 @@ class Schema {
 				field.isRequired = ct.isRequired();
 				if (ct == ColumnType.GeneratedPrimaryKey) {
 					if (this.generatedKeyField != null) {
-						logger.error("ONly one generated key please. Found {} as well as {} as generated primary keys.",
+						logger.error("Only one generated key please. Found {} as well as {} as generated primary keys.",
 								field.name, keyList.get(0).name);
 					} else {
 						if (keyList.size() > 0) {
@@ -219,13 +264,10 @@ class Schema {
 	}
 
 	Set<String> getNameSet() {
-		final Set<String> names = new HashSet<>();
-		if (this.fields != null) {
-			for (final DbField field : this.fields) {
-				names.add(field.name);
-			}
+		if (this.fieldMap != null) {
+			return this.fieldMap.keySet();
 		}
-		return names;
+		return new HashSet<>();
 	}
 
 	void emitJavaClass(final StringBuilder sbf, final String generatedPackage) {
@@ -238,7 +280,7 @@ class Schema {
 		final String cls = Util.toClassName(this.name);
 		String pck = generatedPackage + ".schema";
 		final String qual = Util.getClassQualifier(this.name);
-		if (qual != null && qual.isEmpty() == false) {
+		if (qual != null) {
 			pck += '.' + qual;
 		}
 		sbf.append("package ").append(pck).append(";\n");
@@ -279,7 +321,9 @@ class Schema {
 		sbf.append("\npublic class ").append(cls).append(" extends Schema {");
 
 		this.emitJavaConstants(sbf);
+		this.emitJavaFields(sbf, typesName);
 		this.emitDbStuff(sbf);
+		this.emitJavaValidations(sbf);
 
 		/*
 		 * constructor
@@ -287,10 +331,9 @@ class Schema {
 		sbf.append("\n\n\t/**\n\t *\n\t */");
 		sbf.append("\n\tpublic ").append(cls).append("() {");
 		sbf.append("\n\t\tthis.name = \"").append(this.name).append("\";");
+		sbf.append("\n\t\tthis.fields = FIELDS;");
+		sbf.append("\n\t\tthis.validations = VALIDS;");
 
-		this.emitJavaFields(sbf, typesName);
-
-		this.emitJavaValidations(sbf);
 		this.emitDbMeta(sbf);
 		sbf.append("\n\t\tthis.initialize();");
 
@@ -342,11 +385,12 @@ class Schema {
 	}
 
 	private void emitJavaFields(final StringBuilder sbf, final String dataTypesName) {
+		sbf.append("\tprivate static final DbField[] FIELDS = ");
 		if (this.fields == null) {
-			sbf.append("\n\t\tthis.fields = null;");
+			sbf.append("null;");
 			return;
 		}
-		sbf.append("\n\n\t\tDbField[] flds = {");
+		sbf.append("{");
 		boolean isFirst = true;
 		for (final DbField field : this.fields) {
 			if (isFirst) {
@@ -356,13 +400,13 @@ class Schema {
 			}
 			field.emitJavaCode(sbf, dataTypesName);
 		}
-		sbf.append("\n\t\t};\n\t\tthis.fields = flds;");
+		sbf.append("\n\t};");
 	}
 
 	private void emitJavaValidations(final StringBuilder sbf) {
-		sbf.append("\n\n\t\tIValidation[] vlds = {");
+		sbf.append("\n\tprivate static final IValidation[] VALIDS = {");
 		final int n = sbf.length();
-		final String sufix = ",\n\t\t\t";
+		final String sufix = ",\n\t\t";
 		if (this.fromToPairs != null) {
 			for (final FromToPair pair : this.fromToPairs) {
 				pair.emitJavaCode(sbf);
@@ -415,8 +459,7 @@ class Schema {
 			sbf.setLength(sbf.length() - sufix.length());
 		}
 
-		sbf.append("};");
-		sbf.append("\n\t\tthis.validations = vlds;");
+		sbf.append("\n\t};");
 	}
 
 	private void emitDbMeta(final StringBuilder sbf) {

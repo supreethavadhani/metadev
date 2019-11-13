@@ -38,19 +38,8 @@ import com.google.gson.stream.JsonWriter;
  * @author simplity.org
  *
  */
-public class FormWithChildren extends Form {
-	protected final LinkedForm[] linkedForms;
-
-	/**
-	 *
-	 * @param name
-	 * @param schema
-	 * @param linkedForms
-	 */
-	public FormWithChildren(final String name, final Schema schema, final LinkedForm[] linkedForms) {
-		super(name, schema);
-		this.linkedForms = linkedForms;
-	}
+public class CompositeForm extends Form {
+	protected LinkedForm[] linkedForms;
 
 	/**
 	 *
@@ -130,7 +119,7 @@ public class FormWithChildren extends Form {
 
 	/**
 	 * update/save the data coming in form a client to the database
-	 * 
+	 *
 	 * @param ctx
 	 * @param payload
 	 * @throws Exception
@@ -212,7 +201,7 @@ public class FormWithChildren extends Form {
 
 	/**
 	 * delete rows from the database based on the data sent from a client
-	 * 
+	 *
 	 * @param ctx
 	 * @param payload
 	 * @throws Exception
@@ -259,7 +248,7 @@ public class FormWithChildren extends Form {
 
 		@Override
 		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
-			FormWithChildren.this.fetch(ctx, payload);
+			CompositeForm.this.fetch(ctx, payload);
 		}
 	}
 
@@ -270,7 +259,7 @@ public class FormWithChildren extends Form {
 
 		@Override
 		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
-			FormWithChildren.this.writeWorker(ctx, payload, false);
+			CompositeForm.this.writeWorker(ctx, payload, false);
 		}
 	}
 
@@ -281,7 +270,7 @@ public class FormWithChildren extends Form {
 
 		@Override
 		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
-			FormWithChildren.this.writeWorker(ctx, payload, true);
+			CompositeForm.this.writeWorker(ctx, payload, true);
 		}
 	}
 
@@ -292,7 +281,7 @@ public class FormWithChildren extends Form {
 
 		@Override
 		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
-			FormWithChildren.this.delete(ctx, payload);
+			CompositeForm.this.delete(ctx, payload);
 		}
 	}
 }

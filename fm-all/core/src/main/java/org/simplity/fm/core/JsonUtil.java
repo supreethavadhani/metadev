@@ -24,24 +24,15 @@ package org.simplity.fm.core;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import com.google.gson.reflect.TypeToken;
 
 /**
  * @author simplity.org
  *
  */
 public class JsonUtil {
-	private static final Logger logger = LoggerFactory.getLogger(JsonUtil.class);
 	private static final char OPEN_ARR = '[';
 	private static final char CLOS_ARR = ']';
 	private static final char COMA = ',';
@@ -135,51 +126,6 @@ public class JsonUtil {
 			return;
 		}
 		sbf.append("" + number);
-	}
-
-	/**
-	 * parse a map. optionally copy the key/index to an attribute of the parsed
-	 * object member
-	 *
-	 * @param <T>
-	 *            type of the element of the map
-	 * @param parentJson
-	 *            element tree from which has a member with this map
-	 * @param memberName
-	 *            name of the attribute in JSON to be
-	 * @param cls
-	 *            class of the member
-	 * @param attName
-	 *            attribute name of the member to which the key/index value is
-	 *            to be set to. null if this is not required
-	 * @return map. empty in case of any issue, but not not null;
-	 */
-	public static <T> Map<String, T> fromJson(final JsonObject parentJson, final String memberName, final Class<T> cls,
-			final String attName) {
-		final JsonObject json = parentJson.getAsJsonObject(memberName);
-		if (json == null) {
-			return new HashMap<>();
-		}
-
-		final Type type = new TypeToken<Map<String, T>>() {
-			/* */}.getType();
-		final Map<String, T> map = new Gson().fromJson(json, type);
-		logger.info("{} entries parsed for a map ", map.size());
-		if (attName == null) {
-			return map;
-		}
-		try {
-			final java.lang.reflect.Field field = cls.getField(attName);
-			field.setAccessible(true);
-			for (final Map.Entry<String, T> entry : map.entrySet()) {
-				field.set(entry.getValue(), entry.getKey());
-			}
-			logger.info("indexed key is set as {} attribute to al objects in the map", attName);
-			return map;
-		} catch (final Exception e) {
-			logger.error("name is not a field, or it is not accessible");
-			return map;
-		}
 	}
 
 	/**

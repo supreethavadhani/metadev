@@ -111,6 +111,23 @@ public class Schema {
 	}
 
 	/**
+	 * create FieldMetaData for each of the indexed fields
+	 * 
+	 * @param indexes
+	 * @return
+	 */
+	protected FieldMetaData[] getParams(final int[] indexes) {
+		final FieldMetaData[] result = new FieldMetaData[indexes.length];
+		int idx = -1;
+		for (final int i : indexes) {
+			idx++;
+			final DbField field = this.fields[i];
+			result[idx] = new FieldMetaData(field.index, field.getValueType());
+		}
+		return result;
+	}
+
+	/**
 	 * @return the keyIndexes
 	 */
 	public int[] getKeyIndexes() {
