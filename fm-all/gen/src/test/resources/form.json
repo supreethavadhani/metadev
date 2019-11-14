@@ -1,14 +1,14 @@
 {
 	"name":"form1",
-	"schemaName":"schemaName",
+	"schemaName":"schemaName1",
 	"operations":{
 		"get":true,
 		"update":true
 	},
 	"localFields":{
-		"field1":{"dataType"}
+		"field1":{"dataType":"dataType1"}
 	},
-	fields:[],
-	sections:[]
+	"fields":[],
+	"sections":[]
 	
 }

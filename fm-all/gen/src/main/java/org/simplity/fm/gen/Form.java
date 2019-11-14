@@ -42,6 +42,11 @@ public class Form {
 
 	String name;
 	String schemaName;
+	String[] dbOperations;
+	Field[] localFields;
+	ChildForm[] childForms;
+	Field[] tempFields;
+	Control[] controls;
 	boolean[] dbOperations;
 
 	boolean fromJson(final JsonObject json, final String fileName) {

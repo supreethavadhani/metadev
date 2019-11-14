@@ -23,7 +23,6 @@
 package org.simplity.fm.gen;
 
 import java.io.FileReader;
-import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,8 +44,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
 
 /**
  * represents the contents of a spread sheet for a form
@@ -76,7 +73,7 @@ class Schema {
 	 * reason we have it as an array rather than a MAP is that the sequence,
 	 * though not recommended, could be hard-coded by some coders
 	 */
-	Map<String, DbField> fieldMap = new HashMap<>();
+	DbField[] fields;
 	FromToPair[] fromToPairs;
 	ExclusivePair[] exclusivePairs;
 	InclusivePair[] inclusivePairs;
@@ -84,7 +81,7 @@ class Schema {
 	/*
 	 * derived fields required for generating java/ts
 	 */
-	DbField[] fields;
+	Map<String, DbField> fieldMap;
 	DbField[] fieldsWithList;
 	DbField[] keyFields;
 
@@ -97,47 +94,6 @@ class Schema {
 	 */
 	transient boolean isUpdatable;
 
-	void fromJson(final JsonReader reader) throws IOException {
-		reader.beginObject();
-		while (true) {
-			final JsonToken token = reader.peek();
-			if (token == JsonToken.END_OBJECT) {
-				logger.info("We have reached the end of application.json");
-				reader.endObject();
-				break;
-			}
-
-			final String key = reader.nextName();
-			logger.info("Processing key {}", key);
-			switch (key) {
-			case "name":
-				this.name = reader.nextString();
-				continue;
-
-			case "dbName":
-				this.dbName = reader.nextString();
-				continue;
-
-			case "customValidation":
-				this.customValidation = reader.nextString();
-				continue;
-
-			case "useTimeStampCheck":
-				this.useTimeStampCheck = reader.nextBoolean();
-				continue;
-
-			case "fields":
-				Util.addToMap(this.fieldMap, reader, DbField.class);
-				continue;
-			default:
-				logger.warn("{} is not a vallid attribute of application.ignored", key);
-				Util.swallowAToken(reader);
-				continue;
-			}
-		}
-		this.init();
-	}
-
 	void init() {
 		final int nbr = this.fieldMap.size();
 		this.fields = new DbField[nbr];
@@ -145,17 +101,21 @@ class Schema {
 		/*
 		 * we want to check for duplicate definition of standard fields
 		 */
-		DbField modifiedAt = null;
-		DbField modifiedBy = null;
-		DbField createdBy = null;
-		DbField createdAt = null;
+		final DbField modifiedAt = null;
+		final DbField modifiedBy = null;
+		final DbField createdBy = null;
+		final DbField createdAt = null;
 
-		if (this.fields != null) {
+		this.fieldMap = new HashMap<>();
 			final List<DbField> list = new ArrayList<>();
 			final List<DbField> keyList = new ArrayList<>();
 
-			for (final DbField field : this.fieldMap.values()) {
-				this.fields[field.index] = field;
+			int idx = -1;
+			for (final DbField field : this.fields) {
+				idx++;
+				field.index = idx;
+				this.fieldMap.put(field.name, field);
+				[field.index] = field;
 				if (field.listName != null) {
 					list.add(field);
 				}
@@ -245,7 +205,6 @@ class Schema {
 								createdBy.name);
 					}
 				}
-			}
 
 			if (list.size() > 0) {
 				this.fieldsWithList = list.toArray(new DbField[0]);
