@@ -33,7 +33,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonWriter;
 
 /**
- * represents a schema for input from a client or output to a client
+ * represents a form that has child/subordinate forms
  *
  * @author simplity.org
  *
@@ -42,28 +42,22 @@ public class CompositeForm extends Form {
 	protected LinkedForm[] linkedForms;
 
 	/**
-	 *
-	 * @return unique name of this form
+	 * called from the constructor of generated classes.
 	 */
-	@Override
-	public String getFormId() {
-		return this.name;
+	protected void initialize() {
+		for (final LinkedForm lf : this.linkedForms) {
+			lf.init(this.schema);
+		}
 	}
 
 	/**
-	 * @return the schema
-	 */
-	@Override
-	public Schema getSchema() {
-		return this.schema;
-	}
-
-	/**
+	 * method that can be used to serve a service-request to get data
 	 *
 	 * @param ctx
 	 * @param payload
 	 * @throws Exception
 	 */
+	@Override
 	public void fetch(final IServiceContext ctx, final JsonObject payload) throws Exception {
 		final DataRow dataRow = this.getSchema().parseKeys(payload, ctx);
 		if (!ctx.allOk()) {
@@ -124,6 +118,7 @@ public class CompositeForm extends Form {
 	 * @param payload
 	 * @throws Exception
 	 */
+	@Override
 	public void update(final IServiceContext ctx, final JsonObject payload) throws Exception {
 		this.writeWorker(ctx, payload, false);
 	}
@@ -135,6 +130,7 @@ public class CompositeForm extends Form {
 	 * @param payload
 	 * @throws Exception
 	 */
+	@Override
 	public void insert(final IServiceContext ctx, final JsonObject payload) throws Exception {
 		this.writeWorker(ctx, payload, true);
 	}
@@ -206,6 +202,7 @@ public class CompositeForm extends Form {
 	 * @param payload
 	 * @throws Exception
 	 */
+	@Override
 	public void delete(final IServiceContext ctx, final JsonObject payload) throws Exception {
 		final DataRow dataRow = this.getSchema().parseKeys(payload, ctx);
 		if (!ctx.allOk()) {
@@ -239,49 +236,5 @@ public class CompositeForm extends Form {
 		}
 
 		return;
-	}
-
-	protected class FormReader extends FormService {
-		protected FormReader() {
-			this.opern = IoType.GET;
-		}
-
-		@Override
-		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
-			CompositeForm.this.fetch(ctx, payload);
-		}
-	}
-
-	protected class FormUpdater extends FormService {
-		public FormUpdater() {
-			this.opern = IoType.UPDATE;
-		}
-
-		@Override
-		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
-			CompositeForm.this.writeWorker(ctx, payload, false);
-		}
-	}
-
-	protected class FormInserter extends FormService {
-		protected FormInserter() {
-			this.opern = IoType.CREATE;
-		}
-
-		@Override
-		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
-			CompositeForm.this.writeWorker(ctx, payload, true);
-		}
-	}
-
-	protected class FormDeleter extends FormService {
-		public FormDeleter() {
-			this.opern = IoType.DELETE;
-		}
-
-		@Override
-		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
-			CompositeForm.this.delete(ctx, payload);
-		}
 	}
 }

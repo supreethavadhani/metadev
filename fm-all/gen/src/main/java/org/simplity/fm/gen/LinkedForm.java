@@ -24,43 +24,50 @@ package org.simplity.fm.gen;
 
 /**
  * represents a Table row in tables sheet of a forms work book
- * 
+ *
  * @author simplity.org
  *
  */
-class ChildForm {
+class LinkedForm {
 	private static final String C = ", ";
 
 	String name;
-	String label;
 	String formName;
-	boolean isTabular;
+	boolean isArray;
 	int minRows;
 	int maxRows;
 	String errorId;
-	String[] linkParentFields;
-	String[] linkChildFields;
+	String[] parentLinkFields;
+	String[] childLinkFields;
+
+	String label;
 	boolean isEditable;
 	int index;
 
-	void emitJavaConstant(StringBuilder sbf, int idx) {
+	void emitJavaConstant(final StringBuilder sbf, final int idx) {
 		sbf.append("\n\tpublic static final int ").append(this.name).append(" = ").append(idx).append(';');
 	}
 
 	/**
 	 * push this as an element of an array
-	 * 
+	 *
 	 * @param sbf
 	 */
-	void emitJavaCode(StringBuilder sbf) {
-		sbf.append("\n\t\t\tnew ChildForm(");
+	void emitJavaCode(final StringBuilder sbf) {
+		sbf.append("new LinkedForm(");
 
 		sbf.append(Util.escape(this.name));
 		sbf.append(C).append(Util.escape(this.formName));
-		sbf.append(C).append(this.isTabular);
+		sbf.append(C).append(this.isArray);
 		sbf.append(C).append(this.minRows);
 		sbf.append(C).append(this.maxRows);
 		sbf.append(C).append(Util.escape(this.errorId));
+
+		sbf.append(C);
+		Util.emitArray(this.parentLinkFields, sbf);
+
+		sbf.append(C);
+		Util.emitArray(this.childLinkFields, sbf);
 
 		sbf.append(')');
 	}
@@ -69,18 +76,17 @@ class ChildForm {
 		return this.formName;
 	}
 
-	void emitTs(StringBuilder sbf) {
+	void emitTs(final StringBuilder sbf) {
 		sbf.append("\n\t").append(this.name).append(": ChildForm = {");
 		sbf.append("name:").append(Util.escapeTs(this.name));
 		sbf.append("\n\t\t,form:").append(Util.toClassName(this.formName)).append(".getInstance()");
-		sbf.append("\n\t\t,isTabular:").append(this.isTabular);
+		sbf.append("\n\t\t,isTabular:").append(this.isArray);
 		sbf.append("\n\t\t,isEditable:").append(this.isEditable);
 		sbf.append("\n\t\t,label:").append(this.label == null ? "''" : Util.escapeTs(this.label));
 		sbf.append("\n\t\t,minRows:").append(this.minRows);
 		sbf.append("\n\t\t,maxRows:").append(this.maxRows);
 		sbf.append("\n\t\t,errorId:").append(Util.escapeTs(this.errorId));
-		
+
 		sbf.append("\n\t};");
 	}
 }
-	

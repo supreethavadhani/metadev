@@ -24,6 +24,7 @@ package org.simplity.fm.core.data;
 
 import java.sql.SQLException;
 
+import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.service.IServiceContext;
 
@@ -38,10 +39,17 @@ public class LinkedForm {
 	 * non-null unique across all fields of the form
 	 */
 	protected final String linkName;
+
 	/**
-	 * form being linked
+	 * name of the other form being linked
 	 */
-	protected final Schema schema;
+	protected final String linkFormName;
+
+	/**
+	 * if tabular, data is organized as an array of objects, else it is a child
+	 * object
+	 */
+	protected final boolean isArray;
 	/**
 	 * if this is tabular, min rows expected from client
 	 */
@@ -65,6 +73,11 @@ public class LinkedForm {
 	 */
 	protected final String errorMessageId;
 
+	/*
+	 * fields that are created at init()
+	 */
+
+	protected Schema linkedSchema;
 	/**
 	 * column names are from the child table, but the values for the parameter
 	 * would come from the parent form
@@ -72,47 +85,75 @@ public class LinkedForm {
 	 */
 	protected String linkWhereClause;
 
-	protected int[] parentIndexes;
-
-	protected int[] childIndexes;
-
 	/**
 	 * has the details to set params values for a prepared statement from a
 	 * parent data row
 	 */
 	protected FieldMetaData[] linkWhereParams;
-	protected String deletePart = "delete etc...";
+	protected String deleteSql;
+
+	protected int[] parentIndexes;
+	protected int[] childIndexes;
 
 	/**
 	 *
 	 * @param linkName
 	 *            non-null unique across all fields of the form
-	 * @param schema
-	 *            non-null name of the child schema
+	 * @param formName
+	 *            non-null name of the linked form
+	 * @param isArray
+	 *            if true, linked data is an array of object. if false, it is a
+	 *            child object
 	 * @param minRows
 	 *            for validation of data
 	 * @param maxRows
 	 *            for validation of data. though 0 means unlimited, we strongly
 	 *            encourage a reasonable limit
-	 * @param childLinkNames
-	 * @param parentLinkNames
-	 * @param linkWhereClause
 	 * @param errorMessageId
 	 *            message id to be used if number of data rows fails validation
+	 * @param childLinkNames
+	 * @param parentLinkNames
 	 */
-	public LinkedForm(final String linkName, final Schema schema, final int minRows, final int maxRows,
-			final String[] childLinkNames, final String[] parentLinkNames, final String linkWhereClause,
-			final String errorMessageId) {
+	public LinkedForm(final String linkName, final String formName, final boolean isArray, final int minRows,
+			final int maxRows, final String errorMessageId, final String[] parentLinkNames,
+			final String[] childLinkNames) {
 		this.linkName = linkName;
-		this.schema = schema;
+		this.linkFormName = formName;
+		this.isArray = isArray;
 		this.minRows = minRows;
 		this.maxRows = maxRows;
 		this.errorMessageId = errorMessageId;
-		this.childLinkNames = childLinkNames;
 		this.parentLinkNames = parentLinkNames;
+		this.childLinkNames = childLinkNames;
+	}
 
-		// this.linkWhereClause = linkWhereClause;
-		this.linkWhereParams = null;
+	/**
+	 * called by parent form/schema before it is used.
+	 *
+	 * @param parentSchema
+	 */
+	void init(final Schema parentSchema) {
+		final Form form = ComponentProvider.getProvider().getForm(this.linkFormName);
+		this.linkedSchema = form.schema;
+		final StringBuilder sbf = new StringBuilder(" WHERE ");
+		final int nbr = this.parentLinkNames.length;
+		this.parentIndexes = new int[nbr];
+		this.childIndexes = new int[nbr];
+		this.linkWhereParams = new FieldMetaData[nbr];
+		for (int i = 0; i < nbr; i++) {
+			final DbField parentField = parentSchema.getField(this.parentLinkNames[i]);
+			final DbField childField = this.linkedSchema.getField(this.childLinkNames[i]);
+			this.parentIndexes[i] = parentField.index;
+			this.childIndexes[i] = childField.index;
+			if (i != 0) {
+				sbf.append(" AND ");
+			}
+			sbf.append(childField.columnName).append("=?");
+			this.linkWhereParams[i] = new FieldMetaData(parentField);
+		}
+
+		this.linkWhereClause = sbf.toString();
+		this.deleteSql = "delete from " + this.linkedSchema.nameInDb + this.linkWhereClause;
 	}
 
 	/**
@@ -125,11 +166,11 @@ public class LinkedForm {
 	public DataTable fetch(final DbHandle handle, final Object[] parentRow) throws SQLException {
 		final PreparedStatementParam[] params = this.createParams(parentRow);
 
-		final Object[][] data = this.schema.getDbMetaData().filter(handle, this.linkWhereClause, params);
+		final Object[][] data = this.linkedSchema.getDbMetaData().filter(handle, this.linkWhereClause, params);
 		if (data.length == 0) {
-			return new DataTable(this.schema);
+			return new DataTable(this.linkedSchema);
 		}
-		return new DataTable(this.schema, data);
+		return new DataTable(this.linkedSchema, data);
 	}
 
 	private PreparedStatementParam[] createParams(final Object[] parentRow) {
@@ -154,7 +195,7 @@ public class LinkedForm {
 	 * @return null in case of any error in the input data.
 	 */
 	public DataTable parse(final JsonArray arr, final boolean forInsert, final IServiceContext ctx) {
-		return this.schema.parseTable(arr, forInsert, ctx, this.linkName);
+		return this.linkedSchema.parseTable(arr, forInsert, ctx, this.linkName);
 	}
 
 	/**
@@ -227,8 +268,7 @@ public class LinkedForm {
 	 */
 	public boolean delete(final DbHandle handle, final Object[] dataRow) throws SQLException {
 		final PreparedStatementParam[] params = this.createParams(dataRow);
-		final String sql = this.deletePart + this.linkWhereClause;
-		handle.write(sql, params);
+		handle.write(this.deleteSql, params);
 		return true;
 	}
 

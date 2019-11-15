@@ -66,7 +66,7 @@ class Schema {
 	 * fields that are read directly from json
 	 */
 	String name;
-	String dbName;
+	String nameInDb;
 	boolean useTimeStampCheck;
 	String customValidation;
 	/*
@@ -101,125 +101,137 @@ class Schema {
 		/*
 		 * we want to check for duplicate definition of standard fields
 		 */
-		final DbField modifiedAt = null;
-		final DbField modifiedBy = null;
-		final DbField createdBy = null;
-		final DbField createdAt = null;
+		DbField modifiedAt = null;
+		DbField modifiedBy = null;
+		DbField createdBy = null;
+		DbField createdAt = null;
 
 		this.fieldMap = new HashMap<>();
-			final List<DbField> list = new ArrayList<>();
-			final List<DbField> keyList = new ArrayList<>();
+		final List<DbField> list = new ArrayList<>();
+		final List<DbField> keyList = new ArrayList<>();
 
-			int idx = -1;
-			for (final DbField field : this.fields) {
-				idx++;
-				field.index = idx;
-				this.fieldMap.put(field.name, field);
-				[field.index] = field;
-				if (field.listName != null) {
-					list.add(field);
+		int idx = -1;
+		for (final DbField field : this.fields) {
+			idx++;
+			field.index = idx;
+			final String fieldName = field.name;
+
+			if (this.fieldMap.containsKey(fieldName)) {
+				logger.error("{} is a duplicate field ", fieldName);
+			} else {
+				this.fieldMap.put(fieldName, field);
+			}
+
+			if (field.listName != null) {
+				list.add(field);
+			}
+
+			final ColumnType ct = field.columnType;
+			if (ct == null) {
+				logger.error("{} does not specify its column type ", fieldName);
+				continue;
+			}
+
+			field.isRequired = ct.isRequired();
+
+			switch (ct) {
+			case PrimaryKey:
+				if (this.generatedKeyField != null) {
+					logger.error("{} is defined as a generated primary key, but {} is also defined as a primary key.",
+							keyList.get(0).name, field.name);
+				} else {
+					keyList.add(field);
 				}
+				continue;
 
-				final ColumnType ct = field.columnType;
-				if (ct == null) {
-					continue;
-				}
-
-				field.isRequired = ct.isRequired();
-				if (ct == ColumnType.GeneratedPrimaryKey) {
-					if (this.generatedKeyField != null) {
-						logger.error("Only one generated key please. Found {} as well as {} as generated primary keys.",
+			case GeneratedPrimaryKey:
+				if (this.generatedKeyField != null) {
+					logger.error("Only one generated key please. Found {} as well as {} as generated primary keys.",
+							field.name, keyList.get(0).name);
+				} else {
+					if (keyList.size() > 0) {
+						logger.error(
+								"Field {} is marked as a generated primary key. But {} is also marked as a primary key field.",
 								field.name, keyList.get(0).name);
-					} else {
-						if (keyList.size() > 0) {
-							logger.error(
-									"Field {} is marked as a generated primary key. But {} is also marked as a primary key field.",
-									field.name, keyList.get(0).name);
-							keyList.clear();
-						}
-						keyList.add(field);
-						this.generatedKeyField = field;
+						keyList.clear();
 					}
-					continue;
+					keyList.add(field);
+					this.generatedKeyField = field;
 				}
+				continue;
 
-				if (ct == ColumnType.PrimaryKey) {
-					if (this.generatedKeyField != null) {
-						logger.error(
-								"{} is defined as a generated primary key, but {} is also defined as a primary key.",
-								keyList.get(0).name, field.name);
-					} else {
-						keyList.add(field);
-					}
-					continue;
+			case TenantKey:
+				if (field.dataType.equals("tenantKey") == false) {
+					logger.error(
+							"Tenant key field MUST use dataType of tenantKey. Field {} which is marked as tenant key is of data type {}",
+							field.name, field.dataType);
 				}
-
-				if (ct == ColumnType.ModifiedAt) {
-					if (modifiedAt == null) {
-						modifiedAt = field;
-						if (this.useTimeStampCheck) {
-							this.timestampField = field;
-						}
-					} else {
-						logger.error("{} and {} are both defined as lastModifiedAt!!", field.name,
-								this.timestampField.name);
-					}
-					continue;
+				if (this.tenantField == null) {
+					this.tenantField = field;
+				} else {
+					logger.error("Both {} and {} are marked as tenantKey. Tenant key has to be unique.", field.name,
+							this.tenantField.name);
 				}
+				continue;
 
-				if (ct == ColumnType.TenantKey) {
-					if (field.dataType.equals("tenantKey") == false) {
-						logger.error(
-								"Tenant key field MUST use dataType of tenantKey. Field {} which is marked as tenant key is of data type {}",
-								field.name, field.dataType);
-					}
-					if (this.tenantField == null) {
-						this.tenantField = field;
-					} else {
-						logger.error("Both {} and {} are marked as tenantKey. Tenant key has to be unique.", field.name,
-								this.tenantField.name);
-					}
+			case CreatedAt:
+				if (createdAt == null) {
+					createdAt = field;
+				} else {
+					logger.error("Only one field to be used as createdAt but {} and {} are marked", field.name,
+							createdAt.name);
 				}
+				continue;
 
-				if (ct == ColumnType.ModifiedBy) {
-					if (modifiedBy == null) {
-						modifiedBy = field;
-					} else {
-						logger.error("Only one field to be used as modifiedBy but {} and {} are marked", field.name,
-								modifiedBy.name);
-					}
+			case CreatedBy:
+				if (createdBy == null) {
+					createdBy = field;
+				} else {
+					logger.error("Only one field to be used as createdBy but {} and {} are marked", field.name,
+							createdBy.name);
 				}
-				if (ct == ColumnType.CreatedAt) {
-					if (createdAt == null) {
-						createdAt = field;
-					} else {
-						logger.error("Only one field to be used as createdAt but {} and {} are marked", field.name,
-								createdAt.name);
+				continue;
+
+			case ModifiedAt:
+				if (modifiedAt == null) {
+					modifiedAt = field;
+					if (this.useTimeStampCheck) {
+						this.timestampField = field;
 					}
+				} else {
+					logger.error("{} and {} are both defined as lastModifiedAt!!", field.name,
+							this.timestampField.name);
 				}
-				if (ct == ColumnType.CreatedBy) {
-					if (createdBy == null) {
-						createdBy = field;
-					} else {
-						logger.error("Only one field to be used as createdBy but {} and {} are marked", field.name,
-								createdBy.name);
-					}
+				continue;
+
+			case ModifiedBy:
+				if (modifiedBy == null) {
+					modifiedBy = field;
+				} else {
+					logger.error("Only one field to be used as modifiedBy but {} and {} are marked", field.name,
+							modifiedBy.name);
 				}
+				continue;
 
-			if (list.size() > 0) {
-				this.fieldsWithList = list.toArray(new DbField[0]);
-			}
-
-			if (keyList.size() > 0) {
-				this.keyFields = keyList.toArray(new DbField[0]);
-			}
-
-			if (this.useTimeStampCheck && this.timestampField == null) {
-				logger.error(
-						"Table is designed to use time-stamp for concurrancy, but no field with columnType=modifiedAt");
-				this.useTimeStampCheck = false;
+			default:
+				continue;
 			}
 		}
+
+		if (list.size() > 0) {
+			this.fieldsWithList = list.toArray(new DbField[0]);
+		}
+
+		if (keyList.size() > 0) {
+			this.keyFields = keyList.toArray(new DbField[0]);
+		}
+
+		if (this.useTimeStampCheck && this.timestampField == null) {
+			logger.error(
+					"Table is designed to use time-stamp for concurrancy, but no field with columnType=modifiedAt");
+			this.useTimeStampCheck = false;
+		}
+
 	}
 
 	Set<String> getNameSet() {
@@ -247,7 +259,6 @@ class Schema {
 		/*
 		 * imports
 		 */
-		Util.emitImport(sbf, org.simplity.fm.core.data.Field.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.DbField.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.Schema.class);
 		Util.emitImport(sbf, IValidation.class);
@@ -290,6 +301,7 @@ class Schema {
 		sbf.append("\n\n\t/**\n\t *\n\t */");
 		sbf.append("\n\tpublic ").append(cls).append("() {");
 		sbf.append("\n\t\tthis.name = \"").append(this.name).append("\";");
+		sbf.append("\n\t\tthis.nameInDb = \"").append(this.nameInDb).append("\";");
 		sbf.append("\n\t\tthis.fields = FIELDS;");
 		sbf.append("\n\t\tthis.validations = VALIDS;");
 
@@ -312,7 +324,7 @@ class Schema {
 	}
 
 	private void emitDbStuff(final StringBuilder sbf) {
-		if (this.dbName == null || this.dbName.isEmpty()) {
+		if (this.nameInDb == null || this.nameInDb.isEmpty()) {
 			logger.warn("dbName not set. no db related code generated for this form");
 			sbf.append("\n\n\tprivate void setDbMeta(){\n\t\t//\n\t}");
 			return;
@@ -339,7 +351,7 @@ class Schema {
 			sbf.append(P).append("int[] WHERE_IDX = {").append(indexes.toString()).append("};");
 
 			this.emitUpdate(sbf, clause.toString(), indexes.toString());
-			sbf.append(P).append("String DELETE = \"DELETE FROM ").append(this.dbName).append("\";");
+			sbf.append(P).append("String DELETE = \"DELETE FROM ").append(this.nameInDb).append("\";");
 		}
 	}
 
@@ -425,7 +437,7 @@ class Schema {
 
 		sbf.append("\n\n\t\tthis.dbMetaData = ");
 
-		if (this.dbName == null) {
+		if (this.nameInDb == null) {
 			sbf.append("null;");
 			return;
 		}
@@ -502,14 +514,14 @@ class Schema {
 			idxSbf.append(field.index);
 		}
 
-		sbf.append(" FROM ").append(this.dbName);
+		sbf.append(" FROM ").append(this.nameInDb);
 		sbf.append("\";");
 		sbf.append(P).append("int[] SELECT_IDX = {").append(idxSbf).append("};");
 
 	}
 
 	private void emitInsert(final StringBuilder sbf) {
-		sbf.append(P).append(" String INSERT = \"INSERT INTO ").append(this.dbName).append('(');
+		sbf.append(P).append(" String INSERT = \"INSERT INTO ").append(this.nameInDb).append('(');
 		final StringBuilder idxSbf = new StringBuilder();
 		idxSbf.append(P).append("int[] INSERT_IDX = {");
 		final StringBuilder vbf = new StringBuilder();
@@ -546,7 +558,7 @@ class Schema {
 
 	private void emitUpdate(final StringBuilder sbf, final String whereClause, final String whereIndexes) {
 		final StringBuilder updateBuf = new StringBuilder();
-		updateBuf.append(P).append(" String UPDATE = \"UPDATE ").append(this.dbName).append(" SET ");
+		updateBuf.append(P).append(" String UPDATE = \"UPDATE ").append(this.nameInDb).append(" SET ");
 		final StringBuilder idxBuf = new StringBuilder();
 		idxBuf.append(P).append(" int[] UPDATE_IDX = {");
 		boolean firstOne = true;

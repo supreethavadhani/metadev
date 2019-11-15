@@ -20,59 +20,29 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.data;
+package org.simplity.fm.gen;
 
-import org.simplity.fm.core.datatypes.ValueType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
+ * represents a Control on a client page
+ *
  * @author simplity.org
  *
  */
-public class FieldMetaData {
-	/**
-	 * 0-based index in the form-fields that this parameter corresponds to (for
-	 * getting/setting value in form data array)
-	 */
-	protected final int idx;
-	/**
-	 * value type of this parameter based on which set/get method is ssued
-	 * on the statement
-	 */
-	protected final ValueType valueType;
+class Section {
+	protected static final Logger logger = LoggerFactory.getLogger(Section.class);
+	protected static final String C = ", ";
 
 	/**
-	 * create this parameter as an immutable data structure
-	 *
-	 * @param idx
-	 * @param valueType
+	 * required if the type of control requires data
 	 */
-	public FieldMetaData(final int idx, final ValueType valueType) {
-		this.idx = idx;
-		this.valueType = valueType;
-	}
+	String label;
+	String type;
+	Control[] controls;
 
-	/**
-	 * create this parameter as an immutable data structure
-	 *
-	 * @param field
-	 */
-	public FieldMetaData(final Field field) {
-		this.idx = field.index;
-		this.valueType = field.getValueType();
-	}
-
-	/**
-	 *
-	 * @return index of this field in the data row
-	 */
-	public int getIndex() {
-		return this.idx;
-	}
-
-	/**
-	 * @return the valueType
-	 */
-	public ValueType getValueType() {
-		return this.valueType;
+	void emitTs(final StringBuilder sbf) {
+		sbf.append("\n\t\t\tnew ").append(this.getClass().getSimpleName()).append("(\"");
 	}
 }

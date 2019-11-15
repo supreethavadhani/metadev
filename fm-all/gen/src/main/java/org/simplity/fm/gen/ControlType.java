@@ -20,59 +20,15 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.data;
-
-import org.simplity.fm.core.datatypes.ValueType;
+package org.simplity.fm.gen;
 
 /**
+ * types of controls used on an editable page. A control may or may not have
+ * data
+ *
  * @author simplity.org
  *
  */
-public class FieldMetaData {
-	/**
-	 * 0-based index in the form-fields that this parameter corresponds to (for
-	 * getting/setting value in form data array)
-	 */
-	protected final int idx;
-	/**
-	 * value type of this parameter based on which set/get method is ssued
-	 * on the statement
-	 */
-	protected final ValueType valueType;
-
-	/**
-	 * create this parameter as an immutable data structure
-	 *
-	 * @param idx
-	 * @param valueType
-	 */
-	public FieldMetaData(final int idx, final ValueType valueType) {
-		this.idx = idx;
-		this.valueType = valueType;
-	}
-
-	/**
-	 * create this parameter as an immutable data structure
-	 *
-	 * @param field
-	 */
-	public FieldMetaData(final Field field) {
-		this.idx = field.index;
-		this.valueType = field.getValueType();
-	}
-
-	/**
-	 *
-	 * @return index of this field in the data row
-	 */
-	public int getIndex() {
-		return this.idx;
-	}
-
-	/**
-	 * @return the valueType
-	 */
-	public ValueType getValueType() {
-		return this.valueType;
-	}
+enum ControlType {
+	Input, Dropdown, Radio, Checkbox, Disabled, Divider, Label
 }

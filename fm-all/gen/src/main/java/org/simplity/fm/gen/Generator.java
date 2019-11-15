@@ -121,6 +121,12 @@ public class Generator {
 		}
 
 		for (final File file : f.listFiles()) {
+			final String fn = file.getName();
+			if (fn.endsWith(EXT) == false) {
+				logger.info("Skipping non-json file {} ", fn);
+				continue;
+			}
+
 			emitSchema(file, generatedSourceRootFolder, tsOutputFolder, app.dataTypes, app, rootPackageName,
 					tsImportPrefix);
 		}
@@ -133,6 +139,11 @@ public class Generator {
 		}
 
 		for (final File file : f.listFiles()) {
+			final String fn = file.getName();
+			if (fn.endsWith(EXT) == false) {
+				logger.info("Skipping non-json file {} " + fn);
+				continue;
+			}
 			emitForm(file, generatedSourceRootFolder, tsOutputFolder, app.dataTypes, app, rootPackageName,
 					tsImportPrefix);
 		}
@@ -147,11 +158,25 @@ public class Generator {
 	 * @param rootPackageName
 	 * @param tsImportPrefix
 	 */
-	private static void emitForm(final File files, final String generatedSourceRootFolder, final String tsOutputFolder,
+	private static void emitForm(final File file, final String generatedSourceRootFolder, final String tsOutputFolder,
 			final DataTypes dataTypes, final Application app, final String rootPackageName,
 			final String tsImportPrefix) {
-		// TODO Auto-generated method stub
+		String fn = file.getName();
+		fn = fn.substring(0, fn.length() - EXT.length());
+		logger.info("Going to generate Form " + fn);
+		final Form form;
+		try (final JsonReader reader = new JsonReader(new FileReader(file))) {
+			form = Util.GSON.fromJson(reader, Form.class);
+		} catch (final Exception e) {
+			e.printStackTrace();
+			logger.error("Form {} not generated. Error : {}, {}", fn, e, e.getMessage());
+			return;
+		}
 
+		final StringBuilder sbf = new StringBuilder();
+		form.emitJavaForm(sbf, rootPackageName);
+		final String outName = generatedSourceRootFolder + "form/" + Util.toClassName(fn) + ".java";
+		Util.writeOut(outName, sbf);
 	}
 
 	/**
@@ -164,19 +189,13 @@ public class Generator {
 	 * @param tsImportPrefix
 	 */
 	private static void emitSchema(final File file, final String generatedSourceRootFolder, final String tsOutputFolder,
-			final DataTypes dataTypes, final Application app, final String rootPackageName,
-			final String tsImportPrefix) {
+			final DataTypes dataTypes, final Application app, final String packageName, final String tsImportPrefix) {
 		String fn = file.getName();
-		if (fn.endsWith(EXT) == false) {
-			logger.info("Skipping non-json file {} " + fn);
-			return;
-		}
-
 		fn = fn.substring(0, fn.length() - EXT.length());
 		logger.info("Going to generate schema " + fn);
-		final Schema schema = new Schema();
+		final Schema schema;
 		try (final JsonReader reader = new JsonReader(new FileReader(file))) {
-			schema.fromJson(reader);
+			schema = Util.GSON.fromJson(reader, Schema.class);
 		} catch (final Exception e) {
 			e.printStackTrace();
 			logger.error("Schema {} not generated. Error : {}, {}", fn, e, e.getMessage());
@@ -184,7 +203,7 @@ public class Generator {
 		}
 
 		final StringBuilder sbf = new StringBuilder();
-		schema.emitJavaClass(sbf, rootPackageName);
+		schema.emitJavaClass(sbf, packageName);
 		final String outName = generatedSourceRootFolder + "schema/" + Util.toClassName(fn) + ".java";
 		Util.writeOut(outName, sbf);
 

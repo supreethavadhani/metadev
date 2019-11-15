@@ -64,6 +64,12 @@ public class Schema {
 	 * name must be unique across tables and views
 	 */
 	protected String name;
+
+	/**
+	 * table/view name in the database
+	 */
+	protected String nameInDb;
+
 	/**
 	 * columns in this table.
 	 */
@@ -83,7 +89,6 @@ public class Schema {
 	 * columns are also stored as Maps for ease of access
 	 */
 	protected Map<String, DbField> fieldsMap;
-
 	/**
 	 * meta data required for db operations. null if this is not designed for db
 	 * operations
@@ -112,7 +117,7 @@ public class Schema {
 
 	/**
 	 * create FieldMetaData for each of the indexed fields
-	 * 
+	 *
 	 * @param indexes
 	 * @return
 	 */
@@ -121,8 +126,7 @@ public class Schema {
 		int idx = -1;
 		for (final int i : indexes) {
 			idx++;
-			final DbField field = this.fields[i];
-			result[idx] = new FieldMetaData(field.index, field.getValueType());
+			result[idx] = new FieldMetaData(this.fields[i]);
 		}
 		return result;
 	}

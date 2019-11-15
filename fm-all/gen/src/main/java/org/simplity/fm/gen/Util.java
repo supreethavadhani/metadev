@@ -357,4 +357,18 @@ class Util {
 			logger.warn("Util is not designed to swallow the token {} ", token.name());
 		}
 	}
+
+	public static void emitArray(final String[] arr, final StringBuilder sbf) {
+		sbf.append("new String[]{");
+		boolean firstOne = true;
+		for (final String s : arr) {
+			if (firstOne) {
+				firstOne = false;
+			} else {
+				sbf.append(',');
+			}
+			sbf.append(escape(s));
+		}
+		sbf.append('}');
+	}
 }

@@ -57,12 +57,10 @@ public class Application {
 		while (true) {
 			final JsonToken token = reader.peek();
 			if (token == JsonToken.END_OBJECT) {
-				logger.info("We have reached the end of application.json");
 				reader.endObject();
 				break;
 			}
 			final String key = reader.nextName();
-			logger.info("Processing key {}", key);
 			switch (key) {
 			case NAME:
 				this.name = reader.nextString();
@@ -78,17 +76,14 @@ public class Application {
 
 			case "dataTypes":
 				this.dataTypes.fromJson(reader);
-				logger.info("DataTypes done. Next token is {}", reader.peek().name());
 				continue;
 
 			case "valueLists":
 				Util.loadMap(this.valueLists, reader, ValueList.class);
-				logger.info("{} keyed lists added. next token is {} ", this.valueLists.size(), reader.peek().name());
 				continue;
 
 			case "keyedLists":
 				Util.loadMap(this.keyedLists, reader, KeyedList.class);
-				logger.info("{} keyed lists added ", this.keyedLists.size());
 				continue;
 
 			case "runtimeLists":
@@ -96,7 +91,7 @@ public class Application {
 				continue;
 
 			default:
-				logger.warn("{} is not a vallid attribute of application.ignored", key);
+				logger.warn("{} is not a valid attribute of application.ignored", key);
 				continue;
 			}
 		}

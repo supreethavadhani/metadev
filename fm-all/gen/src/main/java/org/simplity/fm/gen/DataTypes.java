@@ -24,6 +24,7 @@ package org.simplity.fm.gen;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.simplity.fm.core.Conventions;
@@ -165,6 +166,19 @@ class DataTypes {
 		}
 
 		protected abstract void emitIstanceParams(StringBuilder sbf);
+
+		void addValidations(final List<String> vals) {
+			if (this.name.equalsIgnoreCase("email")) {
+				vals.add("Validators.email");
+				return;
+			}
+
+			this.addSpecificValidations(vals);
+		}
+
+		protected void addSpecificValidations(final List<String> vals) {
+			// let concrete class add if required
+		}
 	}
 
 	protected static class BooleanType extends DataType {
@@ -195,6 +209,16 @@ class DataTypes {
 			sbf.append(C).append(this.minValue).append('L');
 			sbf.append(C).append(this.maxValue).append('L');
 		}
+
+		@Override
+		protected void addSpecificValidations(final List<String> vals) {
+			if (this.minValue != 0) {
+				vals.add("min(" + this.minValue + ')');
+			}
+			if (this.maxValue != 0) {
+				vals.add("max(" + this.maxValue + ')');
+			}
+		}
 	}
 
 	protected static class DecimalType extends DataType {
@@ -207,6 +231,16 @@ class DataTypes {
 			sbf.append(C).append(this.minValue).append('L');
 			sbf.append(C).append(this.maxValue).append('L');
 			sbf.append(C).append(this.nbrFractions);
+		}
+
+		@Override
+		protected void addSpecificValidations(final List<String> vals) {
+			if (this.minValue != 0) {
+				vals.add("min(" + this.minValue + ')');
+			}
+			if (this.maxValue != 0) {
+				vals.add("max(" + this.maxValue + ')');
+			}
 		}
 	}
 
@@ -227,6 +261,19 @@ class DataTypes {
 			sbf.append(C).append(this.minLength);
 			sbf.append(C).append(this.maxLength);
 			sbf.append(C).append(Util.escape(this.regex));
+		}
+
+		@Override
+		protected void addSpecificValidations(final List<String> vals) {
+			if (this.minLength != 0) {
+				vals.add("minLength(" + this.minLength + ')');
+			}
+			if (this.maxLength != 0) {
+				vals.add("maxLength(" + this.maxLength + ')');
+			}
+			if (this.regex != null) {
+				vals.add("pattern('" + this.maxLength + "')");
+			}
 		}
 	}
 }
