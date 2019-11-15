@@ -616,4 +616,41 @@ class Schema {
 			System.out.print(gson.toJson(schema));
 		}
 	}
+
+	/**
+	 * @param sbf
+	 */
+	public void emitTs(final StringBuilder sbf) {
+		final StringBuilder valBuf = new StringBuilder();
+		if (this.fromToPairs != null) {
+			for (final FromToPair pair : this.fromToPairs) {
+				if (valBuf.length() > 0) {
+					valBuf.append(C);
+				}
+				pair.emitTs(valBuf);
+			}
+		}
+
+		if (this.exclusivePairs != null) {
+			for (final ExclusivePair pair : this.exclusivePairs) {
+				if (valBuf.length() > 0) {
+					valBuf.append(C);
+				}
+				pair.emitTs(valBuf);
+			}
+		}
+
+		if (this.inclusivePairs != null) {
+			for (final InclusivePair pair : this.inclusivePairs) {
+				if (valBuf.length() > 0) {
+					valBuf.append(C);
+				}
+				pair.emitTs(valBuf);
+			}
+		}
+
+		if (valBuf.length() > 0) {
+			sbf.append("\n\t\tthis.validations = [").append(valBuf).append("];");
+		}
+	}
 }

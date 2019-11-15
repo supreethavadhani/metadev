@@ -22,12 +22,14 @@
 
 package org.simplity.fm.gen;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import org.apache.poi.hpsf.Section;
 import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.data.IoType;
+import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,14 +40,69 @@ import org.slf4j.LoggerFactory;
 public class Form {
 	protected static final Logger logger = LoggerFactory.getLogger(Form.class);
 
+	private static final String C = ", ";
+
 	String name;
 	String schemaName;
 	String[] dbOperations;
-	Field[] localFields;
-	LinkedForm[] childForms;
 	Field[] tempFields;
 	Control[] controls;
-	Section[] sections;
+	LinkedForm[] childForms;
+	// Section[] sections;
+
+	/*
+	 * derived attributes
+	 */
+	Map<String, Field> fields;
+	Schema schema;
+
+	Field[] fieldsWithList;
+
+	Field[] keyFields;
+
+	void initialize(final Schema sch) {
+		this.schema = sch;
+		this.fields = new HashMap<>();
+		final List<Field> listFields = new ArrayList<>();
+		final List<Field> keyedFields = new ArrayList<>();
+		for (final Field f : sch.fieldMap.values()) {
+			if (f.listName != null) {
+				listFields.add(f);
+				if (f.listKey != null) {
+					keyedFields.add(sch.fieldMap.get(f.listKey));
+				}
+			}
+		}
+		this.fields.putAll(sch.fieldMap);
+		if (this.tempFields != null) {
+			for (final Field f : this.tempFields) {
+				if (this.fields.containsKey(f.name)) {
+					logger.error(
+							"Schema has a field named {} but this is also being defined as a temp field. temp feld ignored",
+							f.name);
+					continue;
+				}
+
+				this.fields.put(f.name, f);
+				if (f.listName == null) {
+					continue;
+				}
+
+				listFields.add(f);
+				if (f.listKey != null) {
+					keyedFields.add(this.fields.get(f.listKey));
+				}
+			}
+		}
+
+		if (listFields.size() > 0) {
+			this.fieldsWithList = listFields.toArray(new Field[0]);
+		}
+
+		if (keyedFields.size() > 0) {
+			this.keyFields = keyedFields.toArray(new Field[0]);
+		}
+	}
 
 	void emitJavaForm(final StringBuilder sbf, final String packageName) {
 		final boolean isComposite = this.childForms != null && this.childForms.length > 0;
@@ -163,10 +220,181 @@ public class Form {
 	 * @param keyedLists
 	 * @param tsImportPrefix
 	 */
-	void emitTs(final StringBuilder sbf, final Map<String, DataTypes> typesMap, final Map<String, ValueList> lists,
+	void emitTs(final StringBuilder sbf, final Map<String, DataType> dataTypes, final Map<String, ValueList> lists,
 			final Map<String, KeyedList> keyedLists, final String tsImportPrefix) {
-		// TODO Auto-generated method stub
+		sbf.append("\nimport { Form , Field, ChildForm } from '").append(tsImportPrefix).append("form';");
+		sbf.append("\nimport { SelectOption, Vo } from '").append(tsImportPrefix).append("types';");
+		sbf.append("\nimport { Validators } from '@angular/forms'");
+		/*
+		 * import for child forms being referred
+		 */
+		if (this.childForms != null) {
+			for (final LinkedForm child : this.childForms) {
+				final String fn = child.getFormName();
+				sbf.append("\nimport { ").append(Util.toClassName(fn)).append(" } from './").append(fn).append("';");
+			}
+		}
 
+		final String cls = Util.toClassName(this.name);
+		sbf.append("\n\nexport class ").append(cls).append(" extends Form {");
+		sbf.append("\n\tprivate static _instance = new ").append(cls).append("();");
+
+		/*
+		 * fields as members. We also accumulate ode for controls
+		 */
+		final StringBuilder sbfCon = new StringBuilder();
+		for (final Control control : this.controls) {
+			control.emitTs(sbf, sbfCon, this.fields, dataTypes, lists, keyedLists);
+		}
+
+		/*
+		 * child forms as members
+		 */
+		if (this.childForms != null && this.childForms.length != 0) {
+			sbf.append("\n");
+			for (final LinkedForm child : this.childForms) {
+				child.emitTs(sbf);
+			}
+		}
+
+		/*
+		 * getInstance method
+		 */
+		sbf.append("\n\n\tpublic static getInstance(): ").append(cls).append(" {");
+		sbf.append("\n\t\treturn ").append(cls).append("._instance;\n\t}");
+
+		/*
+		 * constructor
+		 */
+		sbf.append("\n\n\tconstructor() {");
+		sbf.append("\n\t\tsuper();");
+
+		/*
+		 * put fields into a map.
+		 */
+		sbf.append("\n\t\tthis.fields = new Map();");
+		for (final Control control : this.controls) {
+			sbf.append("\n\t\tthis.fields.set('").append(control.name).append("', this.");
+			sbf.append(control.name).append(");");
+		}
+
+		sbf.append("\n\t\tthis.controls = new Map();").append(sbfCon.toString());
+
+		/*
+		 * put child forms into an array
+		 */
+		if (this.childForms != null && this.childForms.length != 0) {
+			sbf.append("\n\n\t\tthis.childForms = new Map();");
+			for (final LinkedForm child : this.childForms) {
+				sbf.append("\n\t\tthis.childForms.set('").append(child.name).append("', this.").append(child.name)
+						.append(");");
+			}
+		}
+
+		/*
+		 * auto-service operations?
+		 */
+		if (this.dbOperations != null && this.dbOperations.length > 0) {
+			sbf.append("\n\t\tthis.opsAllowed = {");
+			boolean first = true;
+			for (final String op : this.dbOperations) {
+				try {
+					IoType.valueOf(op.trim().toUpperCase());
+					if (first) {
+						first = false;
+					} else {
+						sbf.append(C);
+					}
+					sbf.append(op.trim().toLowerCase()).append(": true");
+				} catch (final Exception e) {
+					logger.error("{} is not a valid dbOperation. directive in allowDbOperations ignored", op);
+				}
+			}
+			sbf.append("};");
+		}
+
+		/*
+		 * inter field validations
+		 */
+		this.schema.emitTs(sbf);
+		/*
+		 * fields with drop-downs
+		 */
+		if (this.fieldsWithList != null) {
+			sbf.append("\n\t\tthis.listFields = [");
+			for (final Field f : this.fieldsWithList) {
+				sbf.append(Util.escapeTs(f.name));
+				sbf.append(C);
+			}
+			sbf.setLength(sbf.length() - C.length());
+			sbf.append("];");
+		}
+		/*
+		 * are there key fields?
+		 */
+		if (this.keyFields != null) {
+			sbf.append("\n\t\tthis.keyFields = [");
+			for (final Field f : this.keyFields) {
+				sbf.append(Util.escapeTs(f.name));
+				sbf.append(C);
+			}
+			sbf.setLength(sbf.length() - C.length());
+			sbf.append("];");
+		}
+		/*
+		 * end of constructor
+		 */
+		sbf.append("\n\t}");
+
+		sbf.append("\n\n\tpublic getName(): string {");
+		sbf.append("\n\t\t return '").append(this.name).append("';");
+		sbf.append("\n\t}");
+
+		sbf.append("\n}\n");
+
+		this.emitTsFormData(sbf, dataTypes);
+
+	}
+
+	/**
+	 * create an interface for the data model of this form
+	 */
+	private void emitTsFormData(final StringBuilder sbf, final Map<String, DataType> dataTypes) {
+		sbf.append("\n\nexport interface ").append(Util.toClassName(this.name)).append("Data extends Vo {");
+		boolean isFirst = true;
+		for (final Field field : this.fields.values()) {
+			if (isFirst) {
+				isFirst = false;
+			} else {
+				sbf.append(C);
+			}
+			final DataType dt = dataTypes.get(field.dataType);
+			sbf.append("\n\t").append(field.name).append("?: ").append(getTsValueType(dt));
+		}
+		sbf.append("\n}\n");
+
+	}
+
+	private static String getTsValueType(final DataType dt) {
+		if (dt == null) {
+			return "string";
+		}
+		switch (dt.valueType) {
+		case TEXT:
+		case DATE:
+		case TIMESTAMP:
+			return "string";
+
+		case INTEGER:
+		case DECIMAL:
+			return "number";
+
+		case BOOLEAN:
+			return "boolean";
+
+		default:
+			return "string";
+		}
 	}
 
 }

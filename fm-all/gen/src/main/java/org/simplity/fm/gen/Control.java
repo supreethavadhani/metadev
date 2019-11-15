@@ -22,8 +22,6 @@
 
 package org.simplity.fm.gen;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import org.simplity.fm.gen.DataTypes.DataType;
@@ -44,44 +42,43 @@ class Control {
 	/**
 	 * required if the type of control requires data
 	 */
-	String fieldName;
+	String name;
 	String label;
 	String placeHolder;
 	int width;
 	int columnUnits;
 
-	void emitFormControl(final StringBuilder sbf, final Map<String, Field> fields,
-			final Map<String, DataType> dataTypes) {
-		if (this.fieldName == null) {
-			return; // field not bound to a model.
-		}
-		sbf.append("\n\t\tthis.controls.add('").append(this.fieldName).append("', [");
-		final Field field = fields.get(this.fieldName);
-		if (field == null) {
-			logger.error("Field {} is not defined, but a control with label {} refers to it.", this.fieldName,
-					this.label);
-			sbf.append("]);");
-			return;
-		}
-		final List<String> vals = new ArrayList<>();
-		if (field.isRequired) {
-			vals.add("Validators.required");
-		}
-		final DataType dt = dataTypes.get(field.dataType);
-		if (dt == null) {
-			logger.error("Data Type {} is not defined, but is used by field {}.", field.dataType, this.fieldName);
-		} else {
-			dt.addValidations(vals);
+	void emitTs(final StringBuilder def, final StringBuilder controls, final Map<String, Field> fields,
+			final Map<String, DataType> dataTypes, final Map<String, ValueList> lists,
+			final Map<String, KeyedList> keyedLists) {
+		def.append("\n\t").append(this.name).append(":Field = {\n\t\tname:'").append(this.name).append("'");
+
+		final String b = "\n\t\t,";
+		def.append(b).append("controlType: '").append(this.controlType.name()).append('\'');
+
+		if (this.label != null) {
+			def.append(b).append("label: ").append(Util.escapeTs(this.label));
 		}
 
-		boolean isFirst = true;
-		for (final String s : vals) {
-			if (isFirst) {
-				isFirst = false;
-			} else {
-				sbf.append(C);
-			}
-			sbf.append("Validations.").append(s);
+		if (this.placeHolder != null) {
+			def.append(b).append("placeHolder: ").append(Util.escapeTs(this.placeHolder));
 		}
+
+		if (this.width != 0) {
+			def.append(b).append("width: ").append(this.width);
+		}
+
+		if (this.columnUnits != 0) {
+			def.append(b).append("columnUnits: ").append(this.columnUnits);
+		}
+
+		final Field field = fields.get(this.name);
+		if (field == null) {
+			logger.info("Control {} is not defined as a field. No form control generated", this.name);
+		} else {
+			field.emitTs(def, controls, dataTypes, b, lists, keyedLists);
+		}
+
+		def.append("\n\t};");
 	}
 }

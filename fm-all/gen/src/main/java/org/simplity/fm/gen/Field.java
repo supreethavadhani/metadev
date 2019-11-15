@@ -22,6 +22,11 @@
 
 package org.simplity.fm.gen;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,5 +76,60 @@ class Field implements Util.INamedMember {
 
 	protected void emitJavaSpecific(final StringBuilder sbf) {
 		sbf.append(C).append(this.isRequired);
+	}
+
+	protected void emitTs(final StringBuilder def, final StringBuilder controls, final Map<String, DataType> dataTypes,
+			final String prefix, final Map<String, ValueList> lists, final Map<String, KeyedList> keyedLists) {
+		final List<String> validations = new ArrayList<>();
+
+		if (this.isRequired) {
+			def.append(prefix).append("isRequired: true");
+			validations.add("required");
+		}
+
+		if (this.listName != null) {
+			def.append(prefix).append("listName: ").append(Util.escapeTs(this.listName));
+
+			if (this.listKey != null) {
+				def.append(prefix).append("listKey: ").append(Util.escapeTs(this.listKey));
+				final KeyedList kl = keyedLists.get(this.listName);
+				if (kl != null) {
+					def.append(prefix).append("keyedList: {");
+					final String indent = "\n\t\t\t";
+					kl.emitTs(def, indent);
+					def.append(indent).append("};");
+				}
+			} else {
+				final ValueList list = lists.get(this.listName);
+				if (list != null) {
+					final String indent = "\n\t\t\t";
+					def.append(prefix).append("valueList: [");
+					list.emitTs(def, indent);
+					def.append(indent).append("];");
+
+				}
+			}
+		}
+
+		final DataType dt = dataTypes.get(this.dataType);
+		if (dt == null) {
+			def.append(prefix).append("valueType: 0");
+			logger.error("Field {} has an invalid data type of {}", this.name, this.dataType);
+		} else {
+			dt.emitTs(def, this.defaultValue, validations, prefix);
+		}
+
+		controls.append("\n\tthis.controls.set('").append(this.name).append("', [");
+		boolean firstOne = true;
+		for (final String s : validations) {
+			if (firstOne) {
+				firstOne = false;
+			} else {
+				controls.append(", ");
+			}
+			controls.append("Validations.").append(s);
+		}
+
+		controls.append("]);");
 	}
 }
