@@ -1,0 +1,117 @@
+{
+    "description": "Schema for data base form.json",
+    "required": [
+        "name"
+    ],
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "schemaName": {
+            "type": "string"
+        },
+        "dbOperations": {
+            "type": "array",
+            "items":{
+                "type":"string",
+                "enum":["Get", "Create", "Update", "Filter", "Bulk"]
+            }
+        },
+        "tempFields": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "dataType"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "dataType": {
+                        "type": "string"
+                    },
+                    "defaultValue": {
+                        "type": "string"
+                    },
+                    "isRequired":{
+                        "type":"boolean"
+                    },
+                    "listName": {
+                        "type": "string"
+                    },
+                    "listKey": {
+                        "type": "string"
+                    },
+                    "errorId": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            }
+        },
+        "controls": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "placeHolder": {
+                        "type": "string"
+                    },
+                    "width": {
+                        "type": "integer"
+                    },
+                    "colunUnits": {
+                        "type": "integer"
+                    }
+                },
+                "additionalProperties": false
+            }
+        },
+        "linkedForms": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "formName",
+                    "isArray",
+                    "parentLinkFields",
+                    "childLinkFields"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "formName": {
+                        "type": "string"
+                    },
+                    "isArray": {
+                        "type": "boolean"
+                    },
+                    "minRows":{
+                        "type":"integer"
+                    },
+                    "maxRows":{
+                        "type":"integer"
+                    },
+                    "errorId": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            }
+        }
+    },
+    "additionalProperties": false
+}

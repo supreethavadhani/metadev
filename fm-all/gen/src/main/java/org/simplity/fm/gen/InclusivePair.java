@@ -24,7 +24,7 @@ package org.simplity.fm.gen;
 
 /**
  * represents form level validation (across fields) in a form.
- * 
+ *
  * @author simplity.org
  *
  */
@@ -33,13 +33,14 @@ class InclusivePair {
 
 	String field1;
 	String field2;
-	int index1;
-	int index2;
 	String value1;
-	String fieldName;
 	String errorId;
 
-	void emitJavaCode(StringBuilder sbf) {
+	String fieldName;
+	int index1;
+	int index2;
+
+	void emitJavaCode(final StringBuilder sbf) {
 		sbf.append("new InclusiveValidation(").append(this.index1);
 		sbf.append(C).append(this.index2);
 		sbf.append(C).append(Util.escape(this.value1));
@@ -47,13 +48,14 @@ class InclusivePair {
 		sbf.append(C).append(Util.escape(this.errorId));
 		sbf.append(")");
 	}
+
 	/**
 	 * @param sbf
 	 */
-	public void emitTs(StringBuilder sbf) {
+	public void emitTs(final StringBuilder sbf) {
 		sbf.append("{type: 'incl', errorId: '").append(this.errorId).append("', f1: '").append(this.field1);
 		sbf.append("', f2: '").append(this.field2).append("'");
-		if(this.value1 != null && this.value1.isEmpty() == false) {
+		if (this.value1 != null && this.value1.isEmpty() == false) {
 			sbf.append(", value:").append(Util.escapeTs(this.value1));
 		}
 		sbf.append("}");

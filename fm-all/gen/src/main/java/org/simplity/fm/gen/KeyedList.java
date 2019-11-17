@@ -44,7 +44,6 @@ class KeyedList implements Util.ISelfLoader {
 	}
 
 	void emitJava(final StringBuilder sbf, final String packageName) {
-		AppComps.logger.info("Started generating java for keyed list {} with {} keys", this.name, this.lists.size());
 		sbf.append("package ").append(packageName).append(';');
 		sbf.append('\n');
 

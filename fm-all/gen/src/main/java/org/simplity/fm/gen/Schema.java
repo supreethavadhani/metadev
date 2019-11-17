@@ -67,7 +67,7 @@ class Schema {
 	 */
 	String name;
 	String nameInDb;
-	boolean useTimeStampCheck;
+	boolean useTimestampCheck;
 	String customValidation;
 	/*
 	 * reason we have it as an array rather than a MAP is that the sequence,
@@ -195,7 +195,7 @@ class Schema {
 			case ModifiedAt:
 				if (modifiedAt == null) {
 					modifiedAt = field;
-					if (this.useTimeStampCheck) {
+					if (this.useTimestampCheck) {
 						this.timestampField = field;
 					}
 				} else {
@@ -226,10 +226,10 @@ class Schema {
 			this.keyFields = keyList.toArray(new DbField[0]);
 		}
 
-		if (this.useTimeStampCheck && this.timestampField == null) {
+		if (this.useTimestampCheck && this.timestampField == null) {
 			logger.error(
 					"Table is designed to use time-stamp for concurrancy, but no field with columnType=modifiedAt");
-			this.useTimeStampCheck = false;
+			this.useTimestampCheck = false;
 		}
 
 	}
@@ -462,7 +462,7 @@ class Schema {
 				sbf.append(C).append(Util.escape(this.generatedKeyField.dbColumnName));
 				sbf.append(C).append(this.generatedKeyField.index);
 			}
-			if (this.useTimeStampCheck) {
+			if (this.useTimestampCheck) {
 				sbf.append(", this.fields[").append(this.timestampField.index).append("]");
 			} else {
 				sbf.append(", null");
@@ -600,7 +600,7 @@ class Schema {
 		idxBuf.append(C).append(whereIndexes);
 		updateBuf.append(whereClause);
 
-		if (this.useTimeStampCheck) {
+		if (this.useTimestampCheck) {
 			updateBuf.append(" AND ").append(this.timestampField.dbColumnName).append("=?");
 			idxBuf.append(C).append(this.timestampField.index);
 		}

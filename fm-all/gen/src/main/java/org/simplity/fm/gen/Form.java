@@ -47,7 +47,7 @@ public class Form {
 	String[] dbOperations;
 	Field[] tempFields;
 	Control[] controls;
-	LinkedForm[] childForms;
+	LinkedForm[] linkedForms;
 	// Section[] sections;
 
 	/*
@@ -105,7 +105,7 @@ public class Form {
 	}
 
 	void emitJavaForm(final StringBuilder sbf, final String packageName) {
-		final boolean isComposite = this.childForms != null && this.childForms.length > 0;
+		final boolean isComposite = this.linkedForms != null && this.linkedForms.length > 0;
 		/*
 		 * our package name is rootPAckage + any prefix/qualifier in our name
 		 *
@@ -163,12 +163,12 @@ public class Form {
 
 	private void emitChildStatics(final StringBuilder sbf, final String p) {
 		sbf.append(p).append("LinkedForm[] CHILDREN = {");
-		for (int i = 0; i < this.childForms.length; i++) {
+		for (int i = 0; i < this.linkedForms.length; i++) {
 			if (i != 0) {
 				sbf.append(',');
 			}
 			sbf.append("\n\t\t\t");
-			this.childForms[i].emitJavaCode(sbf);
+			this.linkedForms[i].emitJavaCode(sbf);
 		}
 		sbf.append(p).append("};");
 	}
@@ -228,8 +228,8 @@ public class Form {
 		/*
 		 * import for child forms being referred
 		 */
-		if (this.childForms != null) {
-			for (final LinkedForm child : this.childForms) {
+		if (this.linkedForms != null) {
+			for (final LinkedForm child : this.linkedForms) {
 				final String fn = child.getFormName();
 				sbf.append("\nimport { ").append(Util.toClassName(fn)).append(" } from './").append(fn).append("';");
 			}
@@ -250,9 +250,9 @@ public class Form {
 		/*
 		 * child forms as members
 		 */
-		if (this.childForms != null && this.childForms.length != 0) {
+		if (this.linkedForms != null && this.linkedForms.length != 0) {
 			sbf.append("\n");
-			for (final LinkedForm child : this.childForms) {
+			for (final LinkedForm child : this.linkedForms) {
 				child.emitTs(sbf);
 			}
 		}
@@ -283,9 +283,9 @@ public class Form {
 		/*
 		 * put child forms into an array
 		 */
-		if (this.childForms != null && this.childForms.length != 0) {
+		if (this.linkedForms != null && this.linkedForms.length != 0) {
 			sbf.append("\n\n\t\tthis.childForms = new Map();");
-			for (final LinkedForm child : this.childForms) {
+			for (final LinkedForm child : this.linkedForms) {
 				sbf.append("\n\t\tthis.childForms.set('").append(child.name).append("', this.").append(child.name)
 						.append(");");
 			}

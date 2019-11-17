@@ -1,0 +1,232 @@
+{
+    "description": "Schema for application.json",
+    "required": [
+        "name",
+        "dataTypes"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "tenantFieldName": {
+            "type": "string"
+        },
+        "tenantDbName": {
+            "type": "string"
+        },
+        "dataTypes": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "textTypes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                            "maxLength"
+                        ],
+                        "properties": {
+                            "errorId": {
+                                "type": "string"
+                            },
+                            "regex": {
+                                "type": "string"
+                            },
+                            "mnLength": {
+                                "type": "integer"
+                            },
+                            "maxLength": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "integerTypes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                            "maxValue"
+                        ],
+                        "properties": {
+                            "errorId": {
+                                "type": "string"
+                            },
+                            "mnValue": {
+                                "type": "integer"
+                            },
+                            "maxValue": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "decimalTypes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                            "maxValue",
+                            "nbrFractions"
+                        ],
+                        "properties": {
+                            "errorId": {
+                                "type": "string"
+                            },
+                            "mnValue": {
+                                "type": "integer"
+                            },
+                            "maxValue": {
+                                "type": "integer"
+                            },
+                            "nbrFractions": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "booleanTypes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                            "errorId": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "dateTypes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                            "maxPastDays",
+                            "maxFutureDays"
+                        ],
+                        "properties": {
+                            "errorId": {
+                                "type": "string"
+                            },
+                            "maxPastDays": {
+                                "type": "integer"
+                            },
+                            "maxFutureDays": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "timestampTypes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                            "errorId": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "valueLists": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "required": [
+                        "value",
+                        "label"
+                    ],
+                    "properties": {
+                        "value": {
+                            "type": [
+                                "string",
+                                "integer"
+                            ]
+                        },
+                        "label": {
+                            "type": "string"
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            }
+        },
+        "keyedLists": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "value",
+                            "label"
+                        ],
+                        "properties": {
+                            "value": {
+                                "type": [
+                                    "string",
+                                    "integer"
+                                ]
+                            },
+                            "label": {
+                                "type": "string"
+                            }
+                        },
+                        "additionalProperties": false
+                    }
+                }
+            }
+        },
+        "runtimeLists": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "required": [
+                    "dbTableName",
+                    "dbColumn1",
+                    "dbColumn2"
+                ],
+                "properties": {
+                    "dbTableName": {
+                        "type": "string"
+                    },
+                    "dbColumn1": {
+                        "type": "string"
+                    },
+                    "dbColumn2": {
+                        "type": "string"
+                    },
+                    "keyColumn": {
+                        "type": "string"
+                    },
+                    "tenantColumnName": {
+                        "type": "string"
+                    },
+                    "keyIsNumeric": {
+                        "type": "boolean"
+                    },
+                    "valueIsNumeric": {
+                        "type": "boolean"
+                    },
+                    "parentTable": {
+                        "type": "string"
+                    },
+                    "parentIdColumnName": {
+                        "type": "string"
+                    },
+                    "parentNameColumnName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            }
+        }
+    }
+}
