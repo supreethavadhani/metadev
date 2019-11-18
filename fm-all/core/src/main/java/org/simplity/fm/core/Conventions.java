@@ -170,7 +170,7 @@ public class Conventions {
 		/**
 		 * file name that has he application level components
 		 */
-		public static final String APP_FILE = "application";
+		public static final String APP_FILE = "application.json";
 		/**
 		 * folder name (sun-package) under which all sources are generated
 		 */

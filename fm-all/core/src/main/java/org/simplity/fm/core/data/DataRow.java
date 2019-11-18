@@ -522,4 +522,26 @@ public class DataRow {
 		}
 		return meta.fetch(handle, this.dataRow);
 	}
+
+	/**
+	 * fetch data for this form from a db using a filter condition, that is
+	 * likely to get only one row. In any case,this method stops at first row.
+	 *
+	 * @param handle
+	 * @param sql
+	 *            sql that is likely to result in only one row.
+	 *
+	 * @return true if it is one row read.false if no data found for this form
+	 *         (key not
+	 *         found...)
+	 * @throws SQLException
+	 */
+	public boolean fetchFirstRow(final DbHandle handle, final FilterSql sql) throws SQLException {
+		final DbMetaData meta = this.schema.getDbMetaData();
+		if (meta == null) {
+			this.noOps();
+			return false;
+		}
+		return meta.fetchFirstRow(handle, sql.getSql(), sql.getWhereParams(), this.dataRow);
+	}
 }

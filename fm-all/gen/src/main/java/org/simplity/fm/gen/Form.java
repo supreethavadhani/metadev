@@ -170,7 +170,7 @@ public class Form {
 			sbf.append("\n\t\t\t");
 			this.linkedForms[i].emitJavaCode(sbf);
 		}
-		sbf.append(p).append("};");
+		sbf.append("};");
 	}
 
 	private void getOps(final StringBuilder sbf) {

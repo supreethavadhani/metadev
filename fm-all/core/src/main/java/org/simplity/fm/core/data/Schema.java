@@ -185,7 +185,7 @@ public class Schema {
 	 *
 	 * @return a db data that can carry data for this schema
 	 */
-	public DataRow newRowData() {
+	public DataRow newDataRow() {
 		return new DataRow(this);
 	}
 

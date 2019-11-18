@@ -158,10 +158,12 @@ public class DbMetaData {
 			final String insertClause, final FieldMetaData[] insertParams, final String updateClause,
 			final FieldMetaData[] updateParams, final String deleteClause, final String generatedColumnName,
 			final int generatedKeyIdx, final Field timestampField) {
-		this.whereClause = whereClause;
-		this.whereParams = whereParams;
+		this.nbrFieldsInARow = nbrFieldsInARow;
+		this.tenantField = tenantField;
 		this.selectClause = selectClause;
 		this.selectParams = selectParams;
+		this.whereClause = whereClause;
+		this.whereParams = whereParams;
 		this.insertClause = insertClause;
 		this.insertParams = insertParams;
 		this.updateClause = updateClause;
@@ -169,9 +171,7 @@ public class DbMetaData {
 		this.deleteClause = deleteClause;
 		this.generatedColumnName = generatedColumnName;
 		this.generatedKeyIdx = generatedKeyIdx;
-		this.tenantField = tenantField;
 		this.timestampField = timestampField;
-		this.nbrFieldsInARow = nbrFieldsInARow;
 	}
 
 	/**
@@ -542,5 +542,46 @@ public class DbMetaData {
 			}
 		});
 		return result.toArray(new Object[0][]);
+	}
+
+	/**
+	 * @param handle
+	 * @param filterWhere
+	 * @param params
+	 * @param values
+	 * @return true if one row was read. false otherwise
+	 * @throws SQLException
+	 */
+	public boolean fetchFirstRow(final DbHandle handle, final String filterWhere, final PreparedStatementParam[] params,
+			final Object[] values) throws SQLException {
+		final boolean[] result = new boolean[1];
+		handle.read(new IDbReader() {
+
+			@Override
+			public String getPreparedStatement() {
+				return DbMetaData.this.selectClause + filterWhere;
+			}
+
+			@Override
+			public void setParams(final PreparedStatement ps) throws SQLException {
+				int posn = 1;
+				for (final PreparedStatementParam p : params) {
+					p.valueType.setPsParam(ps, posn, p.value);
+					posn++;
+				}
+			}
+
+			@Override
+			public boolean readARow(final ResultSet rs) throws SQLException {
+				int posn = 1;
+				for (final FieldMetaData p : DbMetaData.this.selectParams) {
+					values[p.getIndex()] = p.getValueType().getFromRs(rs, posn);
+					posn++;
+				}
+				result[0] = true;
+				return false;
+			}
+		});
+		return result[0];
 	}
 }

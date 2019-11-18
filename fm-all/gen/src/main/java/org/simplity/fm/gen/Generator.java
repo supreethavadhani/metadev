@@ -24,6 +24,8 @@ package org.simplity.fm.gen;
 
 import java.io.File;
 import java.io.FileReader;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.simplity.fm.core.Conventions;
 import org.slf4j.Logger;
@@ -38,7 +40,9 @@ import com.google.gson.stream.JsonReader;
 public class Generator {
 	protected static final Logger logger = LoggerFactory.getLogger(Generator.class);
 	private static final String FOLDER = "/";
-	private static final String EXT = ".json";
+
+	private static final String EXT_FRM = ".form";
+	private static final String EXT_SCH = ".schema";
 
 	/**
 	 *
@@ -87,12 +91,11 @@ public class Generator {
 		/*
 		 * create output folders if required
 		 */
-		final String[] folders = { "schema/", "form/", "ts/", "list/" };
-		if (createOutputFolders(generatedSourceRootFolder, folders) == false) {
+		if (createOutputFolders(generatedSourceRootFolder, new String[] { "schema/", "form/", "list/" }) == false) {
 			return;
 		}
 
-		final String fileName = resourceRootFolder + Conventions.App.APP_FILE + EXT;
+		final String fileName = resourceRootFolder + Conventions.App.APP_FILE;
 		File f = new File(fileName);
 		if (f.exists() == false) {
 			logger.error("project configuration file {} not found. Aborting..", fileName);
@@ -120,15 +123,19 @@ public class Generator {
 			return;
 		}
 
+		final Map<String, Schema> schemas = new HashMap<>();
 		for (final File file : f.listFiles()) {
 			final String fn = file.getName();
-			if (fn.endsWith(EXT) == false) {
-				logger.info("Skipping non-json file {} ", fn);
+			if (fn.endsWith(EXT_SCH) == false) {
+				logger.info("Skipping non-schema file {}", fn);
 				continue;
 			}
 
-			emitSchema(file, generatedSourceRootFolder, tsOutputFolder, app.dataTypes, app, rootPackageName,
-					tsImportPrefix);
+			final Schema schema = emitSchema(file, generatedSourceRootFolder, tsOutputFolder, app.dataTypes, app,
+					rootPackageName, tsImportPrefix);
+			if (schema != null) {
+				schemas.put(schema.name, schema);
+			}
 		}
 
 		logger.info("Going to process forms under folder {}", resourceRootFolder);
@@ -140,29 +147,20 @@ public class Generator {
 
 		for (final File file : f.listFiles()) {
 			final String fn = file.getName();
-			if (fn.endsWith(EXT) == false) {
-				logger.info("Skipping non-json file {} " + fn);
+			if (fn.endsWith(EXT_FRM) == false) {
+				logger.info("Skipping non-form file {} " + fn);
 				continue;
 			}
 			emitForm(file, generatedSourceRootFolder, tsOutputFolder, app.dataTypes, app, rootPackageName,
-					tsImportPrefix);
+					tsImportPrefix, schemas);
 		}
 	}
 
-	/**
-	 * @param files
-	 * @param generatedSourceRootFolder
-	 * @param tsOutputFolder
-	 * @param dataTypes
-	 * @param app
-	 * @param rootPackageName
-	 * @param tsImportPrefix
-	 */
 	private static void emitForm(final File file, final String generatedSourceRootFolder, final String tsOutputFolder,
-			final DataTypes dataTypes, final Application app, final String rootPackageName,
-			final String tsImportPrefix) {
+			final DataTypes dataTypes, final Application app, final String rootPackageName, final String tsImportPrefix,
+			final Map<String, Schema> schemas) {
 		String fn = file.getName();
-		fn = fn.substring(0, fn.length() - EXT.length());
+		fn = fn.substring(0, fn.length() - EXT_FRM.length());
 		logger.info("Going to generate Form " + fn);
 		final Form form;
 		try (final JsonReader reader = new JsonReader(new FileReader(file))) {
@@ -173,10 +171,22 @@ public class Generator {
 			return;
 		}
 
+		final Schema schema = schemas.get(form.schemaName);
+		if (schema == null) {
+			logger.error("Form {} uses schema {}, but that schema is not defined", form.name, form.schemaName);
+			return;
+		}
+		form.initialize(schema);
 		final StringBuilder sbf = new StringBuilder();
 		form.emitJavaForm(sbf, rootPackageName);
-		final String outName = generatedSourceRootFolder + "form/" + Util.toClassName(fn) + ".java";
+		String outName = generatedSourceRootFolder + "form/" + Util.toClassName(fn) + ".java";
 		Util.writeOut(outName, sbf);
+
+		sbf.setLength(0);
+		form.emitTs(sbf, dataTypes.dataTypes, app.valueLists, app.keyedLists, tsImportPrefix);
+		outName = tsOutputFolder + Util.toClassName(fn) + ".ts";
+		Util.writeOut(outName, sbf);
+
 	}
 
 	/**
@@ -188,10 +198,11 @@ public class Generator {
 	 * @param rootPackageName
 	 * @param tsImportPrefix
 	 */
-	private static void emitSchema(final File file, final String generatedSourceRootFolder, final String tsOutputFolder,
-			final DataTypes dataTypes, final Application app, final String packageName, final String tsImportPrefix) {
+	private static Schema emitSchema(final File file, final String generatedSourceRootFolder,
+			final String tsOutputFolder, final DataTypes dataTypes, final Application app, final String packageName,
+			final String tsImportPrefix) {
 		String fn = file.getName();
-		fn = fn.substring(0, fn.length() - EXT.length());
+		fn = fn.substring(0, fn.length() - EXT_SCH.length());
 		logger.info("Going to generate schema " + fn);
 		final Schema schema;
 		try (final JsonReader reader = new JsonReader(new FileReader(file))) {
@@ -199,19 +210,14 @@ public class Generator {
 		} catch (final Exception e) {
 			e.printStackTrace();
 			logger.error("Schema {} not generated. Error : {}, {}", fn, e, e.getMessage());
-			return;
+			return null;
 		}
-
+		schema.init();
 		final StringBuilder sbf = new StringBuilder();
 		schema.emitJavaClass(sbf, packageName);
 		final String outName = generatedSourceRootFolder + "schema/" + Util.toClassName(fn) + ".java";
 		Util.writeOut(outName, sbf);
-
-		sbf.setLength(0);
-		// schema.emitTs(sbf, typesMap, project.lists, project.keyedLists,
-		// tsImportPrefix);
-		// outName = tsOutputFolder + fn + ".ts";
-		// Util.writeOut(outName, sbf);
+		return schema;
 	}
 
 	private static boolean createOutputFolders(final String root, final String[] folders) {

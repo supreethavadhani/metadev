@@ -170,11 +170,11 @@ class DataTypes {
 
 		void emitTs(final StringBuilder sbf, final String defaultValue, final List<String> vals, final String prefix) {
 			if (this.name.equalsIgnoreCase("email")) {
-				vals.add("Validators.email");
+				vals.add("email");
 			}
 			sbf.append(prefix).append("valueType: ").append(this.valueType.ordinal());
 			if (defaultValue != null) {
-				sbf.append(prefix).append("deaultValue: ");
+				sbf.append(prefix).append("defaultValue: ");
 				if (this.valueType == ValueType.TEXT || this.valueType == ValueType.DATE) {
 					sbf.append(Util.escapeTs(defaultValue));
 				} else {
@@ -322,7 +322,7 @@ class DataTypes {
 				vals.add("maxLength(" + this.maxLength + ')');
 			}
 			if (this.regex != null) {
-				vals.add("pattern('" + this.maxLength + "')");
+				vals.add("pattern(" + Util.escapeTs(this.regex) + ")");
 			}
 		}
 	}

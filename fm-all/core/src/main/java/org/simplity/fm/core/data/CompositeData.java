@@ -20,54 +20,39 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.gen;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import org.simplity.fm.core.data.ColumnType;
+package org.simplity.fm.core.data;
 
 /**
- * represents a Field row in fields sheet of a forms work book
+ * represents a parent row with one or more table data for child/ren
  *
  * @author simplity.org
  *
  */
-class DbField extends Field {
-	private static final Map<String, ColumnType> columnTypes = createMap();
-	String dbColumnName;
-	String columnType;
+public class CompositeData {
+	private final DataRow dataRow;
+	private final DataTable[] childData;
 
-	@Override
-	protected void emitJavaSpecific(final StringBuilder sbf) {
-		sbf.append(C).append(Util.escape(this.dbColumnName));
-		sbf.append(C);
-		final ColumnType ct = this.getColumnType();
-		if (ct == null) {
-			sbf.append("null");
-		} else {
-			sbf.append("ColumnType.").append(ct.name());
-		}
+	/**
+	 *
+	 * @param dataRow
+	 * @param childData
+	 */
+	public CompositeData(final DataRow dataRow, final DataTable[] childData) {
+		this.dataRow = dataRow;
+		this.childData = childData;
 	}
 
 	/**
-	 * @return column type, or null.
+	 * @return the childData
 	 */
-	public ColumnType getColumnType() {
-		if (this.columnType == null) {
-			return null;
-		}
-		return columnTypes.get(this.columnType.toLowerCase());
+	public DataTable[] getChildData() {
+		return this.childData;
 	}
 
 	/**
-	 * @return
+	 * @return the dataRow
 	 */
-	private static Map<String, ColumnType> createMap() {
-		final Map<String, ColumnType> map = new HashMap<>();
-		for (final ColumnType vt : ColumnType.values()) {
-			map.put(vt.name().toLowerCase(), vt);
-		}
-		return map;
+	public DataRow getDataRow() {
+		return this.dataRow;
 	}
 }

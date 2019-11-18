@@ -51,6 +51,37 @@ public class CompositeForm extends Form {
 	}
 
 	/**
+	 * parse input json into our standard data structure
+	 * 
+	 * @param json
+	 * @param forInsert
+	 * @param ctx
+	 * @return null in case of any validation error
+	 */
+	public CompositeData parse(final JsonObject json, final boolean forInsert, final IServiceContext ctx) {
+		final DataRow dataRow = this.getSchema().parseRow(json, forInsert, ctx, null, 0);
+		if (!ctx.allOk()) {
+			logger.error("Error while reading fields from the input payload");
+			return null;
+		}
+
+		final int nbrLinks = this.linkedForms.length;
+		final DataTable[] childData = new DataTable[nbrLinks];
+		int i = -1;
+		for (final LinkedForm lf : this.linkedForms) {
+			i++;
+			final JsonArray arr = json.getAsJsonArray(lf.linkName);
+			childData[i] = lf.parse(arr, forInsert, ctx);
+		}
+
+		if (!ctx.allOk()) {
+			logger.error("Error while reading data for child-forms");
+			return null;
+		}
+		return new CompositeData(dataRow, childData);
+	}
+
+	/**
 	 * method that can be used to serve a service-request to get data
 	 *
 	 * @param ctx
@@ -120,7 +151,34 @@ public class CompositeForm extends Form {
 	 */
 	@Override
 	public void update(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		this.writeWorker(ctx, payload, false);
+		final CompositeData data = this.parse(payload, false, ctx);
+		if (data == null) {
+			return;
+		}
+		final DataRow dataRow = data.getDataRow();
+		final DataTable[] childData = data.getChildData();
+		final boolean[] result = new boolean[1];
+
+		RdbDriver.getDriver().transact(handle -> {
+			if (dataRow.update(handle) == false) {
+				return false;
+			}
+
+			int idx = -1;
+			for (final LinkedForm lf : this.linkedForms) {
+				idx++;
+				if (lf.save(handle, childData[idx], dataRow.dataRow) == false) {
+					return false;
+				}
+			}
+			result[0] = true;
+			return true;
+		}, false);
+
+		if (!result[0]) {
+			logger.error("ALl validations succeded, but Update failed");
+			ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+		}
 	}
 
 	/**
@@ -132,67 +190,34 @@ public class CompositeForm extends Form {
 	 */
 	@Override
 	public void insert(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		this.writeWorker(ctx, payload, true);
-	}
-
-	protected void writeWorker(final IServiceContext ctx, final JsonObject payload, final boolean forInsert)
-			throws Exception {
-		final DataRow dataRow = this.getSchema().parseRow(payload, forInsert, ctx, null, 0);
-		if (!ctx.allOk()) {
-			logger.error("Error while reading fields from the input payload");
+		final CompositeData data = this.parse(payload, true, ctx);
+		if (data == null) {
 			return;
 		}
-
-		final int nbrLinks = this.linkedForms.length;
-		final DataTable[] childData = new DataTable[nbrLinks];
-		int i = -1;
-		for (final LinkedForm lf : this.linkedForms) {
-			i++;
-			final JsonArray arr = payload.getAsJsonArray(lf.linkName);
-			childData[i] = lf.parse(arr, forInsert, ctx);
-		}
-
-		if (!ctx.allOk()) {
-			logger.error("Error while reading data for child-forms");
-			return;
-		}
-
+		final DataRow dataRow = data.getDataRow();
+		final DataTable[] childData = data.getChildData();
 		final boolean[] result = new boolean[1];
 
 		RdbDriver.getDriver().transact(handle -> {
-			boolean ok = false;
-			if (forInsert) {
-				ok = dataRow.insert(handle);
-			} else {
-				ok = dataRow.update(handle);
-			}
-
-			if (!ok) {
+			if (dataRow.insert(handle) == false) {
 				return false;
 			}
+
 			int idx = -1;
 			for (final LinkedForm lf : this.linkedForms) {
 				idx++;
-				if (forInsert) {
-					ok = lf.insert(handle, childData[idx], dataRow.dataRow);
-				} else {
-					ok = lf.save(handle, childData[idx], dataRow.dataRow);
-				}
-				if (!ok) {
+				if (lf.insert(handle, childData[idx], dataRow.dataRow) == false) {
 					return false;
 				}
 			}
 			result[0] = true;
-
 			return true;
 		}, false);
 
 		if (!result[0]) {
-			logger.error("Row not updated, possibly because of time-stamp issues");
+			logger.error("ALl validations succeded, but insert failed");
 			ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 		}
-
-		return;
 	}
 
 	/**

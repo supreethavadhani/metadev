@@ -33,7 +33,6 @@ class LinkedForm {
 
 	String name;
 	String formName;
-	boolean isArray;
 	int minRows;
 	int maxRows;
 	String errorId;
@@ -58,7 +57,6 @@ class LinkedForm {
 
 		sbf.append(Util.escape(this.name));
 		sbf.append(C).append(Util.escape(this.formName));
-		sbf.append(C).append(this.isArray);
 		sbf.append(C).append(this.minRows);
 		sbf.append(C).append(this.maxRows);
 		sbf.append(C).append(Util.escape(this.errorId));
@@ -80,7 +78,6 @@ class LinkedForm {
 		sbf.append("\n\t").append(this.name).append(": ChildForm = {");
 		sbf.append("name:").append(Util.escapeTs(this.name));
 		sbf.append("\n\t\t,form:").append(Util.toClassName(this.formName)).append(".getInstance()");
-		sbf.append("\n\t\t,isTabular:").append(this.isArray);
 		sbf.append("\n\t\t,isEditable:").append(this.isEditable);
 		sbf.append("\n\t\t,label:").append(this.label == null ? "''" : Util.escapeTs(this.label));
 		sbf.append("\n\t\t,minRows:").append(this.minRows);

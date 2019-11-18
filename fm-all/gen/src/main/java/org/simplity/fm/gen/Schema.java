@@ -95,9 +95,6 @@ class Schema {
 	transient boolean isUpdatable;
 
 	void init() {
-		final int nbr = this.fieldMap.size();
-		this.fields = new DbField[nbr];
-
 		/*
 		 * we want to check for duplicate definition of standard fields
 		 */
@@ -126,7 +123,7 @@ class Schema {
 				list.add(field);
 			}
 
-			final ColumnType ct = field.columnType;
+			final ColumnType ct = field.getColumnType();
 			if (ct == null) {
 				logger.error("{} does not specify its column type ", fieldName);
 				continue;
@@ -452,7 +449,7 @@ class Schema {
 		sbf.append(", SELECT, this.getParams(SELECT_IDX)");
 		if (this.keyFields != null) {
 
-			sbf.append("WHERE, this.getParams(WHERE_IDX)");
+			sbf.append(", WHERE, this.getParams(WHERE_IDX)");
 			sbf.append(", INSERT, this.getParams(INSERT_IDX)");
 			sbf.append(", UPDATE, this.getParams(UPDATE_IDX)");
 			sbf.append(", DELETE");
@@ -500,7 +497,7 @@ class Schema {
 
 		boolean firstOne = true;
 		for (final DbField field : this.fields) {
-			final ColumnType ct = field.columnType;
+			final ColumnType ct = field.getColumnType();
 			if (ct == null) {
 				continue;
 			}
@@ -528,7 +525,7 @@ class Schema {
 		boolean firstOne = true;
 		boolean firstField = true;
 		for (final DbField field : this.fields) {
-			final ColumnType ct = field.columnType;
+			final ColumnType ct = field.getColumnType();
 			if (ct == null || ct.isInserted() == false) {
 				continue;
 			}
@@ -564,7 +561,7 @@ class Schema {
 		boolean firstOne = true;
 		boolean firstField = true;
 		for (final DbField field : this.fields) {
-			final ColumnType ct = field.columnType;
+			final ColumnType ct = field.getColumnType();
 			if (ct == null || ct.isUpdated() == false) {
 				continue;
 			}

@@ -38,7 +38,7 @@ class Control {
 	protected static final Logger logger = LoggerFactory.getLogger(Control.class);
 	protected static final String C = ", ";
 
-	ControlType controlType;
+	ControlType controlType = ControlType.Input;
 	/**
 	 * required if the type of control requires data
 	 */
@@ -72,11 +72,13 @@ class Control {
 			def.append(b).append("columnUnits: ").append(this.columnUnits);
 		}
 
-		final Field field = fields.get(this.name);
-		if (field == null) {
-			logger.info("Control {} is not defined as a field. No form control generated", this.name);
-		} else {
-			field.emitTs(def, controls, dataTypes, b, lists, keyedLists);
+		if (fields != null && this.name != null) {
+			final Field field = fields.get(this.name);
+			if (field == null) {
+				logger.info("Control {} is not defined as a field. No form control generated", this.name);
+			} else {
+				field.emitTs(def, controls, dataTypes, b, lists, keyedLists);
+			}
 		}
 
 		def.append("\n\t};");

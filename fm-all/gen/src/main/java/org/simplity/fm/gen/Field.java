@@ -105,7 +105,7 @@ class Field implements Util.INamedMember {
 					final String indent = "\n\t\t\t";
 					def.append(prefix).append("valueList: [");
 					list.emitTs(def, indent);
-					def.append(indent).append("];");
+					def.append(indent).append("]");
 
 				}
 			}
@@ -119,7 +119,7 @@ class Field implements Util.INamedMember {
 			dt.emitTs(def, this.defaultValue, validations, prefix);
 		}
 
-		controls.append("\n\tthis.controls.set('").append(this.name).append("', [");
+		controls.append("\n\t\tthis.controls.set('").append(this.name).append("', [");
 		boolean firstOne = true;
 		for (final String s : validations) {
 			if (firstOne) {
@@ -127,7 +127,7 @@ class Field implements Util.INamedMember {
 			} else {
 				controls.append(", ");
 			}
-			controls.append("Validations.").append(s);
+			controls.append("Validators.").append(s);
 		}
 
 		controls.append("]);");

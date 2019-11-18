@@ -46,11 +46,6 @@ public class LinkedForm {
 	protected final String linkFormName;
 
 	/**
-	 * if tabular, data is organized as an array of objects, else it is a child
-	 * object
-	 */
-	protected final boolean isArray;
-	/**
 	 * if this is tabular, min rows expected from client
 	 */
 	protected final int minRows;
@@ -101,9 +96,6 @@ public class LinkedForm {
 	 *            non-null unique across all fields of the form
 	 * @param formName
 	 *            non-null name of the linked form
-	 * @param isArray
-	 *            if true, linked data is an array of object. if false, it is a
-	 *            child object
 	 * @param minRows
 	 *            for validation of data
 	 * @param maxRows
@@ -114,12 +106,10 @@ public class LinkedForm {
 	 * @param childLinkNames
 	 * @param parentLinkNames
 	 */
-	public LinkedForm(final String linkName, final String formName, final boolean isArray, final int minRows,
-			final int maxRows, final String errorMessageId, final String[] parentLinkNames,
-			final String[] childLinkNames) {
+	public LinkedForm(final String linkName, final String formName, final int minRows, final int maxRows,
+			final String errorMessageId, final String[] parentLinkNames, final String[] childLinkNames) {
 		this.linkName = linkName;
 		this.linkFormName = formName;
-		this.isArray = isArray;
 		this.minRows = minRows;
 		this.maxRows = maxRows;
 		this.errorMessageId = errorMessageId;
