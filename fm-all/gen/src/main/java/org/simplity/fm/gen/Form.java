@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.simplity.fm.core.ComponentProvider;
+import org.simplity.fm.core.data.ColumnType;
 import org.simplity.fm.core.data.IoType;
 import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
@@ -65,12 +66,13 @@ public class Form {
 		this.fields = new HashMap<>();
 		final List<Field> listFields = new ArrayList<>();
 		final List<Field> keyedFields = new ArrayList<>();
-		for (final Field f : sch.fieldMap.values()) {
+		for (final DbField f : sch.fieldMap.values()) {
 			if (f.listName != null) {
 				listFields.add(f);
-				if (f.listKey != null) {
-					keyedFields.add(sch.fieldMap.get(f.listKey));
-				}
+			}
+			final ColumnType ct = f.getColumnType();
+			if (ct == ColumnType.PrimaryKey || ct == ColumnType.GeneratedPrimaryKey) {
+				keyedFields.add(f);
 			}
 		}
 		this.fields.putAll(sch.fieldMap);
@@ -84,13 +86,8 @@ public class Form {
 				}
 
 				this.fields.put(f.name, f);
-				if (f.listName == null) {
-					continue;
-				}
-
-				listFields.add(f);
-				if (f.listKey != null) {
-					keyedFields.add(this.fields.get(f.listKey));
+				if (f.listName != null) {
+					listFields.add(f);
 				}
 			}
 		}

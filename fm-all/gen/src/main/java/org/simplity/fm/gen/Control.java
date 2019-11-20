@@ -22,6 +22,7 @@
 
 package org.simplity.fm.gen;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.simplity.fm.gen.DataTypes.DataType;
@@ -35,10 +36,11 @@ import org.slf4j.LoggerFactory;
  *
  */
 class Control {
+	private static final Map<String, ControlType> controlTypes = createType();
 	protected static final Logger logger = LoggerFactory.getLogger(Control.class);
 	protected static final String C = ", ";
 
-	ControlType controlType = ControlType.Input;
+	String controlType;
 	/**
 	 * required if the type of control requires data
 	 */
@@ -54,7 +56,7 @@ class Control {
 		def.append("\n\t").append(this.name).append(":Field = {\n\t\tname:'").append(this.name).append("'");
 
 		final String b = "\n\t\t,";
-		def.append(b).append("controlType: '").append(this.controlType.name()).append('\'');
+		def.append(b).append("controlType: '").append(this.getControlType().name()).append('\'');
 
 		if (this.label != null) {
 			def.append(b).append("label: ").append(Util.escapeTs(this.label));
@@ -82,5 +84,27 @@ class Control {
 		}
 
 		def.append("\n\t};");
+	}
+
+	/**
+	 * @return
+	 */
+	private static Map<String, ControlType> createType() {
+		final Map<String, ControlType> map = new HashMap<>();
+		for (final ControlType ct : ControlType.values()) {
+			map.put(ct.name().toLowerCase(), ct);
+		}
+		return map;
+	}
+
+	/**
+	 *
+	 * @return control type, possibly null
+	 */
+	public ControlType getControlType() {
+		if (this.controlType == null) {
+			return null;
+		}
+		return controlTypes.get(this.controlType.toLowerCase());
 	}
 }

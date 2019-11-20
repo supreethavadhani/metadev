@@ -148,7 +148,7 @@ public class Generator {
 		for (final File file : f.listFiles()) {
 			final String fn = file.getName();
 			if (fn.endsWith(EXT_FRM) == false) {
-				logger.info("Skipping non-form file {} " + fn);
+				logger.info("Skipping non-form file {} ", fn);
 				continue;
 			}
 			emitForm(file, generatedSourceRootFolder, tsOutputFolder, app.dataTypes, app, rootPackageName,

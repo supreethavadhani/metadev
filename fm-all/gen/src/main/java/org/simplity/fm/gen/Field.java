@@ -97,7 +97,7 @@ class Field implements Util.INamedMember {
 					def.append(prefix).append("keyedList: {");
 					final String indent = "\n\t\t\t";
 					kl.emitTs(def, indent);
-					def.append(indent).append("};");
+					def.append(indent).append("}");
 				}
 			} else {
 				final ValueList list = lists.get(this.listName);

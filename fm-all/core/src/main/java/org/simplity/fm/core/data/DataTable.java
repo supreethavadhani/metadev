@@ -146,9 +146,11 @@ public class DataTable implements Iterable<DataRow> {
 	public void serializeAsJson(final JsonWriter writer) throws IOException {
 		writer.beginArray();
 		for (final Object[] row : this.dataTable) {
+			writer.beginObject();
 			this.schema.serializeToJson(row, writer);
+			writer.endObject();
 		}
-		writer.endObject();
+		writer.endArray();
 	}
 
 	/**

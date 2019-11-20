@@ -22,8 +22,6 @@
 
 package org.simplity.fm.gen;
 
-import java.io.FileReader;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,9 +39,6 @@ import org.simplity.fm.core.validn.IValidation;
 import org.simplity.fm.core.validn.InclusiveValidation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 /**
  * represents the contents of a spread sheet for a form
@@ -603,15 +598,6 @@ class Schema {
 		}
 		updateBuf.append("\";");
 		sbf.append(updateBuf.toString()).append(idxBuf.toString()).append("};");
-	}
-
-	public static void main(final String[] args) throws Exception {
-		final String file = "c:/repos/forms/fm-all/gen/src/test/resources/schema.json";
-		try (Reader reader = new FileReader(file)) {
-			final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-			final Schema schema = gson.fromJson(reader, Schema.class);
-			System.out.print(gson.toJson(schema));
-		}
 	}
 
 	/**

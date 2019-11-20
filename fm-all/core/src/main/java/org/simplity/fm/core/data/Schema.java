@@ -333,16 +333,16 @@ public class Schema {
 			final Object value = row[field.index];
 			if (value == null) {
 				writer.nullValue();
-				return;
+				continue;
 			}
 			final ValueType vt = field.getValueType();
 			if (vt == ValueType.INTEGER || vt == ValueType.DECIMAL) {
-				writer.value((Number) (value));
-				return;
+				writer.value((Number) value);
+				continue;
 			}
 			if (vt == ValueType.BOOLEAN) {
-				writer.value((boolean) (value));
-				return;
+				writer.value((boolean) value);
+				continue;
 			}
 			writer.value(value.toString());
 		}
@@ -394,12 +394,11 @@ public class Schema {
 	 */
 	public FilterSql parseForFilter(final JsonObject conditions, final JsonObject sorts, final List<Message> errors,
 			final IServiceContext ctx, final int maxRows) {
-		final StringBuilder sql = new StringBuilder(this.dbMetaData.selectClause);
-		sql.append(" WHERE ");
+		final StringBuilder sql = new StringBuilder();
 		final List<PreparedStatementParam> params = new ArrayList<>();
 
 		/*
-		 * force a condition on tenant id id required
+		 * force a condition on tenant id if required
 		 */
 		final Field tenant = this.dbMetaData.tenantField;
 		if (tenant != null) {
@@ -560,9 +559,18 @@ public class Schema {
 				}
 			}
 		}
-		final String sqlText = sql.toString();
-		logger.info("Filter sql = {}", sqlText);
-		return new FilterSql(sql.toString(), params.toArray(new PreparedStatementParam[0]));
+		/*
+		 * did we get anything at all?
+		 */
+		final String sqlText;
+		if (sql.length() == 0) {
+			logger.info("Filter has no conditions");
+			sqlText = "";
+		} else {
+			logger.info("Filter with {} parameters : {}", params.size(), sql.toString());
+			sqlText = " WHERE " + sql.toString();
+		}
+		return new FilterSql(sqlText, params.toArray(new PreparedStatementParam[0]));
 	}
 
 	/**
