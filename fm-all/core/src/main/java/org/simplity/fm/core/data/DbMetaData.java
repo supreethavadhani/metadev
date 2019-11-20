@@ -216,7 +216,7 @@ public class DbMetaData {
 					logger.error("DB handler did not return generated key");
 				} else {
 					values[this.generatedKeyIdx] = generatedKeys[0];
-					logger.info("Generated key {] assigned back to form data", id);
+					logger.info("Generated key {} assigned back to form data", id);
 				}
 			} catch (final SQLException e) {
 				final String msg = toMessage(e, this.insertClause, this.insertParams, values);

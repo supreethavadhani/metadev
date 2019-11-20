@@ -64,6 +64,7 @@ class Schema {
 	String nameInDb;
 	boolean useTimestampCheck;
 	String customValidation;
+	String[] dbOperations;
 	/*
 	 * reason we have it as an array rather than a MAP is that the sequence,
 	 * though not recommended, could be hard-coded by some coders
@@ -284,6 +285,7 @@ class Schema {
 
 		this.emitJavaConstants(sbf);
 		this.emitJavaFields(sbf, typesName);
+		Form.getOps(this.dbOperations, sbf);
 		this.emitDbStuff(sbf);
 		this.emitJavaValidations(sbf);
 
@@ -296,7 +298,7 @@ class Schema {
 		sbf.append("\n\t\tthis.nameInDb = \"").append(this.nameInDb).append("\";");
 		sbf.append("\n\t\tthis.fields = FIELDS;");
 		sbf.append("\n\t\tthis.validations = VALIDS;");
-
+		sbf.append("\n\t\tthis.operations = OPS;");
 		this.emitDbMeta(sbf);
 		sbf.append("\n\t\tthis.initialize();");
 

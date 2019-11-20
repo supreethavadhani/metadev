@@ -137,7 +137,7 @@ public class Form {
 		sbf.append(p).append("String NAME = ").append(Util.escape(this.name)).append(';');
 		sbf.append(p).append("String SCHEMA = ").append(Util.escape(this.schemaName)).append(';');
 		sbf.append(p);
-		this.getOps(sbf);
+		getOps(this.dbOperations, sbf);
 
 		if (isComposite) {
 			this.emitChildStatics(sbf, p);
@@ -170,10 +170,10 @@ public class Form {
 		sbf.append("};");
 	}
 
-	private void getOps(final StringBuilder sbf) {
+	static void getOps(final String[] dbOps, final StringBuilder sbf) {
 		final IoType[] types = IoType.values();
 		final boolean[] ops = new boolean[types.length];
-		if (this.dbOperations != null) {
+		if (dbOps != null) {
 			/*
 			 * we want to use a case-insensitive parsing enum names into a map
 			 * in lower case
@@ -188,7 +188,7 @@ public class Form {
 			 * boolean to
 			 * true
 			 */
-			for (final String op : this.dbOperations) {
+			for (final String op : dbOps) {
 				final Integer idx = indexes.get(op.toLowerCase());
 				if (idx == null) {
 					logger.error("{} is not a valid db operation (IoType). Ignored.");
@@ -197,7 +197,7 @@ public class Form {
 				}
 			}
 		}
-		sbf.append("boolean[] OPS = {");
+		sbf.append("\n\tprivate static final boolean[] OPS = {");
 		boolean firstOne = true;
 		for (final boolean b : ops) {
 			if (firstOne) {

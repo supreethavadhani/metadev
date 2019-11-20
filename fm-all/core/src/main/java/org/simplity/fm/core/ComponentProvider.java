@@ -348,12 +348,6 @@ public abstract class ComponentProvider {
 				return null;
 			}
 
-			final String formName = serviceName.substring(idx + 1);
-			final Form form = this.getForm(formName);
-			if (form == null) {
-				return null;
-			}
-
 			IoType opern = null;
 			try {
 				opern = IoType.valueOf(serviceName.substring(0, idx).toUpperCase());
@@ -361,7 +355,17 @@ public abstract class ComponentProvider {
 				return null;
 			}
 
-			return form.getService(opern);
+			final String formName = serviceName.substring(idx + 1);
+			final Form form = this.getForm(formName);
+			if (form != null) {
+				return form.getService(opern);
+			}
+			final Schema schema = this.getSchema(formName);
+			if (schema != null) {
+				return schema.getService(opern);
+			}
+
+			return null;
 		}
 
 		@Override

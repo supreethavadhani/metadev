@@ -355,10 +355,11 @@ public class DbHandle {
 		logger.info("Generic Batch SQL:{}", sql);
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			for (final Object[] row : paramValues) {
-				ps.addBatch();
-				for (int i = 0; i < paramValues.length; i++) {
+				// ps.addBatch();
+				for (int i = 0; i < paramTypes.length; i++) {
 					paramTypes[i].setPsParam(ps, i + 1, row[i]);
 				}
+				ps.addBatch();
 			}
 			return ps.executeBatch();
 		}

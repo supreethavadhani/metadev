@@ -26,6 +26,7 @@ import java.io.IOException;
 
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.rdb.RdbDriver;
+import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.IServiceContext;
 
 import com.google.gson.JsonArray;
@@ -39,6 +40,7 @@ import com.google.gson.stream.JsonWriter;
  *
  */
 public class CompositeForm extends Form {
+
 	protected LinkedForm[] linkedForms;
 
 	/**
@@ -52,14 +54,14 @@ public class CompositeForm extends Form {
 
 	/**
 	 * parse input json into our standard data structure
-	 * 
+	 *
 	 * @param json
 	 * @param forInsert
 	 * @param ctx
 	 * @return null in case of any validation error
 	 */
 	public CompositeData parse(final JsonObject json, final boolean forInsert, final IServiceContext ctx) {
-		final DataRow dataRow = this.getSchema().parseRow(json, forInsert, ctx, null, 0);
+		final DataRow dataRow = this.schema.parseRow(json, forInsert, ctx, null, 0);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading fields from the input payload");
 			return null;
@@ -88,9 +90,8 @@ public class CompositeForm extends Form {
 	 * @param payload
 	 * @throws Exception
 	 */
-	@Override
 	public void fetch(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final DataRow dataRow = this.getSchema().parseKeys(payload, ctx);
+		final DataRow dataRow = this.schema.parseKeys(payload, ctx);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading keys from the input payload");
 			return;
@@ -149,7 +150,6 @@ public class CompositeForm extends Form {
 	 * @param payload
 	 * @throws Exception
 	 */
-	@Override
 	public void update(final IServiceContext ctx, final JsonObject payload) throws Exception {
 		final CompositeData data = this.parse(payload, false, ctx);
 		if (data == null) {
@@ -188,7 +188,6 @@ public class CompositeForm extends Form {
 	 * @param payload
 	 * @throws Exception
 	 */
-	@Override
 	public void insert(final IServiceContext ctx, final JsonObject payload) throws Exception {
 		final CompositeData data = this.parse(payload, true, ctx);
 		if (data == null) {
@@ -227,9 +226,8 @@ public class CompositeForm extends Form {
 	 * @param payload
 	 * @throws Exception
 	 */
-	@Override
 	public void delete(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final DataRow dataRow = this.getSchema().parseKeys(payload, ctx);
+		final DataRow dataRow = this.schema.parseKeys(payload, ctx);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading fields from the input payload");
 			return;
@@ -262,4 +260,91 @@ public class CompositeForm extends Form {
 
 		return;
 	}
+
+	/**
+	 * get the service instance for the desired operation on this form
+	 *
+	 * @param opern
+	 * @return service, or null if this form is not designed for this operation
+	 */
+	@Override
+	public IService getService(final IoType opern) {
+		if (this.operations == null || this.operations[opern.ordinal()] == false) {
+			return null;
+		}
+
+		switch (opern) {
+		case GET:
+			return new FormService(IoType.GET) {
+
+				@Override
+				public void serve(final IServiceContext ctx, final JsonObject inputPayload) throws Exception {
+					CompositeForm.this.fetch(ctx, inputPayload);
+
+				}
+			};
+
+		case FILTER:
+			return new FormService(IoType.FILTER) {
+
+				@Override
+				public void serve(final IServiceContext ctx, final JsonObject inputPayload) throws Exception {
+					CompositeForm.this.schema.filter(ctx, inputPayload);
+
+				}
+			};
+
+		case CREATE:
+			return new FormService(IoType.CREATE) {
+
+				@Override
+				public void serve(final IServiceContext ctx, final JsonObject inputPayload) throws Exception {
+					CompositeForm.this.insert(ctx, inputPayload);
+
+				}
+			};
+
+		case UPDATE:
+			return new FormService(IoType.UPDATE) {
+
+				@Override
+				public void serve(final IServiceContext ctx, final JsonObject inputPayload) throws Exception {
+					CompositeForm.this.update(ctx, inputPayload);
+
+				}
+			};
+
+		case BULK:
+			logger.info("Bulk operation not allowed on composite form");
+			return null;
+
+		case DELETE:
+			return new FormService(IoType.DELETE) {
+
+				@Override
+				public void serve(final IServiceContext ctx, final JsonObject inputPayload) throws Exception {
+					CompositeForm.this.delete(ctx, inputPayload);
+
+				}
+			};
+
+		default:
+			logger.error("Form operation {} not yet implemented", opern);
+			return null;
+		}
+	}
+
+	protected abstract class FormService implements IService {
+		protected final IoType opern;
+
+		protected FormService(final IoType opern) {
+			this.opern = opern;
+		}
+
+		@Override
+		public String getId() {
+			return this.opern.name() + '_' + CompositeForm.this.name;
+		}
+	}
+
 }
