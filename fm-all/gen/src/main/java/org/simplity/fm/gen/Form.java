@@ -197,7 +197,7 @@ public class Form {
 				}
 			}
 		}
-		sbf.append("\n\tprivate static final boolean[] OPS = {");
+		sbf.append(" boolean[] OPS = {");
 		boolean firstOne = true;
 		for (final boolean b : ops) {
 			if (firstOne) {

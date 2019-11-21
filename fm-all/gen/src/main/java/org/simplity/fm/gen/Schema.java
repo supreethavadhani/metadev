@@ -285,6 +285,7 @@ class Schema {
 
 		this.emitJavaConstants(sbf);
 		this.emitJavaFields(sbf, typesName);
+		sbf.append("\n\tprivate static final ");
 		Form.getOps(this.dbOperations, sbf);
 		this.emitDbStuff(sbf);
 		this.emitJavaValidations(sbf);
