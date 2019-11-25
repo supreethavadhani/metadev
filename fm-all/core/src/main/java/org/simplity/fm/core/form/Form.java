@@ -83,7 +83,6 @@ public class Form {
 	 */
 	protected IValidation[] validations;
 
-
 	/**
 	 * index to the values array for the key fields. this is derived based on
 	 * fields. This is based on the field meta data attribute isKeyField
@@ -119,13 +118,13 @@ public class Form {
 	 */
 	protected void initialize() {
 		if (this.fields != null) {
-			int n = this.fields.length;
+			final int n = this.fields.length;
 			this.fieldMap = new HashMap<>(n, 1);
-			int[] keys = new int[n];
-			int[] uniqs = new int[n];
+			final int[] keys = new int[n];
+			final int[] uniqs = new int[n];
 			int keyIdx = 0;
 			int uniqIdx = 0;
-			for (Field field : this.fields) {
+			for (final Field field : this.fields) {
 				this.fieldMap.put(field.getFieldName(), field);
 				if (field.isKeyField()) {
 					keys[keyIdx] = field.getIndex();
@@ -145,15 +144,15 @@ public class Form {
 		}
 
 		if (this.childForms != null) {
-			int n = this.childForms.length;
+			final int n = this.childForms.length;
 			this.childMap = new HashMap<>(n, 1);
-			for (ChildForm child : this.childForms) {
+			for (final ChildForm child : this.childForms) {
 				this.childMap.put(child.fieldName, child);
 			}
 		}
 
 		if (this.userIdFieldName != null) {
-			Field field = this.fieldMap.get(this.userIdFieldName);
+			final Field field = this.fieldMap.get(this.userIdFieldName);
 			if (field == null) {
 				logger.error("userIdField {} specified, but not defined", this.userIdFieldName);
 			} else {
@@ -171,20 +170,20 @@ public class Form {
 	private static final String WH = " WHERE ";
 
 	/**
-	 * 
+	 *
 	 */
 	private void initializeDbLinks() {
 		boolean foundOne = false;
-		StringBuilder sbf = new StringBuilder(WH);
+		final StringBuilder sbf = new StringBuilder(WH);
 		for (int i = 0; i < this.childForms.length; i++) {
-			DbLink link = this.dbMetaData.dbLinks[i];
-			Form childForm = this.childForms[i].form;
+			final DbLink link = this.dbMetaData.dbLinks[i];
+			final Form childForm = this.childForms[i].form;
 			if (link == null) {
 				logger.info("Form {} has a child {} but has no childMeta entry for it", this.getFormId(),
 						childForm.getFormId());
 				continue;
 			}
-			Form form = this.childForms[i].form;
+			final Form form = this.childForms[i].form;
 			if (form.dbMetaData == null) {
 				logger.warn("Child {} has no db meta data. It will not particiapte in db I/O of its parent",
 						childForm.getFormId());
@@ -197,8 +196,8 @@ public class Form {
 			 * reset the sbf to re-use it
 			 */
 			sbf.setLength(WH.length());
-			for (String f : link.childLinkNames) {
-				Field field = form.getField(f);
+			for (final String f : link.childLinkNames) {
+				final Field field = form.getField(f);
 				if (field == null) {
 					logger.error(
 							"Child link field {} is specified in parent form, but is not defiined as a field in the child form {}",
@@ -232,7 +231,7 @@ public class Form {
 	/**
 	 * unique id assigned to this form. like customerDetails. This is unique
 	 * across all types of forms within a project
-	 * 
+	 *
 	 * @return non-null unique id
 	 */
 	public String getFormId() {
@@ -274,16 +273,16 @@ public class Form {
 	 * @param fieldName
 	 * @return data element or null if there is no such field
 	 */
-	public Field getField(String fieldName) {
+	public Field getField(final String fieldName) {
 		return this.fieldMap.get(fieldName);
 	}
 
 	/**
-	 * 
+	 *
 	 * @param childName
 	 * @return child-form structure that represents the sub-form in this form
 	 */
-	public ChildForm getChildForm(String childName) {
+	public ChildForm getChildForm(final String childName) {
 		return this.childMap.get(childName);
 	}
 
@@ -295,37 +294,37 @@ public class Form {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return db meta data for this form
 	 */
 	public DbMetaData getDbMetaData() {
 		return this.dbMetaData;
 	}
 
-	protected FormDbParam[] getParams(int[] indexes) {
-		FormDbParam[] params = new FormDbParam[indexes.length];
+	protected FormDbParam[] getParams(final int[] indexes) {
+		final FormDbParam[] params = new FormDbParam[indexes.length];
 		for (int i = 0; i < params.length; i++) {
-			int idx = indexes[i];
+			final int idx = indexes[i];
 			params[i] = new FormDbParam(idx, this.fields[idx].getValueType());
 		}
 		return params;
 	}
 
 	/**
-	 * 
+	 *
 	 * @param rows
 	 * @return child data for this form based on rows of data
 	 */
-	public FormData[] createChildData(Object[][] rows) {
-		FormData[] result = new FormData[rows.length];
+	public FormData[] createChildData(final Object[][] rows) {
+		final FormData[] result = new FormData[rows.length];
 		for (int i = 0; i < result.length; i++) {
 			result[i] = new FormData(this, rows[i], null);
 		}
 		return result;
 	}
 
-	protected DbLink newDbLink(String[] names, int[] indexes) {
-		DbLink c = new DbLink();
+	protected DbLink newDbLink(final String[] names, final int[] indexes) {
+		final DbLink c = new DbLink();
 		c.linkParentParams = this.getParams(indexes);
 		c.childLinkNames = names;
 		return c;
@@ -335,9 +334,9 @@ public class Form {
 	 * @return a data structure
 	 */
 	public FormData newFormData() {
-		Object[] row = new Object[this.fields.length];
-		for (Field field : this.fields) {
-			Object val = field.getDefaultValue();
+		final Object[] row = new Object[this.fields.length];
+		for (final Field field : this.fields) {
+			final Object val = field.getDefaultValue();
 			if (val != null) {
 				row[field.getIndex()] = val;
 			}
@@ -347,7 +346,7 @@ public class Form {
 
 	/**
 	 * parse the input into a filter clause
-	 * 
+	 *
 	 * @param conditions
 	 *            non-null {field1: {oper:"=", value:"abcd"...}
 	 * @param sorts
@@ -358,17 +357,17 @@ public class Form {
 	 *            mxRows to be read
 	 * @return filter clause that can be used to get rows from the db
 	 */
-	public SqlReader parseForFilter(JsonObject conditions, JsonObject sorts, List<Message> errors, IServiceContext ctx,
-			int maxRows) {
-		StringBuilder sql = new StringBuilder(this.dbMetaData.selectClause);
+	public SqlReader parseForFilter(final JsonObject conditions, final JsonObject sorts, final List<Message> errors,
+			final IServiceContext ctx, final int maxRows) {
+		final StringBuilder sql = new StringBuilder(this.dbMetaData.selectClause);
 		sql.append(" WHERE ");
-		List<FormDbParam> params = new ArrayList<>();
-		List<Object> values = new ArrayList<>();
+		final List<FormDbParam> params = new ArrayList<>();
+		final List<Object> values = new ArrayList<>();
 
 		/*
 		 * force a condition on tenant id id required
 		 */
-		Field tenant = this.dbMetaData.tenantField;
+		final Field tenant = this.dbMetaData.tenantField;
 		if (tenant != null) {
 			sql.append(tenant.getDbColumnName()).append("=?");
 			values.add(ctx.getTenantId());
@@ -379,145 +378,149 @@ public class Form {
 		 * fairly long inside the loop for each field. But it is more
 		 * serial code. Hence left it that way
 		 */
-		for (Map.Entry<String, JsonElement> entry : conditions.entrySet()) {
-			String fieldName = entry.getKey();
-			Field field = this.getField(fieldName);
-			if (field == null) {
-				logger.warn("Input has value for a field named {} that is not part of this form", fieldName);
-				continue;
-			}
+		if (conditions != null) {
+			for (final Map.Entry<String, JsonElement> entry : conditions.entrySet()) {
+				final String fieldName = entry.getKey();
+				final Field field = this.getField(fieldName);
+				if (field == null) {
+					logger.warn("Input has value for a field named {} that is not part of this form", fieldName);
+					continue;
+				}
 
-			JsonElement node = entry.getValue();
-			if (node == null || !node.isJsonObject()) {
-				logger.error("Filter condition for filed {} should be an object, but it is {}", fieldName, node);
-				errors.add(Message.newError(Message.MSG_INVALID_DATA));
-				return null;
-			}
+				final JsonElement node = entry.getValue();
+				if (node == null || !node.isJsonObject()) {
+					logger.error("Filter condition for filed {} should be an object, but it is {}", fieldName, node);
+					errors.add(Message.newError(Message.MSG_INVALID_DATA));
+					return null;
+				}
 
-			JsonObject con = (JsonObject) node;
+				final JsonObject con = (JsonObject) node;
 
-			JsonElement ele = con.get(Conventions.Http.TAG_FILTER_COMP);
-			if (ele == null || !ele.isJsonPrimitive()) {
-				logger.error("comp is missing for a filter condition");
-				errors.add(Message.newError(Message.MSG_INVALID_DATA));
-				return null;
-			}
-			String condnText = ele.getAsString();
-			FilterCondition condn = FilterCondition.parse(condnText);
-			if (condn == null) {
-				logger.error("{} is not a valid filter condition", condnText);
-				errors.add(Message.newError(Message.MSG_INVALID_DATA));
-				return null;
-			}
-
-			ele = con.get(Conventions.Http.TAG_FILTER_VALUE);
-			if (ele == null || !ele.isJsonPrimitive()) {
-				logger.error("value is missing for a filter condition");
-				errors.add(Message.newError(Message.MSG_INVALID_DATA));
-				return null;
-			}
-			String value = ele.getAsString();
-			String value2 = null;
-			if (condn == FilterCondition.Between) {
-				ele = con.get(Conventions.Http.TAG_FILTER_VALUE_TO);
+				JsonElement ele = con.get(Conventions.Http.TAG_FILTER_COMP);
 				if (ele == null || !ele.isJsonPrimitive()) {
-					logger.error("valueTo is missing for a filter condition");
+					logger.error("comp is missing for a filter condition");
 					errors.add(Message.newError(Message.MSG_INVALID_DATA));
 					return null;
 				}
-				value2 = ele.getAsString();
-			}
-
-			int idx = params.size();
-			if (idx > 0) {
-				sql.append(" and ");
-			}
-
-			sql.append(field.getDbColumnName());
-			ValueType vt = field.getValueType();
-			Object obj = null;
-			logger.info("Found a condition : field {} {} {} . value2={}",field.getFieldName(), condn.name(), value, value2);
-			/*
-			 * complex ones first.. we have to append ? to sql, and add type and
-			 * value to the lists for each case
-			 */
-			if ((condn == FilterCondition.Contains || condn == FilterCondition.StartsWith)) {
-				if (vt != ValueType.TEXT) {
-					logger.error("Condition {} is not a valid for field {} which is of value type {}", condn, fieldName,
-							vt);
+				final String condnText = ele.getAsString();
+				final FilterCondition condn = FilterCondition.parse(condnText);
+				if (condn == null) {
+					logger.error("{} is not a valid filter condition", condnText);
 					errors.add(Message.newError(Message.MSG_INVALID_DATA));
 					return null;
 				}
 
-				sql.append(LIKE);
-				params.add(new FormDbParam(idx++, vt));
-				value = escapeLike(value);
-				if (condn == FilterCondition.Contains) {
-					values.add(WILD_CARD + value + WILD_CARD);
-				} else {
-					values.add(WILD_CARD + value);
+				ele = con.get(Conventions.Http.TAG_FILTER_VALUE);
+				if (ele == null || !ele.isJsonPrimitive()) {
+					logger.error("value is missing for a filter condition");
+					errors.add(Message.newError(Message.MSG_INVALID_DATA));
+					return null;
 				}
-				continue;
-			}
-
-			if (condn == FilterCondition.In) {
-				sql.append(IN);
-				boolean firstOne = true;
-				for (String part : value.split(",")) {
-					obj = vt.parse(part.trim());
-					if (value == null) {
-						logger.error("{} is not a valid value for value type {} for field {}", value, vt, fieldName);
+				String value = ele.getAsString();
+				String value2 = null;
+				if (condn == FilterCondition.Between) {
+					ele = con.get(Conventions.Http.TAG_FILTER_VALUE_TO);
+					if (ele == null || !ele.isJsonPrimitive()) {
+						logger.error("valueTo is missing for a filter condition");
 						errors.add(Message.newError(Message.MSG_INVALID_DATA));
 						return null;
 					}
-					params.add(new FormDbParam(idx++, vt));
-					values.add(obj);
-					if (firstOne) {
-						sql.append('?');
-						firstOne = false;
-					} else {
-						sql.append(",?");
+					value2 = ele.getAsString();
+				}
+
+				int idx = params.size();
+				if (idx > 0) {
+					sql.append(" and ");
+				}
+
+				sql.append(field.getDbColumnName());
+				final ValueType vt = field.getValueType();
+				Object obj = null;
+				logger.info("Found a condition : field {} {} {} . value2={}", field.getFieldName(), condn.name(), value,
+						value2);
+				/*
+				 * complex ones first.. we have to append ? to sql, and add type
+				 * and
+				 * value to the lists for each case
+				 */
+				if ((condn == FilterCondition.Contains || condn == FilterCondition.StartsWith)) {
+					if (vt != ValueType.TEXT) {
+						logger.error("Condition {} is not a valid for field {} which is of value type {}", condn,
+								fieldName, vt);
+						errors.add(Message.newError(Message.MSG_INVALID_DATA));
+						return null;
 					}
-				}
-				sql.append(')');
-				continue;
-			}
 
-			obj = vt.parse(value);
-			if (value == null) {
-				logger.error("{} is not a valid value for value type {} for field {}", value, vt, fieldName);
-				errors.add(Message.newError(Message.MSG_INVALID_DATA));
-				return null;
-			}
-
-			if (condn == FilterCondition.Between) {
-				Object obj2 = null;
-				if (value2 != null) {
-					obj2 = vt.parse(value2);
+					sql.append(LIKE);
+					params.add(new FormDbParam(idx++, vt));
+					value = escapeLike(value);
+					if (condn == FilterCondition.Contains) {
+						values.add(WILD_CARD + value + WILD_CARD);
+					} else {
+						values.add(WILD_CARD + value);
+					}
+					continue;
 				}
-				if (obj2 == null) {
-					logger.error("{} is not a valid value for value type {} for field {}", value2, vt, fieldName);
+
+				if (condn == FilterCondition.In) {
+					sql.append(IN);
+					boolean firstOne = true;
+					for (final String part : value.split(",")) {
+						obj = vt.parse(part.trim());
+						if (value == null) {
+							logger.error("{} is not a valid value for value type {} for field {}", value, vt,
+									fieldName);
+							errors.add(Message.newError(Message.MSG_INVALID_DATA));
+							return null;
+						}
+						params.add(new FormDbParam(idx++, vt));
+						values.add(obj);
+						if (firstOne) {
+							sql.append('?');
+							firstOne = false;
+						} else {
+							sql.append(",?");
+						}
+					}
+					sql.append(')');
+					continue;
+				}
+
+				obj = vt.parse(value);
+				if (value == null) {
+					logger.error("{} is not a valid value for value type {} for field {}", value, vt, fieldName);
 					errors.add(Message.newError(Message.MSG_INVALID_DATA));
 					return null;
 				}
-				sql.append(BETWEEN);
+
+				if (condn == FilterCondition.Between) {
+					Object obj2 = null;
+					if (value2 != null) {
+						obj2 = vt.parse(value2);
+					}
+					if (obj2 == null) {
+						logger.error("{} is not a valid value for value type {} for field {}", value2, vt, fieldName);
+						errors.add(Message.newError(Message.MSG_INVALID_DATA));
+						return null;
+					}
+					sql.append(BETWEEN);
+					values.add(obj);
+					params.add(new FormDbParam(idx++, vt));
+					values.add(obj2);
+					params.add(new FormDbParam(idx++, vt));
+					continue;
+				}
+
+				sql.append(' ').append(condnText).append(" ?");
+				params.add(new FormDbParam(idx++, vt));
 				values.add(obj);
-				params.add(new FormDbParam(idx++, vt));
-				values.add(obj2);
-				params.add(new FormDbParam(idx++, vt));
-				continue;
 			}
-
-			sql.append(' ').append(condnText).append(" ?");
-			params.add(new FormDbParam(idx++, vt));
-			values.add(obj);
 		}
-
 		if (sorts != null) {
 			boolean isFirst = true;
-			for (Entry<String, JsonElement> entry : sorts.entrySet()) {
-				String f = entry.getKey();
-				Field field = this.fieldMap.get(f);
+			for (final Entry<String, JsonElement> entry : sorts.entrySet()) {
+				final String f = entry.getKey();
+				final Field field = this.fieldMap.get(f);
 				if (field == null) {
 					logger.error("{} is not a field in teh form. Sort order ignored");
 					continue;
@@ -534,18 +537,18 @@ public class Form {
 				}
 			}
 		}
-		String sqlText = sql.toString();
+		final String sqlText = sql.toString();
 		logger.info("Filter sql = {}", sqlText);
 		return new SqlReader(sql.toString(), params.toArray(new FormDbParam[0]), values.toArray(new Object[0]));
 	}
 
 	/**
 	 * NOTE: Does not work for MS-ACCESS. but we are fine with that!!!
-	 * 
+	 *
 	 * @param string
 	 * @return string that is escaped for a LIKE sql operation.
 	 */
-	private static String escapeLike(String string) {
+	private static String escapeLike(final String string) {
 		return string.replaceAll(WILD_CARD, ESCAPED_WILD_CARD).replaceAll(WILD_CHAR, ESCAPED_WILD_CHAR);
 	}
 
