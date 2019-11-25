@@ -841,7 +841,13 @@ public class FormData {
 		}
 	}
 
-	private void serialize(final JsonWriter gen) throws IOException {
+	/**
+	 * serialize using a JSON serializer
+	 * 
+	 * @param gen
+	 * @throws IOException
+	 */
+	public void serialize(final JsonWriter gen) throws IOException {
 		gen.beginObject();
 		this.writeFields(gen);
 		if (this.childData != null) {
