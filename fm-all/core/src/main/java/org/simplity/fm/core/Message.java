@@ -68,7 +68,7 @@ public class Message {
 	 * @return an error message for this message id
 	 */
 	public static Message newError(final String messageId) {
-		return new Message(MessageType.ERROR, messageId, null, null, null, -1);
+		return new Message(MessageType.Error, messageId, null, null, null, -1);
 	}
 
 	/**
@@ -76,7 +76,7 @@ public class Message {
 	 * @return a validation message based on the exception
 	 */
 	public static Message newValidationError(final InvalidValueException e) {
-		return new Message(MessageType.ERROR, e.getMessageId(), e.getFieldName(), e.getParams(), null, -1);
+		return new Message(MessageType.Error, e.getMessageId(), e.getFieldName(), e.getParams(), null, -1);
 	}
 
 	/**
@@ -86,7 +86,7 @@ public class Message {
 	 * @return a validation message when an input value fails validation
 	 */
 	public static Message newValidationError(final Field field, final String tableName, final int idx) {
-		return new Message(MessageType.ERROR, field.getMessageId(), field.getName(), null, tableName, idx);
+		return new Message(MessageType.Error, field.getMessageId(), field.getName(), null, tableName, idx);
 	}
 
 	/**
@@ -98,7 +98,7 @@ public class Message {
 	 * @return validation error message
 	 */
 	public static Message newFieldError(final String fieldName, final String messageId, final String... params) {
-		return new Message(MessageType.ERROR, messageId, fieldName, params, null, -1);
+		return new Message(MessageType.Error, messageId, fieldName, params, null, -1);
 	}
 
 	/**
@@ -119,7 +119,7 @@ public class Message {
 	 */
 	public static Message newObjectFieldError(final String fieldName, final String objectName, final String messageId,
 			final int rowNumber, final String... params) {
-		return new Message(MessageType.ERROR, messageId, fieldName, params, objectName, rowNumber);
+		return new Message(MessageType.Error, messageId, fieldName, params, objectName, rowNumber);
 	}
 
 	/**

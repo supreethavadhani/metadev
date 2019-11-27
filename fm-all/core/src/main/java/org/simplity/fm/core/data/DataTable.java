@@ -162,7 +162,7 @@ public class DataTable implements Iterable<DataRow> {
 	 * @throws SQLException
 	 */
 	public boolean fetch(final DbHandle handle, final FilterSql reader) throws SQLException {
-		this.dataTable = this.schema.getDbMetaData().filter(handle, reader.getSql(), reader.getWhereParams());
+		this.dataTable = this.schema.getDbAssistant().filter(handle, reader.getSql(), reader.getWhereParams());
 		return (this.dataTable.length > 0);
 	}
 
@@ -176,7 +176,7 @@ public class DataTable implements Iterable<DataRow> {
 	 * @throws SQLException
 	 */
 	public boolean update(final DbHandle handle) throws SQLException {
-		return this.schema.getDbMetaData().updateAll(handle, this.dataTable);
+		return this.schema.getDbAssistant().updateAll(handle, this.dataTable);
 	}
 
 	/**
@@ -189,7 +189,7 @@ public class DataTable implements Iterable<DataRow> {
 	 * @throws SQLException
 	 */
 	public boolean insert(final DbHandle handle) throws SQLException {
-		return this.schema.getDbMetaData().insertAll(handle, this.dataTable);
+		return this.schema.getDbAssistant().insertAll(handle, this.dataTable);
 	}
 
 	/**
@@ -203,7 +203,7 @@ public class DataTable implements Iterable<DataRow> {
 	 * @throws SQLException
 	 */
 	public boolean save(final DbHandle handle) throws SQLException {
-		return this.schema.getDbMetaData().saveAll(handle, this.dataTable);
+		return this.schema.getDbAssistant().saveAll(handle, this.dataTable);
 	}
 
 	/**

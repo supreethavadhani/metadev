@@ -20,9 +20,7 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.data;
-
-import org.simplity.fm.core.validn.IValidation;
+package org.simplity.fm.core.validn;
 
 /**
  * 

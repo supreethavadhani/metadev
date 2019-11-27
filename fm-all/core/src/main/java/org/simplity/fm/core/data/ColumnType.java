@@ -32,8 +32,8 @@ public enum ColumnType {
 	 */
 	PrimaryKey {
 		@Override
-		public boolean isRequired() {
-			return true;
+		public boolean isUpdated() {
+			return false;
 		}
 	},
 	/**
@@ -43,6 +43,11 @@ public enum ColumnType {
 	 */
 	GeneratedPrimaryKey {
 		@Override
+		public boolean isUpdated() {
+			return false;
+		}
+
+		@Override
 		public boolean isInserted() {
 			return false;
 		}
@@ -50,23 +55,53 @@ public enum ColumnType {
 	/**
 	 * tenant key is used in a multi-tenant product design.
 	 */
-	TenantKey,
+	TenantKey {
+		@Override
+		public boolean isUpdated() {
+			return false;
+		}
+
+		@Override
+		public boolean isRequired() {
+			return false;
+		}
+	},
 	/**
 	 * id of the user who created this field. (one of the "standard fields")
 	 */
-	CreatedBy,
+	CreatedBy {
+		@Override
+		public boolean isUpdated() {
+			return false;
+		}
+
+		@Override
+		public boolean isRequired() {
+			return false;
+		}
+	},
 	/**
 	 * time-stamp at creation. (one of the "standard fields"). This is not set
 	 * using a parameter, but using a sql-command
 	 */
-	CreatedAt,
+	CreatedAt {
+		@Override
+		public boolean isUpdated() {
+			return false;
+		}
+
+		@Override
+		public boolean isRequired() {
+			return false;
+		}
+	},
 	/**
 	 * id of user who modified this last. (one of the "standard fields")
 	 */
 	ModifiedBy {
 		@Override
-		public boolean isUpdated() {
-			return true;
+		public boolean isRequired() {
+			return false;
 		}
 	},
 	/**
@@ -75,31 +110,21 @@ public enum ColumnType {
 	 */
 	ModifiedAt {
 		@Override
-		public boolean isUpdated() {
-			return true;
+		public boolean isRequired() {
+			return false;
 		}
 	},
 	/**
 	 * data column, not key or special field
 	 */
-	RequiredData {
-		@Override
-		public boolean isUpdated() {
-			return true;
-		}
-
-		@Override
-		public boolean isRequired() {
-			return true;
-		}
-	},
+	RequiredData,
 	/**
 	 * data column, not key or special field
 	 */
 	OptionalData {
 		@Override
-		public boolean isUpdated() {
-			return true;
+		public boolean isRequired() {
+			return false;
 		}
 	};
 
@@ -110,7 +135,7 @@ public enum ColumnType {
 	 */
 	@SuppressWarnings("static-method")
 	public boolean isUpdated() {
-		return false;
+		return true;
 	}
 
 	/**
@@ -131,6 +156,6 @@ public enum ColumnType {
 	 */
 	@SuppressWarnings("static-method")
 	public boolean isRequired() {
-		return false;
+		return true;
 	}
 }

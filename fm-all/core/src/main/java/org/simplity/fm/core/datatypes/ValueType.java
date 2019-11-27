@@ -22,11 +22,9 @@
 
 package org.simplity.fm.core.datatypes;
 
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -43,7 +41,7 @@ public enum ValueType {
 	/**
 	 * text
 	 */
-	TEXT {
+	Text {
 		@Override
 		public String parse(final String value) {
 			return value;
@@ -70,7 +68,7 @@ public enum ValueType {
 	/**
 	 * whole number
 	 */
-	INTEGER {
+	Integer {
 		@Override
 		public Long parse(final String value) {
 			/*
@@ -111,7 +109,7 @@ public enum ValueType {
 	/**
 	 * whole number
 	 */
-	DECIMAL {
+	Decimal {
 		@Override
 		public Double parse(final String value) {
 			try {
@@ -149,7 +147,7 @@ public enum ValueType {
 	/**
 	 * boolean
 	 */
-	BOOLEAN {
+	Boolean {
 		@Override
 		public Boolean parse(final String value) {
 			if ("1".equals(value)) {
@@ -190,7 +188,7 @@ public enum ValueType {
 	 * Date as in calendar. No time, no time-zone. like a date-of-birth. Most
 	 * commonly used value-type amongst the three types
 	 */
-	DATE {
+	Date {
 		@Override
 		public LocalDate parse(final String value) {
 			try {
@@ -203,16 +201,16 @@ public enum ValueType {
 
 		@Override
 		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
-			Date date = null;
+			java.sql.Date date = null;
 			if (value != null) {
-				date = Date.valueOf((LocalDate) value);
+				date = java.sql.Date.valueOf((LocalDate) value);
 			}
 			ps.setDate(position, date);
 		}
 
 		@Override
 		public LocalDate getFromRs(final ResultSet rs, final int position) throws SQLException {
-			final Date date = rs.getDate(position);
+			final java.sql.Date date = rs.getDate(position);
 			if (date == null) {
 				return null;
 			}
@@ -224,7 +222,7 @@ public enum ValueType {
 	 * an instant of time. will show up as different date/time .based on the
 	 * locale. Likely candidate to represent most "date-time" fields
 	 */
-	TIMESTAMP {
+	Timestamp {
 		@Override
 		public Instant parse(final String value) {
 			try {
@@ -237,16 +235,16 @@ public enum ValueType {
 
 		@Override
 		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
-			Timestamp stamp = null;
+			java.sql.Timestamp stamp = null;
 			if (value != null) {
-				stamp = Timestamp.from((Instant) value);
+				stamp = java.sql.Timestamp.from((Instant) value);
 			}
 			ps.setTimestamp(position, stamp);
 		}
 
 		@Override
 		public Instant getFromRs(final ResultSet rs, final int position) throws SQLException {
-			final Timestamp stamp = rs.getTimestamp(position);
+			final java.sql.Timestamp stamp = rs.getTimestamp(position);
 			if (stamp == null) {
 				return null;
 			}

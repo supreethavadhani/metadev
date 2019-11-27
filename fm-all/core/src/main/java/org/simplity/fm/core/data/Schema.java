@@ -23,18 +23,18 @@
 package org.simplity.fm.core.data;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.function.Consumer;
 
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.datatypes.ValueType;
-import org.simplity.fm.core.rdb.FilterCondition;
+import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.RdbDriver;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.IServiceContext;
@@ -55,13 +55,6 @@ import com.google.gson.stream.JsonWriter;
  */
 public class Schema {
 	protected static final Logger logger = LoggerFactory.getLogger(Schema.class);
-	private static final String IN = " IN (";
-	private static final String LIKE = " LIKE ? escape '\\'";
-	private static final String BETWEEN = " BETWEEN ? and ?";
-	private static final String WILD_CARD = "%";
-	private static final String ESCAPED_WILD_CARD = "\\%";
-	private static final String WILD_CHAR = "_";
-	private static final String ESCAPED_WILD_CHAR = "\\_";
 	/**
 	 * name must be unique across tables and views
 	 */
@@ -100,7 +93,7 @@ public class Schema {
 	 * meta data required for db operations. null if this is not designed for db
 	 * operations
 	 */
-	protected DbMetaData dbMetaData;
+	protected DbAssistant dbAssistant;
 
 	/**
 	 * MUST BE CALLED after setting all protected fields
@@ -123,6 +116,18 @@ public class Schema {
 	}
 
 	/**
+	 *
+	 * @return tenant field, or null if this schema does not define a tenant
+	 *         field
+	 */
+	public DbField getTenantField() {
+		if (this.dbAssistant == null) {
+			return null;
+		}
+		return this.dbAssistant.tenantField;
+	}
+
+	/**
 	 * create FieldMetaData for each of the indexed fields
 	 *
 	 * @param indexes
@@ -130,10 +135,8 @@ public class Schema {
 	 */
 	protected FieldMetaData[] getParams(final int[] indexes) {
 		final FieldMetaData[] result = new FieldMetaData[indexes.length];
-		int idx = -1;
-		for (final int i : indexes) {
-			idx++;
-			result[idx] = new FieldMetaData(this.fields[i]);
+		for (int i = 0; i < indexes.length; i++) {
+			result[i] = new FieldMetaData(this.fields[indexes[i]]);
 		}
 		return result;
 	}
@@ -199,8 +202,8 @@ public class Schema {
 	/**
 	 * @return the dbMetaData
 	 */
-	public DbMetaData getDbMetaData() {
-		return this.dbMetaData;
+	public DbAssistant getDbAssistant() {
+		return this.dbAssistant;
 	}
 
 	/**
@@ -282,7 +285,7 @@ public class Schema {
 	 */
 	public DataRow parseKeys(final JsonObject json, final IServiceContext ctx) {
 		final DataRow dataRow = new DataRow(this);
-		final Object[] row = dataRow.getDataRow();
+		final Object[] row = dataRow.getRawData();
 		if (this.keyIndexes != null) {
 			for (final int idx : this.keyIndexes) {
 				final Field f = this.fields[idx];
@@ -290,19 +293,22 @@ public class Schema {
 				validateAndSet(f, value, row, idx, false, ctx, null, 0);
 			}
 		}
-		final Field field = this.dbMetaData.tenantField;
+		final Field field = this.getTenantField();
+
 		if (field != null) {
-			row[field.index] = ctx.getTenantId();
+			if (ctx == null) {
+				logger.error(
+						"Schema has tenant field, but no context isprovided to look it up. Tenant key not extracted to the data row");
+			} else {
+				row[field.index] = ctx.getTenantId();
+			}
 		}
 		return dataRow;
 	}
 
 	private static String getTextAttribute(final JsonObject json, final String fieldName) {
 		final JsonElement node = json.get(fieldName);
-		if (node == null) {
-			return null;
-		}
-		if (node.isJsonPrimitive()) {
+		if (node != null && node.isJsonPrimitive()) {
 			return node.getAsString();
 		}
 		return null;
@@ -328,7 +334,8 @@ public class Schema {
 	}
 
 	/**
-	 * only attr-value pairs are written object/array wrapper is to be manged by
+	 * only attr-value pairs are written object/array wrapper is to be managed
+	 * by
 	 * the caller
 	 *
 	 * @param row
@@ -342,15 +349,18 @@ public class Schema {
 				writer.nullValue();
 				continue;
 			}
+
 			final ValueType vt = field.getValueType();
-			if (vt == ValueType.INTEGER || vt == ValueType.DECIMAL) {
+			if (vt == ValueType.Integer || vt == ValueType.Decimal) {
 				writer.value((Number) value);
 				continue;
 			}
-			if (vt == ValueType.BOOLEAN) {
+
+			if (vt == ValueType.Boolean) {
 				writer.value((boolean) value);
 				continue;
 			}
+
 			writer.value(value.toString());
 		}
 
@@ -401,196 +411,11 @@ public class Schema {
 	 */
 	public FilterSql parseForFilter(final JsonObject conditions, final JsonObject sorts, final List<Message> errors,
 			final IServiceContext ctx, final int maxRows) {
-		final StringBuilder sql = new StringBuilder();
-		final List<PreparedStatementParam> params = new ArrayList<>();
-
-		/*
-		 * force a condition on tenant id if required
-		 */
-		final Field tenant = this.dbMetaData.tenantField;
-		if (tenant != null) {
-			sql.append(tenant.getColumnName()).append("=?");
-			params.add(new PreparedStatementParam(ctx.getTenantId(), tenant.getValueType()));
-		}
-
-		/*
-		 * fairly long inside the loop for each field. But it is more
-		 * serial code. Hence left it that way
-		 */
-		for (final Map.Entry<String, JsonElement> entry : conditions.entrySet()) {
-			final String fieldName = entry.getKey();
-			final DbField field = this.getField(fieldName);
-			if (field == null) {
-				logger.warn("Input has value for a field named {} that is not part of this form", fieldName);
-				continue;
-			}
-
-			final JsonElement node = entry.getValue();
-			if (node == null || !node.isJsonObject()) {
-				logger.error("Filter condition for filed {} should be an object, but it is {}", fieldName, node);
-				errors.add(Message.newError(Message.MSG_INVALID_DATA));
-				return null;
-			}
-
-			final JsonObject con = (JsonObject) node;
-
-			JsonElement ele = con.get(Conventions.Http.TAG_FILTER_COMP);
-			if (ele == null || !ele.isJsonPrimitive()) {
-				logger.error("comp is missing for a filter condition");
-				errors.add(Message.newError(Message.MSG_INVALID_DATA));
-				return null;
-			}
-			final String condnText = ele.getAsString();
-			final FilterCondition condn = FilterCondition.parse(condnText);
-			if (condn == null) {
-				logger.error("{} is not a valid filter condition", condnText);
-				errors.add(Message.newError(Message.MSG_INVALID_DATA));
-				return null;
-			}
-
-			ele = con.get(Conventions.Http.TAG_FILTER_VALUE);
-			if (ele == null || !ele.isJsonPrimitive()) {
-				logger.error("value is missing for a filter condition");
-				errors.add(Message.newError(Message.MSG_INVALID_DATA));
-				return null;
-			}
-			String value = ele.getAsString();
-			String value2 = null;
-			if (condn == FilterCondition.Between) {
-				ele = con.get(Conventions.Http.TAG_FILTER_VALUE_TO);
-				if (ele == null || !ele.isJsonPrimitive()) {
-					logger.error("valueTo is missing for a filter condition");
-					errors.add(Message.newError(Message.MSG_INVALID_DATA));
-					return null;
-				}
-				value2 = ele.getAsString();
-			}
-
-			final int idx = params.size();
-			if (idx > 0) {
-				sql.append(" and ");
-			}
-
-			sql.append(field.getColumnName());
-			final ValueType vt = field.getValueType();
-			Object obj = null;
-			logger.info("Found a condition : field {} {} {} . value2={}", field.getName(), condn.name(), value, value2);
-			/*
-			 * complex ones first.. we have to append ? to sql, and add type and
-			 * value to the lists for each case
-			 */
-			if ((condn == FilterCondition.Contains || condn == FilterCondition.StartsWith)) {
-				if (vt != ValueType.TEXT) {
-					logger.error("Condition {} is not a valid for field {} which is of value type {}", condn, fieldName,
-							vt);
-					errors.add(Message.newError(Message.MSG_INVALID_DATA));
-					return null;
-				}
-
-				sql.append(LIKE);
-				value = WILD_CARD + escapeLike(value);
-				if (condn == FilterCondition.Contains) {
-					value += WILD_CARD;
-				}
-				params.add(new PreparedStatementParam(value, vt));
-				continue;
-			}
-
-			if (condn == FilterCondition.In) {
-				sql.append(IN);
-				boolean firstOne = true;
-				for (final String part : value.split(",")) {
-					obj = vt.parse(part.trim());
-					if (value == null) {
-						logger.error("{} is not a valid value for value type {} for field {}", value, vt, fieldName);
-						errors.add(Message.newError(Message.MSG_INVALID_DATA));
-						return null;
-					}
-					if (firstOne) {
-						sql.append('?');
-						firstOne = false;
-					} else {
-						sql.append(",?");
-					}
-					params.add(new PreparedStatementParam(obj, vt));
-				}
-				sql.append(')');
-				continue;
-			}
-
-			obj = vt.parse(value);
-			if (value == null) {
-				logger.error("{} is not a valid value for value type {} for field {}", value, vt, fieldName);
-				errors.add(Message.newError(Message.MSG_INVALID_DATA));
-				return null;
-			}
-
-			if (condn == FilterCondition.Between) {
-				Object obj2 = null;
-				if (value2 != null) {
-					obj2 = vt.parse(value2);
-				}
-				if (obj2 == null) {
-					logger.error("{} is not a valid value for value type {} for field {}", value2, vt, fieldName);
-					errors.add(Message.newError(Message.MSG_INVALID_DATA));
-					return null;
-				}
-				sql.append(BETWEEN);
-				params.add(new PreparedStatementParam(obj, vt));
-				params.add(new PreparedStatementParam(obj2, vt));
-				continue;
-			}
-
-			sql.append(' ').append(condnText).append(" ?");
-			params.add(new PreparedStatementParam(obj, vt));
-		}
-
-		if (sorts != null) {
-			boolean isFirst = true;
-			for (final Entry<String, JsonElement> entry : sorts.entrySet()) {
-				final String f = entry.getKey();
-				final Field field = this.fieldsMap.get(f);
-				if (field == null) {
-					logger.error("{} is not a field in teh form. Sort order ignored");
-					continue;
-				}
-				if (isFirst) {
-					sql.append(" ORDER BY ");
-					isFirst = false;
-				} else {
-					sql.append(", ");
-				}
-				sql.append(field.getColumnName());
-				if (entry.getValue().getAsString().toLowerCase().startsWith("d")) {
-					sql.append(" DESC ");
-				}
-			}
-		}
-		/*
-		 * did we get anything at all?
-		 */
-		final String sqlText;
-		if (sql.length() == 0) {
-			logger.info("Filter has no conditions");
-			sqlText = "";
-		} else {
-			logger.info("Filter with {} parameters : {}", params.size(), sql.toString());
-			sqlText = " WHERE " + sql.toString();
-		}
-		return new FilterSql(sqlText, params.toArray(new PreparedStatementParam[0]));
+		return FilterSql.parse(conditions, sorts, this.fieldsMap, this.getTenantField(), ctx, maxRows);
 	}
 
 	/**
-	 * NOTE: Does not work for MS-ACCESS. but we are fine with that!!!
-	 *
-	 * @param string
-	 * @return string that is escaped for a LIKE sql operation.
-	 */
-	private static String escapeLike(final String string) {
-		return string.replaceAll(WILD_CARD, ESCAPED_WILD_CARD).replaceAll(WILD_CHAR, ESCAPED_WILD_CHAR);
-	}
-
-	/**
+	 * fetch data from the db.This method is suitable to be exposed as a service
 	 *
 	 * @param ctx
 	 * @param payload
@@ -626,6 +451,8 @@ public class Schema {
 	}
 
 	/**
+	 * update a row based on this schema. This method is used to expose a
+	 * service
 	 *
 	 * @param ctx
 	 * @param payload
@@ -653,6 +480,7 @@ public class Schema {
 	}
 
 	/**
+	 * service method to insert a row in the db
 	 *
 	 * @param ctx
 	 * @param payload
@@ -680,6 +508,7 @@ public class Schema {
 	}
 
 	/**
+	 * service method for filter operation
 	 *
 	 * @param ctx
 	 * @param payload
@@ -716,7 +545,7 @@ public class Schema {
 		final FilterSql reader = this.parseForFilter(conditions, sorts, msgs, ctx, nbrRows);
 
 		if (msgs.size() > 0) {
-			logger.warn("Filering aborted due to errors in nuput data");
+			logger.warn("Filtering aborted due to errors in input data");
 			ctx.addMessages(msgs);
 			return;
 		}
@@ -744,6 +573,7 @@ public class Schema {
 	}
 
 	/**
+	 * service metod for delete operation
 	 *
 	 * @param ctx
 	 * @param payload
@@ -771,6 +601,7 @@ public class Schema {
 	}
 
 	/**
+	 * service method for bulk operation
 	 *
 	 * @param ctx
 	 * @param payload
@@ -814,8 +645,8 @@ public class Schema {
 		}
 
 		switch (opern) {
-		case GET:
-			return new FormService(IoType.GET) {
+		case Get:
+			return new FormService(IoType.Get) {
 
 				@Override
 				public void serve(final IServiceContext ctx, final JsonObject inputPayload) throws Exception {
@@ -824,8 +655,8 @@ public class Schema {
 				}
 			};
 
-		case FILTER:
-			return new FormService(IoType.FILTER) {
+		case Filter:
+			return new FormService(IoType.Filter) {
 
 				@Override
 				public void serve(final IServiceContext ctx, final JsonObject inputPayload) throws Exception {
@@ -834,8 +665,8 @@ public class Schema {
 				}
 			};
 
-		case CREATE:
-			return new FormService(IoType.CREATE) {
+		case Create:
+			return new FormService(IoType.Create) {
 
 				@Override
 				public void serve(final IServiceContext ctx, final JsonObject inputPayload) throws Exception {
@@ -844,8 +675,8 @@ public class Schema {
 				}
 			};
 
-		case UPDATE:
-			return new FormService(IoType.UPDATE) {
+		case Update:
+			return new FormService(IoType.Update) {
 
 				@Override
 				public void serve(final IServiceContext ctx, final JsonObject inputPayload) throws Exception {
@@ -854,8 +685,8 @@ public class Schema {
 				}
 			};
 
-		case BULK:
-			return new FormService(IoType.BULK) {
+		case Bulk:
+			return new FormService(IoType.Bulk) {
 
 				@Override
 				public void serve(final IServiceContext ctx, final JsonObject inputPayload) throws Exception {
@@ -864,8 +695,8 @@ public class Schema {
 				}
 			};
 
-		case DELETE:
-			return new FormService(IoType.DELETE) {
+		case Delete:
+			return new FormService(IoType.Delete) {
 
 				@Override
 				public void serve(final IServiceContext ctx, final JsonObject inputPayload) throws Exception {
@@ -893,4 +724,20 @@ public class Schema {
 		}
 	}
 
+	/**
+	 * @param handle
+	 * @param whereClause
+	 * @param params
+	 * @return non-null, possibly empty, data table with the result of a select
+	 *         query on this schema with the supplied where clause
+	 * @throws SQLException
+	 */
+	public DataTable filter(final DbHandle handle, final String whereClause, final PreparedStatementParam[] params)
+			throws SQLException {
+		final Object[][] data = this.getDbAssistant().filter(handle, whereClause, params);
+		if (data.length == 0) {
+			return new DataTable(this);
+		}
+		return new DataTable(this, data);
+	}
 }

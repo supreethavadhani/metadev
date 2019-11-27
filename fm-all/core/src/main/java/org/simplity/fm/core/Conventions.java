@@ -202,6 +202,11 @@ public class Conventions {
 		public static final String FOLDER_NAME_LIST = "list";
 
 		/**
+		 * folder name under root package for custom classes to serve as runtime
+		 * list
+		 */
+		public static final String FOLDER_NAME_CUSTOM_LIST = "clist";
+		/**
 		 * folder name under which form classes are generated
 		 */
 		public static final String FOLDER_NAME_FORM = "form";

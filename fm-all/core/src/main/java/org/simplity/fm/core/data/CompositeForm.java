@@ -274,8 +274,8 @@ public class CompositeForm extends Form {
 		}
 
 		switch (opern) {
-		case GET:
-			return new FormService(IoType.GET) {
+		case Get:
+			return new FormService(IoType.Get) {
 
 				@Override
 				public void serve(final IServiceContext ctx, final JsonObject inputPayload) throws Exception {
@@ -284,8 +284,8 @@ public class CompositeForm extends Form {
 				}
 			};
 
-		case FILTER:
-			return new FormService(IoType.FILTER) {
+		case Filter:
+			return new FormService(IoType.Filter) {
 
 				@Override
 				public void serve(final IServiceContext ctx, final JsonObject inputPayload) throws Exception {
@@ -294,8 +294,8 @@ public class CompositeForm extends Form {
 				}
 			};
 
-		case CREATE:
-			return new FormService(IoType.CREATE) {
+		case Create:
+			return new FormService(IoType.Create) {
 
 				@Override
 				public void serve(final IServiceContext ctx, final JsonObject inputPayload) throws Exception {
@@ -304,8 +304,8 @@ public class CompositeForm extends Form {
 				}
 			};
 
-		case UPDATE:
-			return new FormService(IoType.UPDATE) {
+		case Update:
+			return new FormService(IoType.Update) {
 
 				@Override
 				public void serve(final IServiceContext ctx, final JsonObject inputPayload) throws Exception {
@@ -314,12 +314,12 @@ public class CompositeForm extends Form {
 				}
 			};
 
-		case BULK:
+		case Bulk:
 			logger.info("Bulk operation not allowed on composite form");
 			return null;
 
-		case DELETE:
-			return new FormService(IoType.DELETE) {
+		case Delete:
+			return new FormService(IoType.Delete) {
 
 				@Override
 				public void serve(final IServiceContext ctx, final JsonObject inputPayload) throws Exception {

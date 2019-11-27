@@ -41,7 +41,7 @@ public class TextType extends DataType {
 	 * @param regex
 	 */
 	public TextType(String name, String messageId, int minLength, int maxLength, String regex) {
-		this.valueType = ValueType.TEXT;
+		this.valueType = ValueType.Text;
 		this.minLength = minLength;
 		this.maxLength = maxLength;
 		this.messageId = messageId;

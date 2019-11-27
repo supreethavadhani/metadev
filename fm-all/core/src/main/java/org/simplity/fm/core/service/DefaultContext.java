@@ -92,7 +92,7 @@ public class DefaultContext implements IServiceContext {
 		if (message == null) {
 			return;
 		}
-		if (message.messageType == MessageType.ERROR) {
+		if (message.messageType == MessageType.Error) {
 			this.nbrErrors++;
 		}
 		this.messages.add(message);

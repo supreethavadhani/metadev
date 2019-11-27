@@ -85,7 +85,7 @@ public class DataRow {
 	/**
 	 * @return field values
 	 */
-	public Object[] getDataRow() {
+	public Object[] getRawData() {
 		return this.dataRow;
 	}
 
@@ -147,13 +147,21 @@ public class DataRow {
 	/**
 	 *
 	 * @param idx
-	 * @return get value at this index as long. 0 if the indexis not valid, or
+	 * @return get value at this index as long. 0 if the index is not valid, or
 	 *         the value is not long
 	 */
 	public long getLongValue(final int idx) {
 		final Object obj = this.getObject(idx);
-		if (obj != null && obj instanceof Number) {
+		if (obj == null) {
+			return 0;
+		}
+		if (obj instanceof Number) {
 			return ((Number) obj).longValue();
+		}
+		try {
+			return Long.parseLong(obj.toString());
+		} catch (final Exception e) {
+			//
 		}
 		return 0;
 	}
@@ -176,18 +184,18 @@ public class DataRow {
 
 		final ValueType vt = field.getValueType();
 
-		if (vt == ValueType.INTEGER) {
+		if (vt == ValueType.Integer) {
 			this.dataRow[idx] = value;
 			return true;
 		}
 
-		if (vt == ValueType.DECIMAL) {
+		if (vt == ValueType.Decimal) {
 			final double d = value;
 			this.dataRow[idx] = d;
 			return true;
 		}
 
-		if (vt == ValueType.TEXT) {
+		if (vt == ValueType.Text) {
 
 			this.dataRow[idx] = "" + value;
 			return true;
@@ -226,7 +234,7 @@ public class DataRow {
 
 		final ValueType vt = this.schema.getField(idx).getValueType();
 
-		if (vt == ValueType.TEXT) {
+		if (vt == ValueType.Text) {
 			this.dataRow[idx] = value;
 			return true;
 		}
@@ -249,8 +257,16 @@ public class DataRow {
 	 */
 	public LocalDate getDateValue(final int idx) {
 		final Object obj = this.getObject(idx);
-		if (obj != null && obj instanceof LocalDate) {
+		if (obj == null) {
+			return null;
+		}
+		if (obj instanceof LocalDate) {
 			return (LocalDate) obj;
+		}
+		try {
+			return LocalDate.parse(obj.toString());
+		} catch (final Exception e) {
+			//
 		}
 		return null;
 	}
@@ -272,12 +288,12 @@ public class DataRow {
 
 		final ValueType vt = this.schema.getField(idx).getValueType();
 
-		if (vt == ValueType.DATE) {
+		if (vt == ValueType.Date) {
 			this.dataRow[idx] = value;
 			return true;
 		}
 
-		if (vt == ValueType.TEXT) {
+		if (vt == ValueType.Text) {
 			this.dataRow[idx] = value.toString();
 			return true;
 		}
@@ -292,12 +308,16 @@ public class DataRow {
 	 *            field is null,or the field is not boolean.
 	 */
 	public boolean getBoolValue(final int idx) {
-		final Object obj = this.getObject(idx);
+		Object obj = this.getObject(idx);
 		if (obj == null) {
 			return false;
 		}
 		if (obj instanceof Boolean) {
 			return (Boolean) obj;
+		}
+		obj = ValueType.Boolean.parse(obj.toString());
+		if (obj instanceof Boolean) {
+			return (boolean) obj;
 		}
 		return false;
 	}
@@ -319,12 +339,12 @@ public class DataRow {
 
 		final ValueType vt = this.schema.getField(idx).getValueType();
 
-		if (vt == ValueType.BOOLEAN) {
+		if (vt == ValueType.Boolean) {
 			this.dataRow[idx] = value;
 			return true;
 		}
 
-		if (vt == ValueType.TEXT) {
+		if (vt == ValueType.Text) {
 			this.dataRow[idx] = "" + value;
 			return true;
 		}
@@ -349,6 +369,11 @@ public class DataRow {
 			return ((Number) obj).doubleValue();
 		}
 
+		try {
+			Double.parseDouble(obj.toString());
+		} catch (final Exception e) {
+			//
+		}
 		return 0;
 	}
 
@@ -368,17 +393,17 @@ public class DataRow {
 		}
 
 		final ValueType vt = this.schema.getField(idx).getValueType();
-		if (vt == ValueType.DECIMAL) {
+		if (vt == ValueType.Decimal) {
 			this.dataRow[idx] = value;
 			return true;
 		}
 
-		if (vt == ValueType.INTEGER) {
+		if (vt == ValueType.Integer) {
 			this.dataRow[idx] = ((Number) value).longValue();
 			return true;
 		}
 
-		if (vt == ValueType.TEXT) {
+		if (vt == ValueType.Text) {
 			this.dataRow[idx] = "" + value;
 			return true;
 		}
@@ -397,8 +422,19 @@ public class DataRow {
 	 */
 	public Instant getTimestamp(final int idx) {
 		final Object obj = this.getObject(idx);
-		if (obj != null && obj instanceof Instant) {
+		if (obj == null) {
+			return null;
+		}
+		if (obj instanceof Instant) {
 			return (Instant) obj;
+		}
+		if (obj instanceof String) {
+
+			try {
+				return Instant.parse(obj.toString());
+			} catch (final Exception e) {
+				//
+			}
 		}
 		return null;
 	}
@@ -420,12 +456,12 @@ public class DataRow {
 
 		final ValueType vt = this.schema.getField(idx).getValueType();
 
-		if (vt == ValueType.TIMESTAMP) {
+		if (vt == ValueType.Timestamp) {
 			this.dataRow[idx] = value;
 			return true;
 		}
 
-		if (vt == ValueType.TEXT) {
+		if (vt == ValueType.Text) {
 			this.dataRow[idx] = value.toString();
 			return true;
 		}
@@ -445,6 +481,14 @@ public class DataRow {
 		}
 	}
 
+	/**
+	 * @param writer
+	 * @throws IOException
+	 */
+	public void serializeFields(final JsonWriter writer) throws IOException {
+		this.schema.serializeToJson(this.dataRow, writer);
+	}
+
 	/*
 	 * ************ DB Operations ************
 	 */
@@ -458,12 +502,12 @@ public class DataRow {
 	 * @throws SQLException
 	 */
 	public boolean insert(final DbHandle handle) throws SQLException {
-		final DbMetaData meta = this.schema.getDbMetaData();
-		if (meta == null) {
+		final DbAssistant asst = this.schema.getDbAssistant();
+		if (asst == null) {
 			this.noOps();
 			return false;
 		}
-		return meta.insert(handle, this.dataRow);
+		return asst.insert(handle, this.dataRow);
 	}
 
 	private void noOps() {
@@ -480,12 +524,12 @@ public class DataRow {
 	 * @throws SQLException
 	 */
 	public boolean update(final DbHandle handle) throws SQLException {
-		final DbMetaData meta = this.schema.getDbMetaData();
-		if (meta == null) {
+		final DbAssistant asst = this.schema.getDbAssistant();
+		if (asst == null) {
 			this.noOps();
 			return false;
 		}
-		return meta.update(handle, this.dataRow);
+		return asst.update(handle, this.dataRow);
 	}
 
 	/**
@@ -497,12 +541,12 @@ public class DataRow {
 	 * @throws SQLException
 	 */
 	public boolean deleteFromDb(final DbHandle handle) throws SQLException {
-		final DbMetaData meta = this.schema.getDbMetaData();
-		if (meta == null) {
+		final DbAssistant asst = this.schema.getDbAssistant();
+		if (asst == null) {
 			this.noOps();
 			return false;
 		}
-		return meta.deleteFromDb(handle, this.dataRow);
+		return asst.deleteFromDb(handle, this.dataRow);
 	}
 
 	/**
@@ -515,12 +559,12 @@ public class DataRow {
 	 * @throws SQLException
 	 */
 	public boolean fetch(final DbHandle handle) throws SQLException {
-		final DbMetaData meta = this.schema.getDbMetaData();
-		if (meta == null) {
+		final DbAssistant asst = this.schema.getDbAssistant();
+		if (asst == null) {
 			this.noOps();
 			return false;
 		}
-		return meta.fetch(handle, this.dataRow);
+		return asst.fetch(handle, this.dataRow);
 	}
 
 	/**
@@ -537,11 +581,11 @@ public class DataRow {
 	 * @throws SQLException
 	 */
 	public boolean fetchFirstRow(final DbHandle handle, final FilterSql sql) throws SQLException {
-		final DbMetaData meta = this.schema.getDbMetaData();
-		if (meta == null) {
+		final DbAssistant asst = this.schema.getDbAssistant();
+		if (asst == null) {
 			this.noOps();
 			return false;
 		}
-		return meta.fetchFirstRow(handle, sql.getSql(), sql.getWhereParams(), this.dataRow);
+		return asst.fetchFirstRow(handle, sql.getSql(), sql.getWhereParams(), this.dataRow);
 	}
 }

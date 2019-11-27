@@ -34,14 +34,14 @@ public class BooleanType extends DataType {
 	 * @param messageId
 	 */
 	public BooleanType(String name, String messageId) {
-		this.valueType = ValueType.BOOLEAN;
+		this.valueType = ValueType.Boolean;
 		this.name = name;
 		this.messageId = messageId;
 	}
 
 	@Override
 	public Boolean parse(String value) {
-		return (Boolean)ValueType.BOOLEAN.parse(value);
+		return (Boolean)ValueType.Boolean.parse(value);
 	}
 	
 	@Override
@@ -49,6 +49,6 @@ public class BooleanType extends DataType {
 		if(value instanceof Boolean) {
 			return (Boolean)value;
 		}
-		return (Boolean)ValueType.BOOLEAN.parse(value.toString());
+		return (Boolean)ValueType.Boolean.parse(value.toString());
 	}
 }

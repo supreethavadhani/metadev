@@ -37,11 +37,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * assistant to a Form/schema to save-to or extract-from db. Generated classes
+ * for form/schema include code to have the right instance of this assistant.
+ * That is, the generator takes care of setting all the attributes of this
+ * instance.
+ *
+ * <p>
+ * NOTE: We do not expect user code to create instance of this class. The
+ * constructor is scary enough for any programmer to run away
+ * </p>
+ *
  * @author simplity.org
  *
  */
-public class DbMetaData {
-	protected static final Logger logger = LoggerFactory.getLogger(DbMetaData.class);
+public class DbAssistant {
+	protected static final Logger logger = LoggerFactory.getLogger(DbAssistant.class);
 	/**
 	 * e.g. where a=? and b=?
 	 */
@@ -97,13 +107,13 @@ public class DbMetaData {
 	 * if this APP is designed for multi-tenant deployment, and this table has
 	 * data across tenants..
 	 */
-	protected final Field tenantField;
+	protected final DbField tenantField;
 
 	/**
 	 * if this table allows update, and needs to use time-stamp-match technique
 	 * to avoid concurrent updates..
 	 */
-	protected final Field timestampField;
+	protected final DbField timestampField;
 
 	/**
 	 * number of fields in the schema to which this meta data is attached
@@ -111,14 +121,15 @@ public class DbMetaData {
 	protected final int nbrFieldsInARow;
 
 	/**
-	 * constructor when there is no key. only filter will be allowed
+	 * Designed for code generation. Not to be used by the programmers
+	 * constructor when there is no primary key. only filter will be allowed
 	 *
 	 * @param nbrFieldsInARow
 	 * @param tenantField
 	 * @param selectClause
 	 * @param selectParams
 	 */
-	public DbMetaData(final int nbrFieldsInARow, final Field tenantField, final String selectClause,
+	public DbAssistant(final int nbrFieldsInARow, final DbField tenantField, final String selectClause,
 			final FieldMetaData[] selectParams) {
 		this.nbrFieldsInARow = nbrFieldsInARow;
 		this.tenantField = tenantField;
@@ -137,6 +148,11 @@ public class DbMetaData {
 	}
 
 	/**
+	 * Constructor with so many parameter!!
+	 * Designed for code generation. Not to be used by the programmers.
+	 *
+	 * Builder pattern not used because this is meant for generated code, and
+	 * not a programmer
 	 *
 	 * @param nbrFieldsInARow
 	 * @param tenantField
@@ -153,11 +169,11 @@ public class DbMetaData {
 	 * @param generatedKeyIdx
 	 * @param timestampField
 	 */
-	public DbMetaData(final int nbrFieldsInARow, final Field tenantField, final String selectClause,
+	public DbAssistant(final int nbrFieldsInARow, final DbField tenantField, final String selectClause,
 			final FieldMetaData[] selectParams, final String whereClause, final FieldMetaData[] whereParams,
 			final String insertClause, final FieldMetaData[] insertParams, final String updateClause,
 			final FieldMetaData[] updateParams, final String deleteClause, final String generatedColumnName,
-			final int generatedKeyIdx, final Field timestampField) {
+			final int generatedKeyIdx, final DbField timestampField) {
 		this.nbrFieldsInARow = nbrFieldsInARow;
 		this.tenantField = tenantField;
 		this.selectClause = selectClause;
@@ -186,50 +202,28 @@ public class DbMetaData {
 	 */
 	public boolean insert(final DbHandle handle, final Object[] values) throws SQLException {
 		int n = 0;
-		if (this.generatedColumnName != null) {
-			try {
-				final long[] generatedKeys = new long[1];
-				n = handle.insertAndGenerteKeys(new IDbWriter() {
-
-					@Override
-					public String getPreparedStatement() {
-						return DbMetaData.this.insertClause;
-					}
-
-					@Override
-					public boolean setParams(final PreparedStatement ps) throws SQLException {
-						int posn = 1;
-						final StringBuilder sbf = new StringBuilder("Parameter Values");
-						for (final FieldMetaData p : DbMetaData.this.insertParams) {
-							final Object value = values[p.idx];
-							p.valueType.setPsParam(ps, posn, value);
-							sbf.append('\n').append(posn).append('=').append(value);
-							posn++;
-						}
-						logger.info(sbf.toString());
-						return true;
-					}
-
-				}, this.generatedColumnName, generatedKeys);
-				final long id = generatedKeys[0];
-				if (id == 0) {
-					logger.error("DB handler did not return generated key");
-				} else {
-					values[this.generatedKeyIdx] = generatedKeys[0];
-					logger.info("Generated key {} assigned back to form data", id);
-				}
-			} catch (final SQLException e) {
-				final String msg = toMessage(e, this.insertClause, this.insertParams, values);
-				logger.error(msg);
-				throw new SQLException(msg, e);
-			}
-		} else {
+		if (this.generatedColumnName == null) {
 			n = writeWorker(handle, this.insertClause, this.insertParams, values);
+			return n > 0;
 		}
-		if (n == 0) {
-			return false;
+
+		try {
+			final long[] generatedKeys = new long[1];
+			n = handle.insertAndGenerteKeys(getWriter(this.insertClause, this.insertParams, values),
+					this.generatedColumnName, generatedKeys);
+			final long id = generatedKeys[0];
+			if (id == 0) {
+				logger.error("DB handler did not return generated key");
+			} else {
+				values[this.generatedKeyIdx] = generatedKeys[0];
+				logger.info("Generated key {} assigned back to form data", id);
+			}
+			return n > 0;
+		} catch (final SQLException e) {
+			final String msg = toMessage(e, this.insertClause, this.insertParams, values);
+			logger.error(msg);
+			throw new SQLException(msg, e);
 		}
-		return true;
 	}
 
 	/**
@@ -265,34 +259,37 @@ public class DbMetaData {
 	private static int writeWorker(final DbHandle handle, final String sql, final FieldMetaData[] params,
 			final Object[] values) throws SQLException {
 		try {
-			final int n = handle.write(new IDbWriter() {
-
-				@Override
-				public String getPreparedStatement() {
-					return sql;
-				}
-
-				@Override
-				public boolean setParams(final PreparedStatement ps) throws SQLException {
-					int posn = 1;
-					final StringBuilder sbf = new StringBuilder("Parameter Values");
-					for (final FieldMetaData p : params) {
-						final Object value = values[p.idx];
-						p.valueType.setPsParam(ps, posn, value);
-						sbf.append('\n').append(posn).append('=').append(value);
-						posn++;
-					}
-					logger.info(sbf.toString());
-					return true;
-				}
-
-			});
-			return n;
+			return handle.write(getWriter(sql, params, values));
 		} catch (final SQLException e) {
 			final String msg = toMessage(e, sql, params, values);
 			logger.error(msg);
 			throw new SQLException(msg, e);
 		}
+	}
+
+	private static IDbWriter getWriter(final String sql, final FieldMetaData[] params, final Object[] values) {
+		return new IDbWriter() {
+
+			@Override
+			public String getPreparedStatement() {
+				return sql;
+			}
+
+			@Override
+			public boolean setParams(final PreparedStatement ps) throws SQLException {
+				int posn = 1;
+				final StringBuilder sbf = new StringBuilder("Parameter Values");
+				for (final FieldMetaData p : params) {
+					final Object value = values[p.idx];
+					p.valueType.setPsParam(ps, posn, value);
+					sbf.append('\n').append(posn).append('=').append(value);
+					posn++;
+				}
+				logger.info(sbf.toString());
+				return true;
+			}
+
+		};
 	}
 
 	/**
@@ -305,32 +302,32 @@ public class DbMetaData {
 	 *
 	 * @param rows
 	 *            data to be saved
-	 * @return true if all ok. false in case of any problem, caller shoudl
+	 * @return true if all ok. false in case of any problem, caller should
 	 *         roll-back if this is false
 	 * @throws SQLException
 	 */
 	public boolean saveAll(final DbHandle handle, final Object[][] rows) throws SQLException {
 		if (this.generatedKeyIdx == -1) {
-			logger.error(
-					"This schema has no generated key, and hence meta-data can not determine whether to insert or update a row.");
-			return false;
+			logger.info("Schema has no generated key. Each rowis first updated, failing which it is inserted.");
+			return this.updateOrInsert(handle, rows);
 		}
 		final int nbrRows = rows.length;
 		/*
 		 * we create array with max length rather than list
 		 */
-		final Object[][] inserts = new Object[nbrRows][];
-		final Object[][] updates = new Object[nbrRows][];
+		Object[][] inserts = new Object[nbrRows][];
+		Object[][] updates = new Object[nbrRows][];
 		int nbrInserts = 0;
 		int nbrUpdates = 0;
 
 		for (final Object[] row : rows) {
-			if (row[this.generatedKeyIdx] == null) {
-				inserts[nbrInserts] = row;
-				nbrInserts++;
-			} else {
+			final Object key = row[this.generatedKeyIdx];
+			if (key != null && ((Long) key) != 0) {
 				updates[nbrUpdates] = row;
 				nbrUpdates++;
+			} else {
+				inserts[nbrInserts] = row;
+				nbrInserts++;
 			}
 		}
 
@@ -342,9 +339,29 @@ public class DbMetaData {
 			return this.updateAll(handle, rows);
 		}
 
-		final boolean insertOk = this.insertAll(handle, Arrays.copyOf(inserts, nbrInserts));
-		final boolean updateOk = this.updateAll(handle, Arrays.copyOf(updates, nbrUpdates));
+		inserts = Arrays.copyOf(inserts, nbrInserts);
+		updates = Arrays.copyOf(updates, nbrUpdates);
+		final boolean insertOk = writeMany(handle, this.insertClause, this.insertParams, inserts);
+		final boolean updateOk = writeMany(handle, this.updateClause, this.updateParams, updates);
+
 		return insertOk && updateOk;
+	}
+
+	private boolean updateOrInsert(final DbHandle handle, final Object[][] rows) throws SQLException {
+		for (final Object[] row : rows) {
+			final boolean updated = this.update(handle, row);
+			if (updated) {
+				continue;
+			}
+
+			final boolean inserted = this.insert(handle, row);
+			if (!inserted) {
+				logger.error(
+						"Row failed to update or insert but with no error. Consdering this as business error, and raising an error flag and rolling back the transaction ");
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -454,45 +471,54 @@ public class DbMetaData {
 	}
 
 	/**
-	 * fetch data for this form from a db
+	 * fetch data for this form from a db based on the primary key of this
+	 * schema
 	 *
 	 * @param handle
 	 * @param values
+	 *            values array associated with this DataRow. in case this is
+	 *            called from outside of a DataRow, then the length has to be
+	 *            enough to extract values
 	 *
 	 * @return true if it is read.false if no data found for this form (key not
 	 *         found...)
 	 * @throws SQLException
 	 */
 	public boolean fetch(final DbHandle handle, final Object[] values) throws SQLException {
+		if (values == null || values.length < this.nbrFieldsInARow) {
+			logger.error(
+					"This schema has {} fields but an array of length {} is assigned to receive data. Data not extracted.",
+					this.nbrFieldsInARow, values == null ? 0 : values.length);
+			return false;
+		}
+
 		final boolean[] result = new boolean[1];
 		handle.read(new IDbReader() {
 
 			@Override
 			public String getPreparedStatement() {
-				return DbMetaData.this.selectClause + DbMetaData.this.whereClause;
+				return DbAssistant.this.selectClause + DbAssistant.this.whereClause;
 			}
 
 			@Override
 			public void setParams(final PreparedStatement ps) throws SQLException {
-				int posn = 1;
-				final StringBuilder sbf = new StringBuilder("Parameter Values");
-				for (final FieldMetaData p : DbMetaData.this.whereParams) {
-					final Object value = values[p.idx];
-					p.valueType.setPsParam(ps, posn, value);
-					sbf.append('\n').append(posn).append('=').append(value);
-					posn++;
+				final int posn = 0;
+				for (final FieldMetaData p : DbAssistant.this.whereParams) {
+					p.valueType.setPsParam(ps, posn, values[p.idx]);
 				}
-				logger.info(sbf.toString());
 			}
 
 			@Override
 			public boolean readARow(final ResultSet rs) throws SQLException {
-				int posn = 1;
-				for (final FieldMetaData p : DbMetaData.this.selectParams) {
-					values[p.getIndex()] = p.getValueType().getFromRs(rs, posn);
+				int posn = 0;
+				for (final FieldMetaData p : DbAssistant.this.selectParams) {
 					posn++;
+					values[p.getIndex()] = p.getValueType().getFromRs(rs, posn);
 				}
 				result[0] = true;
+				/*
+				 * return false to askth edriver to stop reading.
+				 */
 				return false;
 			}
 		});
@@ -504,26 +530,34 @@ public class DbMetaData {
 	 *
 	 * @param handle
 	 * @param filterWhereClause
-	 *            like "WHERE a=? and b=?"
-	 * @param whereValues
-	 *            one for each parameter in the where clause
+	 *            like "WHERE a=? and b=?". possibly null if no where criterion
+	 *            is required
+	 * @param params
+	 *            one for each parameter in the where clause. null/empty array
+	 *            if no where clause is used
 	 * @return non-null, possibly empty array of rows
 	 * @throws SQLException
 	 */
 	public Object[][] filter(final DbHandle handle, final String filterWhereClause,
-			final PreparedStatementParam[] whereValues) throws SQLException {
+			final PreparedStatementParam[] params) throws SQLException {
 		final List<Object[]> result = new ArrayList<>();
 		handle.read(new IDbReader() {
 
 			@Override
 			public String getPreparedStatement() {
-				return DbMetaData.this.selectClause + filterWhereClause;
+				if (filterWhereClause == null) {
+					return DbAssistant.this.selectClause;
+				}
+				return DbAssistant.this.selectClause + filterWhereClause;
 			}
 
 			@Override
 			public void setParams(final PreparedStatement ps) throws SQLException {
+				if (params == null) {
+					return;
+				}
 				int posn = 0;
-				for (final PreparedStatementParam p : whereValues) {
+				for (final PreparedStatementParam p : params) {
 					posn++;
 					p.valueType.setPsParam(ps, posn, p.value);
 				}
@@ -531,10 +565,10 @@ public class DbMetaData {
 
 			@Override
 			public boolean readARow(final ResultSet rs) throws SQLException {
-				final Object[] row = new Object[DbMetaData.this.nbrFieldsInARow];
+				final Object[] row = new Object[DbAssistant.this.nbrFieldsInARow];
 				result.add(row);
 				int posn = 0;
-				for (final FieldMetaData p : DbMetaData.this.selectParams) {
+				for (final FieldMetaData p : DbAssistant.this.selectParams) {
 					posn++;
 					row[p.idx] = p.valueType.getFromRs(rs, posn);
 				}
@@ -545,40 +579,71 @@ public class DbMetaData {
 	}
 
 	/**
+	 * to be used when a select query is expected to get a single(or no) row,
+	 * though it is not a key-based read. It
+	 *
 	 * @param handle
 	 * @param filterWhere
+	 *            starts with " WHERE " and contains 0 or more ? as parameters.
+	 *            Can be null if no where clause is required, though this is
+	 *            extremely unlikely
 	 * @param params
+	 *            provides value type and actual values for each of the ? in the
+	 *            where clause. null if there are no parameters
 	 * @param values
+	 *            array to which output (selected) values are to be copied to.
+	 *            Length of this array should be at least the size of the
+	 *            form-fields.Typically, this is the underlying array of the
+	 *            form data
 	 * @return true if one row was read. false otherwise
 	 * @throws SQLException
 	 */
 	public boolean fetchFirstRow(final DbHandle handle, final String filterWhere, final PreparedStatementParam[] params,
 			final Object[] values) throws SQLException {
+		if (values == null || values.length < this.nbrFieldsInARow) {
+			logger.error(
+					"This schema has {} fields but an array of length {} is assigned to receive data. Data not extracted.",
+					this.nbrFieldsInARow, values == null ? 0 : values.length);
+			return false;
+		}
+
 		final boolean[] result = new boolean[1];
 		handle.read(new IDbReader() {
 
 			@Override
 			public String getPreparedStatement() {
-				return DbMetaData.this.selectClause + filterWhere;
+				if (filterWhere == null) {
+					return DbAssistant.this.selectClause;
+				}
+
+				return DbAssistant.this.selectClause + filterWhere;
 			}
 
 			@Override
 			public void setParams(final PreparedStatement ps) throws SQLException {
-				int posn = 1;
+				if (params == null) {
+					return;
+				}
+
+				int posn = 0;
 				for (final PreparedStatementParam p : params) {
-					p.valueType.setPsParam(ps, posn, p.value);
 					posn++;
+					p.valueType.setPsParam(ps, posn, p.value);
 				}
 			}
 
 			@Override
 			public boolean readARow(final ResultSet rs) throws SQLException {
-				int posn = 1;
-				for (final FieldMetaData p : DbMetaData.this.selectParams) {
-					values[p.getIndex()] = p.getValueType().getFromRs(rs, posn);
+				int posn = 0;
+				for (final FieldMetaData p : DbAssistant.this.selectParams) {
 					posn++;
+					values[p.getIndex()] = p.getValueType().getFromRs(rs, posn);
 				}
 				result[0] = true;
+				/*
+				 * return false to signal that we are not interested in reading
+				 * any more rows
+				 */
 				return false;
 			}
 		});

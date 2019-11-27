@@ -23,7 +23,7 @@
 package org.simplity.fm.core.data;
 
 /**
- * represents a parent row with one or more table data for child/ren
+ * represents a parent row with one or more table data for child/relatedrow
  *
  * @author simplity.org
  *

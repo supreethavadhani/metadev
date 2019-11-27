@@ -44,7 +44,7 @@ public class DecimalType extends DataType {
 	 * @param nbrDecimals
 	 */
 	public DecimalType(String name, String messageId, long minValue, long maxValue, int nbrDecimals) {
-		this.valueType = ValueType.DECIMAL;
+		this.valueType = ValueType.Decimal;
 		this.name = name;
 		this.messageId = messageId;
 		this.minValue = minValue;

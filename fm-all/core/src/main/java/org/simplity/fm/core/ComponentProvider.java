@@ -232,6 +232,7 @@ public abstract class ComponentProvider {
 		private final String schemaRoot;
 		private final String listRoot;
 		private final String serviceRoot;
+		private final String customListRoot;
 		private final String fnRoot;
 		private final IMessages messages;
 		private final Map<String, Form> forms = new HashMap<>();
@@ -247,6 +248,7 @@ public abstract class ComponentProvider {
 			this.formRoot = genRoot + Conventions.App.FOLDER_NAME_FORM + DOT;
 			this.schemaRoot = genRoot + Conventions.App.FOLDER_NAME_SCHEMA + DOT;
 			this.listRoot = genRoot + Conventions.App.FOLDER_NAME_LIST + DOT;
+			this.customListRoot = rootPackage + Conventions.App.FOLDER_NAME_CUSTOM_LIST + DOT;
 			this.serviceRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_SERVICE + DOT;
 			this.fnRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_FN + DOT;
 			/*
@@ -300,12 +302,18 @@ public abstract class ComponentProvider {
 			if (list != null) {
 				return list;
 			}
-			final String cls = this.listRoot + toClassName(listId);
+			final String clsName = toClassName(listId);
+			final String cls = this.listRoot + clsName;
 			try {
 				list = (IValueList) Class.forName(cls).newInstance();
 			} catch (final Exception e) {
-				logger.error("No list named {} because we could not locate class {}", listId, cls);
-				return null;
+				final String cls1 = this.customListRoot + clsName;
+				try {
+					list = (IValueList) Class.forName(cls1).newInstance();
+				} catch (final Exception e1) {
+					logger.error("No list named {} because we could not locate class {} or {}", listId, cls, cls1);
+					return null;
+				}
 			}
 			this.lists.put(listId, list);
 			return list;

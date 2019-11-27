@@ -125,6 +125,10 @@ public class LinkedForm {
 	void init(final Schema parentSchema) {
 		final Form form = ComponentProvider.getProvider().getForm(this.linkFormName);
 		this.linkedSchema = form.schema;
+		if (this.childLinkNames == null || this.childLinkNames.length == 0) {
+			return;
+		}
+
 		final StringBuilder sbf = new StringBuilder(" WHERE ");
 		final int nbr = this.parentLinkNames.length;
 		this.parentIndexes = new int[nbr];
@@ -156,11 +160,7 @@ public class LinkedForm {
 	public DataTable fetch(final DbHandle handle, final Object[] parentRow) throws SQLException {
 		final PreparedStatementParam[] params = this.createParams(parentRow);
 
-		final Object[][] data = this.linkedSchema.getDbMetaData().filter(handle, this.linkWhereClause, params);
-		if (data.length == 0) {
-			return new DataTable(this.linkedSchema);
-		}
-		return new DataTable(this.linkedSchema, data);
+		return this.linkedSchema.filter(handle, this.linkWhereClause, params);
 	}
 
 	private PreparedStatementParam[] createParams(final Object[] parentRow) {

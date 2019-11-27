@@ -32,25 +32,25 @@ public enum IoType {
 	/**
 	 * read/fetch/get  one row for the primary key 
 	 */
-	GET,
+	Get,
 	/**
 	 * insert/new/create one row
 	 */
-	CREATE,
+	Create,
 	/**
 	 * edit/update/save/submit one row based identified by primary key
 	 */
-	UPDATE,
+	Update,
 	/**
 	 * delete/remove/archive one row based on primary key
 	 */
-	DELETE,
+	Delete,
 	/**
 	 * filter rows based on filter criterion
 	 */
-	FILTER,
+	Filter,
 	/**
 	 * process an array of rows and add/modify them depending on the primry key
 	 */
-	BULK
+	Bulk
 }

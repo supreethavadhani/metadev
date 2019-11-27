@@ -45,7 +45,7 @@ public class DateType extends DataType {
 	 *            max. 100 means 100 days after today is the max
 	 */
 	public DateType(final String name, final String messageId, final int maxPastDays, final int maxFutureDays) {
-		this.valueType = ValueType.DATE;
+		this.valueType = ValueType.Date;
 		this.name = name;
 		this.messageId = messageId;
 		this.maxPastDays = maxPastDays;
