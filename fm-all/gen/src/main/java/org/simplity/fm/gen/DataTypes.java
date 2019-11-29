@@ -175,7 +175,7 @@ class DataTypes {
 			sbf.append(prefix).append("valueType: ").append(this.valueType.ordinal());
 			if (defaultValue != null) {
 				sbf.append(prefix).append("defaultValue: ");
-				if (this.valueType == ValueType.TEXT || this.valueType == ValueType.DATE) {
+				if (this.valueType == ValueType.Text || this.valueType == ValueType.Date) {
 					sbf.append(Util.escapeTs(defaultValue));
 				} else {
 					sbf.append(defaultValue);
@@ -196,7 +196,7 @@ class DataTypes {
 
 	protected static class BooleanType extends DataType {
 		BooleanType() {
-			this.valueType = ValueType.BOOLEAN;
+			this.valueType = ValueType.Boolean;
 		}
 
 		@Override
@@ -211,7 +211,7 @@ class DataTypes {
 		int maxFutureDays;
 
 		DateType() {
-			this.valueType = ValueType.DATE;
+			this.valueType = ValueType.Date;
 		}
 
 		@Override
@@ -232,7 +232,7 @@ class DataTypes {
 		long maxValue;
 
 		IntegerType() {
-			this.valueType = ValueType.INTEGER;
+			this.valueType = ValueType.Integer;
 		}
 
 		@Override
@@ -260,7 +260,7 @@ class DataTypes {
 		int nbrFractions;
 
 		DecimalType() {
-			this.valueType = ValueType.DECIMAL;
+			this.valueType = ValueType.Decimal;
 		}
 
 		@Override
@@ -286,7 +286,7 @@ class DataTypes {
 
 	protected static class TimestampType extends DataType {
 		TimestampType() {
-			this.valueType = ValueType.TIMESTAMP;
+			this.valueType = ValueType.Timestamp;
 		}
 
 		@Override
@@ -301,7 +301,7 @@ class DataTypes {
 		int maxLength;
 
 		TextType() {
-			this.valueType = ValueType.TEXT;
+			this.valueType = ValueType.Text;
 		}
 
 		@Override

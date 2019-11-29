@@ -22,6 +22,8 @@
 
 package org.simplity.fm.gen;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,12 +33,15 @@ import java.util.Set;
 
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.data.ColumnType;
-import org.simplity.fm.core.data.DbMetaData;
+import org.simplity.fm.core.data.DataRow;
+import org.simplity.fm.core.data.DbAssistant;
+import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.validn.DependentListValidation;
 import org.simplity.fm.core.validn.ExclusiveValidation;
 import org.simplity.fm.core.validn.FromToValidation;
 import org.simplity.fm.core.validn.IValidation;
 import org.simplity.fm.core.validn.InclusiveValidation;
+import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -255,7 +260,7 @@ class Schema {
 		Util.emitImport(sbf, org.simplity.fm.core.data.DbField.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.Schema.class);
 		Util.emitImport(sbf, IValidation.class);
-		Util.emitImport(sbf, DbMetaData.class);
+		Util.emitImport(sbf, DbAssistant.class);
 		Util.emitImport(sbf, ColumnType.class);
 
 		/*
@@ -302,8 +307,18 @@ class Schema {
 		sbf.append("\n\t\tthis.operations = OPS;");
 		this.emitDbMeta(sbf);
 		sbf.append("\n\t\tthis.initialize();");
+		sbf.append("\n\t}");
 
-		sbf.append("\n\t}\n}\n");
+		/*
+		 * reate new form data
+		 */
+		final String dataCls = cls + "Data";
+		sbf.append("\n\t/** @return specific instance **/");
+		sbf.append("\n\tpublic ").append(dataCls).append(" new").append(dataCls).append("(){");
+		sbf.append("\n\t\t return new ").append(dataCls).append("(this);");
+		sbf.append("\n\t}");
+
+		sbf.append("\n}\n");
 	}
 
 	private void emitJavaConstants(final StringBuilder sbf) {
@@ -321,7 +336,7 @@ class Schema {
 	private void emitDbStuff(final StringBuilder sbf) {
 		if (this.nameInDb == null || this.nameInDb.isEmpty()) {
 			logger.warn("dbName not set. no db related code generated for this form");
-			sbf.append("\n\n\tprivate void setDbMeta(){\n\t\t//\n\t}");
+			sbf.append("\n\n\tprivate void setDbAssistant(){\n\t\t//\n\t}");
 			return;
 		}
 
@@ -430,14 +445,14 @@ class Schema {
 
 	private void emitDbMeta(final StringBuilder sbf) {
 
-		sbf.append("\n\n\t\tthis.dbMetaData = ");
+		sbf.append("\n\n\t\tthis.dbAssistant = ");
 
 		if (this.nameInDb == null) {
 			sbf.append("null;");
 			return;
 		}
 
-		sbf.append("new DbMetaData(");
+		sbf.append("new DbAssistant(");
 		sbf.append(this.fields.length);
 		if (this.tenantField == null) {
 			sbf.append(", null");
@@ -638,5 +653,99 @@ class Schema {
 		if (valBuf.length() > 0) {
 			sbf.append("\n\t\tthis.validations = [").append(valBuf).append("];");
 		}
+	}
+
+	void emitJavaDataClass(final StringBuilder sbf, final String generatedPackage,
+			final Map<String, DataType> dataTypes) {
+		/*
+		 * our package name is rootPAckage + any prefix/qualifier in our name
+		 *
+		 * e.g. if name a.b.schema1 then prefix is a.b and className is Schema1
+		 */
+		final String cls = Util.toClassName(this.name) + "Data";
+		String pck = generatedPackage + ".schema";
+		final String qual = Util.getClassQualifier(this.name);
+		if (qual != null) {
+			pck += '.' + qual;
+		}
+		sbf.append("package ").append(pck).append(";\n");
+
+		/*
+		 * imports
+		 */
+		Util.emitImport(sbf, DataRow.class);
+		Util.emitImport(sbf, Instant.class);
+		Util.emitImport(sbf, LocalDate.class);
+		Util.emitImport(sbf, org.simplity.fm.core.data.Schema.class);
+
+		/*
+		 * class definition
+		 */
+
+		sbf.append("\n\n/**\n * class that represents structure of ").append(this.name);
+		sbf.append("\n */ ");
+		sbf.append("\npublic class ").append(cls).append(" extends DataRow {");
+
+		/*
+		 * constructors
+		 */
+		sbf.append("\n\t/** **/\n\tpublic ").append(cls).append("(final Schema schema) {\n\t\tsuper(schema);\n\t}");
+		sbf.append("\n\t/** **/\n\tpublic ").append(cls);
+		sbf.append("(final Schema schema,  final Object[] row) {\n\t\tsuper(schema, row);\n\t}");
+		/*
+		 * getters and setters
+		 */
+		this.emitJavaGettersAndSetters(sbf, dataTypes);
+		sbf.append("\n}\n");
+	}
+
+	private static final String[] JAVA_VALUE_TYPES = getJavaValueTypes();
+	private static final String[] JAVA_GET_TYPES = getJavaGetTypes();
+
+	/**
+	 * getters and setters for all the attributes of this schema
+	 */
+	private void emitJavaGettersAndSetters(final StringBuilder sbf, final Map<String, DataType> dataTypes) {
+		for (final DbField f : this.fields) {
+			final DataType dt = dataTypes.get(f.dataType);
+			final String typ = JAVA_VALUE_TYPES[dt.valueType.ordinal()];
+			final String get = JAVA_GET_TYPES[dt.valueType.ordinal()];
+			final String cls = Util.toClassName(f.name);
+
+			sbf.append("\n\t/** **/\n\tpublic void set").append(cls).append('(').append(typ).append(" value){");
+			sbf.append("\n\t\tthis.dataRow[").append(f.index).append("] = value;");
+			sbf.append("\n\t}");
+
+			sbf.append("\n\t/** **/\n\tpublic ").append(typ).append(" get").append(cls).append("(){");
+			sbf.append("\n\t\treturn super.get").append(get).append("Value(").append(f.index).append(");");
+			sbf.append("\n\t}");
+		}
+
+	}
+
+	private static String[] getJavaValueTypes() {
+		final ValueType[] types = ValueType.values();
+
+		final String[] result = new String[types.length];
+		result[ValueType.Boolean.ordinal()] = "boolean";
+		result[ValueType.Date.ordinal()] = "LocalDate";
+		result[ValueType.Decimal.ordinal()] = "double";
+		result[ValueType.Integer.ordinal()] = "long";
+		result[ValueType.Text.ordinal()] = "String";
+		result[ValueType.Timestamp.ordinal()] = "Instant";
+		return result;
+	}
+
+	private static String[] getJavaGetTypes() {
+		final ValueType[] types = ValueType.values();
+
+		final String[] result = new String[types.length];
+		result[ValueType.Boolean.ordinal()] = "Bool";
+		result[ValueType.Date.ordinal()] = "Date";
+		result[ValueType.Decimal.ordinal()] = "Decimal";
+		result[ValueType.Integer.ordinal()] = "Long";
+		result[ValueType.Text.ordinal()] = "String";
+		result[ValueType.Timestamp.ordinal()] = "Timestamp";
+		return result;
 	}
 }

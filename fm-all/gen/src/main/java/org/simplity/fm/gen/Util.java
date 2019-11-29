@@ -158,17 +158,17 @@ class Util {
 	 */
 	static Class<?> getDataTypeClass(final ValueType valueType) {
 		switch (valueType) {
-		case BOOLEAN:
+		case Boolean:
 			return BooleanType.class;
-		case DATE:
+		case Date:
 			return DateType.class;
-		case DECIMAL:
+		case Decimal:
 			return DecimalType.class;
-		case INTEGER:
+		case Integer:
 			return IntegerType.class;
-		case TEXT:
+		case Text:
 			return TextType.class;
-		case TIMESTAMP:
+		case Timestamp:
 			return TimestampType.class;
 		default:
 			logger.error("{} is not a known value type", valueType);
@@ -183,17 +183,17 @@ class Util {
 	 */
 	static int getValueTypeIdx(final ValueType valueType) {
 		switch (valueType) {
-		case TEXT:
+		case Text:
 			return 0;
-		case INTEGER:
+		case Integer:
 			return 1;
-		case DECIMAL:
+		case Decimal:
 			return 2;
-		case BOOLEAN:
+		case Boolean:
 			return 3;
-		case DATE:
+		case Date:
 			return 4;
-		case TIMESTAMP:
+		case Timestamp:
 			return 5;
 		default:
 			return -1;

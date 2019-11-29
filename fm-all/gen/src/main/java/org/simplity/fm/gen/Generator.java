@@ -213,10 +213,17 @@ public class Generator {
 			return null;
 		}
 		schema.init();
+
 		final StringBuilder sbf = new StringBuilder();
 		schema.emitJavaClass(sbf, packageName);
-		final String outName = generatedSourceRootFolder + "schema/" + Util.toClassName(fn) + ".java";
+		String outName = generatedSourceRootFolder + "schema/" + Util.toClassName(fn) + ".java";
 		Util.writeOut(outName, sbf);
+
+		sbf.setLength(0);
+		schema.emitJavaDataClass(sbf, packageName, dataTypes.dataTypes);
+		outName = generatedSourceRootFolder + "schema/" + Util.toClassName(fn) + "Data.java";
+		Util.writeOut(outName, sbf);
+
 		return schema;
 	}
 

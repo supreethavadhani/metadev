@@ -170,26 +170,15 @@ public class Form {
 		sbf.append("};");
 	}
 
+	private static final Map<String, Integer> OP_INDEXES = getOpIndexes();
+
 	static void getOps(final String[] dbOps, final StringBuilder sbf) {
 		final IoType[] types = IoType.values();
 		final boolean[] ops = new boolean[types.length];
 		if (dbOps != null) {
-			/*
-			 * we want to use a case-insensitive parsing enum names into a map
-			 * in lower case
-			 */
-			final Map<String, Integer> indexes = new HashMap<>();
-			for (final IoType iot : types) {
-				indexes.put(iot.name().toLowerCase(), iot.ordinal());
-			}
 
-			/*
-			 * now parse each of the operations and set the corresponding
-			 * boolean to
-			 * true
-			 */
 			for (final String op : dbOps) {
-				final Integer idx = indexes.get(op.toLowerCase());
+				final Integer idx = OP_INDEXES.get(op.toLowerCase());
 				if (idx == null) {
 					logger.error("{} is not a valid db operation (IoType). Ignored.");
 				} else {
@@ -208,6 +197,17 @@ public class Form {
 			sbf.append(b);
 		}
 		sbf.append("};");
+	}
+
+	/**
+	 * @return
+	 */
+	private static Map<String, Integer> getOpIndexes() {
+		final Map<String, Integer> indexes = new HashMap<>();
+		for (final IoType iot : IoType.values()) {
+			indexes.put(iot.name().toLowerCase(), iot.ordinal());
+		}
+		return indexes;
 	}
 
 	/**
@@ -294,17 +294,18 @@ public class Form {
 		if (this.dbOperations != null && this.dbOperations.length > 0) {
 			sbf.append("\n\t\tthis.opsAllowed = {");
 			boolean first = true;
-			for (final String op : this.dbOperations) {
-				try {
-					IoType.valueOf(op.trim().toUpperCase());
+			for (String op : this.dbOperations) {
+				op = op.trim().toLowerCase();
+				final Integer obj = OP_INDEXES.get(op);
+				if (obj == null) {
+					logger.error("{} is not a valid dbOperation. directive in allowDbOperations ignored", op);
+				} else {
 					if (first) {
 						first = false;
 					} else {
 						sbf.append(C);
 					}
-					sbf.append(op.trim().toLowerCase()).append(": true");
-				} catch (final Exception e) {
-					logger.error("{} is not a valid dbOperation. directive in allowDbOperations ignored", op);
+					sbf.append(op).append(": true");
 				}
 			}
 			sbf.append("};");
@@ -377,16 +378,16 @@ public class Form {
 			return "string";
 		}
 		switch (dt.valueType) {
-		case TEXT:
-		case DATE:
-		case TIMESTAMP:
+		case Text:
+		case Date:
+		case Timestamp:
 			return "string";
 
-		case INTEGER:
-		case DECIMAL:
+		case Integer:
+		case Decimal:
 			return "number";
 
-		case BOOLEAN:
+		case Boolean:
 			return "boolean";
 
 		default:

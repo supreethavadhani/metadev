@@ -36,7 +36,8 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.stream.JsonWriter;
 
 /**
- * data from (or for ) a db schema
+ * data from (or for ) a db schema. Must be instantiated from a Schema/Form
+ * instance
  *
  * @author simplity.org
  *
@@ -58,7 +59,7 @@ public class DataRow {
 	 * @param schema
 	 *            non-null
 	 */
-	public DataRow(final Schema schema) {
+	protected DataRow(final Schema schema) {
 		this.schema = schema;
 		this.dataRow = new Object[this.schema.getNbrFields()];
 	}
@@ -71,7 +72,7 @@ public class DataRow {
 	 *            non-null. note that the number and type of elements must be as
 	 *            per the schema, failing which a runtime exception is thrown
 	 */
-	public DataRow(final Schema schema, final Object[] row) {
+	protected DataRow(final Schema schema, final Object[] row) {
 		this.schema = schema;
 		final int nbrFields = schema.getNbrFields();
 		if (nbrFields == row.length) {
@@ -420,7 +421,7 @@ public class DataRow {
 	 *         an instant.
 	 *         field, or it has null value
 	 */
-	public Instant getTimestamp(final int idx) {
+	public Instant getTimestampValue(final int idx) {
 		final Object obj = this.getObject(idx);
 		if (obj == null) {
 			return null;
@@ -449,7 +450,7 @@ public class DataRow {
 	 * @return true if field exists, and is of Instant type. false otherwise,
 	 *         and the value is not set
 	 */
-	public boolean setTimestamp(final int idx, final Instant value) {
+	public boolean setTimestampValue(final int idx, final Instant value) {
 		if (!this.idxOk(idx)) {
 			return false;
 		}
