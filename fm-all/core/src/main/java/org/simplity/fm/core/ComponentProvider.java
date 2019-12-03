@@ -38,11 +38,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Uses ServiceLoader() to look for a provider, if a provider is not explicitly
- * set before any request is made.
- * Uses a default empty provider instead of throwing exception. That is, if no
- * provider is available, all requests will responded with null, after logging
- * an error message.
+ * Uses ServiceLoader() to look for a provider. Uses a default empty provider
+ * instead of throwing exception. That is, if no provider is available, all
+ * requests will responded with null, after logging an error message.
  *
  * @author simplity.org
  *
@@ -97,13 +95,34 @@ public abstract class ComponentProvider {
 	 */
 	public abstract Message getMessage(String messageId);
 
-	protected static final String ERROR = "Unable to locate IComponentProvider. No components areavailable for this run.";
+	protected static final String ERROR = "Unable to locate IComponentProvider. No components are available for this run.";
 	private static final char DOT = '.';
 	protected static final Logger logger = LoggerFactory.getLogger(ComponentProvider.class);
 
 	private static ComponentProvider instance = null;
 
 	/**
+	 * to be used either got Testing. Can also be used by the app to set this
+	 * instead of using the ServieLoader utility
+	 *
+	 * @param provider
+	 *            null to reset it to the default provider.(Default provider
+	 *            returns null components)
+	 * @return current ComponentProvider, null if provider was not set.
+	 */
+	public static ComponentProvider setProvider(final ComponentProvider provider) {
+		final ComponentProvider oldOne = instance;
+		if (provider == null) {
+			instance = getStandinProvider();
+		} else {
+			instance = provider;
+		}
+		return oldOne;
+	}
+
+	/**
+	 * Note: for testing purposes, this method can be effectively mocked by
+	 * using <code>setProvider</code>
 	 *
 	 * @return non-null component provider. A default provider if no provider is
 	 *         located on the class-path. this default provider will return null

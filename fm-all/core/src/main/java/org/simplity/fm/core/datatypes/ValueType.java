@@ -29,6 +29,7 @@ import java.sql.Types;
 import java.time.Instant;
 import java.time.LocalDate;
 
+import org.eclipse.jdt.annotation.NonNull;
 import org.simplity.fm.core.Conventions;
 
 /**
@@ -43,15 +44,17 @@ public enum ValueType {
 	 */
 	Text {
 		@Override
-		public String parse(final String value) {
+		public String doParse(final String value) {
 			return value;
 		}
 
 		@Override
 		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
-			String val = (String) value;
+			String val;
 			if (value == null) {
 				val = Conventions.Db.TEXT_VALUE_OF_NULL;
+			} else {
+				val = value.toString();
 			}
 			ps.setString(position, val);
 		}
@@ -70,7 +73,7 @@ public enum ValueType {
 	 */
 	Integer {
 		@Override
-		public Long parse(final String value) {
+		public Long doParse(final String value) {
 			/*
 			 * we are okay with decimals but we take the long value of that
 			 */
@@ -111,7 +114,7 @@ public enum ValueType {
 	 */
 	Decimal {
 		@Override
-		public Double parse(final String value) {
+		public Double doParse(final String value) {
 			try {
 				return Double.parseDouble(value);
 			} catch (final Exception e) {
@@ -149,30 +152,26 @@ public enum ValueType {
 	 */
 	Boolean {
 		@Override
-		public Boolean parse(final String value) {
-			if ("1".equals(value)) {
+		public Boolean doParse(final String value) {
+			switch (value.toLowerCase()) {
+			case "1":
+			case "true":
 				return true;
-			}
-			if ("0".equals(value)) {
+			case "0":
+			case "false":
 				return false;
+			default:
+				return null;
 			}
-			final String v = value.toUpperCase();
-			if ("TRUE".equals(v)) {
-				return true;
-			}
-			if ("FALSE".equals(v)) {
-				return true;
-			}
-			return null;
 		}
 
 		@Override
 		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
-			boolean val = false;
-			if (value != null) {
-				val = (boolean) value;
+			if (value == null) {
+				ps.setNull(position, Types.BOOLEAN);
+			} else {
+				ps.setBoolean(position, (boolean) value);
 			}
-			ps.setBoolean(position, val);
 		}
 
 		@Override
@@ -190,7 +189,7 @@ public enum ValueType {
 	 */
 	Date {
 		@Override
-		public LocalDate parse(final String value) {
+		public LocalDate doParse(final String value) {
 			try {
 				return LocalDate.parse(value);
 			} catch (final Exception e) {
@@ -224,7 +223,7 @@ public enum ValueType {
 	 */
 	Timestamp {
 		@Override
-		public Instant parse(final String value) {
+		public Instant doParse(final String value) {
 			try {
 				return Instant.parse(value);
 			} catch (final Exception e) {
@@ -256,11 +255,17 @@ public enum ValueType {
 	 * parse this value type from a string
 	 *
 	 * @param value
-	 *            non-null
-	 * @return parsed value of this type. null if value is null or the value can
-	 *         not be parsed to the desired type
+	 *            non-null to ensure that the caller can figure out whether the
+	 *            parse failed or not.
+	 *
+	 * @return parsed value of this type. null if value the value could not be
+	 *         parsed to the desired type
 	 */
-	public abstract Object parse(String value);
+	public Object parse(@NonNull final String value) {
+		return this.doParse(value.trim());
+	}
+
+	protected abstract Object doParse(@NonNull String value);
 
 	/**
 	 * @param ps
