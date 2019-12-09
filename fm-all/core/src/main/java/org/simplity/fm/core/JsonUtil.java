@@ -24,6 +24,13 @@ package org.simplity.fm.core;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.time.Instant;
+import java.time.LocalDate;
+
+import org.simplity.fm.core.datatypes.ValueType;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 /**
  * @author simplity.org
@@ -37,68 +44,72 @@ public class JsonUtil {
 	private static final String QS = "\"";
 	private static final String QQS = "\"\"";
 	private static final String NULL = "null";
-	
+
 	/**
 	 * write a 2d array of string
+	 * 
 	 * @param writer
 	 * @param arr
-	 * @throws IOException 
+	 * @throws IOException
 	 */
-	public static void write(Writer writer, Object[][] arr) throws IOException {
-		if(arr == null) {
+	public static void write(final Writer writer, final Object[][] arr) throws IOException {
+		if (arr == null) {
 			writer.write("[[]]");
 			return;
 		}
 		writer.write(OPEN_ARR);
 		boolean first = true;
-		for(Object[] row : arr) {
-			if(first) {
+		for (final Object[] row : arr) {
+			if (first) {
 				first = false;
-			}else {
+			} else {
 				writer.write(COMA);
 			}
 			write(writer, row);
 		}
 		writer.write(CLOS_ARR);
 	}
-	
+
 	/**
 	 * write an array of string
+	 * 
 	 * @param writer
 	 * @param arr
-	 * @throws IOException 
+	 * @throws IOException
 	 */
-	public static void write(Writer writer, Object[] arr) throws IOException {
-		if(arr ==null) {
+	public static void write(final Writer writer, final Object[] arr) throws IOException {
+		if (arr == null) {
 			writer.write("[]");
 			return;
 		}
 		writer.write(OPEN_ARR);
 		boolean first = true;
-		for(Object s : arr) {
-			if(first) {
-				first =false;
-			}else {
+		for (final Object s : arr) {
+			if (first) {
+				first = false;
+			} else {
 				writer.write(COMA);
 			}
 			write(writer, s);
 		}
 		writer.write(CLOS_ARR);
 	}
-	
+
 	/**
 	 * write a string
+	 * 
 	 * @param writer
-	 * @param primitive  value
-	 * @throws IOException 
+	 * @param primitive
+	 *            value
+	 * @throws IOException
 	 */
-	public static void write(Writer writer, Object primitive) throws IOException {
-		if(primitive == null) {
+	public static void write(final Writer writer, final Object primitive) throws IOException {
+		if (primitive == null) {
 			writer.write(NULL);
 			return;
 		}
-		String s = primitive.toString();
-		if(primitive instanceof Number || primitive instanceof Boolean) {
+		final String s = primitive.toString();
+		if (primitive instanceof Number || primitive instanceof Boolean) {
 			writer.write(primitive.toString());
 			return;
 		}
@@ -106,17 +117,96 @@ public class JsonUtil {
 		writer.write(s.replaceAll(QS, QQS));
 		writer.write(Q);
 	}
-	
+
 	/**
 	 * write a string
+	 * 
 	 * @param sbf
 	 * @param number
 	 */
-	public static void toJson(StringBuilder sbf, Number number) {
-		if(number == null) {
+	public static void toJson(final StringBuilder sbf, final Number number) {
+		if (number == null) {
 			sbf.append(NULL);
 			return;
 		}
-		sbf.append(""+number);
+		sbf.append("" + number);
 	}
+
+	/**
+	 * parse a primitive from json into boolean
+	 * 
+	 * @param json
+	 * @param attName
+	 * @return false if it is not a boolean
+	 */
+	public static boolean getBoolean(final JsonObject json, final String attName) {
+		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
+		if (ele == null) {
+			return false;
+		}
+		if (ele.isBoolean()) {
+			return ele.getAsBoolean();
+		}
+		return (boolean) ValueType.BOOLEAN.parse(ele.getAsString());
+	}
+
+	/**
+	 *
+	 * @param json
+	 * @param attName
+	 * @return 0 if it is not a number
+	 */
+	public static long getLong(final JsonObject json, final String attName) {
+		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
+		if (ele == null) {
+			return 0;
+		}
+		if (ele.isNumber()) {
+			return ele.getAsLong();
+		}
+		return (long) ValueType.INTEGER.parse(ele.getAsString());
+	}
+
+	/**
+	 *
+	 * @param json
+	 * @param attName
+	 * @return date or null
+	 */
+	public static LocalDate getDate(final JsonObject json, final String attName) {
+		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
+		if (ele == null) {
+			return null;
+		}
+		return (LocalDate) ValueType.DATE.parse(ele.getAsString());
+	}
+
+	/**
+	 *
+	 * @param json
+	 * @param attName
+	 * @return string or null
+	 */
+	public static String getSring(final JsonObject json, final String attName) {
+		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
+		if (ele == null) {
+			return null;
+		}
+		return ele.getAsString();
+	}
+
+	/**
+	 *
+	 * @param json
+	 * @param attName
+	 * @return time-stamp or null
+	 */
+	public static Instant getTimestamp(final JsonObject json, final String attName) {
+		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
+		if (ele == null) {
+			return null;
+		}
+		return (Instant) ValueType.TIMESTAMP.parse(ele.getAsString());
+	}
+
 }

@@ -668,7 +668,7 @@ public class FormData {
 		final ChildForm[] children = this.form.getChildForms();
 		if (children != null) {
 			for (int i = 0; i < children.length; i++) {
-				this.childData[i] = this.validateChild(children[i], json, allFieldsAreOptional, keyIsOptional, ctx);
+				this.childData[i] = this.validateChild(children[i], json, allFieldsAreOptional, forInsert, ctx);
 			}
 		}
 		if (!allFieldsAreOptional) {
@@ -843,7 +843,7 @@ public class FormData {
 
 	/**
 	 * serialize using a JSON serializer
-	 * 
+	 *
 	 * @param gen
 	 * @throws IOException
 	 */
@@ -958,7 +958,7 @@ public class FormData {
 					logger.error("DB handler did not return generated key");
 				} else {
 					this.fieldValues[this.form.keyIndexes[0]] = generatedKeys[0];
-					logger.info("Generated key {] assigned back to form data", id);
+					logger.info("Generated key {} assigned back to form data", id);
 				}
 			} catch (final SQLException e) {
 				final String msg = toMessage(e, meta.insertClause, meta.insertParams, values);
@@ -1280,6 +1280,7 @@ public class FormData {
 	public static FormData[] fetchDataWorker(final DbHandle handle, final Form form, final String sql,
 			final Object[] values, final FormDbParam[] setters, final FormDbParam[] getters) throws SQLException {
 		final List<FormData> result = new ArrayList<>();
+		logger.info("Fetch Worker SQL={}", sql);
 		handle.read(new IDbReader() {
 
 			@Override

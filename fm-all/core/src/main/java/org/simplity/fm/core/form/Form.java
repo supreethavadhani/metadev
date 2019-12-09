@@ -522,7 +522,7 @@ public class Form {
 				final String f = entry.getKey();
 				final Field field = this.fieldMap.get(f);
 				if (field == null) {
-					logger.error("{} is not a field in teh form. Sort order ignored");
+					logger.error("{} is not a field in teh form. Sort order ignored", f);
 					continue;
 				}
 				if (isFirst) {

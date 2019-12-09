@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * represents a Field row in fields sheet of a forms work book
- * 
+ *
  * @author simplity.org
  *
  */
@@ -56,7 +56,7 @@ class Field {
 	ColumnType columnType;
 	int index;
 
-	void emitJavaCode(StringBuilder sbf, String dataTypesName) {
+	void emitJavaCode(final StringBuilder sbf, final String dataTypesName) {
 		sbf.append("\n\t\t\tnew Field(\"").append(this.name).append('"');
 		sbf.append(C).append(this.index);
 		sbf.append(C).append(dataTypesName).append('.').append(this.dataType);
@@ -74,31 +74,32 @@ class Field {
 		}
 		sbf.append(C).append(Util.escape(this.dbColumnName));
 		sbf.append(C);
-		if(this.columnType == null) {
+		if (this.columnType == null) {
 			sbf.append("null");
-		}else {
+		} else {
 			sbf.append("ColumnType.").append(this.columnType.name());
 		}
 		sbf.append(')');
 	}
 
-	void emitJavaCodeSimple(StringBuilder sbf, String dataTypesName) {
+	void emitJavaCodeSimple(final StringBuilder sbf, final String dataTypesName) {
 		sbf.append("\n\t\t\tnew Field(\"").append(this.name).append('"');
 		sbf.append(C).append(this.index);
 		sbf.append(C).append(dataTypesName).append('.').append(this.dataType);
 		sbf.append(C).append(Util.escape(this.dbColumnName));
 		sbf.append(C);
-		if(this.columnType == null) {
+		if (this.columnType == null) {
 			sbf.append("null");
-		}else {
+		} else {
 			sbf.append("ColumnType.").append(this.columnType.name());
 		}
 		sbf.append(')');
 	}
 
-	void emitFg(StringBuilder sbf, DataType dt) {
+	void emitFg(final StringBuilder sbf, final DataType dt) {
 		if (dt == null) {
-			String msg = "Field " + this.name + " has an invalid data type of " + this.dataType + ". Field not added.";
+			final String msg = "Field " + this.name + " has an invalid data type of " + this.dataType
+					+ ". Field not added.";
 			logger.error(msg);
 			sbf.append("\n\t//ERROR: ").append(msg);
 			return;
@@ -106,7 +107,7 @@ class Field {
 		/*
 		 * validators
 		 */
-		List<String> vals = new ArrayList<>();
+		final List<String> vals = new ArrayList<>();
 		if (this.isRequired) {
 			vals.add("Validators.required");
 		}
@@ -121,7 +122,7 @@ class Field {
 			if (dt.regex != null && dt.regex.isEmpty() == false) {
 				vals.add("Validators.pattern(" + Util.escapeTs(dt.regex) + ")");
 			}
-			if (dt.minLength != 0) {
+			if (this.isRequired && dt.minLength != 0) {
 				vals.add("Validators.minLength(" + dt.minLength + ")");
 			}
 			if (dt.maxLength != 0) {
@@ -129,7 +130,7 @@ class Field {
 			}
 		}
 		boolean isFirst = true;
-		for (String s : vals) {
+		for (final String s : vals) {
 			if (isFirst) {
 				isFirst = false;
 			} else {
@@ -139,10 +140,11 @@ class Field {
 		}
 	}
 
-	void emitTs(StringBuilder sbf, DataType dt, Map<String, ValueList> valueLists,
-			Map<String, KeyedList> keyedLists) {
+	void emitTs(final StringBuilder sbf, final DataType dt, final Map<String, ValueList> valueLists,
+			final Map<String, KeyedList> keyedLists) {
 		if (dt == null) {
-			String msg = "Field " + this.name + " has an invalid data type of " + this.dataType + ". Field not added.";
+			final String msg = "Field " + this.name + " has an invalid data type of " + this.dataType
+					+ ". Field not added.";
 			logger.error(msg);
 			sbf.append("\n\t//ERROR: ").append(msg);
 			return;
@@ -175,7 +177,7 @@ class Field {
 		emitAttr(sbf, "listKey", this.listKey);
 		if (this.listName != null) {
 			if (this.listKey == null) {
-				ValueList list = valueLists.get(this.listName);
+				final ValueList list = valueLists.get(this.listName);
 				if (list == null) {
 					Form.logger.info("values not defined for {}. It is treated as a run-time list.", this.listName);
 				} else {
@@ -184,7 +186,7 @@ class Field {
 					sbf.append("\n\t\t\t]");
 				}
 			} else {
-				KeyedList list = keyedLists.get(this.listName);
+				final KeyedList list = keyedLists.get(this.listName);
 				if (list == null) {
 					Form.logger.info("keyed-list of values not defined for {}. It is treated as a run-time list.",
 							this.listName);
@@ -198,7 +200,7 @@ class Field {
 		sbf.append("\n\t};");
 	}
 
-	private static void emitAttr(StringBuilder sbf, String attr, Object value) {
+	private static void emitAttr(final StringBuilder sbf, final String attr, final Object value) {
 		if (value == null) {
 			return;
 		}
