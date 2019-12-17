@@ -280,4 +280,60 @@ public enum ValueType {
 	 * @throws SQLException
 	 */
 	public abstract Object getFromRs(ResultSet rs, int position) throws SQLException;
+
+	/**
+	 *
+	 * @param object
+	 *            must be non-null. must be one of String, Long, Double, Boolean
+	 *            LocalDate or Instant
+	 * @return value type
+	 * @throws SQLException
+	 *             if value is null or of type that is not valid type for a
+	 *             parameter of a prepared statement. SqlException is thrown
+	 *             because the code that calls this is very likely to throw that
+	 *             anyways
+	 */
+	public static ValueType getValueTypeFor(final Object object) throws SQLException {
+		if (object == null) {
+			throw new SQLException(" null can not be directly used as a parameter value for a prepared statement");
+		}
+
+		if (object instanceof String) {
+			return ValueType.TEXT;
+		}
+		if (object instanceof Long) {
+			return ValueType.INTEGER;
+		}
+		if (object instanceof Boolean) {
+			return ValueType.BOOLEAN;
+		}
+		if (object instanceof LocalDate) {
+			return ValueType.DATE;
+		}
+		if (object instanceof Double) {
+			return ValueType.DECIMAL;
+		}
+		if (object instanceof Instant) {
+			return ValueType.TIMESTAMP;
+		}
+		throw new SQLException(object + " is of type " + object.getClass().getName()
+				+ " is not a valid parameter value for a prepared statement");
+	}
+
+	/**
+	 * convenience method to set a parameter when the value is non-null and is
+	 * an instance of the right type
+	 * 
+	 * @param ps
+	 * @param position
+	 * @param value
+	 *            non-null. one of String, Long, Double, Boolean, LocalDate or
+	 *            Instance
+	 * @throws SQLException
+	 */
+	public static void setPsParamValue(final PreparedStatement ps, final int position, final Object value)
+			throws SQLException {
+		getValueTypeFor(value).setPsParam(ps, position, value);
+	}
+
 }

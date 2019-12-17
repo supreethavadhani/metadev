@@ -562,6 +562,14 @@ public class FormData {
 		if (indexes == null) {
 			return false;
 		}
+		/*
+		 * tenant key may have to be used even for keyed read
+		 */
+		final Field field = this.form.dbMetaData.tenantField;
+		if (field != null) {
+			this.setObject(field.getIndex(), ctx.getTenantId());
+		}
+
 		final Field[] fields = this.form.getFields();
 		final int userIdx = this.form.getUserIdFieldIdx();
 		boolean allOk = true;
@@ -1100,6 +1108,68 @@ public class FormData {
 			this.fetchChildren(handle);
 		}
 		return ok;
+	}
+
+	/**
+	 * filter the underlying table/view with a ready where clause and
+	 * corresponding parameters
+	 *
+	 * @param handle
+	 *            active db handle
+	 *
+	 * @param filterClauseStartingWithWhere
+	 *            e.g. " WHERE a=? and b=?". null if you you want to read all
+	 *            rows.
+	 * @param valuesForWhereParameters
+	 *            must have exactly the right number and type of non-null
+	 *            values. parameter is ignored, and hence can be null, if where
+	 *            clause is null. object must of type String, Long, LocalD
+	 * @return non-null array of Fds. empty array if no rows.
+	 * @throws SQLException
+	 */
+	public FormData[] filter(final DbHandle handle, final String filterClauseStartingWithWhere,
+			final Object[] valuesForWhereParameters) throws SQLException {
+		final DbMetaData meta = this.getForm().getDbMetaData();
+		final String sql = filterClauseStartingWithWhere == null ? meta.selectClause
+				: meta.selectClause + ' ' + filterClauseStartingWithWhere;
+
+		final List<FormData> result = new ArrayList<>();
+		final Form frm = this.form;
+		handle.read(new IDbReader() {
+
+			@Override
+			public String getPreparedStatement() {
+				return sql;
+			}
+
+			@Override
+			public void setParams(final PreparedStatement ps) throws SQLException {
+				if (valuesForWhereParameters == null) {
+					return;
+				}
+				int posn = 1;
+				final StringBuilder sbf = new StringBuilder("Parameter Values");
+				for (final Object value : valuesForWhereParameters) {
+					ValueType.setPsParamValue(ps, posn, value);
+					sbf.append('\n').append(posn).append('=').append(value);
+					posn++;
+				}
+				logger.info(sbf.toString());
+			}
+
+			@Override
+			public boolean readARow(final ResultSet rs) throws SQLException {
+				final FormData fd = frm.newFormData();
+				result.add(fd);
+				int posn = 1;
+				for (final FormDbParam p : meta.selectParams) {
+					fd.fieldValues[p.idx] = p.valueType.getFromRs(rs, posn);
+					posn++;
+				}
+				return true;
+			}
+		});
+		return result.toArray(new FormData[0]);
 	}
 
 	/**
