@@ -30,6 +30,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -1422,6 +1423,15 @@ public class FormData {
 			validateAndSet(field, value, this.fieldValues, field.getIndex(), false, ctx, null, 0);
 		}
 		this.validateForm(ctx);
+	}
+
+	/**
+	 * make a copy of this form data, but do not copy child data if any
+	 *
+	 * @return new form data with a copy of header data, and no child data
+	 */
+	public FormData copyWithNoChildData() {
+		return new FormData(this.form, Arrays.copyOf(this.fieldValues, this.fieldValues.length), null);
 	}
 
 	/**
