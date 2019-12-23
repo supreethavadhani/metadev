@@ -106,7 +106,7 @@ public class CompositeForm extends Form {
 				int idx = -1;
 				for (final LinkedForm lf : this.linkedForms) {
 					idx++;
-					childData[idx] = lf.fetch(handle, dataRow.dataRow);
+					childData[idx] = lf.fetch(handle, dataRow.rawData);
 				}
 				result[0] = true;
 			}
@@ -121,7 +121,7 @@ public class CompositeForm extends Form {
 		try (JsonWriter jw = new JsonWriter(ctx.getResponseWriter())) {
 			jw.beginObject();
 
-			this.schema.serializeToJson(dataRow.dataRow, jw);
+			this.schema.serializeToJson(dataRow.rawData, jw);
 			int idx = -1;
 			for (final LinkedForm lf : this.linkedForms) {
 				idx++;
@@ -167,7 +167,7 @@ public class CompositeForm extends Form {
 			int idx = -1;
 			for (final LinkedForm lf : this.linkedForms) {
 				idx++;
-				if (lf.save(handle, childData[idx], dataRow.dataRow) == false) {
+				if (lf.save(handle, childData[idx], dataRow.rawData) == false) {
 					return false;
 				}
 			}
@@ -205,7 +205,7 @@ public class CompositeForm extends Form {
 			int idx = -1;
 			for (final LinkedForm lf : this.linkedForms) {
 				idx++;
-				if (lf.insert(handle, childData[idx], dataRow.dataRow) == false) {
+				if (lf.insert(handle, childData[idx], dataRow.rawData) == false) {
 					return false;
 				}
 			}
@@ -243,7 +243,7 @@ public class CompositeForm extends Form {
 			}
 
 			for (final LinkedForm lf : this.linkedForms) {
-				ok = lf.delete(handle, dataRow.dataRow);
+				ok = lf.delete(handle, dataRow.rawData);
 				if (!ok) {
 					return false;
 				}

@@ -52,7 +52,7 @@ public class DataRow {
 	 * data for (or from) the schema. Each element is the value of the
 	 * corresponding field in the schema
 	 */
-	protected final Object[] dataRow;
+	protected final Object[] rawData;
 
 	/**
 	 *
@@ -61,7 +61,7 @@ public class DataRow {
 	 */
 	protected DataRow(final Schema schema) {
 		this.schema = schema;
-		this.dataRow = new Object[this.schema.getNbrFields()];
+		this.rawData = new Object[this.schema.getNbrFields()];
 	}
 
 	/**
@@ -76,7 +76,7 @@ public class DataRow {
 		this.schema = schema;
 		final int nbrFields = schema.getNbrFields();
 		if (nbrFields == row.length) {
-			this.dataRow = row;
+			this.rawData = row;
 		} else {
 			throw new RuntimeException("DbData " + this.schema.name + " has " + nbrFields + " fields but a row with "
 					+ row.length + " values is being suppled as data row");
@@ -87,7 +87,7 @@ public class DataRow {
 	 * @return field values
 	 */
 	public Object[] getRawData() {
-		return this.dataRow;
+		return this.rawData;
 	}
 
 	/**
@@ -117,13 +117,13 @@ public class DataRow {
 	 */
 	public Object getObject(final int idx) {
 		if (this.idxOk(idx)) {
-			return this.dataRow[idx];
+			return this.rawData[idx];
 		}
 		return null;
 	}
 
 	private boolean idxOk(final int idx) {
-		return idx >= 0 && idx < this.dataRow.length;
+		return idx >= 0 && idx < this.rawData.length;
 	}
 
 	/**
@@ -139,7 +139,7 @@ public class DataRow {
 	 */
 	public boolean setObject(final int idx, final Object value) {
 		if (this.idxOk(idx)) {
-			this.dataRow[idx] = value;
+			this.rawData[idx] = value;
 			return true;
 		}
 		return false;
@@ -186,19 +186,19 @@ public class DataRow {
 		final ValueType vt = field.getValueType();
 
 		if (vt == ValueType.Integer) {
-			this.dataRow[idx] = value;
+			this.rawData[idx] = value;
 			return true;
 		}
 
 		if (vt == ValueType.Decimal) {
 			final double d = value;
-			this.dataRow[idx] = d;
+			this.rawData[idx] = d;
 			return true;
 		}
 
 		if (vt == ValueType.Text) {
 
-			this.dataRow[idx] = "" + value;
+			this.rawData[idx] = "" + value;
 			return true;
 		}
 		return false;
@@ -236,14 +236,14 @@ public class DataRow {
 		final ValueType vt = this.schema.getField(idx).getValueType();
 
 		if (vt == ValueType.Text) {
-			this.dataRow[idx] = value;
+			this.rawData[idx] = value;
 			return true;
 		}
 
 		final Object obj = vt.parse(value);
 
 		if (obj != null) {
-			this.dataRow[idx] = obj;
+			this.rawData[idx] = obj;
 			return true;
 		}
 
@@ -290,12 +290,12 @@ public class DataRow {
 		final ValueType vt = this.schema.getField(idx).getValueType();
 
 		if (vt == ValueType.Date) {
-			this.dataRow[idx] = value;
+			this.rawData[idx] = value;
 			return true;
 		}
 
 		if (vt == ValueType.Text) {
-			this.dataRow[idx] = value.toString();
+			this.rawData[idx] = value.toString();
 			return true;
 		}
 
@@ -341,12 +341,12 @@ public class DataRow {
 		final ValueType vt = this.schema.getField(idx).getValueType();
 
 		if (vt == ValueType.Boolean) {
-			this.dataRow[idx] = value;
+			this.rawData[idx] = value;
 			return true;
 		}
 
 		if (vt == ValueType.Text) {
-			this.dataRow[idx] = "" + value;
+			this.rawData[idx] = "" + value;
 			return true;
 		}
 
@@ -395,17 +395,17 @@ public class DataRow {
 
 		final ValueType vt = this.schema.getField(idx).getValueType();
 		if (vt == ValueType.Decimal) {
-			this.dataRow[idx] = value;
+			this.rawData[idx] = value;
 			return true;
 		}
 
 		if (vt == ValueType.Integer) {
-			this.dataRow[idx] = ((Number) value).longValue();
+			this.rawData[idx] = ((Number) value).longValue();
 			return true;
 		}
 
 		if (vt == ValueType.Text) {
-			this.dataRow[idx] = "" + value;
+			this.rawData[idx] = "" + value;
 			return true;
 		}
 
@@ -458,12 +458,12 @@ public class DataRow {
 		final ValueType vt = this.schema.getField(idx).getValueType();
 
 		if (vt == ValueType.Timestamp) {
-			this.dataRow[idx] = value;
+			this.rawData[idx] = value;
 			return true;
 		}
 
 		if (vt == ValueType.Text) {
-			this.dataRow[idx] = value.toString();
+			this.rawData[idx] = value.toString();
 			return true;
 		}
 
@@ -477,7 +477,7 @@ public class DataRow {
 	public void serializeAsJson(final Writer writer) throws IOException {
 		try (JsonWriter jw = new JsonWriter(writer)) {
 			jw.beginObject();
-			this.schema.serializeToJson(this.dataRow, jw);
+			this.schema.serializeToJson(this.rawData, jw);
 			jw.endObject();
 		}
 	}
@@ -487,7 +487,7 @@ public class DataRow {
 	 * @throws IOException
 	 */
 	public void serializeFields(final JsonWriter writer) throws IOException {
-		this.schema.serializeToJson(this.dataRow, writer);
+		this.schema.serializeToJson(this.rawData, writer);
 	}
 
 	/*
@@ -508,7 +508,7 @@ public class DataRow {
 			this.noOps();
 			return false;
 		}
-		return asst.insert(handle, this.dataRow);
+		return asst.insert(handle, this.rawData);
 	}
 
 	private void noOps() {
@@ -530,7 +530,7 @@ public class DataRow {
 			this.noOps();
 			return false;
 		}
-		return asst.update(handle, this.dataRow);
+		return asst.update(handle, this.rawData);
 	}
 
 	/**
@@ -547,7 +547,7 @@ public class DataRow {
 			this.noOps();
 			return false;
 		}
-		return asst.deleteFromDb(handle, this.dataRow);
+		return asst.deleteFromDb(handle, this.rawData);
 	}
 
 	/**
@@ -565,7 +565,7 @@ public class DataRow {
 			this.noOps();
 			return false;
 		}
-		return asst.fetch(handle, this.dataRow);
+		return asst.fetch(handle, this.rawData);
 	}
 
 	/**
@@ -581,12 +581,12 @@ public class DataRow {
 	 *         found...)
 	 * @throws SQLException
 	 */
-	public boolean fetchFirstRow(final DbHandle handle, final FilterSql sql) throws SQLException {
+	public boolean fetchFirstRow(final DbHandle handle, final ParsedFilter sql) throws SQLException {
 		final DbAssistant asst = this.schema.getDbAssistant();
 		if (asst == null) {
 			this.noOps();
 			return false;
 		}
-		return asst.fetchFirstRow(handle, sql.getSql(), sql.getWhereParams(), this.dataRow);
+		return asst.fetchFirstRow(handle, sql.getSql(), sql.getWhereParams(), this.rawData);
 	}
 }

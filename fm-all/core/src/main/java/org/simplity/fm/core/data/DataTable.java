@@ -161,7 +161,7 @@ public class DataTable implements Iterable<DataRow> {
 	 * @return true if at least one row is read
 	 * @throws SQLException
 	 */
-	public boolean fetch(final DbHandle handle, final FilterSql reader) throws SQLException {
+	public boolean fetch(final DbHandle handle, final ParsedFilter reader) throws SQLException {
 		this.dataTable = this.schema.getDbAssistant().filter(handle, reader.getSql(), reader.getWhereParams());
 		return (this.dataTable.length > 0);
 	}

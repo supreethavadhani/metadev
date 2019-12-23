@@ -63,30 +63,30 @@ public class Generator {
 	 * @param inputRootFolder
 	 *            folder where application.xlsx file, and spec folder are
 	 *            located. e.g.
-	 * @param outputRootFolder
+	 * @param javaRootFolder
 	 *            java source folder where the sources are to be generated
-	 * @param rootPackageName
+	 * @param javaRootPackage
 	 *            root
 	 * @param tsImportPrefix
 	 *            relative path of form folder from the folder where named forms
 	 *            are generated.for example ".." in case the two folders are in
 	 *            the same parent folder
-	 * @param tsOutputFolder
+	 * @param tsRootFolder
 	 *            folder where generated ts files are to be saved
 	 */
-	public static void generate(final String inputRootFolder, final String outputRootFolder,
-			final String rootPackageName, final String tsImportPrefix, final String tsOutputFolder) {
+	public static void generate(final String inputRootFolder, final String javaRootFolder, final String javaRootPackage,
+			final String tsRootFolder, final String tsImportPrefix) {
 
 		String resourceRootFolder = inputRootFolder;
 		if (!inputRootFolder.endsWith(FOLDER)) {
 			resourceRootFolder += FOLDER;
 		}
 
-		String generatedSourceRootFolder = outputRootFolder;
+		String generatedSourceRootFolder = javaRootFolder;
 		if (!generatedSourceRootFolder.endsWith(FOLDER)) {
 			generatedSourceRootFolder += FOLDER;
 		}
-		generatedSourceRootFolder += rootPackageName.replace('.', '/') + FOLDER;
+		generatedSourceRootFolder += javaRootPackage.replace('.', '/') + FOLDER;
 
 		/*
 		 * create output folders if required
@@ -114,7 +114,7 @@ public class Generator {
 		/*
 		 * generate project level components like data types
 		 */
-		app.emitJava(generatedSourceRootFolder, rootPackageName, Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME);
+		app.emitJava(generatedSourceRootFolder, javaRootPackage, Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME);
 
 		logger.info("Going to process schemas under folder {}", resourceRootFolder);
 		f = new File(resourceRootFolder + "schema/");
@@ -131,8 +131,8 @@ public class Generator {
 				continue;
 			}
 
-			final Schema schema = emitSchema(file, generatedSourceRootFolder, tsOutputFolder, app.dataTypes, app,
-					rootPackageName, tsImportPrefix);
+			final Schema schema = emitSchema(file, generatedSourceRootFolder, tsRootFolder, app.dataTypes, app,
+					javaRootPackage, tsImportPrefix);
 			if (schema != null) {
 				schemas.put(schema.name, schema);
 			}
@@ -151,8 +151,8 @@ public class Generator {
 				logger.info("Skipping non-form file {} ", fn);
 				continue;
 			}
-			emitForm(file, generatedSourceRootFolder, tsOutputFolder, app.dataTypes, app, rootPackageName,
-					tsImportPrefix, schemas);
+			emitForm(file, generatedSourceRootFolder, tsRootFolder, app.dataTypes, app, javaRootPackage, tsImportPrefix,
+					schemas);
 		}
 	}
 
@@ -171,6 +171,11 @@ public class Generator {
 			return;
 		}
 
+		if (!fn.equals(form.name)) {
+			logger.error("File {} contains form named {}. It is mandatory to use schema name same as the filename", fn,
+					form.name);
+			return;
+		}
 		final Schema schema = schemas.get(form.schemaName);
 		if (schema == null) {
 			logger.error("Form {} uses schema {}, but that schema is not defined", form.name, form.schemaName);
@@ -212,6 +217,12 @@ public class Generator {
 			logger.error("Schema {} not generated. Error : {}, {}", fn, e, e.getMessage());
 			return null;
 		}
+		if (!fn.equals(schema.name)) {
+			logger.error("File {} contains schema named {}. It is mandatory to use schema name same as the filename",
+					fn, schema.name);
+			return null;
+		}
+
 		schema.init();
 
 		final StringBuilder sbf = new StringBuilder();

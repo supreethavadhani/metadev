@@ -44,8 +44,8 @@ import com.google.gson.JsonObject;
  * @author simplity.org
  *
  */
-public class FilterSql {
-	private static final Logger logger = LoggerFactory.getLogger(FilterSql.class);
+public class ParsedFilter {
+	private static final Logger logger = LoggerFactory.getLogger(ParsedFilter.class);
 	private static final String IN = " IN (";
 	private static final String LIKE = " LIKE ? escape '\\'";
 	private static final String BETWEEN = " BETWEEN ? and ?";
@@ -67,7 +67,7 @@ public class FilterSql {
 	 *            right order. Empty array in case the SQL has no parameters.
 	 *
 	 */
-	public FilterSql(final String sql, final PreparedStatementParam[] whereParams) {
+	public ParsedFilter(final String sql, final PreparedStatementParam[] whereParams) {
 		this.sql = sql;
 		this.whereParams = whereParams;
 	}
@@ -104,7 +104,7 @@ public class FilterSql {
 	 * @return parsed instance. null in case of any error. error is added to the
 	 *         context.
 	 */
-	public static FilterSql parse(final JsonObject conditions, final JsonObject sorts,
+	public static ParsedFilter parse(final JsonObject conditions, final JsonObject sorts,
 			final Map<String, DbField> fields, final DbField tenantField, final IServiceContext ctx,
 			final int maxRows) {
 		final StringBuilder sql = new StringBuilder();
@@ -282,7 +282,7 @@ public class FilterSql {
 			logger.info("Filter with {} parameters : {}", params.size(), sql.toString());
 			sqlText = " WHERE " + sql.toString();
 		}
-		return new FilterSql(sqlText, params.toArray(new PreparedStatementParam[0]));
+		return new ParsedFilter(sqlText, params.toArray(new PreparedStatementParam[0]));
 
 	}
 

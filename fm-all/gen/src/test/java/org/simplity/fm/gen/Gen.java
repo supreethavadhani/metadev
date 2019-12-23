@@ -20,53 +20,25 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
-
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-
-import org.simplity.fm.core.datatypes.ValueType;
+package org.simplity.fm.gen;
 
 /**
  * @author simplity.org
  *
  */
-public class FilterSql {
-	private final String  sql;
-	private final Object[] values;
-	private final ValueType[] types; 
-	
-	/**
-	 * constructor with all attributes being initialized
-	 * @param sql
-	 * @param values
-	 * @param types
-	 */
-	public FilterSql(String sql, Object[] values, ValueType[] types) {
-		this.sql = sql;
-		this.values = values;
-		this.types = types;
-	}
+public class Gen {
+	private static final String SPEC_ROOT = "c:/repos/forms/fm-all/gen/src/test/resources/spec/";
+	private static final String JAVA_ROOT = "c:/repos/forms/fm-all/gen/src/test/java/";
+	private static final String JAVA_PACKAGE = "org.simplity.fm.test.gen";
+	private static final String TS_ROOT = "c:/repos/forms/fm-all/gen/src/test/resources/ts/forms";
+	private static final String TS_FORM_IMPORT_PREFIX = "../form/";
 
 	/**
-	 * 
-	 * @return prepared statement
+	 *
+	 * @param args
 	 */
-	public String getSql() {
-		return this.sql;
-	}
+	public static void main(final String[] args) {
 
-	/**
-	 * 
-	 * @param ps
-	 * @throws SQLException
-	 */
-	public void setParams(PreparedStatement ps) throws SQLException {
-		int idx = 0;
-		for(ValueType vt : this.types) {
-			Object value = this.values[idx];
-			idx++;
-			vt.setPsParam(ps, idx, value);
-		}
+		Generator.generate(SPEC_ROOT, JAVA_ROOT, JAVA_PACKAGE, TS_ROOT, TS_FORM_IMPORT_PREFIX);
 	}
 }

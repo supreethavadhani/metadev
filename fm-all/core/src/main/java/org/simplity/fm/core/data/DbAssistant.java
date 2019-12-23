@@ -517,7 +517,7 @@ public class DbAssistant {
 				}
 				result[0] = true;
 				/*
-				 * return false to askth edriver to stop reading.
+				 * return false to ask the driver to stop reading.
 				 */
 				return false;
 			}
@@ -560,6 +560,63 @@ public class DbAssistant {
 				for (final PreparedStatementParam p : params) {
 					posn++;
 					p.valueType.setPsParam(ps, posn, p.value);
+				}
+			}
+
+			@Override
+			public boolean readARow(final ResultSet rs) throws SQLException {
+				final Object[] row = new Object[DbAssistant.this.nbrFieldsInARow];
+				result.add(row);
+				int posn = 0;
+				for (final FieldMetaData p : DbAssistant.this.selectParams) {
+					posn++;
+					row[p.idx] = p.valueType.getFromRs(rs, posn);
+				}
+				return true;
+			}
+		});
+		return result.toArray(new Object[0][]);
+	}
+
+	/**
+	 * select multiple rows from the db based on the filtering criterion
+	 *
+	 * @param whereClauseStartingWithWhere
+	 *            e.g. "WHERE a=? and b=?" null if all rows are to be read. Best
+	 *            practice is to use parameters rather than dynamic sql. That is
+	 *            you should use a=? rather than a = 32
+	 * @param values
+	 *            null or empty if where-clause is null or has no parameters.
+	 *            every element MUST be non-null and must be one of the standard
+	 *            objects we use String, Long, Double, Boolean, LocalDate,
+	 *            Instant
+	 *
+	 * @param handle
+	 * @return non-null, possibly empty array of rows
+	 * @throws SQLException
+	 */
+	public Object[][] filter(final String whereClauseStartingWithWhere, final Object[] values, final DbHandle handle)
+			throws SQLException {
+		final List<Object[]> result = new ArrayList<>();
+		handle.read(new IDbReader() {
+
+			@Override
+			public String getPreparedStatement() {
+				if (whereClauseStartingWithWhere == null) {
+					return DbAssistant.this.selectClause;
+				}
+				return DbAssistant.this.selectClause + ' ' + whereClauseStartingWithWhere;
+			}
+
+			@Override
+			public void setParams(final PreparedStatement ps) throws SQLException {
+				if (values == null || values.length == 0) {
+					return;
+				}
+				int posn = 0;
+				for (final Object value : values) {
+					posn++;
+					ValueType.setObjectAsPsParam(value, ps, posn);
 				}
 			}
 

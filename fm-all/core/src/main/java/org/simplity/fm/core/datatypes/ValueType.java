@@ -283,4 +283,58 @@ public enum ValueType {
 	 * @throws SQLException
 	 */
 	public abstract Object getFromRs(ResultSet rs, int position) throws SQLException;
+
+	/**
+	 * can be used when the parameter is non-null and is one of String, Long,
+	 * Double, Boolean, LocalDate or Instant. This method has a slight
+	 * performance over-head to checkfor teh object instance. So, if the value
+	 * type is known, it is better to use setPsParam()If the valeType is knowm,
+	 * it is better to use the
+	 *
+	 * @param value
+	 *            non-null. one of the standard classes we use,String, Long,
+	 *            Double, Boolean, LocalDate or Instant
+	 * @param ps
+	 *            non-null prepared statement
+	 * @param oneBaedPosition
+	 *            position of the parameter. note that the first position starts
+	 *            at 1 and not 0
+	 * @throws SQLException
+	 */
+	public static void setObjectAsPsParam(final Object value, final PreparedStatement ps, final int oneBaedPosition)
+			throws SQLException {
+		if (value == null) {
+			throw new SQLException("Null value can not be set to a psparameter using this method");
+		}
+
+		if (value instanceof String) {
+			ps.setString(oneBaedPosition, (String) value);
+			return;
+		}
+
+		if (value instanceof Long) {
+			ps.setLong(oneBaedPosition, (Long) value);
+			return;
+		}
+
+		if (value instanceof Double) {
+			ps.setDouble(oneBaedPosition, (Double) value);
+			return;
+		}
+
+		if (value instanceof Boolean) {
+			ps.setBoolean(oneBaedPosition, (Boolean) value);
+			return;
+		}
+
+		if (value instanceof LocalDate) {
+			ps.setDate(oneBaedPosition, java.sql.Date.valueOf((LocalDate) value));
+			return;
+		}
+
+		if (value instanceof Instant) {
+			ps.setTimestamp(oneBaedPosition, java.sql.Timestamp.from((Instant) value));
+			return;
+		}
+	}
 }

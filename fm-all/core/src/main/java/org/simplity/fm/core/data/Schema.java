@@ -53,7 +53,7 @@ import com.google.gson.stream.JsonWriter;
  * @author simplity.org
  *
  */
-public class Schema {
+public abstract class Schema {
 	protected static final Logger logger = LoggerFactory.getLogger(Schema.class);
 	/**
 	 * name must be unique across tables and views
@@ -195,9 +195,7 @@ public class Schema {
 	 *
 	 * @return a db data that can carry data for this schema
 	 */
-	public DataRow newDataRow() {
-		return new DataRow(this);
-	}
+	public abstract DataRow newDataRow();
 
 	/**
 	 * @return the dbMetaData
@@ -233,7 +231,7 @@ public class Schema {
 					return;
 				}
 				final DataRow dataRow = Schema.this.parseRow((JsonObject) ele, forInsert, ctx, tableName, this.idx);
-				rows.add(dataRow.dataRow);
+				rows.add(dataRow.rawData);
 			}
 		});
 		return new DataTable(this, rows.toArray(new Object[0][]));
@@ -257,7 +255,7 @@ public class Schema {
 			final String tableName, final int rowNbr) {
 
 		final DataRow dataRow = new DataRow(this);
-		final Object[] row = dataRow.dataRow;
+		final Object[] row = dataRow.rawData;
 
 		for (final Field field : this.fields) {
 			final String value = getTextAttribute(json, field.getName());
@@ -341,7 +339,7 @@ public class Schema {
 	 * @param row
 	 * @throws IOException
 	 */
-	void serializeToJson(final Object[] row, final JsonWriter writer) throws IOException {
+	protected void serializeToJson(final Object[] row, final JsonWriter writer) throws IOException {
 		for (final Field field : this.fields) {
 			writer.name(field.name);
 			final Object value = row[field.index];
@@ -363,7 +361,6 @@ public class Schema {
 
 			writer.value(value.toString());
 		}
-
 	}
 
 	/**
@@ -375,7 +372,7 @@ public class Schema {
 	 */
 	public DataRow parseForInsert(final String[] data, final IServiceContext ctx) {
 		final DataRow dataRow = new DataRow(this);
-		final Object[] row = dataRow.dataRow;
+		final Object[] row = dataRow.rawData;
 
 		for (final Field field : this.fields) {
 			final String value = data[field.index];
@@ -409,9 +406,9 @@ public class Schema {
 	 *            mxRows to be read
 	 * @return filter clause that can be used to get rows from the db
 	 */
-	public FilterSql parseForFilter(final JsonObject conditions, final JsonObject sorts, final List<Message> errors,
+	public ParsedFilter parseForFilter(final JsonObject conditions, final JsonObject sorts, final List<Message> errors,
 			final IServiceContext ctx, final int maxRows) {
-		return FilterSql.parse(conditions, sorts, this.fieldsMap, this.getTenantField(), ctx, maxRows);
+		return ParsedFilter.parse(conditions, sorts, this.fieldsMap, this.getTenantField(), ctx, maxRows);
 	}
 
 	/**
@@ -542,7 +539,7 @@ public class Schema {
 			nbrRows = node.getAsInt();
 		}
 
-		final FilterSql reader = this.parseForFilter(conditions, sorts, msgs, ctx, nbrRows);
+		final ParsedFilter reader = this.parseForFilter(conditions, sorts, msgs, ctx, nbrRows);
 
 		if (msgs.size() > 0) {
 			logger.warn("Filtering aborted due to errors in input data");
@@ -726,15 +723,21 @@ public class Schema {
 
 	/**
 	 * @param handle
-	 * @param whereClause
-	 * @param params
+	 * @param whereClauseSRtartingWithWhere
+	 *            .e. "WHERE a=? and b=?". null if no where-clause is to be used
+	 *            in which case all rows from the table/view are read.
+	 * @param values
+	 *            null or empty if where-clause is null or has no parameters.
+	 *            every element MUST be non-null and must be one of the standard
+	 *            objects we use String, Long, Double, Boolean, LocalDate,
+	 *            Instant
 	 * @return non-null, possibly empty, data table with the result of a select
 	 *         query on this schema with the supplied where clause
 	 * @throws SQLException
 	 */
-	public DataTable filter(final DbHandle handle, final String whereClause, final PreparedStatementParam[] params)
+	public DataTable filter(final DbHandle handle, final String whereClauseSRtartingWithWhere, final Object[] values)
 			throws SQLException {
-		final Object[][] data = this.getDbAssistant().filter(handle, whereClause, params);
+		final Object[][] data = this.getDbAssistant().filter(whereClauseSRtartingWithWhere, values, handle);
 		if (data.length == 0) {
 			return new DataTable(this);
 		}

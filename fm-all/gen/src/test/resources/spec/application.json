@@ -13,7 +13,7 @@
 		"decimalTypes":{
 			"grade":{
 				"errorId": "invalidGrade",
-				"maxValue":999.99,
+				"maxValue":999,
 				"nbrFractions":2
 			}
 		},
@@ -24,7 +24,7 @@
 				"maxFutureDays":73000
 			}
 		},
-		"intTypes":{
+		"integerTypes":{
 			"country":{
 				"errorId":"invalidCountry",
 				"maxValue": 999
@@ -189,7 +189,7 @@
 			{"value":"Not Applicable","display":"Not Applicable"}
 		]
 	},
-	"keyedValueLists":{
+	"keyedLists":{
 		"states":{"130":[
 			{"value":"Karnataka", "diaplay":"Karnataka"},
 			{"value":"Tamil Nadu", "diaplay":"Tamil Nadu"},
