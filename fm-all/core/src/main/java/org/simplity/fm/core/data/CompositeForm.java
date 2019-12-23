@@ -37,17 +37,19 @@ import com.google.gson.stream.JsonWriter;
  * represents a form that has child/subordinate forms
  *
  * @author simplity.org
+ * @param <T>
+ *            schema for the header form.
  *
  */
-public class CompositeForm extends Form {
+public class CompositeForm<T extends Schema> extends Form<T> {
 
-	protected LinkedForm[] linkedForms;
+	protected LinkedForm<?>[] linkedForms;
 
 	/**
 	 * called from the constructor of generated classes.
 	 */
 	protected void initialize() {
-		for (final LinkedForm lf : this.linkedForms) {
+		for (final LinkedForm<?> lf : this.linkedForms) {
 			lf.init(this.schema);
 		}
 	}
@@ -60,17 +62,18 @@ public class CompositeForm extends Form {
 	 * @param ctx
 	 * @return null in case of any validation error
 	 */
-	public CompositeData parse(final JsonObject json, final boolean forInsert, final IServiceContext ctx) {
-		final DataRow dataRow = this.schema.parseRow(json, forInsert, ctx, null, 0);
+	public CompositeData<T> parse(final JsonObject json, final boolean forInsert, final IServiceContext ctx) {
+		@SuppressWarnings("unchecked")
+		final DataRow<T> dataRow = (DataRow<T>) this.schema.parseRow(json, forInsert, ctx, null, 0);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading fields from the input payload");
 			return null;
 		}
 
 		final int nbrLinks = this.linkedForms.length;
-		final DataTable[] childData = new DataTable[nbrLinks];
+		final DataTable<?>[] childData = new DataTable[nbrLinks];
 		int i = -1;
-		for (final LinkedForm lf : this.linkedForms) {
+		for (final LinkedForm<?> lf : this.linkedForms) {
 			i++;
 			final JsonArray arr = json.getAsJsonArray(lf.linkName);
 			childData[i] = lf.parse(arr, forInsert, ctx);
@@ -80,7 +83,7 @@ public class CompositeForm extends Form {
 			logger.error("Error while reading data for child-forms");
 			return null;
 		}
-		return new CompositeData(dataRow, childData);
+		return new CompositeData<>(dataRow, childData);
 	}
 
 	/**
@@ -91,20 +94,21 @@ public class CompositeForm extends Form {
 	 * @throws Exception
 	 */
 	public void fetch(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final DataRow dataRow = this.schema.parseKeys(payload, ctx);
+		@SuppressWarnings("unchecked")
+		final DataRow<T> dataRow = (DataRow<T>) this.schema.parseKeys(payload, ctx);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading keys from the input payload");
 			return;
 		}
 		final int nbrLinks = this.linkedForms.length;
-		final DataTable[] childData = new DataTable[nbrLinks];
+		final DataTable<?>[] childData = new DataTable[nbrLinks];
 		final boolean[] result = new boolean[1];
 
 		RdbDriver.getDriver().transact(handle -> {
 			final boolean ok = dataRow.fetch(handle);
 			if (ok) {
 				int idx = -1;
-				for (final LinkedForm lf : this.linkedForms) {
+				for (final LinkedForm<?> lf : this.linkedForms) {
 					idx++;
 					childData[idx] = lf.fetch(handle, dataRow.rawData);
 				}
@@ -123,10 +127,10 @@ public class CompositeForm extends Form {
 
 			this.schema.serializeToJson(dataRow.rawData, jw);
 			int idx = -1;
-			for (final LinkedForm lf : this.linkedForms) {
+			for (final LinkedForm<?> lf : this.linkedForms) {
 				idx++;
 				jw.name(lf.linkName);
-				final DataTable dt = childData[idx];
+				final DataTable<?> dt = childData[idx];
 				if (dt != null) {
 					dt.serializeAsJson(jw);
 				} else {
@@ -151,12 +155,12 @@ public class CompositeForm extends Form {
 	 * @throws Exception
 	 */
 	public void update(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final CompositeData data = this.parse(payload, false, ctx);
+		final CompositeData<T> data = this.parse(payload, false, ctx);
 		if (data == null) {
 			return;
 		}
-		final DataRow dataRow = data.getDataRow();
-		final DataTable[] childData = data.getChildData();
+		final DataRow<T> dataRow = data.getDataRow();
+		final DataTable<?>[] childData = data.getChildData();
 		final boolean[] result = new boolean[1];
 
 		RdbDriver.getDriver().transact(handle -> {
@@ -165,7 +169,7 @@ public class CompositeForm extends Form {
 			}
 
 			int idx = -1;
-			for (final LinkedForm lf : this.linkedForms) {
+			for (final LinkedForm<?> lf : this.linkedForms) {
 				idx++;
 				if (lf.save(handle, childData[idx], dataRow.rawData) == false) {
 					return false;
@@ -189,12 +193,12 @@ public class CompositeForm extends Form {
 	 * @throws Exception
 	 */
 	public void insert(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final CompositeData data = this.parse(payload, true, ctx);
+		final CompositeData<T> data = this.parse(payload, true, ctx);
 		if (data == null) {
 			return;
 		}
-		final DataRow dataRow = data.getDataRow();
-		final DataTable[] childData = data.getChildData();
+		final DataRow<T> dataRow = data.getDataRow();
+		final DataTable<?>[] childData = data.getChildData();
 		final boolean[] result = new boolean[1];
 
 		RdbDriver.getDriver().transact(handle -> {
@@ -203,7 +207,7 @@ public class CompositeForm extends Form {
 			}
 
 			int idx = -1;
-			for (final LinkedForm lf : this.linkedForms) {
+			for (final LinkedForm<?> lf : this.linkedForms) {
 				idx++;
 				if (lf.insert(handle, childData[idx], dataRow.rawData) == false) {
 					return false;
@@ -227,7 +231,8 @@ public class CompositeForm extends Form {
 	 * @throws Exception
 	 */
 	public void delete(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final DataRow dataRow = this.schema.parseKeys(payload, ctx);
+		@SuppressWarnings("unchecked")
+		final DataRow<T> dataRow = (DataRow<T>) this.schema.parseKeys(payload, ctx);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading fields from the input payload");
 			return;
@@ -242,7 +247,7 @@ public class CompositeForm extends Form {
 				return false;
 			}
 
-			for (final LinkedForm lf : this.linkedForms) {
+			for (final LinkedForm<?> lf : this.linkedForms) {
 				ok = lf.delete(handle, dataRow.rawData);
 				if (!ok) {
 					return false;

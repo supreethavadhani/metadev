@@ -30,13 +30,14 @@ import org.slf4j.LoggerFactory;
  * a wrapper on schema to offer this as client-facing service
  *
  * @author simplity.org
+ * @param <T>
  *
  */
-public class Form {
+public class Form<T extends Schema> {
 	static protected final Logger logger = LoggerFactory.getLogger(Form.class);
 
 	protected String name;
-	protected Schema schema;
+	protected T schema;
 	/*
 	 * db operations that are to be exposed thru this form. array corresponds to
 	 * the ordinals of IoType

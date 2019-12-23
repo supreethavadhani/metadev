@@ -32,7 +32,6 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.time.LocalDate;
 
-import org.eclipse.jdt.annotation.NonNull;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -55,19 +54,19 @@ public class ValueTypeTest {
 	class BooleanTest {
 		@ParameterizedTest
 		@ValueSource(strings = { "1", " true", "TRUE ", "  True ", "tRuE" })
-		void shouldParseAsTrue(final @NonNull String value) {
+		void shouldParseAsTrue(final String value) {
 			assertEquals(true, ValueType.Boolean.parse(value));
 		}
 
 		@ParameterizedTest
 		@ValueSource(strings = { "  0 ", "false", "FALSE  ", "False", "FaLSe" })
-		void shouldParseAsFalse(final @NonNull String value) {
+		void shouldParseAsFalse(final String value) {
 			assertEquals(false, ValueType.Boolean.parse(value));
 		}
 
 		@ParameterizedTest
 		@ValueSource(strings = { "", "a", "3", "Yes", "t", "f", "true1", "true true" })
-		void shouldParseAsNull(final @NonNull String value) {
+		void shouldParseAsNull(final String value) {
 			assertEquals(null, ValueType.Boolean.parse(value));
 		}
 
@@ -119,7 +118,7 @@ public class ValueTypeTest {
 	class TextTest {
 		@ParameterizedTest
 		@ValueSource(strings = { " 1", "true ", "TRUE ", "" })
-		void shouldTrimStrings(final @NonNull String value) {
+		void shouldTrimStrings(final String value) {
 			assertEquals(value.trim(), ValueType.Text.parse(value));
 		}
 
@@ -158,19 +157,19 @@ public class ValueTypeTest {
 	class INtegerTest {
 		@ParameterizedTest
 		@ValueSource(strings = { "1", " true", "TRUE ", "  True ", "tRuE" })
-		void shouldParseAsTrue(final @NonNull String value) {
+		void shouldParseAsTrue(final String value) {
 			assertEquals(true, ValueType.Boolean.parse(value));
 		}
 
 		@ParameterizedTest
 		@ValueSource(strings = { "  0 ", "false", "FALSE  ", "False", "FaLSe" })
-		void shouldParseAsFalse(final @NonNull String value) {
+		void shouldParseAsFalse(final String value) {
 			assertEquals(false, ValueType.Boolean.parse(value));
 		}
 
 		@ParameterizedTest
 		@ValueSource(strings = { "", "a", "3", "Yes", "t", "f", "true1", "true true" })
-		void shouldParseAsNull(final @NonNull String value) {
+		void shouldParseAsNull(final String value) {
 			assertEquals(null, ValueType.Boolean.parse(value));
 		}
 

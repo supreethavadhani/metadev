@@ -1,6 +1,6 @@
 {
-	"name":"form1",
-	"schemaName":"schemaName1",
+	"name":"form2",
+	"schemaName":"schema1",
 	"operations":{
 		"get":true,
 		"update":true

@@ -51,7 +51,7 @@ public abstract class ComponentProvider {
 	 * @param formId
 	 * @return form instance, or null if such a form is not located
 	 */
-	public abstract Form getForm(String formId);
+	public abstract Form<?> getForm(String formId);
 
 	/**
 	 *
@@ -197,7 +197,7 @@ public abstract class ComponentProvider {
 			}
 
 			@Override
-			public Form getForm(final String formId) {
+			public Form<?> getForm(final String formId) {
 				return null;
 			}
 
@@ -254,7 +254,7 @@ public abstract class ComponentProvider {
 		private final String customListRoot;
 		private final String fnRoot;
 		private final IMessages messages;
-		private final Map<String, Form> forms = new HashMap<>();
+		private final Map<String, Form<?>> forms = new HashMap<>();
 		private final Map<String, Schema> schemas = new HashMap<>();
 		private final Map<String, IValueList> lists = new HashMap<>();
 		private final Map<String, IService> services = new HashMap<>();
@@ -277,14 +277,14 @@ public abstract class ComponentProvider {
 		}
 
 		@Override
-		public Form getForm(final String formId) {
-			Form form = this.forms.get(formId);
+		public Form<?> getForm(final String formId) {
+			Form<?> form = this.forms.get(formId);
 			if (form != null) {
 				return form;
 			}
 			final String cls = this.formRoot + toClassName(formId);
 			try {
-				form = (Form) Class.forName(cls).newInstance();
+				form = (Form<?>) Class.forName(cls).newInstance();
 			} catch (final Exception e) {
 				logger.error("No form named {} because we could not locate class {}", formId, cls);
 				return null;
@@ -383,7 +383,7 @@ public abstract class ComponentProvider {
 			}
 
 			final String formName = serviceName.substring(idx + 1);
-			final Form form = this.getForm(formName);
+			final Form<?> form = this.getForm(formName);
 			if (form != null) {
 				return form.getService(opern);
 			}

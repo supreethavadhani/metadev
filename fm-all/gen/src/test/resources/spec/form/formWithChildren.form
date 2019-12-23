@@ -1,6 +1,6 @@
 {
-	"name":"form2",
-	"schemaName":"schemaName",
+	"name":"formWithChildren",
+	"schemaName":"schema1",
 	"dbOperations": ["get", "update"],
 	"childForms":[
 		{

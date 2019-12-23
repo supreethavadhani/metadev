@@ -22,6 +22,10 @@
 
 package org.simplity.fm.core.data;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import org.simplity.fm.core.datatypes.ValueType;
 
 /**
@@ -33,12 +37,12 @@ public class FieldMetaData {
 	 * 0-based index in the form-fields that this parameter corresponds to (for
 	 * getting/setting value in form data array)
 	 */
-	protected final int idx;
+	private final int idx;
 	/**
 	 * value type of this parameter based on which set/get method is ssued
 	 * on the statement
 	 */
-	protected final ValueType valueType;
+	private final ValueType valueType;
 
 	/**
 	 * create this parameter as an immutable data structure
@@ -62,6 +66,21 @@ public class FieldMetaData {
 	}
 
 	/**
+	 * append this parameter to a message that describes the run time values of
+	 * a sql
+	 *
+	 * @param buf
+	 * @param posn
+	 * @param values
+	 * @return buffer for convenience
+	 */
+	public StringBuilder toMessage(final StringBuilder buf, final int posn, final Object[] values) {
+		buf.append('\n').append(posn).append(". type=").append(this.valueType);
+		buf.append(" value=").append(values[this.idx]);
+		return buf;
+	}
+
+	/**
 	 *
 	 * @return index of this field in the data row
 	 */
@@ -74,5 +93,37 @@ public class FieldMetaData {
 	 */
 	public ValueType getValueType() {
 		return this.valueType;
+	}
+
+	/**
+	 * set object value to the prepared statement
+	 *
+	 * @param ps
+	 * @param values
+	 * @param oneBasedPosn
+	 * @return value that is set to the ps. can be null
+	 * @throws SQLException
+	 */
+	public Object setPsParam(final PreparedStatement ps, final Object[] values, final int oneBasedPosn)
+			throws SQLException {
+		final Object value = values[this.idx];
+		this.valueType.setPsParam(ps, oneBasedPosn, value);
+		return value;
+	}
+
+	/**
+	 *
+	 * @param rs
+	 * @param oneBasedPosn
+	 * @param rowToExtractTo
+	 * @return value that is extracted from the result set that is already set
+	 *         to the right element in the array. It is returned for the caller
+	 *         to do anything else with it, like logging..
+	 * @throws SQLException
+	 */
+	public Object getFromRs(final ResultSet rs, final int oneBasedPosn, final Object[] rowToExtractTo)
+			throws SQLException {
+
+		return rowToExtractTo[this.idx] = this.valueType.getFromRs(rs, oneBasedPosn);
 	}
 }

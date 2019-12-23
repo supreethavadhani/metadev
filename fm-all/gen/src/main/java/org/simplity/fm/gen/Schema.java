@@ -59,7 +59,6 @@ class Schema {
 	static final Logger logger = LoggerFactory.getLogger(Schema.class);
 
 	private static final String C = ", ";
-	private static final String EQ = " = ";
 	private static final String P = "\n\tprivate static final ";
 
 	/*
@@ -288,7 +287,6 @@ class Schema {
 		sbf.append("\n */ ");
 		sbf.append("\npublic class ").append(cls).append(" extends Schema {");
 
-		this.emitJavaConstants(sbf);
 		this.emitJavaFields(sbf, typesName);
 		sbf.append("\n\tprivate static final ");
 		Form.getOps(this.dbOperations, sbf);
@@ -301,7 +299,7 @@ class Schema {
 		sbf.append("\n\n\t/**\n\t *\n\t */");
 		sbf.append("\n\tpublic ").append(cls).append("() {");
 		sbf.append("\n\t\tthis.name = \"").append(this.name).append("\";");
-		sbf.append("\n\t\tthis.nameInDb = \"").append(this.nameInDb).append("\";");
+		sbf.append("\n\t\tthis.nameInDb = ").append(Util.escape(this.nameInDb)).append(";");
 		sbf.append("\n\t\tthis.fields = FIELDS;");
 		sbf.append("\n\t\tthis.validations = VALIDS;");
 		sbf.append("\n\t\tthis.operations = OPS;");
@@ -310,27 +308,15 @@ class Schema {
 		sbf.append("\n\t}");
 
 		/*
-		 * reate new form data
+		 * create new form data
 		 */
 		final String dataCls = cls + "Data";
-		sbf.append("\n\t/** @return specific instance **/");
-		sbf.append("\n\tpublic ").append(dataCls).append(" new").append(dataCls).append("(){");
+		sbf.append("\n\t/**\n\t * @return this schema-specific data instance\n\t */");
+		sbf.append("\n\tpublic ").append(dataCls).append(" newRow() {");
 		sbf.append("\n\t\t return new ").append(dataCls).append("(this);");
 		sbf.append("\n\t}");
 
 		sbf.append("\n}\n");
-	}
-
-	private void emitJavaConstants(final StringBuilder sbf) {
-		/*
-		 * all fields and child forms indexes are available as constants. To
-		 * avoid name-clash, we create another class for this
-		 */
-		sbf.append("\n\tpublic static class Indexes {");
-		for (final DbField field : this.fields) {
-			sbf.append("\n\tpublic static final int ").append(field.name).append(EQ).append(field.index).append(';');
-		}
-		sbf.append("\n\t}\n");
 	}
 
 	private void emitDbStuff(final StringBuilder sbf) {
@@ -662,7 +648,8 @@ class Schema {
 		 *
 		 * e.g. if name a.b.schema1 then prefix is a.b and className is Schema1
 		 */
-		final String cls = Util.toClassName(this.name) + "Data";
+		final String schemaCls = Util.toClassName(this.name);
+		final String cls = schemaCls + "Data";
 		String pck = generatedPackage + ".schema";
 		final String qual = Util.getClassQualifier(this.name);
 		if (qual != null) {
@@ -684,14 +671,13 @@ class Schema {
 
 		sbf.append("\n\n/**\n * class that represents structure of ").append(this.name);
 		sbf.append("\n */ ");
-		sbf.append("\npublic class ").append(cls).append(" extends DataRow {");
+		sbf.append("\npublic class ").append(cls).append(" extends DataRow<").append(schemaCls).append("> {");
 
 		/*
-		 * constructors
+		 * constructor
 		 */
-		sbf.append("\n\t/** **/\n\tpublic ").append(cls).append("(final Schema schema) {\n\t\tsuper(schema);\n\t}");
-		sbf.append("\n\t/** **/\n\tpublic ").append(cls);
-		sbf.append("(final Schema schema,  final Object[] row) {\n\t\tsuper(schema, row);\n\t}");
+		sbf.append("\n\n\t/**\n\t * @param schema\n\t */\n\tpublic ").append(cls).append("(final ").append(schemaCls)
+				.append(" schema) {\n\t\tsuper(schema);\n\t}");
 		/*
 		 * getters and setters
 		 */
@@ -710,13 +696,18 @@ class Schema {
 			final DataType dt = dataTypes.get(f.dataType);
 			final String typ = JAVA_VALUE_TYPES[dt.valueType.ordinal()];
 			final String get = JAVA_GET_TYPES[dt.valueType.ordinal()];
-			final String cls = Util.toClassName(f.name);
+			final String nam = f.name;
+			final String cls = Util.toClassName(nam);
 
-			sbf.append("\n\t/** **/\n\tpublic void set").append(cls).append('(').append(typ).append(" value){");
-			sbf.append("\n\t\tthis.dataRow[").append(f.index).append("] = value;");
+			sbf.append("\n\n\t/**\n\t * set value for ").append(nam);
+			sbf.append("\n\t * @param value to be assigned to ").append(nam);
+			sbf.append("\n\t */");
+			sbf.append("\n\tpublic void set").append(cls).append('(').append(typ).append(" value){");
+			sbf.append("\n\t\tthis.rawData[").append(f.index).append("] = value;");
 			sbf.append("\n\t}");
 
-			sbf.append("\n\t/** **/\n\tpublic ").append(typ).append(" get").append(cls).append("(){");
+			sbf.append("\n\n\t/**\n\t * @return value of ").append(nam).append("\n\t */");
+			sbf.append("\n\tpublic ").append(typ).append(" get").append(cls).append("(){");
 			sbf.append("\n\t\treturn super.get").append(get).append("Value(").append(f.index).append(");");
 			sbf.append("\n\t}");
 		}

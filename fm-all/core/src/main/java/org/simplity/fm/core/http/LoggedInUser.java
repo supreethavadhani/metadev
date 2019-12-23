@@ -26,7 +26,7 @@ package org.simplity.fm.core.http;
  * Data Structure that has attributes that are required for services-request to
  * be completed. This class is to be extended and used to have all the relevant
  * fields regarding logged in user in a session cache
- * 
+ *
  * @author simplity.org
  *
  */
@@ -34,7 +34,7 @@ public class LoggedInUser {
 
 	/**
 	 * get user instance for pan
-	 * 
+	 *
 	 * @param id
 	 *            unique key for the user
 	 * @param token
@@ -42,20 +42,19 @@ public class LoggedInUser {
 	 *            this is
 	 * @return user for a pan. null if this is not a valid pan
 	 */
-	public static LoggedInUser newUser(String id, String token) {
+	public static LoggedInUser newUser(final String id, final String token) {
 		return new LoggedInUser(id, token);
 	}
 
 	private final String userId;
 	private final String userToken;
-	// TODO: add other attributes that are needed for service execution
 
 	/**
-	 * 
+	 *
 	 * @param id
 	 * @param token
 	 */
-	public LoggedInUser(String id, String token) {
+	public LoggedInUser(final String id, final String token) {
 		this.userId = id;
 		this.userToken = token;
 	}

@@ -133,7 +133,6 @@ public enum ColumnType {
 	 * @return true if this column is to be included in the SQL for update.
 	 *         For example createdUser field should not be updated
 	 */
-	@SuppressWarnings("static-method")
 	public boolean isUpdated() {
 		return true;
 	}
@@ -144,7 +143,6 @@ public enum ColumnType {
 	 *         Also, if the primary is generated, then it is not part of the sql
 	 *         statement
 	 */
-	@SuppressWarnings("static-method")
 	public boolean isInserted() {
 		return true;
 	}
@@ -154,7 +152,6 @@ public enum ColumnType {
 	 *         optional. This is used only if isInput() is true. This attribute
 	 *         is not applicable if isInput() is false;
 	 */
-	@SuppressWarnings("static-method")
 	public boolean isRequired() {
 		return true;
 	}

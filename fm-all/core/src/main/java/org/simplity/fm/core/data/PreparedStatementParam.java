@@ -22,6 +22,9 @@
 
 package org.simplity.fm.core.data;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
 import org.simplity.fm.core.datatypes.ValueType;
 
 /**
@@ -32,11 +35,11 @@ public class PreparedStatementParam {
 	/**
 	 * value to be set/get to/from the prepared statement)
 	 */
-	protected Object value;
+	private Object value;
 	/**
 	 * value type of this parameter
 	 */
-	protected final ValueType valueType;
+	private final ValueType valueType;
 
 	/**
 	 * create this parameter as an immutable data structure
@@ -80,4 +83,15 @@ public class PreparedStatementParam {
 		return this.valueType;
 	}
 
+	/**
+	 * @param ps
+	 * @param oneBasedPosition
+	 * @return value that is set
+	 * @throws SQLException
+	 */
+	public Object setPsParam(final PreparedStatement ps, final int oneBasedPosition) throws SQLException {
+		this.valueType.setPsParam(ps, oneBasedPosition, this.value);
+		return this.value;
+
+	}
 }

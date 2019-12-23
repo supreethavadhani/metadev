@@ -174,7 +174,6 @@ public class Field {
 	/**
 	 * @return true if this field is the tenant key.
 	 */
-	@SuppressWarnings("static-method")
 	public boolean isTenantKey() {
 		return false;
 	}
@@ -182,7 +181,6 @@ public class Field {
 	/**
 	 * @return true if this field is the tenant key.
 	 */
-	@SuppressWarnings("static-method")
 	public boolean isPrimaryKey() {
 		return false;
 	}
@@ -190,7 +188,6 @@ public class Field {
 	/**
 	 * @return true if this field is user id, like createdBy and modifiedBy.
 	 */
-	@SuppressWarnings("static-method")
 	public boolean isUserId() {
 		return false;
 	}
@@ -290,7 +287,6 @@ public class Field {
 	 * @return column name if this is relevant. null if column name is not
 	 *         relevant. Is non-null in case of DbField instances
 	 */
-	@SuppressWarnings("static-method")
 	public Object getColumnName() {
 		return null;
 	}

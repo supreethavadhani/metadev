@@ -34,18 +34,20 @@ import com.google.gson.stream.JsonWriter;
 
 /**
  * @author simplity.org
+ * @param <T>
+ *            schema for which this data structure has data
  *
  */
-public class DataTable implements Iterable<DataRow> {
+public class DataTable<T extends Schema> implements Iterable<DataRow<T>> {
 	protected static final Logger logger = LoggerFactory.getLogger(DataTable.class);
-	protected final Schema schema;
+	protected final T schema;
 	protected Object[][] dataTable = new Object[0][];
 
 	/**
 	 *
 	 * @param schema
 	 */
-	public DataTable(final Schema schema) {
+	public DataTable(final T schema) {
 		this.schema = schema;
 	}
 
@@ -54,7 +56,7 @@ public class DataTable implements Iterable<DataRow> {
 	 * @param schema
 	 * @param data
 	 */
-	public DataTable(final Schema schema, final Object[][] data) {
+	public DataTable(final T schema, final Object[][] data) {
 		this.schema = schema;
 		final int nbr = this.schema.getNbrFields();
 		if (data == null || data.length == 0) {
@@ -75,9 +77,9 @@ public class DataTable implements Iterable<DataRow> {
 	 * @param idx
 	 * @return data row. null if the index is out of range
 	 */
-	public DataRow getRow(final int idx) {
+	public DataRow<T> getRow(final int idx) {
 		try {
-			return new DataRow(this.schema, this.dataTable[idx]);
+			return new DataRow<>(this.schema, this.dataTable[idx]);
 		} catch (final ArrayIndexOutOfBoundsException e) {
 			logger.error("Data table has {} rows but row {} is requested. null returned", this.dataTable.length, idx);
 			return null;
@@ -102,8 +104,8 @@ public class DataTable implements Iterable<DataRow> {
 	 * iterator for data rows
 	 */
 	@Override
-	public Iterator<DataRow> iterator() {
-		return new Iterator<DataRow>() {
+	public Iterator<DataRow<T>> iterator() {
+		return new Iterator<DataRow<T>>() {
 			private int idx = 0;
 
 			@Override
@@ -112,7 +114,7 @@ public class DataTable implements Iterable<DataRow> {
 			}
 
 			@Override
-			public DataRow next() {
+			public DataRow<T> next() {
 				return DataTable.this.getRow(this.idx++);
 			}
 		};

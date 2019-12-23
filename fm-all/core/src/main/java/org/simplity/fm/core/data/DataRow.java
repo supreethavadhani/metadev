@@ -40,14 +40,17 @@ import com.google.gson.stream.JsonWriter;
  * instance
  *
  * @author simplity.org
+ * @param <T>
+ *            Schema for this data row. That is, this data row is an instance of
+ *            data for this schema
  *
  */
-public class DataRow {
+public class DataRow<T extends Schema> {
 	protected static final Logger logger = LoggerFactory.getLogger(DataRow.class);
 	/**
 	 * schema for which this data is created
 	 */
-	protected final Schema schema;
+	protected final T schema;
 	/**
 	 * data for (or from) the schema. Each element is the value of the
 	 * corresponding field in the schema
@@ -59,7 +62,7 @@ public class DataRow {
 	 * @param schema
 	 *            non-null
 	 */
-	protected DataRow(final Schema schema) {
+	public DataRow(final T schema) {
 		this.schema = schema;
 		this.rawData = new Object[this.schema.getNbrFields()];
 	}
@@ -72,7 +75,7 @@ public class DataRow {
 	 *            non-null. note that the number and type of elements must be as
 	 *            per the schema, failing which a runtime exception is thrown
 	 */
-	protected DataRow(final Schema schema, final Object[] row) {
+	protected DataRow(final T schema, final Object[] row) {
 		this.schema = schema;
 		final int nbrFields = schema.getNbrFields();
 		if (nbrFields == row.length) {
@@ -86,28 +89,15 @@ public class DataRow {
 	/**
 	 * @return field values
 	 */
-	public Object[] getRawData() {
+	protected Object[] getRawData() {
 		return this.rawData;
 	}
 
 	/**
 	 * @return the db schema
 	 */
-	public Schema getSchema() {
+	public T getSchema() {
 		return this.schema;
-	}
-
-	/**
-	 *
-	 * @param fieldName
-	 * @return Field in this form. null if no such field
-	 */
-	public int getFieldIndex(final String fieldName) {
-		final Field field = this.schema.getField(fieldName);
-		if (field != null) {
-			return field.getIndex();
-		}
-		return -1;
 	}
 
 	/**
@@ -151,7 +141,7 @@ public class DataRow {
 	 * @return get value at this index as long. 0 if the index is not valid, or
 	 *         the value is not long
 	 */
-	public long getLongValue(final int idx) {
+	protected long getLongValue(final int idx) {
 		final Object obj = this.getObject(idx);
 		if (obj == null) {
 			return 0;
@@ -177,7 +167,7 @@ public class DataRow {
 	 * @return true if field exists, and is of integer type. false otherwise,
 	 *         and the value is not set
 	 */
-	public boolean setLongValue(final int idx, final long value) {
+	protected boolean setLongValue(final int idx, final long value) {
 		if (!this.idxOk(idx)) {
 			return false;
 		}
@@ -210,7 +200,7 @@ public class DataRow {
 	 * @return value of the field as text. null if no such field, or the field
 	 *         has null value. toString() of object if it is non-string
 	 */
-	public String getStringValue(final int idx) {
+	protected String getStringValue(final int idx) {
 		final Object obj = this.getObject(idx);
 		if (obj == null) {
 			return null;
@@ -228,7 +218,7 @@ public class DataRow {
 	 * @return true if field exists, and is of String type. false otherwise, and
 	 *         the value is not set
 	 */
-	public boolean setStringValue(final int idx, final String value) {
+	protected boolean setStringValue(final int idx, final String value) {
 		if (!this.idxOk(idx)) {
 			return false;
 		}
@@ -256,7 +246,7 @@ public class DataRow {
 	 * @return value of the field as Date. null if the field is not a date
 	 *         field, or it has null value
 	 */
-	public LocalDate getDateValue(final int idx) {
+	protected LocalDate getDateValue(final int idx) {
 		final Object obj = this.getObject(idx);
 		if (obj == null) {
 			return null;
@@ -282,7 +272,7 @@ public class DataRow {
 	 * @return true if field exists, and is of Date type. false otherwise, and
 	 *         the value is not set
 	 */
-	public boolean setDateValue(final int idx, final LocalDate value) {
+	protected boolean setDateValue(final int idx, final LocalDate value) {
 		if (!this.idxOk(idx)) {
 			return false;
 		}
@@ -308,7 +298,7 @@ public class DataRow {
 	 * @param idx
 	 *            field is null,or the field is not boolean.
 	 */
-	public boolean getBoolValue(final int idx) {
+	protected boolean getBoolValue(final int idx) {
 		Object obj = this.getObject(idx);
 		if (obj == null) {
 			return false;
@@ -333,7 +323,7 @@ public class DataRow {
 	 * @return true if field exists, and is of boolean type. false otherwise,
 	 *         and the value is not set
 	 */
-	public boolean setBoolValue(final int idx, final boolean value) {
+	protected boolean setBoolValue(final int idx, final boolean value) {
 		if (!this.idxOk(idx)) {
 			return false;
 		}
@@ -359,7 +349,7 @@ public class DataRow {
 	 * @return value of the field if it decimal. 0 index is invalid or the value
 	 *         is not double/decimal.
 	 */
-	public double getDecimalValue(final int idx) {
+	protected double getDecimalValue(final int idx) {
 		final Object obj = this.getObject(idx);
 
 		if (obj == null) {
@@ -388,7 +378,7 @@ public class DataRow {
 	 * @return true if field exists, and is of double type. false otherwise,
 	 *         and the value is not set
 	 */
-	public boolean setDecimlValue(final int idx, final double value) {
+	protected boolean setDecimlValue(final int idx, final double value) {
 		if (!this.idxOk(idx)) {
 			return false;
 		}
@@ -421,7 +411,7 @@ public class DataRow {
 	 *         an instant.
 	 *         field, or it has null value
 	 */
-	public Instant getTimestampValue(final int idx) {
+	protected Instant getTimestampValue(final int idx) {
 		final Object obj = this.getObject(idx);
 		if (obj == null) {
 			return null;
@@ -450,7 +440,7 @@ public class DataRow {
 	 * @return true if field exists, and is of Instant type. false otherwise,
 	 *         and the value is not set
 	 */
-	public boolean setTimestampValue(final int idx, final Instant value) {
+	protected boolean setTimestampValue(final int idx, final Instant value) {
 		if (!this.idxOk(idx)) {
 			return false;
 		}

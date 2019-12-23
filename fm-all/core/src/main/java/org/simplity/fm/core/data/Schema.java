@@ -195,7 +195,10 @@ public abstract class Schema {
 	 *
 	 * @return a db data that can carry data for this schema
 	 */
-	public abstract DataRow newDataRow();
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public DataRow<Schema> newDataRow() {
+		return new DataRow(this);
+	}
 
 	/**
 	 * @return the dbMetaData
@@ -215,7 +218,7 @@ public abstract class Schema {
 	 * @return non-null data row. but should not be used if errors are added to
 	 *         the context
 	 */
-	public DataTable parseTable(final JsonArray array, final boolean forInsert, final IServiceContext ctx,
+	public DataTable<Schema> parseTable(final JsonArray array, final boolean forInsert, final IServiceContext ctx,
 			final String tableName) {
 		final List<Object[]> rows = new ArrayList<>();
 
@@ -230,11 +233,12 @@ public abstract class Schema {
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 					return;
 				}
-				final DataRow dataRow = Schema.this.parseRow((JsonObject) ele, forInsert, ctx, tableName, this.idx);
+				final DataRow<Schema> dataRow = Schema.this.parseRow((JsonObject) ele, forInsert, ctx, tableName,
+						this.idx);
 				rows.add(dataRow.rawData);
 			}
 		});
-		return new DataTable(this, rows.toArray(new Object[0][]));
+		return new DataTable<>(this, rows.toArray(new Object[0][]));
 	}
 
 	/**
@@ -251,10 +255,10 @@ public abstract class Schema {
 	 * @return non-null data row. but should not be used if errors are added to
 	 *         the context
 	 */
-	public DataRow parseRow(final JsonObject json, final boolean forInsert, final IServiceContext ctx,
+	public DataRow<Schema> parseRow(final JsonObject json, final boolean forInsert, final IServiceContext ctx,
 			final String tableName, final int rowNbr) {
 
-		final DataRow dataRow = new DataRow(this);
+		final DataRow<Schema> dataRow = new DataRow<>(this);
 		final Object[] row = dataRow.rawData;
 
 		for (final Field field : this.fields) {
@@ -281,8 +285,8 @@ public abstract class Schema {
 	 *         are defined
 	 *         in this schema. Errors if any,are added to the ctx
 	 */
-	public DataRow parseKeys(final JsonObject json, final IServiceContext ctx) {
-		final DataRow dataRow = new DataRow(this);
+	public DataRow<Schema> parseKeys(final JsonObject json, final IServiceContext ctx) {
+		final DataRow<Schema> dataRow = new DataRow<>(this);
 		final Object[] row = dataRow.getRawData();
 		if (this.keyIndexes != null) {
 			for (final int idx : this.keyIndexes) {
@@ -322,7 +326,7 @@ public abstract class Schema {
 		row[idx] = field.parse(value, ctx, tableName, rowNbr);
 	}
 
-	private void validateRow(final DataRow dataRow, final IServiceContext ctx) {
+	private void validateRow(final DataRow<Schema> dataRow, final IServiceContext ctx) {
 		for (final IValidation vln : this.validations) {
 			final boolean ok = vln.isValid(dataRow, ctx);
 			if (!ok) {
@@ -370,8 +374,8 @@ public abstract class Schema {
 	 *            to which error are added to.
 	 * @return data row. To be discarded if errors are added to ctx
 	 */
-	public DataRow parseForInsert(final String[] data, final IServiceContext ctx) {
-		final DataRow dataRow = new DataRow(this);
+	public DataRow<Schema> parseForInsert(final String[] data, final IServiceContext ctx) {
+		final DataRow<Schema> dataRow = new DataRow<>(this);
 		final Object[] row = dataRow.rawData;
 
 		for (final Field field : this.fields) {
@@ -419,7 +423,7 @@ public abstract class Schema {
 	 * @throws Exception
 	 */
 	public void fetch(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final DataRow dataRow = this.parseKeys(payload, ctx);
+		final DataRow<Schema> dataRow = this.parseKeys(payload, ctx);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading keys from the input payload");
 			return;
@@ -456,7 +460,7 @@ public abstract class Schema {
 	 * @throws Exception
 	 */
 	public void update(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final DataRow dataRow = this.parseRow(payload, false, ctx, null, 0);
+		final DataRow<Schema> dataRow = this.parseRow(payload, false, ctx, null, 0);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading fields from the input payload");
 			return;
@@ -484,7 +488,7 @@ public abstract class Schema {
 	 * @throws Exception
 	 */
 	public void insert(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final DataRow dataRow = this.parseRow(payload, true, ctx, null, 0);
+		final DataRow<Schema> dataRow = this.parseRow(payload, true, ctx, null, 0);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading fields from the input payload");
 			return;
@@ -553,7 +557,7 @@ public abstract class Schema {
 			return;
 		}
 
-		final DataTable dataTable = new DataTable(this);
+		final DataTable<?> dataTable = new DataTable<>(this);
 		RdbDriver.getDriver().transact(handle -> {
 			dataTable.fetch(handle, reader);
 			return true;
@@ -577,7 +581,7 @@ public abstract class Schema {
 	 * @throws Exception
 	 */
 	public void delete(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final DataRow dataRow = this.parseKeys(payload, ctx);
+		final DataRow<Schema> dataRow = this.parseKeys(payload, ctx);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading keys from the input payload");
 			return;
@@ -612,7 +616,7 @@ public abstract class Schema {
 			return;
 		}
 
-		final DataTable dataTable = this.parseTable(arr, true, ctx, null);
+		final DataTable<Schema> dataTable = this.parseTable(arr, true, ctx, null);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading keys from the input payload");
 			return;
@@ -735,12 +739,12 @@ public abstract class Schema {
 	 *         query on this schema with the supplied where clause
 	 * @throws SQLException
 	 */
-	public DataTable filter(final DbHandle handle, final String whereClauseSRtartingWithWhere, final Object[] values)
-			throws SQLException {
+	public DataTable<Schema> filter(final DbHandle handle, final String whereClauseSRtartingWithWhere,
+			final Object[] values) throws SQLException {
 		final Object[][] data = this.getDbAssistant().filter(whereClauseSRtartingWithWhere, values, handle);
 		if (data.length == 0) {
-			return new DataTable(this);
+			return new DataTable<>(this);
 		}
-		return new DataTable(this, data);
+		return new DataTable<>(this, data);
 	}
 }

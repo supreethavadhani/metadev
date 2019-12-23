@@ -60,7 +60,7 @@ public class FromToValidation implements IValidation {
 	}
 
 	@Override
-	public boolean isValid(final DataRow dataRow, final IServiceContext ctx) {
+	public boolean isValid(final DataRow<?> dataRow, final IServiceContext ctx) {
 		final Object fm = dataRow.getObject(this.fromIndex);
 		final Object to = dataRow.getObject(this.toIndex);
 		if (fm == null || to == null) {

@@ -23,21 +23,23 @@
 package org.simplity.fm.core.data;
 
 /**
- * represents a parent row with one or more table data for child/relatedrow
+ * represents a parent row with one or more table data for child/related row
  *
  * @author simplity.org
+ * @param <T>
+ *            parent schema
  *
  */
-public class CompositeData {
-	private final DataRow dataRow;
-	private final DataTable[] childData;
+public class CompositeData<T extends Schema> {
+	private final DataRow<T> dataRow;
+	private final DataTable<?>[] childData;
 
 	/**
 	 *
 	 * @param dataRow
 	 * @param childData
 	 */
-	public CompositeData(final DataRow dataRow, final DataTable[] childData) {
+	public CompositeData(final DataRow<T> dataRow, final DataTable<?>[] childData) {
 		this.dataRow = dataRow;
 		this.childData = childData;
 	}
@@ -45,14 +47,14 @@ public class CompositeData {
 	/**
 	 * @return the childData
 	 */
-	public DataTable[] getChildData() {
+	public DataTable<?>[] getChildData() {
 		return this.childData;
 	}
 
 	/**
 	 * @return the dataRow
 	 */
-	public DataRow getDataRow() {
+	public DataRow<T> getDataRow() {
 		return this.dataRow;
 	}
 }

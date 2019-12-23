@@ -1,29 +1,34 @@
 package org.simplity.fm.test.gen.schema;
 
 import org.simplity.fm.core.data.DataRow;
+import java.time.Instant;
+import java.time.LocalDate;
 import org.simplity.fm.core.data.Schema;
 
 /**
  * class that represents structure of schema1
- */
-public class Schema1Data extends DataRow {
-	/** **/
-	public Schema1Data(final Schema schema) {
+ */ 
+public class Schema1Data extends DataRow<Schema1> {
+
+	/**
+	 * @param schema
+	 */
+	public Schema1Data(final Schema1 schema) {
 		super(schema);
 	}
 
-	/** **/
-	public Schema1Data(final Schema schema, final Object[] row) {
-		super(schema, row);
-	}
-
-	/** **/
-	public void setField1(final long value) {
+	/**
+	 * set value for field1
+	 * @param value to be assigned to field1
+	 */
+	public void setField1(long value){
 		this.rawData[0] = value;
 	}
 
-	/** **/
-	public long getField1() {
+	/**
+	 * @return value of field1
+	 */
+	public long getField1(){
 		return super.getLongValue(0);
 	}
 }

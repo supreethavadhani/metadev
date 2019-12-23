@@ -29,7 +29,6 @@ import java.sql.Types;
 import java.time.Instant;
 import java.time.LocalDate;
 
-import org.eclipse.jdt.annotation.NonNull;
 import org.simplity.fm.core.Conventions;
 
 /**
@@ -261,11 +260,11 @@ public enum ValueType {
 	 * @return parsed value of this type. null if value the value could not be
 	 *         parsed to the desired type
 	 */
-	public Object parse(@NonNull final String value) {
+	public Object parse(final String value) {
 		return this.doParse(value.trim());
 	}
 
-	protected abstract Object doParse(@NonNull String value);
+	protected abstract Object doParse(String value);
 
 	/**
 	 * @param ps

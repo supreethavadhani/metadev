@@ -280,8 +280,7 @@ public class DbAssistant {
 				int posn = 1;
 				final StringBuilder sbf = new StringBuilder("Parameter Values");
 				for (final FieldMetaData p : params) {
-					final Object value = values[p.idx];
-					p.valueType.setPsParam(ps, posn, value);
+					final Object value = p.setPsParam(ps, values, posn);
 					sbf.append('\n').append(posn).append('=').append(value);
 					posn++;
 				}
@@ -411,7 +410,7 @@ public class DbAssistant {
 		int idx = -1;
 		for (final FieldMetaData p : params) {
 			idx++;
-			types[idx] = p.valueType;
+			types[idx] = p.getValueType();
 		}
 
 		/*
@@ -429,7 +428,7 @@ public class DbAssistant {
 			int targetIdx = -1;
 			for (final FieldMetaData p : params) {
 				targetIdx++;
-				target[targetIdx] = source[p.idx];
+				target[targetIdx] = source[p.getIndex()];
 			}
 		}
 
@@ -463,8 +462,7 @@ public class DbAssistant {
 		}
 		int idx = 1;
 		for (final FieldMetaData p : params) {
-			buf.append('\n').append(idx).append(". type=").append(p.valueType);
-			buf.append(" value=").append(values[p.idx]);
+			p.toMessage(buf, idx, values);
 			idx++;
 		}
 		return buf.toString();
@@ -504,7 +502,12 @@ public class DbAssistant {
 			public void setParams(final PreparedStatement ps) throws SQLException {
 				final int posn = 0;
 				for (final FieldMetaData p : DbAssistant.this.whereParams) {
-					p.valueType.setPsParam(ps, posn, values[p.idx]);
+					final Object value = p.setPsParam(ps, values, posn);
+					if (value == null) {
+						logger.error("fetch() invoked with key at index {} as null ", p.getIndex());
+						throw new SQLException(
+								"Primary key fields must be assigned values before a fetch() operations");
+					}
 				}
 			}
 
@@ -513,7 +516,7 @@ public class DbAssistant {
 				int posn = 0;
 				for (final FieldMetaData p : DbAssistant.this.selectParams) {
 					posn++;
-					values[p.getIndex()] = p.getValueType().getFromRs(rs, posn);
+					p.getFromRs(rs, posn, values);
 				}
 				result[0] = true;
 				/*
@@ -559,7 +562,7 @@ public class DbAssistant {
 				int posn = 0;
 				for (final PreparedStatementParam p : params) {
 					posn++;
-					p.valueType.setPsParam(ps, posn, p.value);
+					p.setPsParam(ps, posn);
 				}
 			}
 
@@ -570,7 +573,7 @@ public class DbAssistant {
 				int posn = 0;
 				for (final FieldMetaData p : DbAssistant.this.selectParams) {
 					posn++;
-					row[p.idx] = p.valueType.getFromRs(rs, posn);
+					p.getFromRs(rs, posn, row);
 				}
 				return true;
 			}
@@ -627,7 +630,7 @@ public class DbAssistant {
 				int posn = 0;
 				for (final FieldMetaData p : DbAssistant.this.selectParams) {
 					posn++;
-					row[p.idx] = p.valueType.getFromRs(rs, posn);
+					p.getFromRs(rs, posn, row);
 				}
 				return true;
 			}
@@ -685,7 +688,7 @@ public class DbAssistant {
 				int posn = 0;
 				for (final PreparedStatementParam p : params) {
 					posn++;
-					p.valueType.setPsParam(ps, posn, p.value);
+					p.setPsParam(ps, posn);
 				}
 			}
 
@@ -694,7 +697,7 @@ public class DbAssistant {
 				int posn = 0;
 				for (final FieldMetaData p : DbAssistant.this.selectParams) {
 					posn++;
-					values[p.getIndex()] = p.getValueType().getFromRs(rs, posn);
+					p.getFromRs(rs, posn, values);
 				}
 				result[0] = true;
 				/*

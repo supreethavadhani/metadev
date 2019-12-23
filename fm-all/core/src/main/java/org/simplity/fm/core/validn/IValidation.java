@@ -41,7 +41,7 @@ public interface IValidation {
 	 * @param ctx
 	 * @return true if all OK. false if an error message is added to the list
 	 */
-	boolean isValid(DataRow dataRow, IServiceContext ctx);
+	boolean isValid(DataRow<?> dataRow, IServiceContext ctx);
 
 	/**
 	 *

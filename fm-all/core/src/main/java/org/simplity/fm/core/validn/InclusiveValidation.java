@@ -79,7 +79,7 @@ public class InclusiveValidation implements IValidation {
 	}
 
 	@Override
-	public boolean isValid(final DataRow dataRow, final IServiceContext ctx) {
+	public boolean isValid(final DataRow<?> dataRow, final IServiceContext ctx) {
 		final Object main = dataRow.getObject(this.mainIndex);
 		final Object dep = dataRow.getObject(this.dependentIndex);
 

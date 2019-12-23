@@ -24,10 +24,10 @@ package org.simplity.fm.core.data;
 
 /**
  * This hand-coded class serves as a prototype for generating a file
- * 
+ *
  * @author simplity.org
  *
  */
 public class GeneratedFormTemplate {
-
+	//
 }

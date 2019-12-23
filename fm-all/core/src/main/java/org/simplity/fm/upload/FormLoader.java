@@ -88,7 +88,7 @@ class FormLoader {
 
 	}
 
-	private DataRow parseInput(final Map<String, String> values, final IServiceContext ctx) {
+	private DataRow<?> parseInput(final Map<String, String> values, final IServiceContext ctx) {
 		final String[] data = new String[this.valueProviders.length];
 		int idx = -1;
 		for (final IValueProvider vp : this.valueProviders) {
@@ -99,7 +99,7 @@ class FormLoader {
 		}
 
 		final int nbrExistingErrors = ctx.getNbrErrors();
-		final DataRow dataRow = this.form.parseForInsert(data, ctx);
+		final DataRow<?> dataRow = this.form.parseForInsert(data, ctx);
 		final int nbrErrors = ctx.getNbrErrors();
 		if (nbrErrors > nbrExistingErrors) {
 			return null;
@@ -119,7 +119,7 @@ class FormLoader {
 	 */
 	boolean loadData(final Map<String, String> values, final DbHandle handle, final IServiceContext ctx)
 			throws SQLException {
-		final DataRow fd = this.parseInput(values, ctx);
+		final DataRow<?> fd = this.parseInput(values, ctx);
 		if (fd == null) {
 			return false;
 		}

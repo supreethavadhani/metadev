@@ -45,8 +45,8 @@ public class Form {
 
 	String name;
 	String schemaName;
-	String[] dbOperations;
-	Field[] tempFields;
+	String[] operations;
+	Field[] localFields;
 	Control[] controls;
 	LinkedForm[] linkedForms;
 	// Section[] sections;
@@ -76,8 +76,8 @@ public class Form {
 			}
 		}
 		this.fields.putAll(sch.fieldMap);
-		if (this.tempFields != null) {
-			for (final Field f : this.tempFields) {
+		if (this.localFields != null) {
+			for (final Field f : this.localFields) {
 				if (this.fields.containsKey(f.name)) {
 					logger.error(
 							"Schema has a field named {} but this is also being defined as a temp field. temp feld ignored",
@@ -137,7 +137,7 @@ public class Form {
 		sbf.append(p).append("String NAME = ").append(Util.escape(this.name)).append(';');
 		sbf.append(p).append("String SCHEMA = ").append(Util.escape(this.schemaName)).append(';');
 		sbf.append(p);
-		getOps(this.dbOperations, sbf);
+		getOps(this.operations, sbf);
 
 		if (isComposite) {
 			this.emitChildStatics(sbf, p);
@@ -291,10 +291,10 @@ public class Form {
 		/*
 		 * auto-service operations?
 		 */
-		if (this.dbOperations != null && this.dbOperations.length > 0) {
+		if (this.operations != null && this.operations.length > 0) {
 			sbf.append("\n\t\tthis.opsAllowed = {");
 			boolean first = true;
-			for (String op : this.dbOperations) {
+			for (String op : this.operations) {
 				op = op.trim().toLowerCase();
 				final Integer obj = OP_INDEXES.get(op);
 				if (obj == null) {
