@@ -49,6 +49,35 @@ import com.google.gson.stream.JsonToken;
  *
  */
 class Util {
+	static final String[] JAVA_VALUE_TYPES = getJavaValueTypes();
+	static final String[] JAVA_GET_TYPES = getJavaGetTypes();
+
+	private static String[] getJavaValueTypes() {
+		final ValueType[] types = ValueType.values();
+
+		final String[] result = new String[types.length];
+		result[ValueType.Boolean.ordinal()] = "boolean";
+		result[ValueType.Date.ordinal()] = "LocalDate";
+		result[ValueType.Decimal.ordinal()] = "double";
+		result[ValueType.Integer.ordinal()] = "long";
+		result[ValueType.Text.ordinal()] = "String";
+		result[ValueType.Timestamp.ordinal()] = "Instant";
+		return result;
+	}
+
+	private static String[] getJavaGetTypes() {
+		final ValueType[] types = ValueType.values();
+
+		final String[] result = new String[types.length];
+		result[ValueType.Boolean.ordinal()] = "Bool";
+		result[ValueType.Date.ordinal()] = "Date";
+		result[ValueType.Decimal.ordinal()] = "Decimal";
+		result[ValueType.Integer.ordinal()] = "Long";
+		result[ValueType.Text.ordinal()] = "String";
+		result[ValueType.Timestamp.ordinal()] = "Timestamp";
+		return result;
+	}
+
 	/**
 	 * Gson is not a small object. It is immutable and thread safe. Hence with
 	 * this small trick, we can avoid repeated creation of Gson instances

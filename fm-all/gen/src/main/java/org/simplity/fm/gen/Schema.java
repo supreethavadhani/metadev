@@ -33,9 +33,9 @@ import java.util.Set;
 
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.data.ColumnType;
-import org.simplity.fm.core.data.DataRow;
+import org.simplity.fm.core.data.DataObject;
+import org.simplity.fm.core.data.DataTable;
 import org.simplity.fm.core.data.DbAssistant;
-import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.validn.DependentListValidation;
 import org.simplity.fm.core.validn.ExclusiveValidation;
 import org.simplity.fm.core.validn.FromToValidation;
@@ -641,7 +641,7 @@ class Schema {
 		}
 	}
 
-	void emitJavaDataClass(final StringBuilder sbf, final String generatedPackage,
+	void emitJavaRowClass(final StringBuilder sbf, final String generatedPackage,
 			final Map<String, DataType> dataTypes) {
 		/*
 		 * our package name is rootPAckage + any prefix/qualifier in our name
@@ -649,7 +649,7 @@ class Schema {
 		 * e.g. if name a.b.schema1 then prefix is a.b and className is Schema1
 		 */
 		final String schemaCls = Util.toClassName(this.name);
-		final String cls = schemaCls + "Data";
+		final String cls = schemaCls + "Row";
 		String pck = generatedPackage + ".schema";
 		final String qual = Util.getClassQualifier(this.name);
 		if (qual != null) {
@@ -660,10 +660,9 @@ class Schema {
 		/*
 		 * imports
 		 */
-		Util.emitImport(sbf, DataRow.class);
+		Util.emitImport(sbf, DataObject.class);
 		Util.emitImport(sbf, Instant.class);
 		Util.emitImport(sbf, LocalDate.class);
-		Util.emitImport(sbf, org.simplity.fm.core.data.Schema.class);
 
 		/*
 		 * class definition
@@ -671,13 +670,17 @@ class Schema {
 
 		sbf.append("\n\n/**\n * class that represents structure of ").append(this.name);
 		sbf.append("\n */ ");
-		sbf.append("\npublic class ").append(cls).append(" extends DataRow<").append(schemaCls).append("> {");
+		sbf.append("\npublic class ").append(cls).append(" extends DataRow {");
 
 		/*
-		 * constructor
+		 * constructors
 		 */
-		sbf.append("\n\n\t/**\n\t * @param schema\n\t */\n\tpublic ").append(cls).append("(final ").append(schemaCls)
+		sbf.append("\n\n\tprotected ").append(cls).append("(final ").append(schemaCls)
 				.append(" schema) {\n\t\tsuper(schema);\n\t}");
+
+		sbf.append("\n\n\tprotected ").append(cls).append("(final ").append(schemaCls)
+				.append(" schema, final Object[] data) {\n\t\tsuper(schema, data);\n\t}");
+
 		/*
 		 * getters and setters
 		 */
@@ -685,8 +688,52 @@ class Schema {
 		sbf.append("\n}\n");
 	}
 
-	private static final String[] JAVA_VALUE_TYPES = getJavaValueTypes();
-	private static final String[] JAVA_GET_TYPES = getJavaGetTypes();
+	void emitJavaTableClass(final StringBuilder sbf, final String generatedPackage) {
+		/*
+		 * our package name is rootPAckage + any prefix/qualifier in our name
+		 *
+		 * e.g. if name a.b.schema1 then prefix is a.b and className is Schema1
+		 */
+		final String schemaCls = Util.toClassName(this.name);
+		final String cls = schemaCls + "Table";
+		final String rowCls = schemaCls + "Row";
+		String pck = generatedPackage + ".schema";
+		final String qual = Util.getClassQualifier(this.name);
+		if (qual != null) {
+			pck += '.' + qual;
+		}
+		sbf.append("package ").append(pck).append(";\n");
+
+		/*
+		 * imports
+		 */
+		Util.emitImport(sbf, DataTable.class);
+
+		/*
+		 * class definition
+		 */
+
+		sbf.append("\n\n/**\n * class that represents an array of structure of ").append(this.name);
+		sbf.append("\n */ ");
+		sbf.append("\npublic class ").append(cls).append(" extends DataTable {");
+
+		/*
+		 * constructors
+		 */
+		sbf.append("\n\n\tprotected ").append(cls).append("(final ").append(schemaCls)
+				.append(" schema) {\n\t\tsuper(schema);\n\t}");
+
+		sbf.append("\n\n\tprotected ").append(cls).append("(final ").append(schemaCls)
+				.append(" schema, final Object[][] data) {\n\t\tsuper(schema, data);\n\t}");
+		/*
+		 * override getRow for class-specific return type
+		 */
+		sbf.append("\n\n\t/@Override\n\tpublic ").append(rowCls).append("(final int idx) {");
+		sbf.append("\n\t\treturn(").append(rowCls).append(") super.getRow(idx);\n\t}");
+
+		sbf.append("\n}\n");
+
+	}
 
 	/**
 	 * getters and setters for all the attributes of this schema
@@ -694,8 +741,8 @@ class Schema {
 	private void emitJavaGettersAndSetters(final StringBuilder sbf, final Map<String, DataType> dataTypes) {
 		for (final DbField f : this.fields) {
 			final DataType dt = dataTypes.get(f.dataType);
-			final String typ = JAVA_VALUE_TYPES[dt.valueType.ordinal()];
-			final String get = JAVA_GET_TYPES[dt.valueType.ordinal()];
+			final String typ = Util.JAVA_VALUE_TYPES[dt.valueType.ordinal()];
+			final String get = Util.JAVA_GET_TYPES[dt.valueType.ordinal()];
 			final String nam = f.name;
 			final String cls = Util.toClassName(nam);
 
@@ -703,7 +750,7 @@ class Schema {
 			sbf.append("\n\t * @param value to be assigned to ").append(nam);
 			sbf.append("\n\t */");
 			sbf.append("\n\tpublic void set").append(cls).append('(').append(typ).append(" value){");
-			sbf.append("\n\t\tthis.rawData[").append(f.index).append("] = value;");
+			sbf.append("\n\t\tthis.fieldValues[").append(f.index).append("] = value;");
 			sbf.append("\n\t}");
 
 			sbf.append("\n\n\t/**\n\t * @return value of ").append(nam).append("\n\t */");
@@ -712,31 +759,5 @@ class Schema {
 			sbf.append("\n\t}");
 		}
 
-	}
-
-	private static String[] getJavaValueTypes() {
-		final ValueType[] types = ValueType.values();
-
-		final String[] result = new String[types.length];
-		result[ValueType.Boolean.ordinal()] = "boolean";
-		result[ValueType.Date.ordinal()] = "LocalDate";
-		result[ValueType.Decimal.ordinal()] = "double";
-		result[ValueType.Integer.ordinal()] = "long";
-		result[ValueType.Text.ordinal()] = "String";
-		result[ValueType.Timestamp.ordinal()] = "Instant";
-		return result;
-	}
-
-	private static String[] getJavaGetTypes() {
-		final ValueType[] types = ValueType.values();
-
-		final String[] result = new String[types.length];
-		result[ValueType.Boolean.ordinal()] = "Bool";
-		result[ValueType.Date.ordinal()] = "Date";
-		result[ValueType.Decimal.ordinal()] = "Decimal";
-		result[ValueType.Integer.ordinal()] = "Long";
-		result[ValueType.Text.ordinal()] = "String";
-		result[ValueType.Timestamp.ordinal()] = "Timestamp";
-		return result;
 	}
 }

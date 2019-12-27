@@ -35,10 +35,23 @@ public class Schema1 extends Schema {
 		this.initialize();
 	}
 
-	/**
-	 * @return this schema-specific data instance
-	 */
-	public Schema1Data newRow() {
-		return new Schema1Data(this);
+	@Override
+	protected Schema1Table newDataTable(final Object[][] data) {
+		return new Schema1Table(this, data);
+	}
+
+	@Override
+	public Schema1Table newDataTable() {
+		return new Schema1Table(this);
+	}
+
+	@Override
+	public Schema1Row newDataRow() {
+		return new Schema1Row(this);
+	}
+
+	@Override
+	protected Schema1Row newDataRow(final Object[] fieldValues) {
+		return new Schema1Row(this, fieldValues);
 	}
 }

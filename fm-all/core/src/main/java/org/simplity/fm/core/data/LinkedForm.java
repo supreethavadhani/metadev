@@ -32,11 +32,9 @@ import com.google.gson.JsonArray;
 
 /**
  * @author simplity.org
- * @param <T>
- *            underlying schema of this form
  *
  */
-public class LinkedForm<T extends Schema> {
+public class LinkedForm {
 	/**
 	 * non-null unique across all fields of the form
 	 */
@@ -74,7 +72,7 @@ public class LinkedForm<T extends Schema> {
 	 * fields that are created at init()
 	 */
 
-	protected T linkedSchema;
+	protected Schema linkedSchema;
 	/**
 	 * column names are from the child table, but the values for the parameter
 	 * would come from the parent form
@@ -125,8 +123,7 @@ public class LinkedForm<T extends Schema> {
 	 * @param parentSchema
 	 */
 	void init(final Schema parentSchema) {
-		@SuppressWarnings("unchecked")
-		final Form<T> form = (Form<T>) ComponentProvider.getProvider().getForm(this.linkFormName);
+		final Form form = ComponentProvider.getProvider().getForm(this.linkFormName);
 		this.linkedSchema = form.schema;
 		if (this.childLinkNames == null || this.childLinkNames.length == 0) {
 			return;
@@ -160,11 +157,10 @@ public class LinkedForm<T extends Schema> {
 	 * @return non-null data table with data extracted from the db
 	 * @throws SQLException
 	 */
-	@SuppressWarnings("unchecked")
-	public DataTable<T> fetch(final DbHandle handle, final Object[] parentRow) throws SQLException {
+	public DataTable fetch(final DbHandle handle, final Object[] parentRow) throws SQLException {
 		final PreparedStatementParam[] params = this.createParams(parentRow);
 
-		return (DataTable<T>) this.linkedSchema.filter(handle, this.linkWhereClause, params);
+		return this.linkedSchema.filter(handle, this.linkWhereClause, params);
 	}
 
 	private PreparedStatementParam[] createParams(final Object[] parentRow) {
@@ -188,9 +184,8 @@ public class LinkedForm<T extends Schema> {
 	 *            any validation error is added to it
 	 * @return null in case of any error in the input data.
 	 */
-	@SuppressWarnings("unchecked")
-	public DataTable<T> parse(final JsonArray arr, final boolean forInsert, final IServiceContext ctx) {
-		return (DataTable<T>) this.linkedSchema.parseTable(arr, forInsert, ctx, this.linkName);
+	public DataTable parse(final JsonArray arr, final boolean forInsert, final IServiceContext ctx) {
+		return this.linkedSchema.parseTable(arr, forInsert, ctx, this.linkName);
 	}
 
 	/**
@@ -200,7 +195,7 @@ public class LinkedForm<T extends Schema> {
 	 * @return true of every row is updated. false otherwise
 	 * @throws SQLException
 	 */
-	public boolean update(final DbHandle handle, final DataTable<?> dataTable, final Object[] dataRow)
+	public boolean update(final DbHandle handle, final DataTable dataTable, final Object[] dataRow)
 			throws SQLException {
 		/*
 		 * we copy parent key into child key to ensure that the update process
@@ -229,7 +224,7 @@ public class LinkedForm<T extends Schema> {
 	 * @return true of every row is updated. false otherwise
 	 * @throws SQLException
 	 */
-	public boolean insert(final DbHandle handle, final DataTable<?> dataTable, final Object[] dataRow)
+	public boolean insert(final DbHandle handle, final DataTable dataTable, final Object[] dataRow)
 			throws SQLException {
 		/*
 		 * we copy parent key into child key to ensure that the update process
@@ -246,8 +241,7 @@ public class LinkedForm<T extends Schema> {
 	 * @return true of every row is updated. false otherwise
 	 * @throws SQLException
 	 */
-	public boolean save(final DbHandle handle, final DataTable<?> dataTable, final Object[] dataRow)
-			throws SQLException {
+	public boolean save(final DbHandle handle, final DataTable dataTable, final Object[] dataRow) throws SQLException {
 		/*
 		 * we copy parent key into child key to ensure that the update process
 		 * is not changing the parent

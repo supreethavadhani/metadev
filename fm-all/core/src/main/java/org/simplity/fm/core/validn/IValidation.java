@@ -22,7 +22,7 @@
 
 package org.simplity.fm.core.validn;
 
-import org.simplity.fm.core.data.DataRow;
+import org.simplity.fm.core.data.DataObject;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
@@ -41,7 +41,7 @@ public interface IValidation {
 	 * @param ctx
 	 * @return true if all OK. false if an error message is added to the list
 	 */
-	boolean isValid(DataRow<?> dataRow, IServiceContext ctx);
+	boolean isValid(DataObject dataRow, IServiceContext ctx);
 
 	/**
 	 *

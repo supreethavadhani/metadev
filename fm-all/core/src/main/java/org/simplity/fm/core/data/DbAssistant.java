@@ -250,7 +250,7 @@ public class DbAssistant {
 	 * @return true if it is indeed deleted happened. false otherwise
 	 * @throws SQLException
 	 */
-	public boolean deleteFromDb(final DbHandle handle, final Object[] values) throws SQLException {
+	public boolean delete(final DbHandle handle, final Object[] values) throws SQLException {
 		final String sql = this.deleteClause + this.whereClause;
 		final int nbr = writeWorker(handle, sql, this.whereParams, values);
 		return nbr > 0;
@@ -289,6 +289,25 @@ public class DbAssistant {
 			}
 
 		};
+	}
+
+	/**
+	 * @param handle
+	 * @param row
+	 * @return true if this row was indeed saved
+	 * @throws SQLException
+	 */
+	public boolean save(final DbHandle handle, final Object[] row) throws SQLException {
+		if (this.generatedKeyIdx == -1) {
+			final String msg = "Save operation not valid as teh key is not generated";
+			logger.error(msg);
+			throw new SQLException(msg);
+		}
+		final Object key = row[this.generatedKeyIdx];
+		if (key != null && ((Long) key) != 0) {
+			return this.update(handle, row);
+		}
+		return this.insert(handle, row);
 	}
 
 	/**
@@ -482,7 +501,7 @@ public class DbAssistant {
 	 *         found...)
 	 * @throws SQLException
 	 */
-	public boolean fetch(final DbHandle handle, final Object[] values) throws SQLException {
+	public boolean read(final DbHandle handle, final Object[] values) throws SQLException {
 		if (values == null || values.length < this.nbrFieldsInARow) {
 			logger.error(
 					"This schema has {} fields but an array of length {} is assigned to receive data. Data not extracted.",
@@ -658,7 +677,7 @@ public class DbAssistant {
 	 * @return true if one row was read. false otherwise
 	 * @throws SQLException
 	 */
-	public boolean fetchFirstRow(final DbHandle handle, final String filterWhere, final PreparedStatementParam[] params,
+	public boolean readFirstOne(final DbHandle handle, final String filterWhere, final PreparedStatementParam[] params,
 			final Object[] values) throws SQLException {
 		if (values == null || values.length < this.nbrFieldsInARow) {
 			logger.error(
@@ -709,4 +728,5 @@ public class DbAssistant {
 		});
 		return result[0];
 	}
+
 }

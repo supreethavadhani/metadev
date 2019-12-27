@@ -183,7 +183,7 @@ public class Generator {
 		}
 		form.initialize(schema);
 		final StringBuilder sbf = new StringBuilder();
-		form.emitJavaForm(sbf, rootPackageName);
+		form.emitJavaForm(sbf, rootPackageName, app.dataTypes.dataTypes);
 		String outName = generatedSourceRootFolder + "form/" + Util.toClassName(fn) + ".java";
 		Util.writeOut(outName, sbf);
 
@@ -225,14 +225,29 @@ public class Generator {
 
 		schema.init();
 
+		final String outNamePrefix = generatedSourceRootFolder + "schema/" + Util.toClassName(fn);
+		/*
+		 * schema.java
+		 */
 		final StringBuilder sbf = new StringBuilder();
 		schema.emitJavaClass(sbf, packageName);
-		String outName = generatedSourceRootFolder + "schema/" + Util.toClassName(fn) + ".java";
+		String outName = outNamePrefix + ".java";
 		Util.writeOut(outName, sbf);
 
+		/*
+		 * schemaRow.java
+		 */
 		sbf.setLength(0);
-		schema.emitJavaDataClass(sbf, packageName, dataTypes.dataTypes);
-		outName = generatedSourceRootFolder + "schema/" + Util.toClassName(fn) + "Data.java";
+		schema.emitJavaRowClass(sbf, packageName, dataTypes.dataTypes);
+		outName = outNamePrefix + "Row.java";
+		Util.writeOut(outName, sbf);
+
+		/*
+		 * schemaTable.java
+		 */
+		sbf.setLength(0);
+		schema.emitJavaTableClass(sbf, packageName);
+		outName = outNamePrefix + "Table.java";
 		Util.writeOut(outName, sbf);
 
 		return schema;

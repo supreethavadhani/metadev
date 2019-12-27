@@ -22,6 +22,8 @@
 
 package org.simplity.fm.gen;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -101,7 +103,7 @@ public class Form {
 		}
 	}
 
-	void emitJavaForm(final StringBuilder sbf, final String packageName) {
+	void emitJavaForm(final StringBuilder sbf, final String packageName, final Map<String, DataType> dataTypes) {
 		final boolean isComposite = this.linkedForms != null && this.linkedForms.length > 0;
 		/*
 		 * our package name is rootPAckage + any prefix/qualifier in our name
@@ -120,11 +122,20 @@ public class Form {
 			Util.emitImport(sbf, org.simplity.fm.core.data.LinkedForm.class);
 			Util.emitImport(sbf, org.simplity.fm.core.data.CompositeForm.class);
 		}
+
+		/*
+		 * for setters and getters
+		 */
+		if (this.localFields != null) {
+			Util.emitImport(sbf, Instant.class);
+			Util.emitImport(sbf, LocalDate.class);
+		}
+
 		/*
 		 * class declaration
 		 */
 		final String cls = Util.toClassName(this.name);
-		sbf.append("\n/**\n *\n */\npublic class ").append(cls).append(" extends ");
+		sbf.append("\n/**  */\npublic class ").append(cls).append(" extends ");
 		if (isComposite) {
 			sbf.append("Composite");
 		}
@@ -146,7 +157,7 @@ public class Form {
 		 * constructor
 		 */
 		p = "\n\t\tthis.";
-		sbf.append("\n\t/**\n * constructor\n */\npublic ").append(cls).append("() {");
+		sbf.append("\n/** constructor */\npublic ").append(cls).append("() {");
 		sbf.append(p).append("name = NAME;");
 		sbf.append(p).append("schema = ComponentProvider.getProvider().getSchema(SCHEMA);");
 		sbf.append(p).append("operations = OPS;");
@@ -155,7 +166,34 @@ public class Form {
 			sbf.append(p).append("initialize();");
 		}
 
-		sbf.append("\n\t}\n}\n");
+		sbf.append("\n\t}");
+		if (this.localFields != null) {
+			this.emitJavaGettersAndSetters(sbf, dataTypes);
+		}
+
+		sbf.append("\n}\n");
+	}
+
+	private void emitJavaGettersAndSetters(final StringBuilder sbf, final Map<String, DataType> dataTypes) {
+		for (final Field f : this.localFields) {
+			final DataType dt = dataTypes.get(f.dataType);
+			final String typ = Util.JAVA_VALUE_TYPES[dt.valueType.ordinal()];
+			final String nam = f.name;
+			final String cls = Util.toClassName(nam);
+
+			sbf.append("\n\n\t/**\n\t * set value for ").append(nam);
+			sbf.append("\n\t * @param value to be assigned to ").append(nam);
+			sbf.append("\n\t */");
+			sbf.append("\n\tpublic void set").append(cls).append('(').append(typ).append(" value){");
+			sbf.append("\n\t\tthis.").append(f.name).append(" = value;");
+			sbf.append("\n\t}");
+
+			sbf.append("\n\n\t/**\n\t * @return value of ").append(nam).append("\n\t */");
+			sbf.append("\n\tpublic ").append(typ).append(" get").append(cls).append("(){");
+			sbf.append("\n\t\treturn this.").append(f.name).append(";");
+			sbf.append("\n\t}");
+		}
+
 	}
 
 	private void emitChildStatics(final StringBuilder sbf, final String p) {

@@ -22,39 +22,61 @@
 
 package org.simplity.fm.core.data;
 
+import java.util.Iterator;
+
 /**
- * represents a parent row with one or more table data for child/related row
- *
  * @author simplity.org
- * @param <T>
- *            parent schema
  *
  */
-public class CompositeData<T extends Schema> {
-	private final DataRow<T> dataRow;
-	private final DataTable<?>[] childData;
+public abstract class FormDataTable implements Iterable<FormData> {
+	protected final Form form;
+	protected final DataTable dataTable;
+	protected final Object[][] fieldValues;
+
+	protected FormDataTable(final Form form, final DataTable dataTable, final Object[][] fieldValues) {
+		this.form = form;
+		this.dataTable = dataTable;
+		this.fieldValues = fieldValues;
+	}
 
 	/**
 	 *
-	 * @param dataRow
-	 * @param childData
+	 * @return data table associated with this form table
 	 */
-	public CompositeData(final DataRow<T> dataRow, final DataTable<?>[] childData) {
-		this.dataRow = dataRow;
-		this.childData = childData;
+	public DataTable getDataTable() {
+		return this.dataTable;
 	}
 
 	/**
-	 * @return the childData
+	 *
+	 * @return local field values associated with this form table
 	 */
-	public DataTable<?>[] getChildData() {
-		return this.childData;
+	public Object[][] getFiedValues() {
+		return this.fieldValues;
 	}
 
 	/**
-	 * @return the dataRow
+	 * iterator for data rows
 	 */
-	public DataRow<T> getDataRow() {
-		return this.dataRow;
+	@Override
+	public Iterator<FormData> iterator() {
+		final int nbr = this.dataTable.length();
+		return new Iterator<FormData>() {
+			private int idx = 0;
+
+			@Override
+			public boolean hasNext() {
+				return this.idx < nbr;
+			}
+
+			@Override
+			public FormData next() {
+				return FormDataTable.this.getFormData(this.idx++);
+			}
+		};
+	}
+
+	protected FormData getFormData(final int idx) {
+		return this.form.newFormData(this.dataTable.getRow(idx), this.fieldValues[idx], null);
 	}
 }

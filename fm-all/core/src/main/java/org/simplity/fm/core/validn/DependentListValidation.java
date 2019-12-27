@@ -24,7 +24,7 @@ package org.simplity.fm.core.validn;
 
 import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.data.DataRow;
+import org.simplity.fm.core.data.DataObject;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
@@ -60,7 +60,7 @@ public class DependentListValidation implements IValidation {
 	}
 
 	@Override
-	public boolean isValid(final DataRow<?> dataRow, final IServiceContext ctx) {
+	public boolean isValid(final DataObject dataRow, final IServiceContext ctx) {
 		final Object fieldValue = dataRow.getObject(this.fieldIndex);
 		if (fieldValue == null) {
 			return true;

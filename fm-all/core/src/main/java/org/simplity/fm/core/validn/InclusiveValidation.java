@@ -23,7 +23,7 @@
 package org.simplity.fm.core.validn;
 
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.data.DataRow;
+import org.simplity.fm.core.data.DataObject;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
@@ -79,7 +79,7 @@ public class InclusiveValidation implements IValidation {
 	}
 
 	@Override
-	public boolean isValid(final DataRow<?> dataRow, final IServiceContext ctx) {
+	public boolean isValid(final DataObject dataRow, final IServiceContext ctx) {
 		final Object main = dataRow.getObject(this.mainIndex);
 		final Object dep = dataRow.getObject(this.dependentIndex);
 

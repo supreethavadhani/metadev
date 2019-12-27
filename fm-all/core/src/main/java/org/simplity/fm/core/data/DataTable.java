@@ -34,20 +34,18 @@ import com.google.gson.stream.JsonWriter;
 
 /**
  * @author simplity.org
- * @param <T>
- *            schema for which this data structure has data
  *
  */
-public class DataTable<T extends Schema> implements Iterable<DataRow<T>> {
+public abstract class DataTable implements Iterable<DataObject> {
 	protected static final Logger logger = LoggerFactory.getLogger(DataTable.class);
-	protected final T schema;
+	protected final Schema schema;
 	protected Object[][] dataTable = new Object[0][];
 
 	/**
 	 *
 	 * @param schema
 	 */
-	public DataTable(final T schema) {
+	protected DataTable(final Schema schema) {
 		this.schema = schema;
 	}
 
@@ -56,7 +54,7 @@ public class DataTable<T extends Schema> implements Iterable<DataRow<T>> {
 	 * @param schema
 	 * @param data
 	 */
-	public DataTable(final T schema, final Object[][] data) {
+	protected DataTable(final Schema schema, final Object[][] data) {
 		this.schema = schema;
 		final int nbr = this.schema.getNbrFields();
 		if (data == null || data.length == 0) {
@@ -77,9 +75,9 @@ public class DataTable<T extends Schema> implements Iterable<DataRow<T>> {
 	 * @param idx
 	 * @return data row. null if the index is out of range
 	 */
-	public DataRow<T> getRow(final int idx) {
+	public DataObject getRow(final int idx) {
 		try {
-			return new DataRow<>(this.schema, this.dataTable[idx]);
+			return this.schema.newDataRow(this.dataTable[idx]);
 		} catch (final ArrayIndexOutOfBoundsException e) {
 			logger.error("Data table has {} rows but row {} is requested. null returned", this.dataTable.length, idx);
 			return null;
@@ -88,24 +86,18 @@ public class DataTable<T extends Schema> implements Iterable<DataRow<T>> {
 
 	/**
 	 *
-	 * @param idx
 	 * @return data row. null if the index is out of range
 	 */
-	public Object[] getRawData(final int idx) {
-		try {
-			return this.dataTable[idx];
-		} catch (final ArrayIndexOutOfBoundsException e) {
-			logger.error("Data table has {} rows but row {} is requested. null returned", this.dataTable.length, idx);
-			return null;
-		}
+	public Object[][] getRawData() {
+		return this.dataTable;
 	}
 
 	/**
 	 * iterator for data rows
 	 */
 	@Override
-	public Iterator<DataRow<T>> iterator() {
-		return new Iterator<DataRow<T>>() {
+	public Iterator<DataObject> iterator() {
+		return new Iterator<DataObject>() {
 			private int idx = 0;
 
 			@Override
@@ -114,27 +106,8 @@ public class DataTable<T extends Schema> implements Iterable<DataRow<T>> {
 			}
 
 			@Override
-			public DataRow<T> next() {
+			public DataObject next() {
 				return DataTable.this.getRow(this.idx++);
-			}
-		};
-	}
-
-	/**
-	 * @return iterator over raw data
-	 */
-	public Iterable<Object[]> rowDataSet() {
-		return () -> new Iterator<Object[]>() {
-			private int idx = 0;
-
-			@Override
-			public boolean hasNext() {
-				return this.idx < DataTable.this.dataTable.length;
-			}
-
-			@Override
-			public Object[] next() {
-				return DataTable.this.getRawData(this.idx++);
 			}
 		};
 	}
