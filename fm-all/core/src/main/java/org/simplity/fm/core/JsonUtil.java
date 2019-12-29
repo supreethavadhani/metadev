@@ -25,8 +25,12 @@ package org.simplity.fm.core;
 import java.io.IOException;
 import java.io.Writer;
 
+import org.simplity.fm.core.data.Field;
+import org.simplity.fm.core.datatypes.ValueType;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.google.gson.stream.JsonWriter;
 
 /**
  * @author simplity.org
@@ -173,5 +177,39 @@ public class JsonUtil {
 		} catch (final Exception e) {
 			return false;
 		}
+	}
+
+	/**
+	 * write fields as json attributes.
+	 * 
+	 * @param fields
+	 * @param values
+	 * @param writer
+	 * @throws IOException
+	 */
+	public static void writeFields(final Field[] fields, final Object[] values, final JsonWriter writer)
+			throws IOException {
+		for (final Field field : fields) {
+			writer.name(field.getName());
+			final Object value = values[field.getIndex()];
+			if (value == null) {
+				writer.nullValue();
+				continue;
+			}
+
+			final ValueType vt = field.getValueType();
+			if (vt == ValueType.Integer || vt == ValueType.Decimal) {
+				writer.value((Number) value);
+				continue;
+			}
+
+			if (vt == ValueType.Boolean) {
+				writer.value((boolean) value);
+				continue;
+			}
+
+			writer.value(value.toString());
+		}
+
 	}
 }

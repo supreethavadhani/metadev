@@ -22,15 +22,21 @@
 
 package org.simplity.fm.core.data;
 
+import java.io.IOException;
 import java.sql.SQLException;
 
 import org.simplity.fm.core.ComponentProvider;
+import org.simplity.fm.core.Message;
 import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.service.IServiceContext;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonWriter;
 
 /**
+ * this is used in generated classes
+ *
  * @author simplity.org
  *
  */
@@ -38,25 +44,25 @@ public class LinkedForm {
 	/**
 	 * non-null unique across all fields of the form
 	 */
-	protected final String linkName;
+	protected String linkName;
 
 	/**
 	 * name of the other form being linked
 	 */
-	protected final String linkFormName;
+	protected String linkFormName;
 
 	/**
 	 * if this is tabular, min rows expected from client
 	 */
-	protected final int minRows;
+	protected int minRows;
 	/**
 	 * if this is tabular, max rows expected from client.
 	 */
-	protected final int maxRows;
+	protected int maxRows;
 	/**
 	 * field names from the parent form that are used for linking
 	 */
-	protected final String[] parentLinkNames;
+	protected String[] parentLinkNames;
 	/**
 	 * field names from the child form that form the parent-key for the child
 	 * form
@@ -66,16 +72,21 @@ public class LinkedForm {
 	 * in case min/max rows violated, what is the error message to be used to
 	 * report this problem
 	 */
-	protected final String errorMessageId;
+	protected String errorMessageId;
 
 	/*
 	 * fields that are created at init()
 	 */
 
-	protected Schema linkedSchema;
 	/**
-	 * column names are from the child table, but the values for the parameter
-	 * would come from the parent form
+	 * form that is linked
+	 */
+	protected Form linkedForm;
+
+	/**
+	 * in case the schemas are to be linked, then we need the where clause where
+	 * the column names come from the linked schema,while the values for them
+	 * come from the parent schema
 	 * e.g. where childCol1=? and childCll2=?
 	 */
 	protected String linkWhereClause;
@@ -85,37 +96,16 @@ public class LinkedForm {
 	 * parent data row
 	 */
 	protected FieldMetaData[] linkWhereParams;
+	/**
+	 * in case the linked schema is to be used for deleting children
+	 */
 	protected String deleteSql;
 
+	/**
+	 * how do we link the parent and the child/linked schema?
+	 */
 	protected int[] parentIndexes;
 	protected int[] childIndexes;
-
-	/**
-	 *
-	 * @param linkName
-	 *            non-null unique across all fields of the form
-	 * @param formName
-	 *            non-null name of the linked form
-	 * @param minRows
-	 *            for validation of data
-	 * @param maxRows
-	 *            for validation of data. though 0 means unlimited, we strongly
-	 *            encourage a reasonable limit
-	 * @param errorMessageId
-	 *            message id to be used if number of data rows fails validation
-	 * @param childLinkNames
-	 * @param parentLinkNames
-	 */
-	public LinkedForm(final String linkName, final String formName, final int minRows, final int maxRows,
-			final String errorMessageId, final String[] parentLinkNames, final String[] childLinkNames) {
-		this.linkName = linkName;
-		this.linkFormName = formName;
-		this.minRows = minRows;
-		this.maxRows = maxRows;
-		this.errorMessageId = errorMessageId;
-		this.parentLinkNames = parentLinkNames;
-		this.childLinkNames = childLinkNames;
-	}
 
 	/**
 	 * called by parent form/schema before it is used.
@@ -123,8 +113,7 @@ public class LinkedForm {
 	 * @param parentSchema
 	 */
 	void init(final Schema parentSchema) {
-		final Form form = ComponentProvider.getProvider().getForm(this.linkFormName);
-		this.linkedSchema = form.schema;
+		this.linkedForm = ComponentProvider.getProvider().getForm(this.linkFormName);
 		if (this.childLinkNames == null || this.childLinkNames.length == 0) {
 			return;
 		}
@@ -134,9 +123,10 @@ public class LinkedForm {
 		this.parentIndexes = new int[nbr];
 		this.childIndexes = new int[nbr];
 		this.linkWhereParams = new FieldMetaData[nbr];
+		final Schema linkedSchema = this.linkedForm.getSchema();
 		for (int i = 0; i < nbr; i++) {
 			final DbField parentField = parentSchema.getField(this.parentLinkNames[i]);
-			final DbField childField = this.linkedSchema.getField(this.childLinkNames[i]);
+			final DbField childField = linkedSchema.getField(this.childLinkNames[i]);
 			this.parentIndexes[i] = parentField.index;
 			this.childIndexes[i] = childField.index;
 			if (i != 0) {
@@ -147,7 +137,7 @@ public class LinkedForm {
 		}
 
 		this.linkWhereClause = sbf.toString();
-		this.deleteSql = "delete from " + this.linkedSchema.nameInDb + this.linkWhereClause;
+		this.deleteSql = "delete from " + linkedSchema.nameInDb + this.linkWhereClause;
 	}
 
 	/**
@@ -157,10 +147,9 @@ public class LinkedForm {
 	 * @return non-null data table with data extracted from the db
 	 * @throws SQLException
 	 */
-	public DataTable fetch(final DbHandle handle, final Object[] parentRow) throws SQLException {
+	public SchemaDataTable read(final DbHandle handle, final Object[] parentRow) throws SQLException {
 		final PreparedStatementParam[] params = this.createParams(parentRow);
-
-		return this.linkedSchema.filter(handle, this.linkWhereClause, params);
+		return this.linkedForm.getSchema().filterToTable(handle, this.linkWhereClause, params);
 	}
 
 	private PreparedStatementParam[] createParams(final Object[] parentRow) {
@@ -175,8 +164,8 @@ public class LinkedForm {
 
 	/**
 	 *
-	 * @param arr
-	 *            json array that has the input data
+	 * @param json
+	 *            that has the json-array for this form
 	 * @param forInsert
 	 *            if the rows are to be parsed for insert (generated primary key
 	 *            is optional in the case of insert)
@@ -184,8 +173,28 @@ public class LinkedForm {
 	 *            any validation error is added to it
 	 * @return null in case of any error in the input data.
 	 */
-	public DataTable parse(final JsonArray arr, final boolean forInsert, final IServiceContext ctx) {
-		return this.linkedSchema.parseTable(arr, forInsert, ctx, this.linkName);
+	public FormDataTable parse(final JsonObject json, final boolean forInsert, final IServiceContext ctx) {
+		final JsonArray arr = json.getAsJsonArray(this.linkName);
+		FormDataTable data = null;
+		int nbr = 0;
+		if (arr != null && arr.size() > 0) {
+			data = this.linkedForm.parseTable(arr, forInsert, ctx, this.linkName);
+			if (ctx.allOk() == false) {
+				return null;
+			}
+			if (data != null) {
+				nbr = data.length();
+			}
+		}
+		if (this.minRows > nbr) {
+			ctx.addMessage(Message.newFieldError(this.linkName, "minRows", "" + this.minRows));
+			return null;
+		}
+		if (this.maxRows != 0 && nbr > this.maxRows) {
+			ctx.addMessage(Message.newFieldError(this.linkName, "maxRows", "" + this.maxRows));
+			return null;
+		}
+		return data;
 	}
 
 	/**
@@ -195,13 +204,13 @@ public class LinkedForm {
 	 * @return true of every row is updated. false otherwise
 	 * @throws SQLException
 	 */
-	public boolean update(final DbHandle handle, final DataTable dataTable, final Object[] dataRow)
+	public boolean update(final DbHandle handle, final SchemaDataTable dataTable, final Object[] dataRow)
 			throws SQLException {
 		/*
 		 * we copy parent key into child key to ensure that the update process
 		 * is not changing the parent
 		 */
-		this.copyKeys(dataRow, dataTable.dataTable);
+		this.copyKeys(dataRow, dataTable.fieldValues);
 		return dataTable.update(handle);
 	}
 
@@ -224,13 +233,13 @@ public class LinkedForm {
 	 * @return true of every row is updated. false otherwise
 	 * @throws SQLException
 	 */
-	public boolean insert(final DbHandle handle, final DataTable dataTable, final Object[] dataRow)
+	public boolean insert(final DbHandle handle, final SchemaDataTable dataTable, final Object[] dataRow)
 			throws SQLException {
 		/*
 		 * we copy parent key into child key to ensure that the update process
 		 * is not changing the parent
 		 */
-		this.copyKeys(dataRow, dataTable.dataTable);
+		this.copyKeys(dataRow, dataTable.fieldValues);
 		return dataTable.insert(handle);
 	}
 
@@ -241,12 +250,13 @@ public class LinkedForm {
 	 * @return true of every row is updated. false otherwise
 	 * @throws SQLException
 	 */
-	public boolean save(final DbHandle handle, final DataTable dataTable, final Object[] dataRow) throws SQLException {
+	public boolean save(final DbHandle handle, final SchemaDataTable dataTable, final Object[] dataRow)
+			throws SQLException {
 		/*
 		 * we copy parent key into child key to ensure that the update process
 		 * is not changing the parent
 		 */
-		this.copyKeys(dataRow, dataTable.dataTable);
+		this.copyKeys(dataRow, dataTable.fieldValues);
 		return dataTable.save(handle);
 	}
 
@@ -260,6 +270,25 @@ public class LinkedForm {
 		final PreparedStatementParam[] params = this.createParams(dataRow);
 		handle.write(this.deleteSql, params);
 		return true;
+	}
+
+	/**
+	 * @param table
+	 * @param writer
+	 * @throws IOException
+	 */
+	public void serializeToJson(final FormDataTable table, final JsonWriter writer) throws IOException {
+		if (table == null) {
+			return;
+		}
+		writer.name(this.linkName);
+		writer.beginArray();
+		for (final FormData fd : table) {
+			writer.beginObject();
+			fd.serializeFields(writer);
+			writer.endObject();
+		}
+		writer.endArray();
 	}
 
 }

@@ -22,6 +22,15 @@
 
 package org.simplity.fm.core.data;
 
+import java.io.IOException;
+import java.io.Writer;
+import java.time.Instant;
+import java.time.LocalDate;
+
+import org.simplity.fm.core.datatypes.ValueType;
+
+import com.google.gson.stream.JsonWriter;
+
 /**
  * <p>
  * Abstract representation of data associated with a form. Each Concrete class
@@ -40,10 +49,11 @@ package org.simplity.fm.core.data;
  */
 public abstract class FormData {
 
+	protected final Form form;
 	/**
 	 * data for the schema that this form is based on
 	 */
-	protected final DataObject dataObject;
+	protected final SchemaData dataObject;
 	/**
 	 * data for local fields that this form may have. null if there are no local
 	 * fields.
@@ -60,29 +70,128 @@ public abstract class FormData {
 	 * components are right
 	 *
 	 */
-	protected FormData(final DataObject dataObject, final Object[] fieldValues, final FormDataTable[] linkedData) {
+	protected FormData(final Form form, final SchemaData dataObject, final Object[] fieldValues,
+			final FormDataTable[] linkedData) {
+		this.form = form;
 		this.dataObject = dataObject;
 		this.fieldValues = fieldValues;
 		this.linkedData = linkedData;
 	}
 
+	protected Form getForm() {
+		return this.form;
+	}
+
 	/*
 	 * called by generated concrete class, and never by end-programmers.
 	 */
-	protected DataObject getDataObject() {
+	protected SchemaData getDataObject() {
 		return this.dataObject;
 	}
 
-	protected Object getFieldValue(final int index) {
+	protected Object getObject(final int index) {
 		return this.fieldValues[index];
 	}
 
-	protected void setFieldValue(final int index, final Object value) {
+	protected void setObject(final int index, final Object value) {
 		this.fieldValues[index] = value;
 	}
 
 	protected Object[] getFieldValues() {
 		return this.fieldValues;
+	}
+
+	protected long getLongValue(final int idx) {
+		final Object obj = this.getObject(idx);
+		if (obj == null) {
+			return 0;
+		}
+		if (obj instanceof Number) {
+			return ((Number) obj).longValue();
+		}
+		try {
+			return Long.parseLong(obj.toString());
+		} catch (final Exception e) {
+			//
+		}
+		return 0;
+	}
+
+	protected String getStringValue(final int idx) {
+		final Object obj = this.getObject(idx);
+		if (obj == null) {
+			return null;
+		}
+		return obj.toString();
+	}
+
+	protected LocalDate getDateValue(final int idx) {
+		final Object obj = this.getObject(idx);
+		if (obj == null) {
+			return null;
+		}
+		if (obj instanceof LocalDate) {
+			return (LocalDate) obj;
+		}
+		try {
+			return LocalDate.parse(obj.toString());
+		} catch (final Exception e) {
+			//
+		}
+		return null;
+	}
+
+	protected boolean getBoolValue(final int idx) {
+		Object obj = this.getObject(idx);
+		if (obj == null) {
+			return false;
+		}
+		if (obj instanceof Boolean) {
+			return (Boolean) obj;
+		}
+		obj = ValueType.Boolean.parse(obj.toString());
+		if (obj instanceof Boolean) {
+			return (boolean) obj;
+		}
+		return false;
+	}
+
+	protected double getDecimalValue(final int idx) {
+		final Object obj = this.getObject(idx);
+
+		if (obj == null) {
+			return 0;
+		}
+
+		if (obj instanceof Number) {
+			return ((Number) obj).doubleValue();
+		}
+
+		try {
+			Double.parseDouble(obj.toString());
+		} catch (final Exception e) {
+			//
+		}
+		return 0;
+	}
+
+	protected Instant getTimestampValue(final int idx) {
+		final Object obj = this.getObject(idx);
+		if (obj == null) {
+			return null;
+		}
+		if (obj instanceof Instant) {
+			return (Instant) obj;
+		}
+		if (obj instanceof String) {
+
+			try {
+				return Instant.parse(obj.toString());
+			} catch (final Exception e) {
+				//
+			}
+		}
+		return null;
 	}
 
 	protected FormDataTable[] getLinkedData() {
@@ -91,5 +200,26 @@ public abstract class FormData {
 
 	protected FormDataTable getLinkedData(final int idx) {
 		return this.linkedData[idx];
+	}
+
+	/**
+	 * @param writer
+	 * @throws IOException
+	 */
+	public void serializeAsJson(final Writer writer) throws IOException {
+		try (JsonWriter jw = new JsonWriter(writer)) {
+			jw.beginObject();
+			this.serializeFields(jw);
+			jw.endObject();
+		}
+	}
+
+	/**
+	 * @param writer
+	 * @throws IOException
+	 */
+	public void serializeFields(final JsonWriter writer) throws IOException {
+		this.form.serializeToJson(this.dataObject, this.fieldValues, this.linkedData, writer);
+
 	}
 }

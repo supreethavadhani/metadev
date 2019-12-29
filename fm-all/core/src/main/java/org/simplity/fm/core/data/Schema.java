@@ -32,8 +32,8 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import org.simplity.fm.core.Conventions;
+import org.simplity.fm.core.JsonUtil;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.RdbDriver;
 import org.simplity.fm.core.service.IService;
@@ -99,25 +99,25 @@ public abstract class Schema {
 	 * @param data
 	 * @return data table based on the data
 	 */
-	protected abstract DataTable newDataTable(Object[][] data);
+	protected abstract SchemaDataTable newDataTable(Object[][] data);
 
 	/**
 	 * @return a new instance of data table based on this schema
 	 */
-	public abstract DataTable newDataTable();
+	public abstract SchemaDataTable newDataTable();
 
 	/**
 	 *
 	 * @return a db data that can carry data for this schema
 	 */
-	public abstract DataObject newDataRow();
+	public abstract SchemaData newDataObject();
 
 	/**
 	 *
 	 * @param fieldValues
 	 * @return a db data that can carry data for this schema
 	 */
-	protected abstract DataObject newDataRow(Object[] fieldValues);
+	protected abstract SchemaData newDataObject(Object[] fieldValues);
 
 	/**
 	 * MUST BE CALLED after setting all protected fields
@@ -233,7 +233,7 @@ public abstract class Schema {
 	 * @return non-null data row. but should not be used if errors are added to
 	 *         the context
 	 */
-	public DataTable parseTable(final JsonArray array, final boolean forInsert, final IServiceContext ctx,
+	public SchemaDataTable parseTable(final JsonArray array, final boolean forInsert, final IServiceContext ctx,
 			final String tableName) {
 		final List<Object[]> rows = new ArrayList<>();
 
@@ -248,7 +248,7 @@ public abstract class Schema {
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 					return;
 				}
-				final DataObject dataRow = Schema.this.parseRow((JsonObject) ele, forInsert, ctx, tableName, this.idx);
+				final SchemaData dataRow = Schema.this.parseData((JsonObject) ele, forInsert, ctx, tableName, this.idx);
 				rows.add(dataRow.fieldValues);
 			}
 		});
@@ -269,10 +269,10 @@ public abstract class Schema {
 	 * @return non-null data row. but should not be used if errors are added to
 	 *         the context
 	 */
-	public DataObject parseRow(final JsonObject json, final boolean forInsert, final IServiceContext ctx,
+	public SchemaData parseData(final JsonObject json, final boolean forInsert, final IServiceContext ctx,
 			final String tableName, final int rowNbr) {
 
-		final DataObject dataRow = this.newDataRow();
+		final SchemaData dataRow = this.newDataObject();
 		final Object[] row = dataRow.fieldValues;
 
 		for (final Field field : this.fields) {
@@ -299,8 +299,8 @@ public abstract class Schema {
 	 *         are defined
 	 *         in this schema. Errors if any,are added to the ctx
 	 */
-	public DataObject parseKeys(final JsonObject json, final IServiceContext ctx) {
-		final DataObject dataRow = this.newDataRow();
+	public SchemaData parseKeys(final JsonObject json, final IServiceContext ctx) {
+		final SchemaData dataRow = this.newDataObject();
 		final Object[] row = dataRow.getRawData();
 		if (this.keyIndexes != null) {
 			for (final int idx : this.keyIndexes) {
@@ -340,7 +340,7 @@ public abstract class Schema {
 		row[idx] = field.parse(value, ctx, tableName, rowNbr);
 	}
 
-	private void validateRow(final DataObject dataRow, final IServiceContext ctx) {
+	private void validateRow(final SchemaData dataRow, final IServiceContext ctx) {
 		for (final IValidation vln : this.validations) {
 			final boolean ok = vln.isValid(dataRow, ctx);
 			if (!ok) {
@@ -358,27 +358,7 @@ public abstract class Schema {
 	 * @throws IOException
 	 */
 	public void serializeToJson(final Object[] row, final JsonWriter writer) throws IOException {
-		for (final Field field : this.fields) {
-			writer.name(field.name);
-			final Object value = row[field.index];
-			if (value == null) {
-				writer.nullValue();
-				continue;
-			}
-
-			final ValueType vt = field.getValueType();
-			if (vt == ValueType.Integer || vt == ValueType.Decimal) {
-				writer.value((Number) value);
-				continue;
-			}
-
-			if (vt == ValueType.Boolean) {
-				writer.value((boolean) value);
-				continue;
-			}
-
-			writer.value(value.toString());
-		}
+		JsonUtil.writeFields(this.fields, row, writer);
 	}
 
 	/**
@@ -388,8 +368,8 @@ public abstract class Schema {
 	 *            to which error are added to.
 	 * @return data row. To be discarded if errors are added to ctx
 	 */
-	public DataObject parseForInsert(final String[] data, final IServiceContext ctx) {
-		final DataObject dataRow = this.newDataRow();
+	public SchemaData parseForInsert(final String[] data, final IServiceContext ctx) {
+		final SchemaData dataRow = this.newDataObject();
 		final Object[] row = dataRow.fieldValues;
 
 		for (final Field field : this.fields) {
@@ -436,8 +416,8 @@ public abstract class Schema {
 	 * @param payload
 	 * @throws Exception
 	 */
-	public void fetch(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final DataObject dataRow = this.parseKeys(payload, ctx);
+	public void read(final IServiceContext ctx, final JsonObject payload) throws Exception {
+		final SchemaData dataRow = this.parseKeys(payload, ctx);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading keys from the input payload");
 			return;
@@ -474,7 +454,7 @@ public abstract class Schema {
 	 * @throws Exception
 	 */
 	public void update(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final DataObject dataRow = this.parseRow(payload, false, ctx, null, 0);
+		final SchemaData dataRow = this.parseData(payload, false, ctx, null, 0);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading fields from the input payload");
 			return;
@@ -502,7 +482,7 @@ public abstract class Schema {
 	 * @throws Exception
 	 */
 	public void insert(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final DataObject dataRow = this.parseRow(payload, true, ctx, null, 0);
+		final SchemaData dataRow = this.parseData(payload, true, ctx, null, 0);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading fields from the input payload");
 			return;
@@ -571,9 +551,9 @@ public abstract class Schema {
 			return;
 		}
 
-		final DataTable dataTable = this.newDataTable();
+		final SchemaDataTable dataTable = this.newDataTable();
 		RdbDriver.getDriver().transact(handle -> {
-			dataTable.fetch(handle, reader);
+			dataTable.filter(handle, reader);
 			return true;
 		}, true);
 
@@ -588,6 +568,29 @@ public abstract class Schema {
 	}
 
 	/**
+	 * @param handle
+	 * @param whereClauseSRtartingWithWhere
+	 *            .e. "WHERE a=? and b=?". null if no where-clause is to be used
+	 *            in which case all rows from the table/view are read.
+	 * @param values
+	 *            null or empty if where-clause is null or has no parameters.
+	 *            every element MUST be non-null and must be one of the standard
+	 *            objects we use String, Long, Double, Boolean, LocalDate,
+	 *            Instant
+	 * @return non-null, possibly empty, data table with the result of a select
+	 *         query on this schema with the supplied where clause
+	 * @throws SQLException
+	 */
+	public SchemaDataTable filterToTable(final DbHandle handle, final String whereClauseSRtartingWithWhere,
+			final Object[] values) throws SQLException {
+		final Object[][] data = this.getDbAssistant().filter(whereClauseSRtartingWithWhere, values, handle);
+		if (data.length == 0) {
+			return this.newDataTable();
+		}
+		return this.newDataTable(data);
+	}
+
+	/**
 	 * service metod for delete operation
 	 *
 	 * @param ctx
@@ -595,7 +598,7 @@ public abstract class Schema {
 	 * @throws Exception
 	 */
 	public void delete(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final DataObject dataRow = this.parseKeys(payload, ctx);
+		final SchemaData dataRow = this.parseKeys(payload, ctx);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading keys from the input payload");
 			return;
@@ -630,7 +633,7 @@ public abstract class Schema {
 			return;
 		}
 
-		final DataTable dataTable = this.parseTable(arr, true, ctx, null);
+		final SchemaDataTable dataTable = this.parseTable(arr, true, ctx, null);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading keys from the input payload");
 			return;
@@ -665,7 +668,7 @@ public abstract class Schema {
 
 				@Override
 				public void serve(final IServiceContext ctx, final JsonObject inputPayload) throws Exception {
-					Schema.this.fetch(ctx, inputPayload);
+					Schema.this.read(ctx, inputPayload);
 
 				}
 			};
@@ -738,28 +741,4 @@ public abstract class Schema {
 			return this.opern.name() + '_' + Schema.this.name;
 		}
 	}
-
-	/**
-	 * @param handle
-	 * @param whereClauseSRtartingWithWhere
-	 *            .e. "WHERE a=? and b=?". null if no where-clause is to be used
-	 *            in which case all rows from the table/view are read.
-	 * @param values
-	 *            null or empty if where-clause is null or has no parameters.
-	 *            every element MUST be non-null and must be one of the standard
-	 *            objects we use String, Long, Double, Boolean, LocalDate,
-	 *            Instant
-	 * @return non-null, possibly empty, data table with the result of a select
-	 *         query on this schema with the supplied where clause
-	 * @throws SQLException
-	 */
-	public DataTable filter(final DbHandle handle, final String whereClauseSRtartingWithWhere, final Object[] values)
-			throws SQLException {
-		final Object[][] data = this.getDbAssistant().filter(whereClauseSRtartingWithWhere, values, handle);
-		if (data.length == 0) {
-			return this.newDataTable();
-		}
-		return this.newDataTable(data);
-	}
-
 }

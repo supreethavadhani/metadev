@@ -23,30 +23,12 @@
 		}
 		
 	],
-	"tempFields":[
+	"localFields":[
 		{
-			"name":"local1"
+			"name":"local1", "dataType":"text"
 		},
 		{
-			"name":"local2"
-		}
-	],
-	
-	"controls":[
-		{
-			"name":"f1",
-			"label":""
-		}
-	],
-	"sections":[
-		{
-			"label":"label",
-			"type":"ss",
-			"controls":[
-				{
-					"name":"naaa"
-				}
-			]
+			"name":"local2", "dataType":"text"
 		}
 	]
 }

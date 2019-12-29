@@ -36,37 +36,21 @@ import com.google.gson.stream.JsonWriter;
  * @author simplity.org
  *
  */
-public abstract class DataTable implements Iterable<DataObject> {
-	protected static final Logger logger = LoggerFactory.getLogger(DataTable.class);
+public abstract class SchemaDataTable implements Iterable<SchemaData> {
+	protected static final Logger logger = LoggerFactory.getLogger(SchemaDataTable.class);
+
 	protected final Schema schema;
-	protected Object[][] dataTable = new Object[0][];
+	protected Object[][] fieldValues = new Object[0][];
 
 	/**
 	 *
 	 * @param schema
+	 * @param values
 	 */
-	protected DataTable(final Schema schema) {
+	protected SchemaDataTable(final Schema schema, final Object[][] values) {
 		this.schema = schema;
-	}
-
-	/**
-	 *
-	 * @param schema
-	 * @param data
-	 */
-	protected DataTable(final Schema schema, final Object[][] data) {
-		this.schema = schema;
-		final int nbr = this.schema.getNbrFields();
-		if (data == null || data.length == 0) {
-			this.dataTable = new Object[0][];
-		} else {
-			for (final Object[] row : data) {
-				if (row == null || row.length != nbr) {
-					throw new RuntimeException("Data table needs " + nbr
-							+ " fields in each of its row but is supplied woth invalid number of elements in one of its rows");
-				}
-			}
-			this.dataTable = data;
+		if (values != null) {
+			this.fieldValues = values;
 		}
 	}
 
@@ -75,13 +59,8 @@ public abstract class DataTable implements Iterable<DataObject> {
 	 * @param idx
 	 * @return data row. null if the index is out of range
 	 */
-	public DataObject getRow(final int idx) {
-		try {
-			return this.schema.newDataRow(this.dataTable[idx]);
-		} catch (final ArrayIndexOutOfBoundsException e) {
-			logger.error("Data table has {} rows but row {} is requested. null returned", this.dataTable.length, idx);
-			return null;
-		}
+	protected SchemaData getSchemaData(final int idx) {
+		return this.schema.newDataObject(this.fieldValues[idx]);
 	}
 
 	/**
@@ -89,25 +68,25 @@ public abstract class DataTable implements Iterable<DataObject> {
 	 * @return data row. null if the index is out of range
 	 */
 	public Object[][] getRawData() {
-		return this.dataTable;
+		return this.fieldValues;
 	}
 
 	/**
 	 * iterator for data rows
 	 */
 	@Override
-	public Iterator<DataObject> iterator() {
-		return new Iterator<DataObject>() {
+	public Iterator<SchemaData> iterator() {
+		return new Iterator<SchemaData>() {
 			private int idx = 0;
 
 			@Override
 			public boolean hasNext() {
-				return this.idx < DataTable.this.dataTable.length;
+				return this.idx < SchemaDataTable.this.fieldValues.length;
 			}
 
 			@Override
-			public DataObject next() {
-				return DataTable.this.getRow(this.idx++);
+			public SchemaData next() {
+				return SchemaDataTable.this.getSchemaData(this.idx++);
 			}
 		};
 	}
@@ -120,7 +99,7 @@ public abstract class DataTable implements Iterable<DataObject> {
 	 */
 	public void serializeAsJson(final JsonWriter writer) throws IOException {
 		writer.beginArray();
-		for (final Object[] row : this.dataTable) {
+		for (final Object[] row : this.fieldValues) {
 			writer.beginObject();
 			this.schema.serializeToJson(row, writer);
 			writer.endObject();
@@ -136,9 +115,9 @@ public abstract class DataTable implements Iterable<DataObject> {
 	 * @return true if at least one row is read
 	 * @throws SQLException
 	 */
-	public boolean fetch(final DbHandle handle, final ParsedFilter reader) throws SQLException {
-		this.dataTable = this.schema.getDbAssistant().filter(handle, reader.getSql(), reader.getWhereParams());
-		return (this.dataTable.length > 0);
+	public boolean filter(final DbHandle handle, final ParsedFilter reader) throws SQLException {
+		this.fieldValues = this.schema.getDbAssistant().filter(handle, reader.getSql(), reader.getWhereParams());
+		return (this.fieldValues.length > 0);
 	}
 
 	/**
@@ -151,7 +130,7 @@ public abstract class DataTable implements Iterable<DataObject> {
 	 * @throws SQLException
 	 */
 	public boolean update(final DbHandle handle) throws SQLException {
-		return this.schema.getDbAssistant().updateAll(handle, this.dataTable);
+		return this.schema.getDbAssistant().updateAll(handle, this.fieldValues);
 	}
 
 	/**
@@ -164,7 +143,7 @@ public abstract class DataTable implements Iterable<DataObject> {
 	 * @throws SQLException
 	 */
 	public boolean insert(final DbHandle handle) throws SQLException {
-		return this.schema.getDbAssistant().insertAll(handle, this.dataTable);
+		return this.schema.getDbAssistant().insertAll(handle, this.fieldValues);
 	}
 
 	/**
@@ -178,14 +157,13 @@ public abstract class DataTable implements Iterable<DataObject> {
 	 * @throws SQLException
 	 */
 	public boolean save(final DbHandle handle) throws SQLException {
-		return this.schema.getDbAssistant().saveAll(handle, this.dataTable);
+		return this.schema.getDbAssistant().saveAll(handle, this.fieldValues);
 	}
 
 	/**
 	 * @return number of data rows in this data table.
 	 */
 	public int length() {
-		return this.dataTable.length;
+		return this.fieldValues.length;
 	}
-
 }

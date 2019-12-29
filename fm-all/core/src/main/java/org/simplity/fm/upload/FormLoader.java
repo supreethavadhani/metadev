@@ -26,7 +26,7 @@ import java.sql.SQLException;
 import java.util.Map;
 
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.data.DataObject;
+import org.simplity.fm.core.data.SchemaData;
 import org.simplity.fm.core.data.Schema;
 import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.service.IServiceContext;
@@ -88,7 +88,7 @@ class FormLoader {
 
 	}
 
-	private DataObject parseInput(final Map<String, String> values, final IServiceContext ctx) {
+	private SchemaData parseInput(final Map<String, String> values, final IServiceContext ctx) {
 		final String[] data = new String[this.valueProviders.length];
 		int idx = -1;
 		for (final IValueProvider vp : this.valueProviders) {
@@ -99,7 +99,7 @@ class FormLoader {
 		}
 
 		final int nbrExistingErrors = ctx.getNbrErrors();
-		final DataObject dataRow = this.form.parseForInsert(data, ctx);
+		final SchemaData dataRow = this.form.parseForInsert(data, ctx);
 		final int nbrErrors = ctx.getNbrErrors();
 		if (nbrErrors > nbrExistingErrors) {
 			return null;
@@ -119,7 +119,7 @@ class FormLoader {
 	 */
 	boolean loadData(final Map<String, String> values, final DbHandle handle, final IServiceContext ctx)
 			throws SQLException {
-		final DataObject fd = this.parseInput(values, ctx);
+		final SchemaData fd = this.parseInput(values, ctx);
 		if (fd == null) {
 			return false;
 		}

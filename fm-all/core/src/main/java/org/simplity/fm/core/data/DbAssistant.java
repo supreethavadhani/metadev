@@ -43,8 +43,8 @@ import org.slf4j.LoggerFactory;
  * instance.
  *
  * <p>
- * NOTE: We do not expect user code to create instance of this class. The
- * constructor is scary enough for any programmer to run away
+ * NOTE: An instance of this class is created only in generated code. The code
+ * sets the right attributes values after creating the instance
  * </p>
  *
  * @author simplity.org
@@ -55,140 +55,70 @@ public class DbAssistant {
 	/**
 	 * e.g. where a=? and b=?
 	 */
-	protected final String whereClause;
+	protected String whereClause;
 	/**
 	 * db parameters to be used for the where clause
 	 */
-	protected final FieldMetaData[] whereParams;
+	protected FieldMetaData[] whereParams;
 	/**
 	 * e.g. select a,b,c from t
 	 */
-	protected final String selectClause;
+	protected String selectClause;
 	/**
 	 * db parameters to be used to receive data from the result set of the
 	 * select query
 	 */
-	protected final FieldMetaData[] selectParams;
+	protected FieldMetaData[] selectParams;
 	/**
 	 * e.g insert a,b,c,d into table1 values(?,?,?,?)
 	 */
-	protected final String insertClause;
+	protected String insertClause;
 	/**
 	 * db parameters for the insert sql
 	 */
-	protected final FieldMetaData[] insertParams;
+	protected FieldMetaData[] insertParams;
 
 	/**
 	 * e.g. update table1 set a=?, b=?, c=?
 	 */
-	protected final String updateClause;
+	protected String updateClause;
 	/**
 	 * db parameters for the update sql
 	 */
-	protected final FieldMetaData[] updateParams;
+	protected FieldMetaData[] updateParams;
 
 	/**
 	 * e.g. delete from table1. Note that where is not part of this.
 	 */
-	protected final String deleteClause;
+	protected String deleteClause;
 
 	/**
 	 * db column name that is generated as internal key. null if this is not
 	 * relevant
 	 */
-	protected final String generatedColumnName;
+	protected String generatedColumnName;
 
 	/**
 	 *
 	 */
-	protected final int generatedKeyIdx;
+	protected int generatedKeyIdx = -1;
 
 	/**
 	 * if this APP is designed for multi-tenant deployment, and this table has
 	 * data across tenants..
 	 */
-	protected final DbField tenantField;
+	protected DbField tenantField;
 
 	/**
 	 * if this table allows update, and needs to use time-stamp-match technique
 	 * to avoid concurrent updates..
 	 */
-	protected final DbField timestampField;
+	protected DbField timestampField;
 
 	/**
 	 * number of fields in the schema to which this meta data is attached
 	 */
-	protected final int nbrFieldsInARow;
-
-	/**
-	 * Designed for code generation. Not to be used by the programmers
-	 * constructor when there is no primary key. only filter will be allowed
-	 *
-	 * @param nbrFieldsInARow
-	 * @param tenantField
-	 * @param selectClause
-	 * @param selectParams
-	 */
-	public DbAssistant(final int nbrFieldsInARow, final DbField tenantField, final String selectClause,
-			final FieldMetaData[] selectParams) {
-		this.nbrFieldsInARow = nbrFieldsInARow;
-		this.tenantField = tenantField;
-		this.selectClause = selectClause;
-		this.selectParams = selectParams;
-		this.whereClause = null;
-		this.whereParams = null;
-		this.insertClause = null;
-		this.insertParams = null;
-		this.updateClause = null;
-		this.updateParams = null;
-		this.deleteClause = null;
-		this.generatedColumnName = null;
-		this.generatedKeyIdx = -1;
-		this.timestampField = null;
-	}
-
-	/**
-	 * Constructor with so many parameter!!
-	 * Designed for code generation. Not to be used by the programmers.
-	 *
-	 * Builder pattern not used because this is meant for generated code, and
-	 * not a programmer
-	 *
-	 * @param nbrFieldsInARow
-	 * @param tenantField
-	 * @param selectClause
-	 * @param selectParams
-	 * @param whereClause
-	 * @param whereParams
-	 * @param insertClause
-	 * @param insertParams
-	 * @param updateClause
-	 * @param updateParams
-	 * @param deleteClause
-	 * @param generatedColumnName
-	 * @param generatedKeyIdx
-	 * @param timestampField
-	 */
-	public DbAssistant(final int nbrFieldsInARow, final DbField tenantField, final String selectClause,
-			final FieldMetaData[] selectParams, final String whereClause, final FieldMetaData[] whereParams,
-			final String insertClause, final FieldMetaData[] insertParams, final String updateClause,
-			final FieldMetaData[] updateParams, final String deleteClause, final String generatedColumnName,
-			final int generatedKeyIdx, final DbField timestampField) {
-		this.nbrFieldsInARow = nbrFieldsInARow;
-		this.tenantField = tenantField;
-		this.selectClause = selectClause;
-		this.selectParams = selectParams;
-		this.whereClause = whereClause;
-		this.whereParams = whereParams;
-		this.insertClause = insertClause;
-		this.insertParams = insertParams;
-		this.updateClause = updateClause;
-		this.updateParams = updateParams;
-		this.deleteClause = deleteClause;
-		this.generatedColumnName = generatedColumnName;
-		this.generatedKeyIdx = generatedKeyIdx;
-		this.timestampField = timestampField;
-	}
+	protected int nbrFieldsInARow;
 
 	/**
 	 * insert/create this form data into the db.

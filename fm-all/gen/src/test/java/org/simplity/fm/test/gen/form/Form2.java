@@ -11,28 +11,27 @@ import org.simplity.fm.core.data.SchemaDataTable;
 import org.simplity.fm.test.gen.DefinedDataTypes;
 import org.simplity.fm.test.gen.schema.Schema1Data;
 import org.simplity.fm.test.gen.schema.Schema1DataTable;
-/** class for form formWithChildren  */
-public class FormWithChildren extends Form {
-	protected static final String NAME = "formWithChildren";
+/** class for form form2  */
+public class Form2 extends Form {
+	protected static final String NAME = "form2";
 	protected static final String SCHEMA = "schema1";
 	protected static final  Field[] FIELDS = {
-			new Field("local1", 0, DefinedDataTypes.text, null, null, null, false), 
-			new Field("local2", 0, DefinedDataTypes.text, null, null, null, false)};
-	protected static final  boolean[] OPS = {false, false, false, false, false, false};
+			new Field("f2", 0, DefinedDataTypes.date, null, null, null, false)};
+	protected static final  boolean[] OPS = {true, false, true, false, false, false};
 /** constructor */
-public FormWithChildren() {
+public Form2() {
 		this.name = NAME;
 		this.schema = ComponentProvider.getProvider().getSchema(SCHEMA);
 		this.operations = OPS;
 	}
 
 	@Override
-	protected FormWithChildrenData newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {
-		return new FormWithChildrenData(this, (Schema1Data) schemaData, values, data);
+	protected Form2Data newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {
+		return new Form2Data(this, (Schema1Data) schemaData, values, data);
 	}
 
 	@Override
-	protected FormWithChildrenDataTable newFormDataTable(final SchemaDataTable table, final Object[][] values) {
-		return new FormWithChildrenDataTable(this, (Schema1DataTable) table, values);
+	protected Form2DataTable newFormDataTable(final SchemaDataTable table, final Object[][] values) {
+		return new Form2DataTable(this, (Schema1DataTable) table, values);
 	}
 }

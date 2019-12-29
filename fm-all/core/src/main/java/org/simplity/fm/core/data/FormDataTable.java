@@ -22,7 +22,11 @@
 
 package org.simplity.fm.core.data;
 
+import java.io.IOException;
+import java.io.Writer;
 import java.util.Iterator;
+
+import com.google.gson.stream.JsonWriter;
 
 /**
  * @author simplity.org
@@ -30,10 +34,10 @@ import java.util.Iterator;
  */
 public abstract class FormDataTable implements Iterable<FormData> {
 	protected final Form form;
-	protected final DataTable dataTable;
+	protected final SchemaDataTable dataTable;
 	protected final Object[][] fieldValues;
 
-	protected FormDataTable(final Form form, final DataTable dataTable, final Object[][] fieldValues) {
+	protected FormDataTable(final Form form, final SchemaDataTable dataTable, final Object[][] fieldValues) {
 		this.form = form;
 		this.dataTable = dataTable;
 		this.fieldValues = fieldValues;
@@ -43,7 +47,7 @@ public abstract class FormDataTable implements Iterable<FormData> {
 	 *
 	 * @return data table associated with this form table
 	 */
-	public DataTable getDataTable() {
+	public SchemaDataTable getDataTable() {
 		return this.dataTable;
 	}
 
@@ -77,6 +81,36 @@ public abstract class FormDataTable implements Iterable<FormData> {
 	}
 
 	protected FormData getFormData(final int idx) {
-		return this.form.newFormData(this.dataTable.getRow(idx), this.fieldValues[idx], null);
+		return this.form.newFormData(this.dataTable.getSchemaData(idx), this.fieldValues[idx], null);
+	}
+
+	/**
+	 * @param writer
+	 * @throws IOException
+	 */
+	public void serializeAsJson(final Writer writer) throws IOException {
+		try (JsonWriter jw = new JsonWriter(writer)) {
+			jw.beginObject();
+			this.form.getSchema().serializeToJson(this.fieldValues, jw);
+			jw.endObject();
+		}
+	}
+
+	/**
+	 * @param writer
+	 * @throws IOException
+	 */
+	public void serializeFields(final JsonWriter writer) throws IOException {
+		this.form.getSchema().serializeToJson(this.fieldValues, writer);
+	}
+
+	/**
+	 * @return number of rows in this data table
+	 */
+	public int length() {
+		if (this.dataTable == null) {
+			return 0;
+		}
+		return this.dataTable.length();
 	}
 }

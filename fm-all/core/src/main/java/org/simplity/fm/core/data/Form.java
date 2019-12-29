@@ -32,6 +32,8 @@ import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonWriter;
 
@@ -44,15 +46,15 @@ import com.google.gson.stream.JsonWriter;
 public abstract class Form {
 	static protected final Logger logger = LoggerFactory.getLogger(Form.class);
 
-	protected final String name;
-	protected final Schema schema;
-	protected final Field[] localFields;
-	protected final LinkedForm[] linkedForms;
+	protected String name;
+	protected Schema schema;
+	protected Field[] localFields;
+	protected LinkedForm[] linkedForms;
 	/*
 	 * operations that are to be exposed thru this form. array corresponds to
 	 * the ordinals of IoType
 	 */
-	protected final boolean[] operations;
+	protected boolean[] operations;
 
 	/**
 	 * @return primary schema that this form is based on. null if this form is
@@ -82,17 +84,17 @@ public abstract class Form {
 	 *         case of any error in which case the ctx has the message(s)
 	 */
 	public FormData parse(final JsonObject json, final boolean forInsert, final IServiceContext ctx) {
-		final Object[] fieldValues = this.parseLocalFields(json, forInsert, ctx);
-		DataObject dataObject = null;
+		final Object[] fieldValues = this.parseLocalFields(json, ctx);
+		SchemaData dataObject = null;
 		if (this.schema != null) {
-			dataObject = this.schema.parseRow(json, forInsert, ctx, null, 0);
+			dataObject = this.schema.parseData(json, forInsert, ctx, null, 0);
 		}
-		DataTable[] childData = null;
+		FormDataTable[] childData = null;
 		if (this.linkedForms != null) {
-			childData = new DataTable[this.linkedForms.length];
+			childData = new FormDataTable[this.linkedForms.length];
 			for (int i = 0; i < this.linkedForms.length; i++) {
 				final LinkedForm lf = this.linkedForms[i];
-				childData[i] = lf.parse(json.getAsJsonArray(lf.linkName), forInsert, ctx);
+				childData[i] = lf.parse(json, forInsert, ctx);
 			}
 		}
 		if (!ctx.allOk()) {
@@ -103,16 +105,50 @@ public abstract class Form {
 		return this.newFormData(dataObject, fieldValues, childData);
 	}
 
+	protected abstract FormDataTable newFormDataTable(SchemaDataTable schemaTable, Object[][] fieldValues);
+
 	/**
-	 * concrete class puts the right code in the constructor to initialize these
-	 * fields
+	 * @param arr
+	 * @param forInsert
+	 * @param ctx
+	 *            to which any parse error is added
+	 * @param tableName
+	 *            used for raising the right error message
+	 * @return populated instance, or null in case of any error while parsing.
 	 */
-	protected Form() {
-		this.name = null;
-		this.schema = null;
-		this.localFields = null;
-		this.linkedForms = null;
-		this.operations = null;
+	public FormDataTable parseTable(final JsonArray arr, final boolean forInsert, final IServiceContext ctx,
+			final String tableName) {
+		if (arr == null || arr.size() == 0) {
+			logger.warn("No data received for form ", this.name);
+			return null;
+		}
+		final Object[][] fieldValues = this.parseLocalFieldArray(arr, ctx, tableName);
+		SchemaDataTable tbl = null;
+		if (this.schema != null) {
+			tbl = this.schema.parseTable(arr, forInsert, ctx, tableName);
+		}
+		return this.newFormDataTable(tbl, fieldValues);
+	}
+
+	private Object[][] parseLocalFieldArray(final JsonArray arr, final IServiceContext ctx, final String tableName) {
+		if (this.localFields == null) {
+			return null;
+		}
+		final int nbr = arr.size();
+		final Object[][] fieldValues = new Object[nbr][];
+		for (int i = 0; i < nbr; i++) {
+			final JsonElement ele = arr.get(i);
+			JsonObject json = null;
+			if (ele != null) {
+				json = ele.getAsJsonObject();
+			}
+			if (json == null) {
+				ctx.addMessage(Message.newFieldError(tableName, Message.MSG_INVALID_DATA, ""));
+			} else {
+				fieldValues[i] = this.parseLocalFields((JsonObject) ele, ctx);
+			}
+		}
+		return fieldValues;
 	}
 
 	/**
@@ -130,7 +166,7 @@ public abstract class Form {
 	 * delegated to the concrete class to instantiate the right concrete class
 	 * of FormData
 	 */
-	protected abstract FormData newFormData(DataObject dataObject, Object[] fieldValues, DataTable[] childData);
+	protected abstract FormData newFormData(SchemaData dataObject, Object[] fieldValues, FormDataTable[] childData);
 
 	/**
 	 * method that can be used to serve a service-request to get data
@@ -140,13 +176,13 @@ public abstract class Form {
 	 * @throws Exception
 	 */
 	public void read(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final DataObject dataObject = this.schema.parseKeys(payload, ctx);
+		final SchemaData dataObject = this.schema.parseKeys(payload, ctx);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading keys from the input payload");
 			return;
 		}
 		final int nbrLinks = this.linkedForms.length;
-		final DataTable[] childData = new DataTable[nbrLinks];
+		final SchemaDataTable[] childData = new SchemaDataTable[nbrLinks];
 		final boolean[] result = new boolean[1];
 
 		RdbDriver.getDriver().transact(handle -> {
@@ -155,7 +191,7 @@ public abstract class Form {
 				int idx = -1;
 				for (final LinkedForm lf : this.linkedForms) {
 					idx++;
-					childData[idx] = lf.fetch(handle, dataObject.fieldValues);
+					childData[idx] = lf.read(handle, dataObject.fieldValues);
 				}
 				result[0] = true;
 			}
@@ -170,16 +206,17 @@ public abstract class Form {
 		try (JsonWriter jw = new JsonWriter(ctx.getResponseWriter())) {
 			jw.beginObject();
 
-			this.schema.serializeToJson(dataObject.fieldValues, jw);
+			JsonUtil.writeFields(this.schema.getFields(), dataObject.fieldValues, jw);
 			int idx = -1;
 			for (final LinkedForm lf : this.linkedForms) {
 				idx++;
 				jw.name(lf.linkName);
-				final DataTable dt = childData[idx];
+				final SchemaDataTable dt = childData[idx];
 				if (dt != null) {
 					dt.serializeAsJson(jw);
 				} else {
 					jw.beginArray();
+
 					jw.endArray();
 				}
 			}
@@ -204,7 +241,7 @@ public abstract class Form {
 		if (data == null) {
 			return;
 		}
-		final DataObject dataRow = data.getDataObject();
+		final SchemaData dataRow = data.getDataObject();
 		final FormDataTable[] linkedData = data.getLinkedData();
 		final boolean[] result = new boolean[1];
 
@@ -242,7 +279,7 @@ public abstract class Form {
 		if (data == null) {
 			return;
 		}
-		final DataObject dataObject = data.getDataObject();
+		final SchemaData dataObject = data.getDataObject();
 		final FormDataTable[] linkedData = data.getLinkedData();
 		final boolean[] result = new boolean[1];
 
@@ -276,7 +313,7 @@ public abstract class Form {
 	 * @throws Exception
 	 */
 	public void delete(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final DataObject dataRow = this.schema.parseKeys(payload, ctx);
+		final SchemaData dataRow = this.schema.parseKeys(payload, ctx);
 		if (!ctx.allOk()) {
 			logger.error("Error while reading fields from the input payload");
 			return;
@@ -405,7 +442,7 @@ public abstract class Form {
 		}
 	}
 
-	private Object[] parseLocalFields(final JsonObject json, final boolean forInsert, final IServiceContext ctx) {
+	private Object[] parseLocalFields(final JsonObject json, final IServiceContext ctx) {
 		if (this.localFields == null) {
 			return null;
 		}
@@ -413,9 +450,32 @@ public abstract class Form {
 		for (int i = 0; i < this.localFields.length; i++) {
 			final Field f = this.localFields[i];
 			final String value = JsonUtil.getStringMember(json, f.name);
-			f.parseIntoRow(value, values, forInsert, ctx, null, 0);
+			f.parseIntoRow(value, values, false, ctx, null, 0);
 		}
 		return values;
 	}
 
+	/**
+	 * @param schemaData
+	 * @param values
+	 * @param tables
+	 * @param writer
+	 * @throws IOException
+	 */
+	public void serializeToJson(final SchemaData schemaData, final Object[] values, final FormDataTable[] tables,
+			final JsonWriter writer) throws IOException {
+		if (this.schema != null && schemaData != null) {
+			this.schema.serializeToJson(schemaData.getRawData(), writer);
+		}
+
+		if (this.localFields != null && values != null) {
+			JsonUtil.writeFields(this.localFields, values, writer);
+		}
+
+		if (this.linkedForms != null && tables != null) {
+			for (int i = 0; i < this.linkedForms.length; i++) {
+				this.linkedForms[i].serializeToJson(tables[i], writer);
+			}
+		}
+	}
 }

@@ -60,8 +60,8 @@ import com.google.gson.stream.JsonWriter;
  * @author simplity.org
  *
  */
-public abstract class DataObject {
-	protected static final Logger logger = LoggerFactory.getLogger(DataObject.class);
+public abstract class SchemaData {
+	protected static final Logger logger = LoggerFactory.getLogger(SchemaData.class);
 	/**
 	 * schema for which this data is created
 	 */
@@ -72,19 +72,13 @@ public abstract class DataObject {
 	 */
 	protected final Object[] fieldValues;
 
-	protected DataObject(final Schema schema) {
-		this.schema = schema;
-		this.fieldValues = new Object[this.schema.getNbrFields()];
-	}
-
-	protected DataObject(final Schema schema, final Object[] row) {
+	protected SchemaData(final Schema schema, final Object[] values) {
 		this.schema = schema;
 		final int nbrFields = schema.getNbrFields();
-		if (nbrFields == row.length) {
-			this.fieldValues = row;
+		if (values == null) {
+			this.fieldValues = new Object[nbrFields];
 		} else {
-			throw new RuntimeException("DbData " + this.schema.name + " has " + nbrFields + " fields but a row with "
-					+ row.length + " values is being suppled as data row");
+			this.fieldValues = values;
 		}
 	}
 

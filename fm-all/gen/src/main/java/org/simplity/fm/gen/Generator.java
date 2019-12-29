@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.simplity.fm.core.Conventions;
+import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -183,8 +184,20 @@ public class Generator {
 		}
 		form.initialize(schema);
 		final StringBuilder sbf = new StringBuilder();
-		form.emitJavaForm(sbf, rootPackageName, app.dataTypes.dataTypes);
-		String outName = generatedSourceRootFolder + "form/" + Util.toClassName(fn) + ".java";
+
+		final String cls = Util.toClassName(fn);
+		form.emitJavaForm(sbf, rootPackageName);
+		String outName = generatedSourceRootFolder + "form/" + cls + ".java";
+		Util.writeOut(outName, sbf);
+
+		sbf.setLength(0);
+		form.emitJavaFormData(sbf, rootPackageName, app.dataTypes.dataTypes);
+		outName = generatedSourceRootFolder + "form/" + cls + "Data.java";
+		Util.writeOut(outName, sbf);
+
+		sbf.setLength(0);
+		form.emitJavaFormDataTable(sbf, rootPackageName);
+		outName = generatedSourceRootFolder + "form/" + cls + "DataTable.java";
 		Util.writeOut(outName, sbf);
 
 		sbf.setLength(0);
@@ -238,8 +251,8 @@ public class Generator {
 		 * schemaRow.java
 		 */
 		sbf.setLength(0);
-		schema.emitJavaRowClass(sbf, packageName, dataTypes.dataTypes);
-		outName = outNamePrefix + "Row.java";
+		schema.emitJavaDataClass(sbf, packageName, dataTypes.dataTypes);
+		outName = outNamePrefix + "Data.java";
 		Util.writeOut(outName, sbf);
 
 		/*
@@ -247,7 +260,7 @@ public class Generator {
 		 */
 		sbf.setLength(0);
 		schema.emitJavaTableClass(sbf, packageName);
-		outName = outNamePrefix + "Table.java";
+		outName = outNamePrefix + "DataTable.java";
 		Util.writeOut(outName, sbf);
 
 		return schema;
@@ -267,4 +280,33 @@ public class Generator {
 		return allOk;
 	}
 
+	static void emitJavaGettersAndSetters(final Field[] fields, final StringBuilder sbf,
+			final Map<String, DataType> dataTypes) {
+		for (final Field f : fields) {
+			final DataType dt = dataTypes.get(f.dataType);
+			String typ = "unknownBecauseOfUnknownDataType";
+			String get = typ;
+			if (dt == null) {
+				logger.error("Field {} has an invalid data type of {}", f.name, f.dataType);
+			} else {
+				typ = Util.JAVA_VALUE_TYPES[dt.valueType.ordinal()];
+				get = Util.JAVA_GET_TYPES[dt.valueType.ordinal()];
+			}
+			final String nam = f.name;
+			final String cls = Util.toClassName(nam);
+
+			sbf.append("\n\n\t/**\n\t * set value for ").append(nam);
+			sbf.append("\n\t * @param value to be assigned to ").append(nam);
+			sbf.append("\n\t */");
+			sbf.append("\n\tpublic void set").append(cls).append('(').append(typ).append(" value){");
+			sbf.append("\n\t\tthis.fieldValues[").append(f.index).append("] = value;");
+			sbf.append("\n\t}");
+
+			sbf.append("\n\n\t/**\n\t * @return value of ").append(nam).append("\n\t */");
+			sbf.append("\n\tpublic ").append(typ).append(" get").append(cls).append("(){");
+			sbf.append("\n\t\treturn super.get").append(get).append("Value(").append(f.index).append(");");
+			sbf.append("\n\t}");
+		}
+
+	}
 }

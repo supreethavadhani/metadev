@@ -33,9 +33,9 @@ import java.util.Set;
 
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.data.ColumnType;
-import org.simplity.fm.core.data.DataObject;
-import org.simplity.fm.core.data.DataTable;
 import org.simplity.fm.core.data.DbAssistant;
+import org.simplity.fm.core.data.SchemaData;
+import org.simplity.fm.core.data.SchemaDataTable;
 import org.simplity.fm.core.validn.DependentListValidation;
 import org.simplity.fm.core.validn.ExclusiveValidation;
 import org.simplity.fm.core.validn.FromToValidation;
@@ -308,12 +308,31 @@ class Schema {
 		sbf.append("\n\t}");
 
 		/*
-		 * create new form data
+		 * concrete methods to create concrete data instances
 		 */
-		final String dataCls = cls + "Data";
-		sbf.append("\n\t/**\n\t * @return this schema-specific data instance\n\t */");
-		sbf.append("\n\tpublic ").append(dataCls).append(" newRow() {");
-		sbf.append("\n\t\t return new ").append(dataCls).append("(this);");
+		final String over = "\n\n\t@Override";
+
+		sbf.append(over);
+
+		String c = cls + "Data";
+		sbf.append("\n\tpublic ").append(c).append(" newDataObject() {");
+		sbf.append("\n\t\treturn new ").append(c).append("(this, null);");
+		sbf.append("\n\t}");
+
+		sbf.append(over);
+		sbf.append("\n\tprotected ").append(c).append(" newDataObject(final Object[] data) {");
+		sbf.append("\n\t\treturn new ").append(c).append("(this, data);");
+		sbf.append("\n\t}");
+
+		c = cls + "DataTable";
+		sbf.append(over);
+		sbf.append("\n\tpublic ").append(c).append(" newDataTable() {");
+		sbf.append("\n\t\treturn new ").append(c).append("(this, null);");
+		sbf.append("\n\t}");
+
+		sbf.append(over);
+		sbf.append("\n\tprotected ").append(c).append(" newDataTable(final Object[][] data) {");
+		sbf.append("\n\t\treturn new ").append(c).append("(this, data);");
 		sbf.append("\n\t}");
 
 		sbf.append("\n}\n");
@@ -322,7 +341,6 @@ class Schema {
 	private void emitDbStuff(final StringBuilder sbf) {
 		if (this.nameInDb == null || this.nameInDb.isEmpty()) {
 			logger.warn("dbName not set. no db related code generated for this form");
-			sbf.append("\n\n\tprivate void setDbAssistant(){\n\t\t//\n\t}");
 			return;
 		}
 
@@ -431,40 +449,38 @@ class Schema {
 
 	private void emitDbMeta(final StringBuilder sbf) {
 
-		sbf.append("\n\n\t\tthis.dbAssistant = ");
-
 		if (this.nameInDb == null) {
-			sbf.append("null;");
+			sbf.append("\n\n\t\tthis.dbAssistant = null;");
 			return;
 		}
+		sbf.append("\n\n\t\tDbAssistant a = new DbAssistant();");
+		sbf.append("\n\n\t\tthis.dbAssistant = a;");
+		final String p = "\n\t\ta.";
+		final char s = ';';
 
-		sbf.append("new DbAssistant(");
-		sbf.append(this.fields.length);
-		if (this.tenantField == null) {
-			sbf.append(", null");
-		} else {
-			sbf.append(", this.fields[").append(this.tenantField.index).append("]");
-		}
-		sbf.append(", SELECT, this.getParams(SELECT_IDX)");
+		sbf.append(p).append("selectClause = SELECT;");
+		sbf.append(p).append("selectParams = this.getParams(SELECT_IDX);");
+
 		if (this.keyFields != null) {
-
-			sbf.append(", WHERE, this.getParams(WHERE_IDX)");
-			sbf.append(", INSERT, this.getParams(INSERT_IDX)");
-			sbf.append(", UPDATE, this.getParams(UPDATE_IDX)");
-			sbf.append(", DELETE");
-			if (this.generatedKeyField == null) {
-				sbf.append(", null, -1");
-			} else {
-				sbf.append(C).append(Util.escape(this.generatedKeyField.dbColumnName));
-				sbf.append(C).append(this.generatedKeyField.index);
-			}
-			if (this.useTimestampCheck) {
-				sbf.append(", this.fields[").append(this.timestampField.index).append("]");
-			} else {
-				sbf.append(", null");
+			sbf.append(p).append("whereClause = WHERE;");
+			sbf.append(p).append("whereParams = this.getParams(WHERE_IDX);");
+			sbf.append(p).append("insertClause = INSERT;");
+			sbf.append(p).append("insertParams = this.getParams(INSERT_IDX);");
+			sbf.append(p).append("updateClause = UPDATE;");
+			sbf.append(p).append("updateParams = this.getParams(UPDATE_IDX);");
+			sbf.append(p).append("deleteClause = DELETE;");
+			if (this.generatedKeyField != null) {
+				sbf.append(p).append("generatedColumnName = ").append(Util.escape(this.generatedKeyField.dbColumnName))
+						.append(s);
+				sbf.append(p).append("generatedKeyIdx = ").append(this.generatedKeyField.index).append(s);
 			}
 		}
-		sbf.append(");");
+
+		sbf.append(p).append("nbrFieldsInARow = ").append(this.fields.length).append(s);
+
+		if (this.tenantField != null) {
+			sbf.append(p).append("tenantField = this.fields[").append(this.tenantField.index).append("];");
+		}
 
 	}
 
@@ -604,10 +620,7 @@ class Schema {
 		sbf.append(updateBuf.toString()).append(idxBuf.toString()).append("};");
 	}
 
-	/**
-	 * @param sbf
-	 */
-	public void emitTs(final StringBuilder sbf) {
+	void emitTs(final StringBuilder sbf) {
 		final StringBuilder valBuf = new StringBuilder();
 		if (this.fromToPairs != null) {
 			for (final FromToPair pair : this.fromToPairs) {
@@ -641,7 +654,7 @@ class Schema {
 		}
 	}
 
-	void emitJavaRowClass(final StringBuilder sbf, final String generatedPackage,
+	void emitJavaDataClass(final StringBuilder sbf, final String generatedPackage,
 			final Map<String, DataType> dataTypes) {
 		/*
 		 * our package name is rootPAckage + any prefix/qualifier in our name
@@ -649,7 +662,7 @@ class Schema {
 		 * e.g. if name a.b.schema1 then prefix is a.b and className is Schema1
 		 */
 		final String schemaCls = Util.toClassName(this.name);
-		final String cls = schemaCls + "Row";
+		final String cls = schemaCls + "Data";
 		String pck = generatedPackage + ".schema";
 		final String qual = Util.getClassQualifier(this.name);
 		if (qual != null) {
@@ -660,7 +673,7 @@ class Schema {
 		/*
 		 * imports
 		 */
-		Util.emitImport(sbf, DataObject.class);
+		Util.emitImport(sbf, SchemaData.class);
 		Util.emitImport(sbf, Instant.class);
 		Util.emitImport(sbf, LocalDate.class);
 
@@ -670,21 +683,18 @@ class Schema {
 
 		sbf.append("\n\n/**\n * class that represents structure of ").append(this.name);
 		sbf.append("\n */ ");
-		sbf.append("\npublic class ").append(cls).append(" extends DataRow {");
+		sbf.append("\npublic class ").append(cls).append(" extends SchemaData {");
 
 		/*
-		 * constructors
+		 * constructor
 		 */
-		sbf.append("\n\n\tprotected ").append(cls).append("(final ").append(schemaCls)
-				.append(" schema) {\n\t\tsuper(schema);\n\t}");
-
 		sbf.append("\n\n\tprotected ").append(cls).append("(final ").append(schemaCls)
 				.append(" schema, final Object[] data) {\n\t\tsuper(schema, data);\n\t}");
 
 		/*
 		 * getters and setters
 		 */
-		this.emitJavaGettersAndSetters(sbf, dataTypes);
+		Generator.emitJavaGettersAndSetters(this.fields, sbf, dataTypes);
 		sbf.append("\n}\n");
 	}
 
@@ -695,8 +705,8 @@ class Schema {
 		 * e.g. if name a.b.schema1 then prefix is a.b and className is Schema1
 		 */
 		final String schemaCls = Util.toClassName(this.name);
-		final String cls = schemaCls + "Table";
-		final String rowCls = schemaCls + "Row";
+		final String rowCls = schemaCls + "Data";
+		final String cls = rowCls + "Table";
 		String pck = generatedPackage + ".schema";
 		final String qual = Util.getClassQualifier(this.name);
 		if (qual != null) {
@@ -707,7 +717,7 @@ class Schema {
 		/*
 		 * imports
 		 */
-		Util.emitImport(sbf, DataTable.class);
+		Util.emitImport(sbf, SchemaDataTable.class);
 
 		/*
 		 * class definition
@@ -715,49 +725,20 @@ class Schema {
 
 		sbf.append("\n\n/**\n * class that represents an array of structure of ").append(this.name);
 		sbf.append("\n */ ");
-		sbf.append("\npublic class ").append(cls).append(" extends DataTable {");
+		sbf.append("\npublic class ").append(cls).append(" extends SchemaDataTable {");
 
 		/*
-		 * constructors
+		 * constructor
 		 */
-		sbf.append("\n\n\tprotected ").append(cls).append("(final ").append(schemaCls)
-				.append(" schema) {\n\t\tsuper(schema);\n\t}");
-
 		sbf.append("\n\n\tprotected ").append(cls).append("(final ").append(schemaCls)
 				.append(" schema, final Object[][] data) {\n\t\tsuper(schema, data);\n\t}");
 		/*
 		 * override getRow for class-specific return type
 		 */
-		sbf.append("\n\n\t/@Override\n\tpublic ").append(rowCls).append("(final int idx) {");
-		sbf.append("\n\t\treturn(").append(rowCls).append(") super.getRow(idx);\n\t}");
+		sbf.append("\n\n\t@Override\n\tpublic ").append(rowCls).append(" getSchemaData(final int idx) {");
+		sbf.append("\n\t\treturn(").append(rowCls).append(") super.getSchemaData(idx);\n\t}");
 
 		sbf.append("\n}\n");
-
-	}
-
-	/**
-	 * getters and setters for all the attributes of this schema
-	 */
-	private void emitJavaGettersAndSetters(final StringBuilder sbf, final Map<String, DataType> dataTypes) {
-		for (final DbField f : this.fields) {
-			final DataType dt = dataTypes.get(f.dataType);
-			final String typ = Util.JAVA_VALUE_TYPES[dt.valueType.ordinal()];
-			final String get = Util.JAVA_GET_TYPES[dt.valueType.ordinal()];
-			final String nam = f.name;
-			final String cls = Util.toClassName(nam);
-
-			sbf.append("\n\n\t/**\n\t * set value for ").append(nam);
-			sbf.append("\n\t * @param value to be assigned to ").append(nam);
-			sbf.append("\n\t */");
-			sbf.append("\n\tpublic void set").append(cls).append('(').append(typ).append(" value){");
-			sbf.append("\n\t\tthis.fieldValues[").append(f.index).append("] = value;");
-			sbf.append("\n\t}");
-
-			sbf.append("\n\n\t/**\n\t * @return value of ").append(nam).append("\n\t */");
-			sbf.append("\n\tpublic ").append(typ).append(" get").append(cls).append("(){");
-			sbf.append("\n\t\treturn super.get").append(get).append("Value(").append(f.index).append(");");
-			sbf.append("\n\t}");
-		}
 
 	}
 }
