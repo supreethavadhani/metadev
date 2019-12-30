@@ -22,11 +22,9 @@
 
 package org.simplity.fm.core.datatypes;
 
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -43,17 +41,19 @@ public enum ValueType {
 	/**
 	 * text
 	 */
-	TEXT {
+	Text {
 		@Override
-		public String parse(final String value) {
+		public String doParse(final String value) {
 			return value;
 		}
 
 		@Override
 		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
-			String val = (String) value;
+			String val;
 			if (value == null) {
 				val = Conventions.Db.TEXT_VALUE_OF_NULL;
+			} else {
+				val = value.toString();
 			}
 			ps.setString(position, val);
 		}
@@ -70,9 +70,9 @@ public enum ValueType {
 	/**
 	 * whole number
 	 */
-	INTEGER {
+	Integer {
 		@Override
-		public Long parse(final String value) {
+		public Long doParse(final String value) {
 			/*
 			 * we are okay with decimals but we take the long value of that
 			 */
@@ -111,9 +111,9 @@ public enum ValueType {
 	/**
 	 * whole number
 	 */
-	DECIMAL {
+	Decimal {
 		@Override
-		public Double parse(final String value) {
+		public Double doParse(final String value) {
 			try {
 				return Double.parseDouble(value);
 			} catch (final Exception e) {
@@ -149,32 +149,28 @@ public enum ValueType {
 	/**
 	 * boolean
 	 */
-	BOOLEAN {
+	Boolean {
 		@Override
-		public Boolean parse(final String value) {
-			if ("1".equals(value)) {
+		public Boolean doParse(final String value) {
+			switch (value.toLowerCase()) {
+			case "1":
+			case "true":
 				return true;
-			}
-			if ("0".equals(value)) {
+			case "0":
+			case "false":
 				return false;
+			default:
+				return null;
 			}
-			final String v = value.toUpperCase();
-			if ("TRUE".equals(v)) {
-				return true;
-			}
-			if ("FALSE".equals(v)) {
-				return false;
-			}
-			return null;
 		}
 
 		@Override
 		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
-			boolean val = false;
-			if (value != null) {
-				val = (boolean) value;
+			if (value == null) {
+				ps.setNull(position, Types.BOOLEAN);
+			} else {
+				ps.setBoolean(position, (boolean) value);
 			}
-			ps.setBoolean(position, val);
 		}
 
 		@Override
@@ -190,9 +186,9 @@ public enum ValueType {
 	 * Date as in calendar. No time, no time-zone. like a date-of-birth. Most
 	 * commonly used value-type amongst the three types
 	 */
-	DATE {
+	Date {
 		@Override
-		public LocalDate parse(final String value) {
+		public LocalDate doParse(final String value) {
 			try {
 				return LocalDate.parse(value);
 			} catch (final Exception e) {
@@ -203,16 +199,16 @@ public enum ValueType {
 
 		@Override
 		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
-			Date date = null;
+			java.sql.Date date = null;
 			if (value != null) {
-				date = Date.valueOf((LocalDate) value);
+				date = java.sql.Date.valueOf((LocalDate) value);
 			}
 			ps.setDate(position, date);
 		}
 
 		@Override
 		public LocalDate getFromRs(final ResultSet rs, final int position) throws SQLException {
-			final Date date = rs.getDate(position);
+			final java.sql.Date date = rs.getDate(position);
 			if (date == null) {
 				return null;
 			}
@@ -224,9 +220,9 @@ public enum ValueType {
 	 * an instant of time. will show up as different date/time .based on the
 	 * locale. Likely candidate to represent most "date-time" fields
 	 */
-	TIMESTAMP {
+	Timestamp {
 		@Override
-		public Instant parse(final String value) {
+		public Instant doParse(final String value) {
 			try {
 				return Instant.parse(value);
 			} catch (final Exception e) {
@@ -237,16 +233,16 @@ public enum ValueType {
 
 		@Override
 		public void setPsParam(final PreparedStatement ps, final int position, final Object value) throws SQLException {
-			Timestamp stamp = null;
+			java.sql.Timestamp stamp = null;
 			if (value != null) {
-				stamp = Timestamp.from((Instant) value);
+				stamp = java.sql.Timestamp.from((Instant) value);
 			}
 			ps.setTimestamp(position, stamp);
 		}
 
 		@Override
 		public Instant getFromRs(final ResultSet rs, final int position) throws SQLException {
-			final Timestamp stamp = rs.getTimestamp(position);
+			final java.sql.Timestamp stamp = rs.getTimestamp(position);
 			if (stamp == null) {
 				return null;
 			}
@@ -258,11 +254,17 @@ public enum ValueType {
 	 * parse this value type from a string
 	 *
 	 * @param value
-	 *            non-null
-	 * @return parsed value of this type. null if value is null or the value can
-	 *         not be parsed to the desired type
+	 *            non-null to ensure that the caller can figure out whether the
+	 *            parse failed or not.
+	 *
+	 * @return parsed value of this type. null if value the value could not be
+	 *         parsed to the desired type
 	 */
-	public abstract Object parse(String value);
+	public Object parse(final String value) {
+		return this.doParse(value.trim());
+	}
+
+	protected abstract Object doParse(String value);
 
 	/**
 	 * @param ps
@@ -282,58 +284,56 @@ public enum ValueType {
 	public abstract Object getFromRs(ResultSet rs, int position) throws SQLException;
 
 	/**
+	 * can be used when the parameter is non-null and is one of String, Long,
+	 * Double, Boolean, LocalDate or Instant. This method has a slight
+	 * performance over-head to checkfor teh object instance. So, if the value
+	 * type is known, it is better to use setPsParam()If the valeType is knowm,
+	 * it is better to use the
 	 *
-	 * @param object
-	 *            must be non-null. must be one of String, Long, Double, Boolean
-	 *            LocalDate or Instant
-	 * @return value type
-	 * @throws SQLException
-	 *             if value is null or of type that is not valid type for a
-	 *             parameter of a prepared statement. SqlException is thrown
-	 *             because the code that calls this is very likely to throw that
-	 *             anyways
-	 */
-	public static ValueType getValueTypeFor(final Object object) throws SQLException {
-		if (object == null) {
-			throw new SQLException(" null can not be directly used as a parameter value for a prepared statement");
-		}
-
-		if (object instanceof String) {
-			return ValueType.TEXT;
-		}
-		if (object instanceof Long) {
-			return ValueType.INTEGER;
-		}
-		if (object instanceof Boolean) {
-			return ValueType.BOOLEAN;
-		}
-		if (object instanceof LocalDate) {
-			return ValueType.DATE;
-		}
-		if (object instanceof Double) {
-			return ValueType.DECIMAL;
-		}
-		if (object instanceof Instant) {
-			return ValueType.TIMESTAMP;
-		}
-		throw new SQLException(object + " is of type " + object.getClass().getName()
-				+ " is not a valid parameter value for a prepared statement");
-	}
-
-	/**
-	 * convenience method to set a parameter when the value is non-null and is
-	 * an instance of the right type
-	 * 
-	 * @param ps
-	 * @param position
 	 * @param value
-	 *            non-null. one of String, Long, Double, Boolean, LocalDate or
-	 *            Instance
+	 *            non-null. one of the standard classes we use,String, Long,
+	 *            Double, Boolean, LocalDate or Instant
+	 * @param ps
+	 *            non-null prepared statement
+	 * @param oneBaedPosition
+	 *            position of the parameter. note that the first position starts
+	 *            at 1 and not 0
 	 * @throws SQLException
 	 */
-	public static void setPsParamValue(final PreparedStatement ps, final int position, final Object value)
+	public static void setObjectAsPsParam(final Object value, final PreparedStatement ps, final int oneBaedPosition)
 			throws SQLException {
-		getValueTypeFor(value).setPsParam(ps, position, value);
-	}
+		if (value == null) {
+			throw new SQLException("Null value can not be set to a psparameter using this method");
+		}
 
+		if (value instanceof String) {
+			ps.setString(oneBaedPosition, (String) value);
+			return;
+		}
+
+		if (value instanceof Long) {
+			ps.setLong(oneBaedPosition, (Long) value);
+			return;
+		}
+
+		if (value instanceof Double) {
+			ps.setDouble(oneBaedPosition, (Double) value);
+			return;
+		}
+
+		if (value instanceof Boolean) {
+			ps.setBoolean(oneBaedPosition, (Boolean) value);
+			return;
+		}
+
+		if (value instanceof LocalDate) {
+			ps.setDate(oneBaedPosition, java.sql.Date.valueOf((LocalDate) value));
+			return;
+		}
+
+		if (value instanceof Instant) {
+			ps.setTimestamp(oneBaedPosition, java.sql.Timestamp.from((Instant) value));
+			return;
+		}
+	}
 }

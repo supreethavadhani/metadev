@@ -22,16 +22,15 @@
 
 package org.simplity.fm.core.validn;
 
-import java.util.List;
-
 import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.form.FormData;
+import org.simplity.fm.core.data.SchemaData;
+import org.simplity.fm.core.service.IServiceContext;
 
 /**
  * when the valid values for a field depends on the vale of its key-field. like
  * list of valid districts depends on stateCode
- * 
+ *
  * @author simplity.org
  */
 public class DependentListValidation implements IValidation {
@@ -40,18 +39,19 @@ public class DependentListValidation implements IValidation {
 	private final int parentFieldIndex;
 	private final String fieldName;
 	private final String messaageId;
-	
 
 	/**
 	 * create the list with valid keys and values
-	 * @param fieldIndex 
-	 * @param parentFieldIndex 
-	 * @param listName 
-	 * @param fieldName 
-	 * @param messageId 
-	 * 
+	 *
+	 * @param fieldIndex
+	 * @param parentFieldIndex
+	 * @param listName
+	 * @param fieldName
+	 * @param messageId
+	 *
 	 */
-	public DependentListValidation(int fieldIndex, int parentFieldIndex, String listName, String fieldName, String messageId ) {
+	public DependentListValidation(final int fieldIndex, final int parentFieldIndex, final String listName,
+			final String fieldName, final String messageId) {
 		this.fieldIndex = fieldIndex;
 		this.parentFieldIndex = parentFieldIndex;
 		this.listName = listName;
@@ -59,29 +59,27 @@ public class DependentListValidation implements IValidation {
 		this.messaageId = messageId;
 	}
 
-
 	@Override
-	public boolean isValid(FormData data, List<Message> mesages) {
-		Object fieldValue = data.getObject(this.fieldIndex);
-		if(fieldValue == null) {
+	public boolean isValid(final SchemaData dataRow, final IServiceContext ctx) {
+		final Object fieldValue = dataRow.getObject(this.fieldIndex);
+		if (fieldValue == null) {
 			return true;
 		}
-		Object keyValue = data.getObject(this.parentFieldIndex);
-		if(keyValue == null) {
+		final Object keyValue = dataRow.getObject(this.parentFieldIndex);
+		if (keyValue == null) {
 			return true;
 		}
-		
-		IValueList vl = ComponentProvider.getProvider().getValueList(this.listName);
-		if(vl == null) {
+
+		final IValueList vl = ComponentProvider.getProvider().getValueList(this.listName);
+		if (vl == null) {
 			return true;
 		}
-		if(vl.isValid(fieldValue, keyValue)) {
+		if (vl.isValid(fieldValue, keyValue)) {
 			return true;
 		}
-		mesages.add(Message.newFieldError(this.fieldName, this.messaageId));
+		ctx.addMessage(Message.newFieldError(this.fieldName, this.messaageId));
 		return false;
 	}
-
 
 	@Override
 	public String getFieldName() {

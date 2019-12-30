@@ -31,6 +31,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.simplity.fm.core.data.PreparedStatementParam;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,26 +46,26 @@ public class DbHandle {
 
 	/**
 	 * to be created by DbDriver ONLY
-	 * 
+	 *
 	 * @param con
 	 * @param readOnly
 	 */
-	DbHandle(Connection con) {
+	DbHandle(final Connection con) {
 		this.con = con;
 	}
 
 	/**
 	 * Most flexible way to read from db. Caller has full control of what
 	 * and how to read.
-	 * 
+	 *
 	 * @param reader
 	 *            instance that wants to read from the database
 	 * @return number of rows actually read by the reader.
 	 * @throws SQLException
-	 * 
+	 *
 	 */
-	public int read(IDbReader reader) throws SQLException {
-		String sql = reader.getPreparedStatement();
+	public int read(final IDbReader reader) throws SQLException {
+		final String sql = reader.getPreparedStatement();
 		if (sql == null) {
 			return 0;
 		}
@@ -88,7 +89,7 @@ public class DbHandle {
 	/**
 	 * lower level API that is very close to the JDBC API for reading one
 	 * row from the result of a select query
-	 * 
+	 *
 	 * @param sql
 	 *            a prepared statement
 	 * @param whereTypes
@@ -106,12 +107,12 @@ public class DbHandle {
 	 *         if result-set had no rows
 	 * @throws SQLException
 	 */
-	public Object[] read(String sql, ValueType[] whereTypes, Object[] whereData, ValueType[] resultTypes)
-			throws SQLException {
+	public Object[] read(final String sql, final ValueType[] whereTypes, final Object[] whereData,
+			final ValueType[] resultTypes) throws SQLException {
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			int posn = 0;
-			for (ValueType vt : whereTypes) {
-				Object val = whereData[posn];
+			for (final ValueType vt : whereTypes) {
+				final Object val = whereData[posn];
 				posn++;
 				vt.setPsParam(ps, posn, val);
 			}
@@ -120,7 +121,7 @@ public class DbHandle {
 				if (!rs.next()) {
 					return null;
 				}
-				Object[] result = new Object[resultTypes.length];
+				final Object[] result = new Object[resultTypes.length];
 				for (int i = 0; i < resultTypes.length; i++) {
 					result[i] = resultTypes[i].getFromRs(rs, i + 1);
 				}
@@ -132,7 +133,7 @@ public class DbHandle {
 	/**
 	 * lower level API that is very close to the JDBC API for reading all
 	 * rows from the result of a select query
-	 * 
+	 *
 	 * @param sql
 	 *            a prepared statement
 	 * @param whereTypes
@@ -150,20 +151,20 @@ public class DbHandle {
 	 *         object values from the result set row.
 	 * @throws SQLException
 	 */
-	public Object[][] readRows(String sql, ValueType[] whereTypes, Object[] whereData, ValueType[] resultTypes)
-			throws SQLException {
+	public Object[][] readRows(final String sql, final ValueType[] whereTypes, final Object[] whereData,
+			final ValueType[] resultTypes) throws SQLException {
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			int posn = 0;
-			for (ValueType vt : whereTypes) {
-				Object val = whereData[posn];
+			for (final ValueType vt : whereTypes) {
+				final Object val = whereData[posn];
 				posn++;
 				vt.setPsParam(ps, posn, val);
 			}
 
-			List<Object[]> result = new ArrayList<>();
+			final List<Object[]> result = new ArrayList<>();
 			try (ResultSet rs = ps.executeQuery()) {
 				while (rs.next()) {
-					Object[] row = new Object[resultTypes.length];
+					final Object[] row = new Object[resultTypes.length];
 					result.add(row);
 					for (int i = 0; i < resultTypes.length; i++) {
 						row[i] = resultTypes[i].getFromRs(rs, i + 1);
@@ -182,8 +183,8 @@ public class DbHandle {
 	 * @return number of affected rows.
 	 * @throws SQLException
 	 */
-	public int write(IDbWriter writer) throws SQLException {
-		String sql = writer.getPreparedStatement();
+	public int write(final IDbWriter writer) throws SQLException {
+		final String sql = writer.getPreparedStatement();
 		if (sql == null) {
 			logger.warn(
 					"writer {} returned null as prepared statement, indicatiing taht it does not want to write.. Opertion skipped.",
@@ -193,23 +194,27 @@ public class DbHandle {
 		logger.info("SQL:{}", sql);
 
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
-			writer.setParams(ps);
-			int n = ps.executeUpdate();
-			logger.info("{} rows affected ", n);
+			int n = 0;
+			if (writer.setParams(ps)) {
+				n = ps.executeUpdate();
+				logger.info("{} rows affected ", n);
+			} else {
+				logger.warn("call back function returned false and hence the write operaiton is abandoned");
+			}
 			return n;
 		}
 	}
 
 	/**
 	 * write to the rdbms using a writer
-	 * 
+	 *
 	 * @param writer
 	 * @return number of rows affected
 	 * @throws SQLException
 	 */
-	public int write(IDbMultipleWriter writer) throws SQLException {
+	public int write(final IDbMultipleWriter writer) throws SQLException {
 
-		String sql = writer.getPreparedStatement();
+		final String sql = writer.getPreparedStatement();
 		if (sql == null) {
 			logger.warn(
 					"writer {} returned null as prepared statement, indicatiing taht it does not want to write.. Opertion skipped.",
@@ -220,16 +225,16 @@ public class DbHandle {
 
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			while (true) {
-				boolean hasMore = writer.setParams(ps);
+				final boolean hasMore = writer.setParams(ps);
 				ps.addBatch();
-				if(!hasMore) {
+				if (!hasMore) {
 					break;
 				}
 			}
-			
-			int[] nbrs = ps.executeBatch();
+
+			final int[] nbrs = ps.executeBatch();
 			int n = 0;
-			for (int i : nbrs) {
+			for (final int i : nbrs) {
 				/*
 				 * some drivers return -1 indicating inability to get nbr rows
 				 * affected
@@ -252,24 +257,29 @@ public class DbHandle {
 	 * @return number of affected rows.
 	 * @throws SQLException
 	 */
-	public int insertAndGenerteKeys(IDbWriter writer, String keyColumnName, long[] generatedKeys) throws SQLException {
-		String[] keys = { keyColumnName };
+	public int insertAndGenerteKeys(final IDbWriter writer, final String keyColumnName, final long[] generatedKeys)
+			throws SQLException {
+		final String[] keys = { keyColumnName };
 
-		String sql = writer.getPreparedStatement();
+		final String sql = writer.getPreparedStatement();
 		if (sql == null) {
 			logger.warn("Writer returned a null SQL, indicating no action.");
 			return 0;
 		}
 		logger.info("Insert With Key SQL:{}", sql);
 		try (PreparedStatement ps = this.con.prepareStatement(sql, keys)) {
-			writer.setParams(ps);
-			int result = ps.executeUpdate();
-			if (result > 0) {
-				long id = getGeneratedKey(ps);
-				logger.info("Row iinserted with generated key = {}", id);
-				generatedKeys[0] = id;
+			int result = 0;
+			if (writer.setParams(ps)) {
+				result = ps.executeUpdate();
+				if (result > 0) {
+					final long id = getGeneratedKey(ps);
+					logger.info("Row iinserted with generated key = {}", id);
+					generatedKeys[0] = id;
+				} else {
+					logger.info("{} rows inserted ", result);
+				}
 			} else {
-				logger.info("{} rows inserted ", result);
+				logger.warn("Call back function returned false, and hence insert operation is abandoned");
 			}
 			return result;
 		}
@@ -277,7 +287,7 @@ public class DbHandle {
 
 	/**
 	 * API that is close to the JDBC API for updating/inserting/deleting
-	 * 
+	 *
 	 * @param sql
 	 *            a prepared statement that manipulates data.
 	 * @param paramTypes
@@ -288,14 +298,14 @@ public class DbHandle {
 	 *         determine it
 	 * @throws SQLException
 	 */
-	public int write(String sql, ValueType[] paramTypes, Object[] paramValues) throws SQLException {
+	public int write(final String sql, final ValueType[] paramTypes, final Object[] paramValues) throws SQLException {
 		logger.info("Generic Write SQL:{}", sql);
 
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			for (int i = 0; i < paramValues.length; i++) {
 				paramTypes[i].setPsParam(ps, i + 1, paramValues[i]);
 			}
-			int n = ps.executeUpdate();
+			final int n = ps.executeUpdate();
 			logger.info("{} rows affected ", n);
 			return n;
 		}
@@ -303,7 +313,32 @@ public class DbHandle {
 
 	/**
 	 * API that is close to the JDBC API for updating/inserting/deleting
-	 * 
+	 *
+	 * @param sql
+	 *            a prepared statement that manipulates data.
+	 * @param params
+	 *            parameters to be set the prepared statement
+	 * @return number of affected rows. -1 if the driver was unable to
+	 *         determine it
+	 * @throws SQLException
+	 */
+	public int write(final String sql, final PreparedStatementParam[] params) throws SQLException {
+		logger.info("Generic Write SQL:{}", sql);
+
+		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
+			final int posn = 0;
+			for (final PreparedStatementParam p : params) {
+				p.setPsParam(ps, posn);
+			}
+			final int n = ps.executeUpdate();
+			logger.info("{} rows affected ", n);
+			return n;
+		}
+	}
+
+	/**
+	 * API that is close to the JDBC API for updating/inserting/deleting
+	 *
 	 * @param sql
 	 *            a prepared statement that manipulates data.
 	 * @param paramTypes
@@ -315,21 +350,23 @@ public class DbHandle {
 	 *         that the driver was unable to determine it
 	 * @throws SQLException
 	 */
-	public int[] writeMany(String sql, ValueType[] paramTypes, Object[][] paramValues) throws SQLException {
+	public int[] writeMany(final String sql, final ValueType[] paramTypes, final Object[][] paramValues)
+			throws SQLException {
 		logger.info("Generic Batch SQL:{}", sql);
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
-			for (Object[] row : paramValues) {
-				ps.addBatch();
-				for (int i = 0; i < paramValues.length; i++) {
+			for (final Object[] row : paramValues) {
+				// ps.addBatch();
+				for (int i = 0; i < paramTypes.length; i++) {
 					paramTypes[i].setPsParam(ps, i + 1, row[i]);
 				}
+				ps.addBatch();
 			}
 			return ps.executeBatch();
 		}
 	}
 
 	/**
-	 * 
+	 *
 	 * @return blob object
 	 * @throws SQLException
 	 */
@@ -338,7 +375,7 @@ public class DbHandle {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return blob object
 	 * @throws SQLException
 	 */
@@ -346,7 +383,7 @@ public class DbHandle {
 		return this.con.createBlob();
 	}
 
-	private static long getGeneratedKey(PreparedStatement ps) throws SQLException {
+	private static long getGeneratedKey(final PreparedStatement ps) throws SQLException {
 		try (ResultSet rs = ps.getGeneratedKeys()) {
 			if (rs.next()) {
 				return rs.getLong(1);
@@ -355,8 +392,8 @@ public class DbHandle {
 		}
 	}
 
-	static void warn(String sql, ValueType[] types, Object[] vals) {
-		StringBuilder sbf = new StringBuilder();
+	static void warn(final String sql, final ValueType[] types, final Object[] vals) {
+		final StringBuilder sbf = new StringBuilder();
 		sbf.append("RDBMS is not set up. Sql = ").append(sql);
 		for (int i = 0; i < types.length; i++) {
 			sbf.append('(').append(types[i]).append(", ").append(vals[i]).append(") ");
@@ -364,7 +401,7 @@ public class DbHandle {
 		logger.warn(sbf.toString());
 	}
 
-	static void warn(String sql) {
+	static void warn(final String sql) {
 		logger.error("RDBMS is not set up. Sql = ", sql);
 	}
 

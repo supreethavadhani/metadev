@@ -23,32 +23,32 @@ package org.simplity.fm.core.datatypes;
 
 /**
  * validation parameters for a an integral value
- *
+ * 
  * @author simplity.org
  *
  */
 public class BooleanType extends DataType {
 
 	/**
-	 * @param name
+	 * @param name 
 	 * @param messageId
 	 */
-	public BooleanType(final String name, final String messageId) {
-		this.valueType = ValueType.BOOLEAN;
+	public BooleanType(String name, String messageId) {
+		this.valueType = ValueType.Boolean;
 		this.name = name;
 		this.messageId = messageId;
 	}
 
 	@Override
-	public Boolean parse(final String value) {
-		return (Boolean) ValueType.BOOLEAN.parse(value);
+	public Boolean parse(String value) {
+		return (Boolean)ValueType.Boolean.parse(value);
 	}
-
+	
 	@Override
-	public Boolean parse(final Object value) {
-		if (value instanceof Boolean) {
-			return (Boolean) value;
+	public Boolean parse(Object value) {
+		if(value instanceof Boolean) {
+			return (Boolean)value;
 		}
-		return (Boolean) ValueType.BOOLEAN.parse(value.toString());
+		return (Boolean)ValueType.Boolean.parse(value.toString());
 	}
 }

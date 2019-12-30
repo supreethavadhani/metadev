@@ -24,14 +24,11 @@ package org.simplity.fm.gen;
 
 /**
  * label-value pair
+ * 
  * @author simplity.org
  *
  */
 class Pair {
-	final String label;
-	final Object value;
-	Pair(String label, Object value){
-		this.label = label;
-		this.value = value;
-	}
+	String label;
+	Object value;
 }

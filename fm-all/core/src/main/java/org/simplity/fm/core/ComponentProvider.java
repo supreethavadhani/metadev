@@ -27,10 +27,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.ServiceLoader;
 
+import org.simplity.fm.core.data.Form;
+import org.simplity.fm.core.data.IoType;
+import org.simplity.fm.core.data.Schema;
 import org.simplity.fm.core.datatypes.DataType;
-import org.simplity.fm.core.form.Form;
-import org.simplity.fm.core.form.FormIo;
-import org.simplity.fm.core.form.IoType;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.ListService;
 import org.simplity.fm.core.validn.IValueList;
@@ -38,11 +38,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Uses ServiceLoader() to look for a provider, if a provider is not explicitly
- * set before any request is made.
- * Uses a default empty provider instead of throwing exception. That is, if no
- * provider is available, all requests will responded with null, after logging
- * an error mesage.
+ * Uses ServiceLoader() to look for a provider. Uses a default empty provider
+ * instead of throwing exception. That is, if no provider is available, all
+ * requests will responded with null, after logging an error message.
  *
  * @author simplity.org
  *
@@ -54,6 +52,13 @@ public abstract class ComponentProvider {
 	 * @return form instance, or null if such a form is not located
 	 */
 	public abstract Form getForm(String formId);
+
+	/**
+	 *
+	 * @param schemaName
+	 * @return form instance, or null if such a form is not located
+	 */
+	public abstract Schema getSchema(String schemaName);
 
 	/**
 	 *
@@ -90,13 +95,34 @@ public abstract class ComponentProvider {
 	 */
 	public abstract Message getMessage(String messageId);
 
-	protected static final String ERROR = "Unable to locate IComponentProvider. No components areavailable for this run.";
+	protected static final String ERROR = "Unable to locate IComponentProvider. No components are available for this run.";
 	private static final char DOT = '.';
 	protected static final Logger logger = LoggerFactory.getLogger(ComponentProvider.class);
 
 	private static ComponentProvider instance = null;
 
 	/**
+	 * to be used either got Testing. Can also be used by the app to set this
+	 * instead of using the ServieLoader utility
+	 *
+	 * @param provider
+	 *            null to reset it to the default provider.(Default provider
+	 *            returns null components)
+	 * @return current ComponentProvider, null if provider was not set.
+	 */
+	public static ComponentProvider setProvider(final ComponentProvider provider) {
+		final ComponentProvider oldOne = instance;
+		if (provider == null) {
+			instance = getStandinProvider();
+		} else {
+			instance = provider;
+		}
+		return oldOne;
+	}
+
+	/**
+	 * Note: for testing purposes, this method can be effectively mocked by
+	 * using <code>setProvider</code>
 	 *
 	 * @return non-null component provider. A default provider if no provider is
 	 *         located on the class-path. this default provider will return null
@@ -194,6 +220,11 @@ public abstract class ComponentProvider {
 			public IFunction getFunction(final String functionName) {
 				return null;
 			}
+
+			@Override
+			public Schema getSchema(final String schemaName) {
+				return null;
+			}
 		};
 	}
 
@@ -217,11 +248,14 @@ public abstract class ComponentProvider {
 	private static class CompProvider extends ComponentProvider {
 		private final IDataTypes dataTypes;
 		private final String formRoot;
+		private final String schemaRoot;
 		private final String listRoot;
 		private final String serviceRoot;
+		private final String customListRoot;
 		private final String fnRoot;
 		private final IMessages messages;
 		private final Map<String, Form> forms = new HashMap<>();
+		private final Map<String, Schema> schemas = new HashMap<>();
 		private final Map<String, IValueList> lists = new HashMap<>();
 		private final Map<String, IService> services = new HashMap<>();
 		private final Map<String, IFunction> functions = new HashMap<>();
@@ -231,7 +265,9 @@ public abstract class ComponentProvider {
 			this.messages = messages;
 			final String genRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_GEN + DOT;
 			this.formRoot = genRoot + Conventions.App.FOLDER_NAME_FORM + DOT;
+			this.schemaRoot = genRoot + Conventions.App.FOLDER_NAME_SCHEMA + DOT;
 			this.listRoot = genRoot + Conventions.App.FOLDER_NAME_LIST + DOT;
+			this.customListRoot = rootPackage + Conventions.App.FOLDER_NAME_CUSTOM_LIST + DOT;
 			this.serviceRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_SERVICE + DOT;
 			this.fnRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_FN + DOT;
 			/*
@@ -258,6 +294,23 @@ public abstract class ComponentProvider {
 		}
 
 		@Override
+		public Schema getSchema(final String schemaName) {
+			Schema schema = this.schemas.get(schemaName);
+			if (schema != null) {
+				return schema;
+			}
+			final String cls = this.schemaRoot + toClassName(schemaName);
+			try {
+				schema = (Schema) Class.forName(cls).newInstance();
+			} catch (final Exception e) {
+				logger.error("No form named {} because we could not locate class {}", schemaName, cls);
+				return null;
+			}
+			this.schemas.put(schemaName, schema);
+			return schema;
+		}
+
+		@Override
 		public DataType getDataType(final String dataTypeId) {
 			return this.dataTypes.getDataType(dataTypeId);
 		}
@@ -268,12 +321,18 @@ public abstract class ComponentProvider {
 			if (list != null) {
 				return list;
 			}
-			final String cls = this.listRoot + toClassName(listId);
+			final String clsName = toClassName(listId);
+			final String cls = this.listRoot + clsName;
 			try {
 				list = (IValueList) Class.forName(cls).newInstance();
 			} catch (final Exception e) {
-				logger.error("No list named {} because we could not locate class {}", listId, cls);
-				return null;
+				final String cls1 = this.customListRoot + clsName;
+				try {
+					list = (IValueList) Class.forName(cls1).newInstance();
+				} catch (final Exception e1) {
+					logger.error("No list named {} because we could not locate class {} or {}", listId, cls, cls1);
+					return null;
+				}
 			}
 			this.lists.put(listId, list);
 			return list;
@@ -297,7 +356,7 @@ public abstract class ComponentProvider {
 			final String cls = this.serviceRoot + toClassName(serviceId);
 			try {
 				service = (IService) Class.forName(cls).newInstance();
-			} catch (final ClassNotFoundException e) {
+			} catch (final Exception e) {
 				logger.info("Service {} is not defined as a java class {}", serviceId, cls);
 
 				service = this.tryFormIo(serviceId);
@@ -305,23 +364,14 @@ public abstract class ComponentProvider {
 					logger.error("Service {} is not served by this application", serviceId);
 					return null;
 				}
-			} catch (IllegalAccessException | InstantiationException e) {
-				logger.info(" java class {} could not be instantiated as an instance of IService. Error : {}", cls,
-						e.getMessage());
 			}
 			this.services.put(serviceId, service);
 			return service;
 		}
 
-		private FormIo tryFormIo(final String serviceName) {
+		private IService tryFormIo(final String serviceName) {
 			final int idx = serviceName.indexOf(Conventions.Http.SERVICE_OPER_SEPARATOR);
 			if (idx <= 0) {
-				return null;
-			}
-
-			final String formName = serviceName.substring(idx + 1);
-			final Form fs = this.getForm(formName);
-			if (fs == null) {
 				return null;
 			}
 
@@ -332,7 +382,17 @@ public abstract class ComponentProvider {
 				return null;
 			}
 
-			return FormIo.getInstance(opern, serviceName.substring(idx + 1));
+			final String formName = serviceName.substring(idx + 1);
+			final Form form = this.getForm(formName);
+			if (form != null) {
+				return form.getService(opern);
+			}
+			final Schema schema = this.getSchema(formName);
+			if (schema != null) {
+				return schema.getService(opern);
+			}
+
+			return null;
 		}
 
 		@Override

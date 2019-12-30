@@ -22,25 +22,28 @@
 
 package org.simplity.fm.gen;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.google.gson.stream.JsonReader;
 
 /**
  * @author simplity.org
  *
  */
-class KeyedList {
+class KeyedList implements Util.ISelfLoader {
 	private static final String C = ", ";
-	final String name;
-	final Map<Object, Pair[]> lists;
+	String name;
+	Map<String, ValueList> lists = new HashMap<>();
 
-	KeyedList(String name, Map<Object, Pair[]> lists) {
-		this.name = name;
-		this.lists = lists;
+	@Override
+	public void fromJson(final JsonReader reader, final String key, final int idx) throws IOException {
+		this.name = key;
+		Util.loadMap(this.lists, reader, ValueList.class);
 	}
 
-	void emitJava(StringBuilder sbf, String packageName) {
-		AppComps.logger.info("Started generating java for keyed list {} with {} keys", this.name, this.lists.size());
+	void emitJava(final StringBuilder sbf, final String packageName) {
 		sbf.append("package ").append(packageName).append(';');
 		sbf.append('\n');
 
@@ -51,14 +54,25 @@ class KeyedList {
 		sbf.append("\npublic class ").append(Util.toClassName(this.name)).append(" extends KeyedValueList {");
 
 		sbf.append("\n\tprivate static final Object[] KEYS = {");
-		StringBuilder vals = new StringBuilder();
+		final StringBuilder vals = new StringBuilder();
+		boolean firstOne = true;
+		boolean keyIsNumeric = false;
 		vals.append("\n\tprivate static final Object[][][] VALUES = {");
-		for (Map.Entry<Object, Pair[]> entry : this.lists.entrySet()) {
-			Object key = entry.getKey();
-			if(key instanceof String) {
-				sbf.append(Util.escape(key.toString()));
-			}else {
+		for (final Map.Entry<String, ValueList> entry : this.lists.entrySet()) {
+			final String key = entry.getKey();
+			if (firstOne) {
+				try {
+					Long.parseLong(key);
+					keyIsNumeric = true;
+				} catch (final Exception e) {
+					// key is not numeric
+				}
+				firstOne = false;
+			}
+			if (keyIsNumeric) {
 				sbf.append(key).append('L');
+			} else {
+				sbf.append(Util.escape(key.toString()));
 			}
 			sbf.append(C);
 			emitJavaSet(vals, entry.getValue());
@@ -86,13 +100,14 @@ class KeyedList {
 		sbf.append("\n}\n");
 	}
 
-	private static void emitJavaSet(StringBuilder vals, Pair[] ps) {
+	private static void emitJavaSet(final StringBuilder vals, final ValueList list) {
+		final Pair[] ps = list.pairs;
 		vals.append("\n\t\t\t{");
-		for (Pair p : ps) {
+		for (final Pair p : ps) {
 			vals.append("\n\t\t\t\t{");
-			if(p.value instanceof String) {
+			if (p.value instanceof String) {
 				vals.append(Util.escape(p.value.toString()));
-			}else {
+			} else {
 				vals.append(p.value).append('L');
 			}
 			vals.append(C).append(Util.escape(p.label)).append("}");
@@ -102,9 +117,9 @@ class KeyedList {
 		vals.append("\n\t\t\t}");
 	}
 
-	protected void emitTs(StringBuilder sbf, String indent) {
+	protected void emitTs(final StringBuilder sbf, final String indent) {
 		boolean firstOne = true;
-		for (Map.Entry<Object, Pair[]> entry : this.lists.entrySet()) {
+		for (final Map.Entry<String, ValueList> entry : this.lists.entrySet()) {
 			if (firstOne) {
 				firstOne = false;
 			} else {
@@ -112,18 +127,18 @@ class KeyedList {
 			}
 			sbf.append(indent);
 			sbf.append(entry.getKey()).append(" : [");
-			String newIndent = indent + '\t';
+			final String newIndent = indent + '\t';
 			boolean f = true;
-			for (Pair p : entry.getValue()) {
+			for (final Pair p : entry.getValue().pairs) {
 				if (f) {
 					f = false;
 				} else {
 					sbf.append(C);
 				}
 				sbf.append(newIndent).append("{value:");
-				if(p.value instanceof String) {
+				if (p.value instanceof String) {
 					sbf.append(Util.escapeTs(p.value));
-				}else {
+				} else {
 					sbf.append(p.value);
 				}
 				sbf.append(",text:").append(Util.escapeTs(p.label)).append("}");

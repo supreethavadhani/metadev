@@ -22,43 +22,45 @@
 
 package org.simplity.fm.gen;
 
+import com.google.gson.stream.JsonReader;
 
 /**
  * @author simplity.org
  *
  */
-class ValueList {
+class ValueList implements Util.ISelfLoader {
 	private static final String C = ", ";
-	final String name;
-	final Pair[] pairs;
 
-	ValueList(String name, Pair[] pairs) {
-		this.name = name;
-		this.pairs = pairs;
+	String name;
+	Pair[] pairs;
+
+	@Override
+	public void fromJson(final JsonReader reader, final String key, final int idx) {
+		this.name = key;
+		this.pairs = Util.GSON.fromJson(reader, Pair[].class);
 	}
 
-	void emitJava(StringBuilder sbf, String packageName) {
+	void emitJava(final StringBuilder sbf, final String packageName) {
 		sbf.append("package ").append(packageName).append(';');
 		sbf.append('\n');
 
 		Util.emitImport(sbf, org.simplity.fm.core.validn.ValueList.class);
 
-		System.out.println("STarting list=|" + this.name + "|");
 		sbf.append("\npublic class ").append(Util.toClassName(this.name)).append(" extends ValueList {");
 
 		sbf.append("\n\t private static final Object[][] VALUES = { ");
-		for (Pair p : this.pairs) {
-			sbf.append("\n\t\t\t{");
-			if(p.value instanceof String) {
+		for (final Pair p : this.pairs) {
+			sbf.append("\n\t\t{");
+			if (p.value instanceof String) {
 				sbf.append(Util.escape(p.value.toString()));
-			}else {
+			} else {
 				sbf.append(p.value).append('L');
 			}
 			sbf.append(C).append(Util.escape(p.label)).append("}");
 			sbf.append(C);
 		}
 		sbf.setLength(sbf.length() - C.length());
-		sbf.append("\n\t\t};");
+		sbf.append("\n\t};");
 		sbf.append("\n\t private static final String NAME = \"").append(this.name).append("\";");
 
 		sbf.append("\n\n/**\n *\n\t * @param name\n\t * @param valueList\n */");
@@ -74,17 +76,17 @@ class ValueList {
 		sbf.append("\n}\n");
 	}
 
-	protected void emitTs(StringBuilder sbf, String indent) {
+	protected void emitTs(final StringBuilder sbf, final String indent) {
 		for (int i = 0; i < this.pairs.length; i++) {
 			if (i != 0) {
 				sbf.append(',');
 			}
 			sbf.append(indent);
-			Pair pair = this.pairs[i];
+			final Pair pair = this.pairs[i];
 			sbf.append("{value:");
-			if(pair.value instanceof String) {
+			if (pair.value instanceof String) {
 				sbf.append(Util.escapeTs(pair.value));
-			}else {
+			} else {
 				sbf.append(pair.value);
 			}
 			sbf.append(",text:").append(Util.escapeTs(pair.label)).append('}');

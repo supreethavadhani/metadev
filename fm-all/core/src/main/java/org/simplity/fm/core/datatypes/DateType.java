@@ -25,52 +25,50 @@ import java.time.LocalDate;
 
 /**
  * validation parameters for a an integral value
- * 
+ *
  * @author simplity.org
  *
  */
 public class DateType extends DataType {
-	private final long minValue;
-	private final long maxValue;
+	private final int maxPastDays;
+	private final int maxFutureDays;
 
 	/**
 	 * @param name
 	 * @param messageId
-	 * 
-	 * @param minDays
+	 *
+	 * @param maxPastDays
+	 *            0 means today is OK. 100 means 100 days before today is the
+	 *            min, -100 means 100 days after today is the min
+	 * @param maxFutureDays
 	 *            0 means today is OK. -100 means 100 days before today is the
-	 *            min, 100
-	 *            means 100 days after today is the min
-	 * @param maxDays
-	 *            0 means today is OK. -100 means 100 days before today is the
-	 *            max. 100
-	 *            means 100 days after today is the max
+	 *            max. 100 means 100 days after today is the max
 	 */
-	public DateType(String name, String messageId, long minDays, long maxDays) {
-		this.valueType = ValueType.DATE;
+	public DateType(final String name, final String messageId, final int maxPastDays, final int maxFutureDays) {
+		this.valueType = ValueType.Date;
 		this.name = name;
 		this.messageId = messageId;
-		this.minValue = minDays;
-		this.maxValue = maxDays;
+		this.maxPastDays = maxPastDays;
+		this.maxFutureDays = maxFutureDays;
 	}
 
 	@Override
-	public LocalDate parse(String text) {
+	public LocalDate parse(final String text) {
 		try {
 			if (text.length() >= 10) {
 				return this.validate(LocalDate.parse(text.substring(0, 10)));
 			}
-			
+
 			return this.validate(LocalDate.ofEpochDay(Long.parseLong(text)));
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			return null;
 		}
 
 	}
 
 	@Override
-	public LocalDate parse(Object object) {
+	public LocalDate parse(final Object object) {
 		if (object instanceof LocalDate) {
 			return this.validate((LocalDate) object);
 		}
@@ -81,12 +79,12 @@ public class DateType extends DataType {
 		return null;
 	}
 
-	private LocalDate validate(LocalDate date) {
-		LocalDate today = LocalDate.now();
-		if (today.plusDays(this.minValue).isAfter(date)) {
+	private LocalDate validate(final LocalDate date) {
+		final LocalDate today = LocalDate.now();
+		if (today.plusDays(-this.maxPastDays).isAfter(date)) {
 			return null;
 		}
-		if (today.plusDays(this.maxValue).isBefore(date)) {
+		if (today.plusDays(this.maxFutureDays).isBefore(date)) {
 			return null;
 		}
 		return date;

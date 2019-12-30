@@ -24,11 +24,12 @@ package org.simplity.fm.core;
 import java.io.IOException;
 import java.io.Writer;
 
+import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.datatypes.InvalidValueException;
 
 /**
  * represents a validation error while accepting data from a client for a field
- * 
+ *
  * @author simplity.org.
  *
  */
@@ -62,43 +63,53 @@ public class Message {
 
 	/**
 	 * create an error message for a message id
-	 * 
+	 *
 	 * @param messageId
 	 * @return an error message for this message id
 	 */
-	public static Message newError(String messageId) {
-		return new Message(MessageType.ERROR, messageId, null, null, null, -1);
+	public static Message newError(final String messageId) {
+		return new Message(MessageType.Error, messageId, null, null, null, -1);
 	}
 
 	/**
 	 * @param e
 	 * @return a validation message based on the exception
 	 */
-	public static Message newValidationError(InvalidValueException e) {
-		return new Message(MessageType.ERROR, e.getMessageId(), e.getFieldName(), e.getParams(), null, -1);
+	public static Message newValidationError(final InvalidValueException e) {
+		return new Message(MessageType.Error, e.getMessageId(), e.getFieldName(), e.getParams(), null, -1);
+	}
+
+	/**
+	 * @param field
+	 * @param tableName
+	 * @param idx
+	 * @return a validation message when an input value fails validation
+	 */
+	public static Message newValidationError(final Field field, final String tableName, final int idx) {
+		return new Message(MessageType.Error, field.getMessageId(), field.getName(), null, tableName, idx);
 	}
 
 	/**
 	 * create a validation error message for a field
-	 * 
+	 *
 	 * @param fieldName
 	 * @param messageId
 	 * @param params
 	 * @return validation error message
 	 */
-	public static Message newFieldError(String fieldName, String messageId, String... params) {
-		return new Message(MessageType.ERROR, messageId, fieldName, params, null, -1);
+	public static Message newFieldError(final String fieldName, final String messageId, final String... params) {
+		return new Message(MessageType.Error, messageId, fieldName, params, null, -1);
 	}
 
 	/**
 	 * create a validation error message for a field inside an object/table
-	 * 
+	 *
 	 * @param fieldName
 	 *            name of the field inside the object
 	 * @param objectName
 	 *            attribute/field name of the parent that has this child object
 	 *            as data
-	 * 
+	 *
 	 * @param messageId
 	 * @param rowNumber
 	 *            1-based row number in which the error is detected
@@ -106,20 +117,20 @@ public class Message {
 	 *            run-time parameters
 	 * @return validation error message
 	 */
-	public static Message newObjectFieldError(String fieldName, String objectName, String messageId, int rowNumber,
-			String... params) {
-		return new Message(MessageType.ERROR, messageId, fieldName, params, objectName, rowNumber);
+	public static Message newObjectFieldError(final String fieldName, final String objectName, final String messageId,
+			final int rowNumber, final String... params) {
+		return new Message(MessageType.Error, messageId, fieldName, params, objectName, rowNumber);
 	}
 
 	/**
 	 * generic message could be warning/info etc..
-	 * 
+	 *
 	 * @param messageType
 	 * @param messageId
 	 * @param params
 	 * @return message
 	 */
-	public static Message newMessage(MessageType messageType, String messageId, String... params) {
+	public static Message newMessage(final MessageType messageType, final String messageId, final String... params) {
 		return new Message(messageType, messageId, null, params, null, -1);
 	}
 
@@ -155,8 +166,8 @@ public class Message {
 	 */
 	public final String[] params;
 
-	private Message(MessageType messageType, String messageId, String fieldName, String[] params, String objectName,
-			int rowNumber) {
+	private Message(final MessageType messageType, final String messageId, final String fieldName,
+			final String[] params, final String objectName, final int rowNumber) {
 		this.messageType = messageType;
 		this.messageId = messageId;
 		this.fieldName = fieldName;
@@ -176,7 +187,7 @@ public class Message {
 	 * @param writer
 	 * @throws IOException
 	 */
-	public void toJson(Writer writer) throws IOException {
+	public void toJson(final Writer writer) throws IOException {
 		writer.write("{\"type\":\"");
 
 		if (this.messageType == null) {
@@ -209,13 +220,13 @@ public class Message {
 
 		writer.write("}");
 	}
-	
-	private static void writePair(Writer writer, String key, String value) throws IOException {
-		if(value == null) {
+
+	private static void writePair(final Writer writer, final String key, final String value) throws IOException {
+		if (value == null) {
 			return;
 		}
 		writer.write(",\"");
-		if(key != null) {
+		if (key != null) {
 			writer.write(key);
 			writer.write("\":\"");
 		}

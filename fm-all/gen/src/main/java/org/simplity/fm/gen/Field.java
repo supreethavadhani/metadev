@@ -26,8 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.simplity.fm.core.datatypes.ValueType;
-import org.simplity.fm.core.form.ColumnType;
+import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,33 +36,32 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-class Field {
+class Field implements Util.INamedMember {
 	protected static final Logger logger = LoggerFactory.getLogger(Field.class);
-	private static final String C = ", ";
+	protected static final String C = ", ";
 
 	String name;
-	String label;
-	String altLabel;
-	String placeHolder;
 	String dataType;
 	String errorId;
 	String defaultValue;
 	boolean isRequired;
-	boolean isEditable;
 	String listName;
 	String listKey;
-	String dbColumnName;
-	ColumnType columnType;
 	int index;
 
+	@Override
+	public void setNameAndIdx(final String name, final int idx) {
+		this.name = name;
+		this.index = idx;
+	}
+
 	void emitJavaCode(final StringBuilder sbf, final String dataTypesName) {
-		sbf.append("\n\t\t\tnew Field(\"").append(this.name).append('"');
+		sbf.append("\n\t\t\tnew ").append(this.getClass().getSimpleName()).append("(\"");
+		sbf.append(this.name).append('"');
 		sbf.append(C).append(this.index);
 		sbf.append(C).append(dataTypesName).append('.').append(this.dataType);
 		sbf.append(C).append(Util.escape(this.defaultValue));
 		sbf.append(C).append(Util.escape(this.errorId));
-		sbf.append(C).append(this.isRequired);
-		sbf.append(C).append(this.isEditable);
 		/*
 		 * list is handled by inter-field in case key is specified
 		 */
@@ -72,146 +70,66 @@ class Field {
 		} else {
 			sbf.append(C).append("null");
 		}
-		sbf.append(C).append(Util.escape(this.dbColumnName));
-		sbf.append(C);
-		if (this.columnType == null) {
-			sbf.append("null");
-		} else {
-			sbf.append("ColumnType.").append(this.columnType.name());
-		}
+		this.emitJavaSpecific(sbf);
 		sbf.append(')');
 	}
 
-	void emitJavaCodeSimple(final StringBuilder sbf, final String dataTypesName) {
-		sbf.append("\n\t\t\tnew Field(\"").append(this.name).append('"');
-		sbf.append(C).append(this.index);
-		sbf.append(C).append(dataTypesName).append('.').append(this.dataType);
-		sbf.append(C).append(Util.escape(this.dbColumnName));
-		sbf.append(C);
-		if (this.columnType == null) {
-			sbf.append("null");
-		} else {
-			sbf.append("ColumnType.").append(this.columnType.name());
-		}
-		sbf.append(')');
+	protected void emitJavaSpecific(final StringBuilder sbf) {
+		sbf.append(C).append(this.isRequired);
 	}
 
-	void emitFg(final StringBuilder sbf, final DataType dt) {
-		if (dt == null) {
-			final String msg = "Field " + this.name + " has an invalid data type of " + this.dataType
-					+ ". Field not added.";
-			logger.error(msg);
-			sbf.append("\n\t//ERROR: ").append(msg);
-			return;
-		}
-		/*
-		 * validators
-		 */
-		final List<String> vals = new ArrayList<>();
+	protected void emitTs(final StringBuilder def, final StringBuilder controls, final Map<String, DataType> dataTypes,
+			final String prefix, final Map<String, ValueList> lists, final Map<String, KeyedList> keyedLists) {
+		final List<String> validations = new ArrayList<>();
+
 		if (this.isRequired) {
-			vals.add("Validators.required");
+			def.append(prefix).append("isRequired: true");
+			validations.add("required");
 		}
 
-		if (dt.name.equalsIgnoreCase("email")) {
-			vals.add("Validators.email");
-		} else {
-			if (dt.valueType == ValueType.DECIMAL || dt.valueType == ValueType.INTEGER) {
-				vals.add("Validators.max(" + dt.maxValue + ")");
-				vals.add("Validators.min(" + dt.minValue + ")");
-			}
-			if (dt.regex != null && dt.regex.isEmpty() == false) {
-				vals.add("Validators.pattern(" + Util.escapeTs(dt.regex) + ")");
-			}
-			if (this.isRequired && dt.minLength != 0) {
-				vals.add("Validators.minLength(" + dt.minLength + ")");
-			}
-			if (dt.maxLength != 0) {
-				vals.add("Validators.maxLength(" + dt.maxLength + ")");
-			}
-		}
-		boolean isFirst = true;
-		for (final String s : vals) {
-			if (isFirst) {
-				isFirst = false;
-			} else {
-				sbf.append(C);
-			}
-			sbf.append(s);
-		}
-	}
-
-	void emitTs(final StringBuilder sbf, final DataType dt, final Map<String, ValueList> valueLists,
-			final Map<String, KeyedList> keyedLists) {
-		if (dt == null) {
-			final String msg = "Field " + this.name + " has an invalid data type of " + this.dataType
-					+ ". Field not added.";
-			logger.error(msg);
-			sbf.append("\n\t//ERROR: ").append(msg);
-			return;
-		}
-		sbf.append("\n\t").append(this.name).append(": Field = {");
-
-		sbf.append("\n\t\tname:").append(Util.escapeTs(this.name));
-		emitAttr(sbf, "valueType", dt.valueType.ordinal());
-		emitAttr(sbf, "defaultValue", this.defaultValue);
-		emitAttr(sbf, "label", this.label);
-		emitAttr(sbf, "altLabel", this.altLabel);
-		emitAttr(sbf, "placeHolder", this.placeHolder);
-		emitAttr(sbf, "trueLabel", dt.trueLabel);
-		emitAttr(sbf, "falseLabel", dt.falseLabel);
-
-		emitAttr(sbf, "isEditable", this.isEditable);
-		String eid = this.errorId;
-		if (eid == null || eid.isEmpty()) {
-			eid = dt.errorId;
-		}
-		emitAttr(sbf, "errorId", eid);
-		emitAttr(sbf, "isRequired", this.isRequired);
-		emitAttr(sbf, "minLength", dt.minLength);
-		emitAttr(sbf, "maxLength", dt.maxLength);
-		emitAttr(sbf, "regex", dt.regex);
-		emitAttr(sbf, "minValue", dt.minValue);
-		emitAttr(sbf, "maxValue", dt.maxValue);
-		emitAttr(sbf, "nbrFractions", dt.nbrFractions);
-		emitAttr(sbf, "listName", this.listName);
-		emitAttr(sbf, "listKey", this.listKey);
 		if (this.listName != null) {
-			if (this.listKey == null) {
-				final ValueList list = valueLists.get(this.listName);
-				if (list == null) {
-					Form.logger.info("values not defined for {}. It is treated as a run-time list.", this.listName);
-				} else {
-					sbf.append("\n\t\t,valueList:[");
-					list.emitTs(sbf, "\n\t\t\t\t");
-					sbf.append("\n\t\t\t]");
+			def.append(prefix).append("listName: ").append(Util.escapeTs(this.listName));
+
+			if (this.listKey != null) {
+				def.append(prefix).append("listKey: ").append(Util.escapeTs(this.listKey));
+				final KeyedList kl = keyedLists.get(this.listName);
+				if (kl != null) {
+					def.append(prefix).append("keyedList: {");
+					final String indent = "\n\t\t\t";
+					kl.emitTs(def, indent);
+					def.append(indent).append("}");
 				}
 			} else {
-				final KeyedList list = keyedLists.get(this.listName);
-				if (list == null) {
-					Form.logger.info("keyed-list of values not defined for {}. It is treated as a run-time list.",
-							this.listName);
-				} else {
-					sbf.append("\n\t\t,keyedList:{");
-					list.emitTs(sbf, "\n\t\t\t\t");
-					sbf.append("\n\t\t\t}");
+				final ValueList list = lists.get(this.listName);
+				if (list != null) {
+					final String indent = "\n\t\t\t";
+					def.append(prefix).append("valueList: [");
+					list.emitTs(def, indent);
+					def.append(indent).append("]");
+
 				}
 			}
 		}
-		sbf.append("\n\t};");
-	}
 
-	private static void emitAttr(final StringBuilder sbf, final String attr, final Object value) {
-		if (value == null) {
-			return;
+		final DataType dt = dataTypes.get(this.dataType);
+		if (dt == null) {
+			def.append(prefix).append("valueType: 0");
+			logger.error("Field {} has an invalid data type of {}", this.name, this.dataType);
+		} else {
+			dt.emitTs(def, this.defaultValue, validations, prefix);
 		}
-		String s = value.toString();
-		if (value instanceof String) {
-			if (s.isEmpty()) {
-				return;
+
+		controls.append("\n\t\tthis.controls.set('").append(this.name).append("', [");
+		boolean firstOne = true;
+		for (final String s : validations) {
+			if (firstOne) {
+				firstOne = false;
+			} else {
+				controls.append(", ");
 			}
-			s = Util.escapeTs(s);
+			controls.append("Validators.").append(s);
 		}
-		sbf.append("\n\t\t,").append(attr).append(":").append(s);
 
+		controls.append("]);");
 	}
 }

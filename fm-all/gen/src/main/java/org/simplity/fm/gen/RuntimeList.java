@@ -22,17 +22,19 @@
 
 package org.simplity.fm.gen;
 
+import org.simplity.fm.gen.Util.INamedMember;
+
 /**
  * @author simplity.org
  *
  */
-class RuntimeList {
+class RuntimeList implements INamedMember {
 	private static final String C = ", ";
 	String name;
-	String table;
-	String col1;
-	String col2;
-	String key;
+	String dbTableName;
+	String dbColumn1;
+	String dbColumn2;
+	String keyColumn;
 	boolean keyIsNumeric;
 	boolean valueIsNumeric;
 	String tenantColumnName;
@@ -43,7 +45,12 @@ class RuntimeList {
 	String parentIdColumnName;
 	String parentNameColumnName;
 
-	void emitJava(StringBuilder sbf, String packageName) {
+	@Override
+	public void setNameAndIdx(final String name, final int idx) {
+		this.name = name;
+	}
+
+	void emitJava(final StringBuilder sbf, final String packageName) {
 		sbf.append("package ").append(packageName).append(';');
 		sbf.append('\n');
 
@@ -54,13 +61,13 @@ class RuntimeList {
 		sbf.append("\n\t private static final String NAME = \"").append(this.name).append("\";");
 
 		sbf.append("\n\t private static final String LIST_SQL = \"SELECT ");
-		sbf.append(this.col1).append(C).append(this.col2).append(" FROM ").append(this.table);
+		sbf.append(this.dbColumn1).append(C).append(this.dbColumn2).append(" FROM ").append(this.dbTableName);
 
-		if (this.key != null) {
-			sbf.append(" WHERE ").append(this.key).append("=?");
+		if (this.keyColumn != null) {
+			sbf.append(" WHERE ").append(this.keyColumn).append("=?");
 		}
 		if (this.tenantColumnName != null) {
-			if (this.key == null) {
+			if (this.keyColumn == null) {
 				sbf.append(" WHERE ");
 			} else {
 				sbf.append(" AND ");
@@ -69,19 +76,19 @@ class RuntimeList {
 		}
 		sbf.append("\";");
 
-		sbf.append("\n\t private static final String CHECK_SQL = \"SELECT ").append(this.col1).append(" FROM ")
-				.append(this.table);
-		sbf.append(" WHERE ").append(this.col1).append("=?");
-		if (this.key != null) {
-			sbf.append(" and ").append(this.key).append("=?");
+		sbf.append("\n\t private static final String CHECK_SQL = \"SELECT ").append(this.dbColumn1).append(" FROM ")
+				.append(this.dbTableName);
+		sbf.append(" WHERE ").append(this.dbColumn1).append("=?");
+		if (this.keyColumn != null) {
+			sbf.append(" and ").append(this.keyColumn).append("=?");
 		}
 		sbf.append("\";");
 
 		if (this.parentTable != null) {
-			sbf.append("\n\t private static final String ALL_SQL = \"SELECT a.").append(this.col1);
-			sbf.append(", a.").append(this.col2).append(", b.").append(this.parentNameColumnName).append(" FROM ");
-			sbf.append(this.table).append(" a, ").append(this.parentTable).append(" b ");
-			sbf.append(" WHERE a.").append(this.key).append("=b.").append(this.parentIdColumnName);
+			sbf.append("\n\t private static final String ALL_SQL = \"SELECT a.").append(this.dbColumn1);
+			sbf.append(", a.").append(this.dbColumn2).append(", b.").append(this.parentNameColumnName).append(" FROM ");
+			sbf.append(this.dbTableName).append(" a, ").append(this.parentTable).append(" b ");
+			sbf.append(" WHERE a.").append(this.keyColumn).append("=b.").append(this.parentIdColumnName);
 			if (this.tenantColumnName != null) {
 				sbf.append(" and ").append(this.tenantColumnName).append("=?");
 			}
@@ -89,15 +96,15 @@ class RuntimeList {
 		}
 
 		sbf.append("\n\t/**\n\t *\n\t */\n\tpublic ").append(Util.toClassName(this.name)).append("() {");
+		sbf.append("\n\t\tthis.name = NAME;");
 		sbf.append("\n\t\tthis.listSql = LIST_SQL;");
 		sbf.append("\n\t\tthis.checkSql = CHECK_SQL;");
-		sbf.append("\n\t\tthis.name = NAME;");
 
 		if (this.valueIsNumeric) {
 			sbf.append("\n\t\tthis.valueIsNumeric = true;");
 		}
 
-		if (this.key != null) {
+		if (this.keyColumn != null) {
 			sbf.append("\n\t\tthis.hasKey = true;");
 			if (this.keyIsNumeric) {
 				sbf.append("\n\t\tthis.keyIsNumeric = true;");

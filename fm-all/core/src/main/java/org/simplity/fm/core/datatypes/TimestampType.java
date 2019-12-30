@@ -40,7 +40,7 @@ public class TimestampType extends DataType {
 	 * 
 	 */
 	public TimestampType(String name, String errorId) {
-		this.valueType = ValueType.TIMESTAMP;
+		this.valueType = ValueType.Timestamp;
 	}
 
 	@Override

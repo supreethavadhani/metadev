@@ -27,10 +27,12 @@ import java.io.Writer;
 import java.time.Instant;
 import java.time.LocalDate;
 
+import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.datatypes.ValueType;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.google.gson.stream.JsonWriter;
 
 /**
  * @author simplity.org
@@ -47,7 +49,7 @@ public class JsonUtil {
 
 	/**
 	 * write a 2d array of string
-	 * 
+	 *
 	 * @param writer
 	 * @param arr
 	 * @throws IOException
@@ -72,7 +74,7 @@ public class JsonUtil {
 
 	/**
 	 * write an array of string
-	 * 
+	 *
 	 * @param writer
 	 * @param arr
 	 * @throws IOException
@@ -97,7 +99,7 @@ public class JsonUtil {
 
 	/**
 	 * write a string
-	 * 
+	 *
 	 * @param writer
 	 * @param primitive
 	 *            value
@@ -120,7 +122,7 @@ public class JsonUtil {
 
 	/**
 	 * write a string
-	 * 
+	 *
 	 * @param sbf
 	 * @param number
 	 */
@@ -133,8 +135,89 @@ public class JsonUtil {
 	}
 
 	/**
+	 * get the member as string.
+	 *
+	 * @param json
+	 * @param attName
+	 * @return null if the member does not exist or is not a primitive. Else
+	 *         string value of the primitive
+	 */
+	public static String getStringMember(final JsonObject json, final String attName) {
+		final JsonPrimitive p = json.getAsJsonPrimitive(attName);
+		if (p == null) {
+			return null;
+		}
+		return p.getAsString();
+	}
+
+	/**
+	 * get the member as number.
+	 *
+	 * @param json
+	 * @param attName
+	 * @return 0 if the member does not exist or is not a number.
+	 */
+	public static double getNumberMember(final JsonObject json, final String attName) {
+		try {
+			return json.getAsJsonPrimitive(attName).getAsDouble();
+		} catch (final Exception e) {
+			return 0;
+		}
+	}
+
+	/**
+	 * get the member as boolean.
+	 *
+	 * @param json
+	 * @param attName
+	 * @return true if the member exists as boolean and its value is true. false
+	 *         otherwise
+	 */
+	public static boolean getBoolMember(final JsonObject json, final String attName) {
+		try {
+			return json.getAsJsonPrimitive(attName).getAsBoolean();
+		} catch (final Exception e) {
+			return false;
+		}
+	}
+
+	/**
+	 * write fields as json attributes.
+	 *
+	 * @param fields
+	 * @param values
+	 * @param writer
+	 * @throws IOException
+	 */
+	public static void writeFields(final Field[] fields, final Object[] values, final JsonWriter writer)
+			throws IOException {
+		for (final Field field : fields) {
+			writer.name(field.getName());
+			final Object value = values[field.getIndex()];
+			if (value == null) {
+				writer.nullValue();
+				continue;
+			}
+
+			final ValueType vt = field.getValueType();
+			if (vt == ValueType.Integer || vt == ValueType.Decimal) {
+				writer.value((Number) value);
+				continue;
+			}
+
+			if (vt == ValueType.Boolean) {
+				writer.value((boolean) value);
+				continue;
+			}
+
+			writer.value(value.toString());
+		}
+
+	}
+
+	/**
 	 * parse a primitive from json into boolean
-	 * 
+	 *
 	 * @param json
 	 * @param attName
 	 * @return false if it is not a boolean
@@ -147,7 +230,21 @@ public class JsonUtil {
 		if (ele.isBoolean()) {
 			return ele.getAsBoolean();
 		}
-		return (boolean) ValueType.BOOLEAN.parse(ele.getAsString());
+		return (boolean) ValueType.Boolean.parse(ele.getAsString());
+	}
+
+	/**
+	 *
+	 * @param json
+	 * @param attName
+	 * @return 0 if it is not a number
+	 */
+	public static double getDouble(final JsonObject json, final String attName) {
+		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
+		if (ele == null) {
+			return 0;
+		}
+		return (double) ValueType.Decimal.parse(ele.getAsString());
 	}
 
 	/**
@@ -161,10 +258,7 @@ public class JsonUtil {
 		if (ele == null) {
 			return 0;
 		}
-		if (ele.isNumber()) {
-			return ele.getAsLong();
-		}
-		return (long) ValueType.INTEGER.parse(ele.getAsString());
+		return (long) ValueType.Integer.parse(ele.getAsString());
 	}
 
 	/**
@@ -173,12 +267,12 @@ public class JsonUtil {
 	 * @param attName
 	 * @return date or null
 	 */
-	public static LocalDate getDate(final JsonObject json, final String attName) {
+	public static final LocalDate getDate(final JsonObject json, final String attName) {
 		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
 		if (ele == null) {
 			return null;
 		}
-		return (LocalDate) ValueType.DATE.parse(ele.getAsString());
+		return (LocalDate) ValueType.Date.parse(ele.getAsString());
 	}
 
 	/**
@@ -187,7 +281,7 @@ public class JsonUtil {
 	 * @param attName
 	 * @return string or null
 	 */
-	public static String getSring(final JsonObject json, final String attName) {
+	public static final String getSring(final JsonObject json, final String attName) {
 		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
 		if (ele == null) {
 			return null;
@@ -201,12 +295,11 @@ public class JsonUtil {
 	 * @param attName
 	 * @return time-stamp or null
 	 */
-	public static Instant getTimestamp(final JsonObject json, final String attName) {
+	public static final Instant getTimestamp(final JsonObject json, final String attName) {
 		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
 		if (ele == null) {
 			return null;
 		}
-		return (Instant) ValueType.TIMESTAMP.parse(ele.getAsString());
+		return (Instant) ValueType.Timestamp.parse(ele.getAsString());
 	}
-
 }

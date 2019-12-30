@@ -1,0 +1,34 @@
+{
+	"name":"formWithChildren",
+	"schemaName":"schema1",
+	"dbOperations": ["get", "update"],
+	"childForms":[
+		{
+			"childName":"ch1",		
+			"formName": "form1",
+			"minRows":1,
+			"mxRows":2,
+			"parentLinkNames":["p1", "p2"],
+			"childLinkNames":["c1", "c2"],
+			"messageId":"msg1"
+		},
+		{
+			"childName":"ch2",		
+			"formName": "form2",
+			"minRows":12,
+			"mxRows":22,
+			"parentLinkNames":["P1", "P2"],
+			"childLinkNames":["C1", "C2"],
+			"messageId":"MSG1"
+		}
+		
+	],
+	"localFields":[
+		{
+			"name":"local1", "dataType":"text"
+		},
+		{
+			"name":"local2", "dataType":"text"
+		}
+	]
+}

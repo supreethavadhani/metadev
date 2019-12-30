@@ -39,7 +39,7 @@ public class IntegerType extends DataType {
 	 * @param maxValue
 	 */
 	public IntegerType(String name, String messageId, long minValue, long maxValue) {
-		this.valueType = ValueType.INTEGER;
+		this.valueType = ValueType.Integer;
 		this.name = name;
 		this.messageId = messageId;
 		this.minValue = minValue;

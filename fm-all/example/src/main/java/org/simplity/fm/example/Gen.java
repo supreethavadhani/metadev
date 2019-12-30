@@ -22,20 +22,20 @@
 
 package org.simplity.fm.example;
 
-import org.simplity.fm.gen.Generator;
-
 /**
  * @author simplity.org
  *
  */
 public class Gen {
 	/**
-	 * 
+	 *
 	 * @param args
 	 */
-	public static void main(String[] args) {
-		String root = "C:/Users/raghu/eclipse-workspace/fm-example/src/main/";
-		Generator.generate(root+"spec/",root+"java/" ,"org.simplity.fm.example.gen", "./", "c:/C:/Users/raghu/eclipse-workspace/fm-example/src/ts/");
+	public static void main(final String[] args) {
+		final String root = "C:/Users/raghu/eclipse-workspace/fm-example/src/main/";
+		// Generator.generate(root+"spec/",root+"java/"
+		// ,"org.simplity.fm.example.gen", "./",
+		// "c:/C:/Users/raghu/eclipse-workspace/fm-example/src/ts/");
 	}
 
 }

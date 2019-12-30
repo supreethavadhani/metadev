@@ -22,32 +22,30 @@
 
 package org.simplity.fm.core.validn;
 
-import java.util.List;
-
-import org.simplity.fm.core.Message;
-import org.simplity.fm.core.form.FormData;
+import org.simplity.fm.core.data.SchemaData;
+import org.simplity.fm.core.service.IServiceContext;
 
 /**
  * represents a validation at the form level, including inter-field
  * validations.This should not be used for field level validations. (Field level
  * validations are handled at <code>DataElement</code> level
- * 
+ *
  * @author simplity.org
  *
  */
 public interface IValidation {
 	/**
-	 * execute this validation for a form
-	 * 
-	 * @param form
-	 * @param messages
+	 * execute this validation for a data row
+	 *
+	 * @param dataRow
+	 * @param ctx
 	 * @return true if all OK. false if an error message is added to the list
 	 */
-	public boolean isValid(FormData form, List<Message> messages);
-	
+	boolean isValid(SchemaData dataRow, IServiceContext ctx);
+
 	/**
-	 * 
+	 *
 	 * @return primary/any field that is associated with this validation
 	 */
-	public String getFieldName();
+	String getFieldName();
 }

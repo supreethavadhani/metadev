@@ -22,626 +22,422 @@
 
 package org.simplity.fm.gen;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import org.simplity.fm.core.validn.FromToValidation;
-import org.simplity.fm.core.validn.IValidation;
+import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.form.DbLink;
-import org.simplity.fm.core.form.ColumnType;
-import org.simplity.fm.core.form.DbMetaData;
-import org.simplity.fm.core.form.IoType;
-import org.simplity.fm.core.validn.DependentListValidation;
-import org.simplity.fm.core.validn.ExclusiveValidation;
-import org.simplity.fm.core.validn.InclusiveValidation;
+import org.simplity.fm.core.data.ColumnType;
+import org.simplity.fm.core.data.FormData;
+import org.simplity.fm.core.data.FormDataTable;
+import org.simplity.fm.core.data.IoType;
+import org.simplity.fm.core.data.SchemaData;
+import org.simplity.fm.core.data.SchemaDataTable;
+import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * represents the contents of a spread sheet for a form
- * 
  * @author simplity.org
  *
  */
-class Form {
-	/*
-	 * this logger is used by all related classes of form to give the programmer
-	 * the right stream of logs to look for any issue in the workbook
-	 */
-	static final Logger logger = LoggerFactory.getLogger("Form");
+public class Form {
+	protected static final Logger logger = LoggerFactory.getLogger(Form.class);
 
 	private static final String C = ", ";
-	private static final String EQ = " = ";
-	private static final String P = "\n\tprivate static final ";
 
 	String name;
-	final Map<String, Object> params = new HashMap<>();
-	Field[] fields;
-	Map<String, Field> fieldMap;
-	Field[] fieldsWithList;
-	Field[] keyFields;
-	Field[] uniqueFields;
-	ChildForm[] childForms;
-	FromToPair[] fromToPairs;
-	ExclusivePair[] exclusivePairs;
-	InclusivePair[] inclusivePairs;
-	boolean hasCustomValidations;
-	boolean isForDbOnly;
-
-	Field tenantField;
-	Field timestampField;
-	String generatedColumnName;
-	boolean useTimestampForUpdate;
+	String schemaName;
+	String[] operations;
+	Field[] localFields;
+	Control[] controls;
+	LinkedForm[] linkedForms;
+	// Section[] sections;
 
 	/*
-	 * some tables may have primary key, but not have anything to update
+	 * derived attributes
 	 */
-	private boolean isUpdatable;
+	Map<String, Field> fields;
+	Schema schema;
 
-	void buildFieldMap() {
-		this.fieldMap = new HashMap<>();
+	Field[] fieldsWithList;
+
+	Field[] keyFields;
+
+	void initialize(final Schema sch) {
+		this.schema = sch;
+		this.fields = new HashMap<>();
+		final List<Field> listFields = new ArrayList<>();
+		final List<Field> keyedFields = new ArrayList<>();
+		for (final DbField f : sch.fieldMap.values()) {
+			if (f.listName != null) {
+				listFields.add(f);
+			}
+			final ColumnType ct = f.getColumnType();
+			if (ct == ColumnType.PrimaryKey || ct == ColumnType.GeneratedPrimaryKey) {
+				keyedFields.add(f);
+			}
+		}
+		this.fields.putAll(sch.fieldMap);
+		if (this.localFields != null) {
+			for (final Field f : this.localFields) {
+				if (this.fields.containsKey(f.name)) {
+					logger.error(
+							"Schema has a field named {} but this is also being defined as a temp field. temp feld ignored",
+							f.name);
+					continue;
+				}
+
+				this.fields.put(f.name, f);
+				if (f.listName != null) {
+					listFields.add(f);
+				}
+			}
+		}
+
+		if (listFields.size() > 0) {
+			this.fieldsWithList = listFields.toArray(new Field[0]);
+		}
+
+		if (keyedFields.size() > 0) {
+			this.keyFields = keyedFields.toArray(new Field[0]);
+		}
+	}
+
+	void emitJavaForm(final StringBuilder sbf, final String packageName) {
+		/*
+		 * our package name is rootPAckage + any prefix/qualifier in our name
+		 *
+		 * e.g. if name a.b.schema1 then prefix is a.b and className is Schema1
+		 */
+		String pck = packageName + ".form";
+		final String qual = Util.getClassQualifier(this.name);
+		if (qual != null) {
+			pck += '.' + qual;
+		}
+		sbf.append("package ").append(pck).append(";\n");
+		Util.emitImport(sbf, ComponentProvider.class);
+		Util.emitImport(sbf, org.simplity.fm.core.data.Form.class);
+		Util.emitImport(sbf, org.simplity.fm.core.data.Field.class);
+		Util.emitImport(sbf, org.simplity.fm.core.data.LinkedForm.class);
+		Util.emitImport(sbf, FormDataTable.class);
+		Util.emitImport(sbf, FormData.class);
+		Util.emitImport(sbf, SchemaData.class);
+		Util.emitImport(sbf, SchemaDataTable.class);
+		/*
+		 * data types are directly referred to the static declarations
+		 */
+		sbf.append("\nimport ").append(packageName).append('.').append(Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME)
+				.append(';');
+
+		String schClass = null;
+		if (this.schema != null) {
+			schClass = Util.toClassName(this.schemaName);
+			final String imp = "\nimport " + packageName + ".schema.";
+			sbf.append(imp).append(schClass).append("Data;");
+			sbf.append(imp).append(schClass).append("DataTable;");
+		}
 
 		/*
-		 * we want to check for duplicate definition of standard fields
+		 * class declaration
 		 */
-		Field modifiedAt = null;
-		Field modifiedBy = null;
-		Field createdBy = null;
-		Field createdAt = null;
+		final String cls = Util.toClassName(this.name);
+		sbf.append("\n/** class for form ").append(this.name).append("  */\npublic class ").append(cls)
+				.append(" extends Form {");
 
-		if (this.fields != null) {
-			List<Field> list = new ArrayList<>();
-			List<Field> keyList = new ArrayList<>();
-			List<Field> uniqueList = new ArrayList<>();
+		String p = "\n\tprotected static final ";
 
-			for (Field field : this.fields) {
-				this.fieldMap.put(field.name, field);
-				if (field.listName != null) {
-					list.add(field);
-				}
-
-				ColumnType ct = field.columnType;
-				if (ct == null) {
-					continue;
-				}
-				if (ct == ColumnType.UniqueKey) {
-					uniqueList.add(field);
-				}
-				field.isRequired = ct.isRequired();
-				if (ct == ColumnType.GeneratedPrimaryKey) {
-					if (this.generatedColumnName != null) {
-						logger.error("ONly one generated key please. Found {} as well as {} as generated primary keys.",
-								field.name, keyList.get(0).name);
-					} else {
-						if (keyList.size() > 0) {
-							logger.error(
-									"Field {} is marked as a generated primary key. But {} is also marked as a primary key field.",
-									field.name, keyList.get(0).name);
-							keyList.clear();
-						}
-						keyList.add(field);
-						this.generatedColumnName = field.dbColumnName;
-					}
-					continue;
-				}
-
-				if (ct == ColumnType.PrimaryKey || ct == ColumnType.PrimaryAndParentKey) {
-					if (this.generatedColumnName != null) {
-						logger.error(
-								"{} is defined as a generated primary key, but {} is also defined as a primary key.",
-								keyList.get(0).name, field.name);
-					} else {
-						keyList.add(field);
-					}
-					continue;
-				}
-
-				if (ct == ColumnType.ModifiedAt) {
-					if (modifiedAt == null) {
-						modifiedAt = field;
-						if (this.useTimestampForUpdate) {
-							this.timestampField = field;
-						}
-					} else {
-						logger.error("{} and {} are both defined as lastModifiedAt!!", field.name,
-								this.timestampField.name);
-					}
-					continue;
-				}
-
-				if (ct == ColumnType.TenantKey) {
-					if (field.dataType.equals("tenantKey") == false) {
-						logger.error(
-								"Tenant key field MUST use dataTYpe of tenantKey. Field {} which is marked as tenant key is of data type {}",
-								field.name, field.dataType);
-					}
-					if (this.tenantField == null) {
-						this.tenantField = field;
-					} else {
-						logger.error("Both {} and {} are marked as tenantKey. Tenant key has to be unique.", field.name,
-								this.tenantField.name);
-					}
-				}
-
-				if (ct == ColumnType.ModifiedBy) {
-					if (modifiedBy == null) {
-						modifiedBy = field;
-					} else {
-						logger.error("Only one field to be used as modifiedBy but {} and {} are marked", field.name,
-								modifiedBy.name);
-					}
-				}
-				if (ct == ColumnType.CreatedAt) {
-					if (createdAt == null) {
-						createdAt = field;
-					} else {
-						logger.error("Only one field to be used as createdAt but {} and {} are marked", field.name,
-								createdAt.name);
-					}
-				}
-				if (ct == ColumnType.CreatedBy) {
-					if (createdBy == null) {
-						createdBy = field;
-					} else {
-						logger.error("Only one field to be used as createdBy but {} and {} are marked", field.name,
-								createdBy.name);
-					}
-				}
-			}
-
-			if (list.size() > 0) {
-				this.fieldsWithList = list.toArray(new Field[0]);
-			}
-
-			if (keyList.size() > 0) {
-				this.keyFields = keyList.toArray(new Field[0]);
-			}
-
-			if (uniqueList.size() > 0) {
-				this.uniqueFields = uniqueList.toArray(new Field[0]);
-			}
-
-			if (this.useTimestampForUpdate && this.timestampField == null) {
-				logger.error(
-						"Table is designed to use time-stamp for concurrancy, but no field with columnType=modifiedAt");
-				this.useTimestampForUpdate = false;
-			}
+		/*
+		 * protected static final Field[] FIELDS = {.....};
+		 */
+		sbf.append(p).append("String NAME = ").append(Util.escape(this.name)).append(';');
+		/*
+		 * protected static final String SCHEMA = "....";
+		 */
+		if (schClass != null) {
+			sbf.append(p).append("String SCHEMA = ").append(Util.escape(this.schemaName)).append(';');
 		}
-	}
 
-	Set<String> getNameSet() {
-		Set<String> names = new HashSet<>();
-		if (this.fields != null) {
-			for (Field field : this.fields) {
-				names.add(field.name);
+		/*
+		 * protected static final Field[] FIELDS = {.....};
+		 */
+		if (this.localFields != null) {
+			sbf.append(p).append(" Field[] FIELDS = {");
+			for (final Field field : this.localFields) {
+				field.emitJavaCode(sbf, Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME);
+				sbf.append(C);
 			}
-		}
-		return names;
-	}
+			sbf.setLength(sbf.length() - C.length());
 
-	private static String getQualifier(String nam) {
-		int idx = nam.lastIndexOf('.');
-		if (idx == -1) {
-			return null;
+			sbf.append("};");
 		}
-		return nam.substring(0, idx);
-	}
 
-	void emitJavaClass(StringBuilder sbf, String generatedPackage) {
-		String typesName = Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
-		String pck = getQualifier(this.name);
-		String cls = null;
-		if (pck == null) {
-			pck = generatedPackage + ".form";
-			cls = Util.toClassName(this.name);
+		/*
+		 * protected static final boolean[] OPS = {true, false,..};
+		 */
+		sbf.append(p);
+		getOps(this.operations, sbf);
+
+		/*
+		 * protected static final LinkedForm[] LINKED_FORMS = {......};
+		 */
+		if (this.linkedForms != null) {
+			sbf.append(p).append("LinkedForm[] LINKED_FORMS = {");
+			for (int i = 0; i < this.linkedForms.length; i++) {
+				if (i != 0) {
+					sbf.append(',');
+				}
+				sbf.append("\n\t\t\t");
+				this.linkedForms[i].emitJavaCode(sbf);
+			}
+			sbf.append("};");
+		}
+		/*
+		 * public ClassName(){
+		 * this.name = NAME;
+		 * this.schema = ComponentProvider.getProvider().getSchema(schemaName);
+		 * this.fields = FIELDS;
+		 * this.operations = OPS;
+		 * this.linkedForms = LINKED_FORMS;
+		 * initialize();
+		 * }
+		 */
+		p = "\n\t\tthis.";
+		sbf.append("\n/** constructor */\npublic ").append(cls).append("() {");
+		sbf.append(p).append("name = NAME;");
+		if (schClass != null) {
+			sbf.append(p).append("schema = ComponentProvider.getProvider().getSchema(SCHEMA);");
+		}
+		sbf.append(p).append("operations = OPS;");
+		if (this.linkedForms != null) {
+			sbf.append(p).append("linkedForms = LINKED_FORMS;");
+			sbf.append(p).append("initialize();");
+		}
+
+		sbf.append("\n\t}");
+
+		/*
+		 * methods to be implemented. Schema is cast to specific class if it is
+		 * defined, else null is used
+		 */
+		p = "\n\n\t@Override\n\tprotected " + cls;
+
+		sbf.append(p).append(
+				"Data newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {");
+		sbf.append("\n\t\treturn new ").append(cls).append("Data(this, ");
+		if (schClass != null) {
+			sbf.append("(").append(schClass).append("Data) schemaData");
 		} else {
-			cls = Util.toClassName(this.generatedColumnName.substring(pck.length() + 1));
-			pck = generatedPackage + ".form." + pck;
+			sbf.append("null");
 		}
+		sbf.append(", values, data);\n\t}");
+
+		sbf.append(p).append("DataTable newFormDataTable(final SchemaDataTable table, final Object[][] values) {");
+		sbf.append("\n\t\treturn new ").append(cls).append("DataTable(this, ");
+		if (schClass != null) {
+			sbf.append("(").append(schClass).append("DataTable) table");
+		} else {
+			sbf.append("null");
+		}
+		sbf.append(", values);\n\t}");
+
+		sbf.append("\n}\n");
+	}
+
+	void emitJavaFormData(final StringBuilder sbf, final String packageName, final Map<String, DataType> dataTypes) {
+		/*
+		 * our package name is rootPAckage + any prefix/qualifier in our name
+		 *
+		 * e.g. if name a.b.schema1 then prefix is a.b and className is Schema1
+		 */
+		String pck = packageName + ".form";
+		final String qual = Util.getClassQualifier(this.name);
+		if (qual != null) {
+			pck += '.' + qual;
+		}
+
+		sbf.append("package ").append(pck).append(";\n");
+
+		/*
+		 * imports.
+		 */
+		Util.emitImport(sbf, FormData.class);
+		Util.emitImport(sbf, FormDataTable.class);
+		String schClass = null;
+		if (this.schemaName != null) {
+			schClass = Util.toClassName(this.schemaName);
+			sbf.append("\nimport ").append(packageName).append(".schema.").append(schClass).append("Data;");
+		}
+
+		if (this.localFields != null) {
+			Util.emitImport(sbf, LocalDate.class);
+			Util.emitImport(sbf, Instant.class);
+		}
+
+		/*
+		 * class declaration
+		 */
+		final String cls = Util.toClassName(this.name);
+		final String d = "Data";
+		sbf.append("\n/** class for form data ").append(this.name).append("  */");
+		sbf.append("\npublic class ").append(cls).append(d).append(" extends FormData {");
+
+		/*
+		 * constructor
+		 */
+		sbf.append("\n\tprotected ").append(cls).append(d).append("(final ").append(cls).append(" form, final ");
+		if (schClass == null) {
+			sbf.append("SchemaData");
+		} else {
+			sbf.append(schClass).append(d);
+		}
+		sbf.append(" dataObject, final Object[] values, final FormDataTable[] data) {");
+		sbf.append("\n\t\tsuper(form, dataObject, values, data);");
+		sbf.append("\n\t}");
+
+		/*
+		 * setters and getters in case we have local fields
+		 */
+		if (this.localFields != null) {
+			Generator.emitJavaGettersAndSetters(this.localFields, sbf, dataTypes);
+		}
+
+		sbf.append("\n}\n");
+	}
+
+	void emitJavaFormDataTable(final StringBuilder sbf, final String packageName) {
+		/*
+		 * our package name is rootPAckage + any prefix/qualifier in our name
+		 *
+		 * e.g. if name a.b.schema1 then prefix is a.b and className is Schema1
+		 */
+		String pck = packageName + ".form";
+		final String qual = Util.getClassQualifier(this.name);
+		if (qual != null) {
+			pck += '.' + qual;
+		}
+
+		final String cls = Util.toClassName(this.name);
+		final String dt = "DataTable";
 		sbf.append("package ").append(pck).append(";\n");
 
 		/*
 		 * imports
 		 */
-		Util.emitImport(sbf, org.simplity.fm.core.form.Field.class);
-		Util.emitImport(sbf, org.simplity.fm.core.form.Form.class);
-		Util.emitImport(sbf, IValidation.class);
-		Util.emitImport(sbf, org.simplity.fm.core.form.ChildForm.class);
-		Util.emitImport(sbf, DbMetaData.class);
-		Util.emitImport(sbf, DbLink.class);
-		Util.emitImport(sbf, ColumnType.class);
+		Util.emitImport(sbf, FormDataTable.class);
+		String schClass = null;
+		if (this.schemaName != null) {
+			schClass = Util.toClassName(this.schemaName);
+			sbf.append("\nimport ").append(packageName).append(".schema.").append(schClass).append(dt).append(";");
+		}
 
 		/*
-		 * validation imports on need basis
+		 * class declaration
 		 */
-		if (this.fromToPairs != null) {
-			Util.emitImport(sbf, FromToValidation.class);
-		}
-		if (this.exclusivePairs != null) {
-			Util.emitImport(sbf, ExclusiveValidation.class);
-		}
-		if (this.inclusivePairs != null) {
-			Util.emitImport(sbf, InclusiveValidation.class);
-		}
-		Util.emitImport(sbf, DependentListValidation.class);
-		sbf.append("\nimport ").append(generatedPackage).append('.').append(typesName).append(';');
-		/*
-		 * class definition
-		 */
-
-		sbf.append("\n\n/**\n * class that represents structure of ").append(this.name);
-		sbf.append("\n */ ");
-		sbf.append("\npublic class ").append(cls).append(" extends Form {");
-
-		/*
-		 * all fields and child forms indexes are available as constants
-		 */
-		this.emitJavaConstants(sbf);
-		this.emitDbStuff(sbf);
+		sbf.append("\n/** class for form data table ").append(this.name).append("  */");
+		sbf.append("\npublic class ").append(cls).append(dt).append(" extends FormDataTable {");
 
 		/*
 		 * constructor
 		 */
-		sbf.append("\n\n\t/**\n\t *\n\t */");
-		sbf.append("\n\tpublic ").append(cls).append("() {");
-		sbf.append("\n\t\tthis.uniqueName = \"").append(this.name).append("\";");
-		/*
-		 * userIdFieldName
-		 */
-		Object obj = this.params.get("userIdFieldName");
-		if (obj != null) {
-			String t = obj.toString().trim();
-			if (!t.isEmpty()) {
-				sbf.append("\n\t\tthis.userIdFieldName = \"").append(t).append("\";");
-			}
-		}
-
-		if (this.fields != null) {
-			this.emitJavaFields(sbf, typesName);
-		}
-
-		if (this.childForms != null) {
-			this.emitJavaChildren(sbf);
-		}
-
-		if (this.isForDbOnly == false) {
-			this.emitJavaValidations(sbf);
-		}
-
-		sbf.append("\n\n\t\tthis.setDbMeta();");
-		sbf.append("\n\t\tthis.initialize();");
-
-		sbf.append("\n\t}\n}\n");
-	}
-
-	private void emitDbStuff(StringBuilder sbf) {
-		String tableName = (String) this.params.get("dbTableName");
-		if (tableName == null) {
-			logger.warn("dbTableName not set. no db related code generated for this form");
-			sbf.append("\n\n\tprivate void setDbMeta(){\n\t\t//\n\t}");
-			return;
-		}
-
-		this.emitSelect(sbf, tableName);
-		if (this.keyFields == null) {
-			logger.info(
-					"No keys defined for the db table. only filter operation is allowed. Other operations require primary key/s.");
+		sbf.append("\n\tprotected ").append(cls).append(dt).append("(final ").append(cls).append(" form, final ");
+		if (schClass == null) {
+			sbf.append("Schema");
 		} else {
-			this.emitInsert(sbf, tableName);
-
-			/*
-			 * indexes is to be built like "1,2,3,4"
-			 */
-			StringBuilder indexes = new StringBuilder();
-			/*
-			 * clause is going to be like " WHERE k1=? AND k2=?...."
-			 */
-			StringBuilder clause = new StringBuilder();
-			this.makeWhere(clause, indexes, this.keyFields);
-
-			sbf.append(P).append("String WHERE = \"").append(clause.toString()).append("\";");
-			sbf.append(P).append("int[] WHERE_IDX = {").append(indexes.toString()).append("};");
-
-			this.emitUpdate(sbf, clause.toString(), indexes.toString(), tableName);
-			sbf.append(P).append("String DELETE = \"DELETE FROM ").append(tableName).append("\";");
+			sbf.append(schClass);
 		}
-
-		if (this.uniqueFields != null) {
-			StringBuilder idxBuf = new StringBuilder();
-			sbf.append(P).append("String UNIQUE = \" WHERE ");
-			boolean isFirst = true;
-			for (Field f : this.uniqueFields) {
-				if (isFirst) {
-					isFirst = false;
-				} else {
-					sbf.append(" AND ");
-					idxBuf.append(C);
-				}
-				sbf.append(f.dbColumnName).append("=? ");
-				idxBuf.append(f.index);
-			}
-			sbf.append("\";");
-			sbf.append(P).append("int[] UNIQUE_IDX = {").append(idxBuf.toString()).append("};");
-		}
-
-		this.emitChildDbDeclarations(sbf);
-
-		sbf.append("\n\n\tprivate void setDbMeta(){");
-		String t = "\n\t\tm.";
-		sbf.append("\n\t\tDbMetaData m = new DbMetaData();");
-		/*
-		 * set dbOperationOk[] to true for auto-service
-		 */
-		Object obj = this.params.get("allowDbOperations");
-		if (obj != null) {
-			for (String op : obj.toString().split(",")) {
-				try {
-					IoType opn = IoType.valueOf(op.trim().toUpperCase());
-					sbf.append(t).append("dbOperationOk[").append(opn.ordinal()).append("] = true;");
-				} catch (Exception e) {
-					logger.error("{} is not a valid dbOperation. directive in allowDbOperations ignored", op);
-				}
-			}
-		}
-
-		sbf.append(t).append("selectClause = SELECT;");
-		if (this.keyFields != null) {
-
-			sbf.append(t).append("selectParams = this.getParams(SELECT_IDX);");
-			sbf.append(t).append("insertClause = INSERT;");
-			sbf.append(t).append("insertParams = this.getParams(INSERT_IDX);");
-
-			sbf.append(t).append("whereClause = WHERE;");
-			sbf.append(t).append("whereParams = this.getParams(WHERE_IDX);");
-			if (this.isUpdatable) {
-				sbf.append(t).append("updateClause = UPDATE;");
-				sbf.append(t).append("updateParams = this.getParams(UPDATE_IDX);");
-			}
-			sbf.append(t).append("deleteClause = DELETE;");
-			if (this.generatedColumnName != null) {
-				sbf.append(t).append("generatedColumnName = \"").append(this.generatedColumnName).append("\";");
-			}
-		}
-
-		if (this.uniqueFields != null && this.uniqueFields.length > 0) {
-			sbf.append(t).append("uniqueClause = UNIQUE;");
-			sbf.append(t).append("uniqueParams = this.getParams(UNIQUE_IDX);");
-		}
-
-		if (this.childForms != null && this.childForms.length > 0) {
-			this.emitChildDbParam(sbf);
-		}
-
-		if (this.useTimestampForUpdate) {
-			sbf.append(t).append("timestampField = this.fields[").append(this.timestampField.index).append("];");
-		}
-
-		if (this.tenantField != null) {
-			sbf.append(t).append("tenantField = this.fields[").append(this.tenantField.index).append("];");
-		}
-
-		sbf.append("\n\t\tthis.dbMetaData = m;");
+		sbf.append(dt).append(" dataTable, final Object[][] values) {");
+		sbf.append("\n\t\tsuper(form, dataTable, values);");
 		sbf.append("\n\t}");
+
+		sbf.append("\n}\n");
 	}
 
-	/**
-	 * @param sbf
-	 */
-	private void emitChildDbParam(StringBuilder sbf) {
-		if (this.childForms == null) {
-			return;
-		}
-		sbf.append("\n\t\tDbLink[] cm = {");
-		for (ChildForm child : this.childForms) {
-			if (child.linkChildFields == null) {
-				sbf.append("null, ");
-			} else {
-				String f = child.formName.toUpperCase();
-				sbf.append("this.newDbLink(").append(f).append("_LINK, ");
-				sbf.append(f).append("_IDX), ");
-			}
-		}
-		sbf.setLength(sbf.length() - 2);
-		sbf.append("};\n\t\tm.dbLinks = cm;");
+	private static final Map<String, Integer> OP_INDEXES = getOpIndexes();
 
-	}
+	static void getOps(final String[] dbOps, final StringBuilder sbf) {
+		final IoType[] types = IoType.values();
+		final boolean[] ops = new boolean[types.length];
+		if (dbOps != null) {
 
-	/**
-	 * @param sbf
-	 */
-	private void emitChildDbDeclarations(StringBuilder sbf) {
-		if (this.childForms == null) {
-			return;
-		}
-		for (ChildForm child : this.childForms) {
-			if (child.linkChildFields == null) {
-				continue;
-			}
-			sbf.append("\n\n\tprivate static final String[] ").append(child.formName.toUpperCase()).append("_LINK = {");
-			for (String txt : child.linkChildFields) {
-				sbf.append('"').append(txt).append("\", ");
-			}
-			sbf.setLength(sbf.length() - 2);
-			sbf.append("};");
-
-			sbf.append("\n\tprivate static final int[] ").append(child.formName.toUpperCase()).append("_IDX = {");
-			for (String txt : child.linkParentFields) {
-				Field field = this.fieldMap.get(txt);
-				if (field == null) {
-					logger.error(
-							"{} is not a valid field. It is specified as a link parent field in th echild form {}, (form name = {})",
-							txt, child.name, child.formName);
-					sbf.append("\"InvalidName ").append(txt).append("\", ");
+			for (final String op : dbOps) {
+				final Integer idx = OP_INDEXES.get(op.toLowerCase());
+				if (idx == null) {
+					logger.error("{} is not a valid db operation (IoType). Ignored.");
 				} else {
-					sbf.append(field.index).append(C);
+					ops[idx] = true;
 				}
 			}
-			sbf.setLength(sbf.length() - 2);
-			sbf.append("};");
 		}
-
-	}
-
-	private void emitJavaConstants(StringBuilder sbf) {
-		if (this.fields != null) {
-			for (Field field : this.fields) {
-				sbf.append("\n\tpublic static final int ").append(field.name).append(EQ).append(field.index)
-						.append(';');
-			}
-		}
-
-		if (this.childForms != null) {
-			for (ChildForm child : this.childForms) {
-				sbf.append("\n\tpublic static final int ").append(child.name).append(EQ).append(child.index)
-						.append(';');
-			}
-		}
-	}
-
-	private void emitJavaFields(StringBuilder sbf, String dataTypesName) {
-		if (this.fields == null) {
-			sbf.append("\n\t\tthis.fields = null;");
-			return;
-		}
-		sbf.append("\n\n\t\tField[] flds = {");
-		boolean isFirst = true;
-		for (Field field : this.fields) {
-			if (isFirst) {
-				isFirst = false;
+		sbf.append(" boolean[] OPS = {");
+		boolean firstOne = true;
+		for (final boolean b : ops) {
+			if (firstOne) {
+				firstOne = false;
 			} else {
-				sbf.append(C);
+				sbf.append(", ");
 			}
-			if (this.isForDbOnly) {
-				field.emitJavaCodeSimple(sbf, dataTypesName);
-			} else {
-				field.emitJavaCode(sbf, dataTypesName);
-			}
-		}
-		sbf.append("\n\t\t};\n\t\tthis.fields = flds;");
-	}
-
-	private void emitJavaChildren(StringBuilder sbf) {
-		if (this.childForms == null) {
-			sbf.append("\n\t\tthis.childForms = null;");
-			return;
-		}
-		sbf.append("\n\n\t\tChildForm[] chlds = {");
-		boolean isFirst = true;
-		for (ChildForm child : this.childForms) {
-			if (isFirst) {
-				isFirst = false;
-			} else {
-				sbf.append(C);
-			}
-			child.emitJavaCode(sbf);
+			sbf.append(b);
 		}
 		sbf.append("};");
-		sbf.append("\n\t\tthis.childForms = chlds;");
 	}
 
-	private void emitJavaValidations(StringBuilder sbf) {
-		sbf.append("\n\n\t\tIValidation[] vlds = {");
-		int n = sbf.length();
-		String sufix = ",\n\t\t\t";
-		if (this.fromToPairs != null) {
-			for (FromToPair pair : this.fromToPairs) {
-				pair.emitJavaCode(sbf);
-				sbf.append(sufix);
-			}
+	/**
+	 * @return
+	 */
+	private static Map<String, Integer> getOpIndexes() {
+		final Map<String, Integer> indexes = new HashMap<>();
+		for (final IoType iot : IoType.values()) {
+			indexes.put(iot.name().toLowerCase(), iot.ordinal());
 		}
-
-		if (this.exclusivePairs != null) {
-			for (ExclusivePair pair : this.exclusivePairs) {
-				pair.emitJavaCode(sbf);
-				sbf.append(sufix);
-			}
-		}
-
-		if (this.inclusivePairs != null) {
-			for (InclusivePair pair : this.inclusivePairs) {
-				pair.emitJavaCode(sbf);
-				sbf.append(sufix);
-			}
-		}
-
-		/*
-		 * dependent lists
-		 */
-		if (this.fieldsWithList != null) {
-			for (Field field : this.fieldsWithList) {
-				if (field.listKey == null) {
-					continue;
-				}
-				Field f = this.fieldMap.get(field.listKey);
-				if (f == null) {
-					logger.error("Field {} specifies {} as listKey, but that field is not defined");
-					continue;
-				}
-
-				sbf.append("new DependentListValidation(").append(field.index);
-				sbf.append(C).append(f.index);
-				sbf.append(C).append(Util.escape(field.listName));
-				sbf.append(C).append(Util.escape(field.name));
-				sbf.append(C).append(Util.escape(field.errorId));
-				sbf.append(")");
-				sbf.append(sufix);
-			}
-		}
-		if (this.hasCustomValidations) {
-			// sbf.append("new
-			// ").append(customPackageName).append('.').append(Util.toClassName(this.name))
-			// .append("Validation()");
-		} else if (sbf.length() > n) {
-			/*
-			 * remove last sufix
-			 */
-			sbf.setLength(sbf.length() - sufix.length());
-		}
-
-		sbf.append("};");
-		sbf.append("\n\t\tthis.validations = vlds;");
+		return indexes;
 	}
 
-	void emitTs(StringBuilder sbf, Map<String, DataType> dataTypes, Map<String, ValueList> valueLists,
-			Map<String, KeyedList> keyedLists, String tsImportPrefix) {
-
+	/**
+	 * @param sbf
+	 * @param typesMap
+	 * @param lists
+	 * @param keyedLists
+	 * @param tsImportPrefix
+	 */
+	void emitTs(final StringBuilder sbf, final Map<String, DataType> dataTypes, final Map<String, ValueList> lists,
+			final Map<String, KeyedList> keyedLists, final String tsImportPrefix) {
 		sbf.append("\nimport { Form , Field, ChildForm } from '").append(tsImportPrefix).append("form';");
-		sbf.append("\nimport { SelectOption } from '").append(tsImportPrefix).append("types';");
+		sbf.append("\nimport { SelectOption, Vo } from '").append(tsImportPrefix).append("types';");
 		sbf.append("\nimport { Validators } from '@angular/forms'");
 		/*
 		 * import for child forms being referred
 		 */
-		if (this.childForms != null) {
-			for (ChildForm child : this.childForms) {
-				String fn = child.getFormName();
+		if (this.linkedForms != null) {
+			for (final LinkedForm child : this.linkedForms) {
+				final String fn = child.getFormName();
 				sbf.append("\nimport { ").append(Util.toClassName(fn)).append(" } from './").append(fn).append("';");
 			}
 		}
 
-		String cls = Util.toClassName(this.name);
+		final String cls = Util.toClassName(this.name);
 		sbf.append("\n\nexport class ").append(cls).append(" extends Form {");
 		sbf.append("\n\tprivate static _instance = new ").append(cls).append("();");
 
 		/*
-		 * fields as members
+		 * fields as members. We also accumulate code for controls
 		 */
-		if (this.fields != null && this.fields.length > 0) {
-			for (Field field : this.fields) {
-				field.emitTs(sbf, dataTypes.get(field.dataType), valueLists, keyedLists);
+		final StringBuilder sbfCon = new StringBuilder();
+		if (this.controls != null) {
+			for (final Control control : this.controls) {
+				control.emitTs(sbf, sbfCon, this.fields, dataTypes, lists, keyedLists);
 			}
 		}
-
 		/*
 		 * child forms as members
 		 */
-		if (this.childForms != null && this.childForms.length != 0) {
+		if (this.linkedForms != null && this.linkedForms.length != 0) {
 			sbf.append("\n");
-			for (ChildForm child : this.childForms) {
+			for (final LinkedForm child : this.linkedForms) {
 				child.emitTs(sbf);
 			}
 		}
@@ -662,72 +458,59 @@ class Form {
 		 * put fields into a map.
 		 */
 		sbf.append("\n\t\tthis.fields = new Map();");
-		StringBuilder altSbf = new StringBuilder("\n\t\tthis.controls = new Map();");
-		if (this.fields != null && this.fields.length > 0) {
-			for (Field field : this.fields) {
-				sbf.append("\n\t\tthis.fields.set('").append(field.name).append("', this.").append(field.name)
-						.append(");");
-				if (field.isEditable) {
-					altSbf.append("\n\t\tthis.controls.set('").append(field.name).append("', [");
-					field.emitFg(altSbf, dataTypes.get(field.dataType));
-					altSbf.append("]);");
-				}
-			}
 
-			sbf.append(altSbf.toString());
+		if (this.localFields != null) {
+			for (final Field field : this.localFields) {
+				sbf.append("\n\t\tthis.fields.set('").append(field.name).append("', this.");
+				sbf.append(field.name).append(");");
+			}
 		}
+		sbf.append("\n\t\tthis.controls = new Map();").append(sbfCon.toString());
 
 		/*
 		 * put child forms into an array
 		 */
-		if (this.childForms != null && this.childForms.length != 0) {
+		if (this.linkedForms != null && this.linkedForms.length != 0) {
 			sbf.append("\n\n\t\tthis.childForms = new Map();");
-			for (ChildForm child : this.childForms) {
+			for (final LinkedForm child : this.linkedForms) {
 				sbf.append("\n\t\tthis.childForms.set('").append(child.name).append("', this.").append(child.name)
 						.append(");");
 			}
 		}
 
 		/*
+		 * auto-service operations?
+		 */
+		if (this.operations != null && this.operations.length > 0) {
+			sbf.append("\n\t\tthis.opsAllowed = {");
+			boolean first = true;
+			for (String op : this.operations) {
+				op = op.trim().toLowerCase();
+				final Integer obj = OP_INDEXES.get(op);
+				if (obj == null) {
+					logger.error("{} is not a valid dbOperation. directive in allowDbOperations ignored", op);
+				} else {
+					if (first) {
+						first = false;
+					} else {
+						sbf.append(C);
+					}
+					sbf.append(op).append(": true");
+				}
+			}
+			sbf.append("};");
+		}
+
+		/*
 		 * inter field validations
 		 */
-		StringBuilder valBuf = new StringBuilder();
-		if (this.fromToPairs != null) {
-			for (FromToPair pair : this.fromToPairs) {
-				if (valBuf.length() > 0) {
-					valBuf.append(C);
-				}
-				pair.emitTs(valBuf);
-			}
-		}
-
-		if (this.exclusivePairs != null) {
-			for (ExclusivePair pair : this.exclusivePairs) {
-				if (valBuf.length() > 0) {
-					valBuf.append(C);
-				}
-				pair.emitTs(valBuf);
-			}
-		}
-
-		if (this.inclusivePairs != null) {
-			for (InclusivePair pair : this.inclusivePairs) {
-				if (valBuf.length() > 0) {
-					valBuf.append(C);
-				}
-				pair.emitTs(valBuf);
-			}
-		}
-
-		if (valBuf.length() > 0) {
-			sbf.append("\n\t\tthis.validations = [").append(valBuf).append("];");
-		}
+		this.schema.emitTs(sbf);
 		/*
 		 * fields with drop-downs
 		 */
 		if (this.fieldsWithList != null) {
 			sbf.append("\n\t\tthis.listFields = [");
-			for (Field f : this.fieldsWithList) {
+			for (final Field f : this.fieldsWithList) {
 				sbf.append(Util.escapeTs(f.name));
 				sbf.append(C);
 			}
@@ -739,43 +522,12 @@ class Form {
 		 */
 		if (this.keyFields != null) {
 			sbf.append("\n\t\tthis.keyFields = [");
-			for (Field f : this.keyFields) {
+			for (final Field f : this.keyFields) {
 				sbf.append(Util.escapeTs(f.name));
 				sbf.append(C);
 			}
 			sbf.setLength(sbf.length() - C.length());
 			sbf.append("];");
-		}
-		if (this.uniqueFields != null) {
-			sbf.append("\n\t\tthis.uniqueFields = [");
-			for (Field f : this.uniqueFields) {
-				sbf.append(Util.escapeTs(f.name));
-				sbf.append(C);
-			}
-			sbf.setLength(sbf.length() - C.length());
-			sbf.append("];");
-		}
-		/*
-		 * auto-service operations?
-		 */
-		Object obj = this.params.get("allowDbOperations");
-		if (obj != null) {
-			sbf.append("\n\t\tthis.opsAllowed = {");
-			boolean first = true;
-			for (String op : obj.toString().split(",")) {
-				try {
-					IoType.valueOf(op.trim().toUpperCase());
-					if (first) {
-						first = false;
-					} else {
-						sbf.append(C);
-					}
-					sbf.append(op.trim().toLowerCase()).append(": true");
-				} catch (Exception e) {
-					logger.error("{} is not a valid dbOperation. directive in allowDbOperations ignored", op);
-				}
-			}
-			sbf.append("};");
 		}
 		/*
 		 * end of constructor
@@ -787,141 +539,50 @@ class Form {
 		sbf.append("\n\t}");
 
 		sbf.append("\n}\n");
+
+		this.emitTsFormData(sbf, dataTypes);
+
 	}
 
-	private void makeWhere(StringBuilder clause, StringBuilder indexes, Field[] keys) {
-		clause.append(" WHERE ");
-		boolean firstOne = true;
-		for (Field field : keys) {
-			if (firstOne) {
-				firstOne = false;
-			} else {
-				clause.append(" AND ");
-				indexes.append(C);
-			}
-			clause.append(field.dbColumnName).append("=?");
-			indexes.append(field.index);
-		}
-		/*
-		 * as a matter of safety, tenant key is always part of queries
-		 */
-		if (this.tenantField != null) {
-			clause.append(" AND ").append(this.tenantField.dbColumnName).append("=?");
-			indexes.append(C).append(this.tenantField.index);
-		}
-	}
-
-	private void emitSelect(StringBuilder sbf, String tableName) {
-		StringBuilder idxSbf = new StringBuilder();
-		sbf.append(P).append("String SELECT = \"SELECT ");
-
-		boolean firstOne = true;
-		for (Field field : this.fields) {
-			ColumnType ct = field.columnType;
-			if (ct == null || ct.isSelected() == false) {
-				continue;
-			}
-			if (firstOne) {
-				firstOne = false;
+	/**
+	 * create an interface for the data model of this form
+	 */
+	private void emitTsFormData(final StringBuilder sbf, final Map<String, DataType> dataTypes) {
+		sbf.append("\n\nexport interface ").append(Util.toClassName(this.name)).append("Data extends Vo {");
+		boolean isFirst = true;
+		for (final Field field : this.fields.values()) {
+			if (isFirst) {
+				isFirst = false;
 			} else {
 				sbf.append(C);
-				idxSbf.append(C);
 			}
-			sbf.append(field.dbColumnName);
-			idxSbf.append(field.index);
+			final DataType dt = dataTypes.get(field.dataType);
+			sbf.append("\n\t").append(field.name).append("?: ").append(getTsValueType(dt));
 		}
-
-		sbf.append(" FROM ").append(tableName);
-		sbf.append("\";");
-		sbf.append(P).append("int[] SELECT_IDX = {").append(idxSbf).append("};");
+		sbf.append("\n}\n");
 
 	}
 
-	private void emitInsert(StringBuilder sbf, String tableName) {
-		sbf.append(P).append(" String INSERT = \"INSERT INTO ").append(tableName).append('(');
-		StringBuilder idxSbf = new StringBuilder();
-		idxSbf.append(P).append("int[] INSERT_IDX = {");
-		StringBuilder vbf = new StringBuilder();
-		boolean firstOne = true;
-		boolean firstField = true;
-		for (Field field : this.fields) {
-			ColumnType ct = field.columnType;
-			if (ct == null || ct.isInserted() == false) {
-				continue;
-			}
-			if (firstOne) {
-				firstOne = false;
-			} else {
-				sbf.append(C);
-				vbf.append(C);
-			}
-			sbf.append(field.dbColumnName);
-			if (ct == ColumnType.ModifiedAt || ct == ColumnType.CreatedAt) {
-				vbf.append(" CURRENT_TIMESTAMP ");
-			} else {
-				vbf.append('?');
-				if (firstField) {
-					firstField = false;
-				} else {
-					idxSbf.append(C);
-				}
-				idxSbf.append(field.index);
-			}
+	private static String getTsValueType(final DataType dt) {
+		if (dt == null) {
+			return "string";
 		}
+		switch (dt.valueType) {
+		case Text:
+		case Date:
+		case Timestamp:
+			return "string";
 
-		sbf.append(") values (").append(vbf).append(")\";");
-		sbf.append(idxSbf).append("};");
+		case Integer:
+		case Decimal:
+			return "number";
+
+		case Boolean:
+			return "boolean";
+
+		default:
+			return "string";
+		}
 	}
 
-	private void emitUpdate(StringBuilder sbf, String whereClause, String whereIndexes, String tableName) {
-		StringBuilder updateBuf = new StringBuilder();
-		updateBuf.append(P).append(" String UPDATE = \"UPDATE ").append(tableName).append(" SET ");
-		StringBuilder idxBuf = new StringBuilder();
-		idxBuf.append(P).append(" int[] UPDATE_IDX = {");
-		boolean firstOne = true;
-		boolean firstField = true;
-		for (Field field : this.fields) {
-			ColumnType ct = field.columnType;
-			if (ct == null || ct.isUpdated() == false) {
-				continue;
-			}
-
-			if (firstOne) {
-				firstOne = false;
-			} else {
-				updateBuf.append(C);
-			}
-
-			updateBuf.append(field.dbColumnName).append("=");
-			if (ct == ColumnType.ModifiedAt) {
-				updateBuf.append(" CURRENT_TIMESTAMP ");
-			} else {
-				updateBuf.append(" ? ");
-				if (firstField) {
-					firstField = false;
-				} else {
-					idxBuf.append(C);
-				}
-				idxBuf.append(field.index);
-			}
-		}
-		if (firstOne) {
-			/*
-			 * nothing to update
-			 */
-			this.isUpdatable = false;
-			return;
-		}
-		this.isUpdatable = true;
-		// update sql will have the where indexes at the end
-		idxBuf.append(C).append(whereIndexes);
-		updateBuf.append(whereClause);
-
-		if (this.useTimestampForUpdate) {
-			updateBuf.append(" AND ").append(this.timestampField.dbColumnName).append("=?");
-			idxBuf.append(C).append(this.timestampField.index);
-		}
-		updateBuf.append("\";");
-		sbf.append(updateBuf.toString()).append(idxBuf.toString()).append("};");
-	}
 }

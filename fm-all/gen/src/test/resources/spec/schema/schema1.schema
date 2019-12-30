@@ -1,0 +1,21 @@
+{
+	"name" : "schema1",
+	"dbName": "table1",
+	"useTimeStampCheck":true,
+	"customValidation":"validationName",
+	"fields":[
+		{"name":"field1",
+			"dataType":"id",
+			"columnName":"col1",
+			"columnType":"generatedPrimaryKey",
+			"listName":"list1",
+			"listKeyName":"field2"
+		}],
+		"fromToPairs":[{
+			"fromField":"field1",
+			"toField":"field2",
+			"equalIsOkay":false
+		}],
+		"inclusivePairs":[],
+		"exclusivePairs":[]
+}

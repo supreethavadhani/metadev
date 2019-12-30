@@ -208,10 +208,6 @@ public class RuntimeList implements IValueList {
 	@Override
 	public Map<String, String> getAll(IServiceContext ctx) {
 		Map<String, String> result = new HashMap<>();
-		if (this.hasKey == false) {
-			logger.error("List {} is not keyed. getAll is not pplicable", this.name);
-			return result;
-		}
 
 		try {
 			RdbDriver.getDriver().transact(new IDbClient() {
