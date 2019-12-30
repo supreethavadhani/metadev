@@ -24,6 +24,8 @@ package org.simplity.fm.core;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.time.Instant;
+import java.time.LocalDate;
 
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.datatypes.ValueType;
@@ -181,7 +183,7 @@ public class JsonUtil {
 
 	/**
 	 * write fields as json attributes.
-	 * 
+	 *
 	 * @param fields
 	 * @param values
 	 * @param writer
@@ -211,5 +213,93 @@ public class JsonUtil {
 			writer.value(value.toString());
 		}
 
+	}
+
+	/**
+	 * parse a primitive from json into boolean
+	 *
+	 * @param json
+	 * @param attName
+	 * @return false if it is not a boolean
+	 */
+	public static boolean getBoolean(final JsonObject json, final String attName) {
+		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
+		if (ele == null) {
+			return false;
+		}
+		if (ele.isBoolean()) {
+			return ele.getAsBoolean();
+		}
+		return (boolean) ValueType.Boolean.parse(ele.getAsString());
+	}
+
+	/**
+	 *
+	 * @param json
+	 * @param attName
+	 * @return 0 if it is not a number
+	 */
+	public static double getDouble(final JsonObject json, final String attName) {
+		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
+		if (ele == null) {
+			return 0;
+		}
+		return (double) ValueType.Decimal.parse(ele.getAsString());
+	}
+
+	/**
+	 *
+	 * @param json
+	 * @param attName
+	 * @return 0 if it is not a number
+	 */
+	public static long getLong(final JsonObject json, final String attName) {
+		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
+		if (ele == null) {
+			return 0;
+		}
+		return (long) ValueType.Integer.parse(ele.getAsString());
+	}
+
+	/**
+	 *
+	 * @param json
+	 * @param attName
+	 * @return date or null
+	 */
+	public static final LocalDate getDate(final JsonObject json, final String attName) {
+		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
+		if (ele == null) {
+			return null;
+		}
+		return (LocalDate) ValueType.Date.parse(ele.getAsString());
+	}
+
+	/**
+	 *
+	 * @param json
+	 * @param attName
+	 * @return string or null
+	 */
+	public static final String getSring(final JsonObject json, final String attName) {
+		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
+		if (ele == null) {
+			return null;
+		}
+		return ele.getAsString();
+	}
+
+	/**
+	 *
+	 * @param json
+	 * @param attName
+	 * @return time-stamp or null
+	 */
+	public static final Instant getTimestamp(final JsonObject json, final String attName) {
+		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
+		if (ele == null) {
+			return null;
+		}
+		return (Instant) ValueType.Timestamp.parse(ele.getAsString());
 	}
 }
