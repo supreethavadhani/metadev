@@ -173,14 +173,17 @@ public class Generator {
 		}
 
 		if (!fn.equals(form.name)) {
-			logger.error("File {} contains form named {}. It is mandatory to use schema name same as the filename", fn,
+			logger.error("File {} contains form named {}. It is mandatory to use form name same as the filename", fn,
 					form.name);
 			return;
 		}
-		final Schema schema = schemas.get(form.schemaName);
-		if (schema == null) {
-			logger.error("Form {} uses schema {}, but that schema is not defined", form.name, form.schemaName);
-			return;
+		Schema schema = null;
+		if (form.schemaName != null) {
+			schema = schemas.get(form.schemaName);
+			if (schema == null) {
+				logger.error("Form {} uses schema {}, but that schema is not defined", form.name, form.schemaName);
+				return;
+			}
 		}
 		form.initialize(schema);
 		final StringBuilder sbf = new StringBuilder();

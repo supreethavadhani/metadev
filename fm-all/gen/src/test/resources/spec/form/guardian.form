@@ -1,0 +1,103 @@
+{
+    "name": "guardian",
+    "schemaName": "guardian",
+    "dbOperations": [
+        "get",
+        "create",
+        "update",
+        "filter",
+        "bulk"
+    ],
+    "controls": [
+        {
+            "name": "guardianId",
+            "controlType": "hidden"
+        },
+        {
+            "name": "studentId",
+            "controlType": "hidden"
+        },
+        {
+            "name": "instituteId",
+            "controlType": "hidden"
+        },
+       {
+            "name": "relationType",
+            "controlType": "input",
+            "label": "Relationship"
+        },
+        {
+            "name": "name",
+            "controlType": "input",
+            "label": "Name"
+        },
+        {
+            "name": "gender",
+            "controlType": "dropDown",
+            "label": "Gender"
+        },
+        {
+            "name": "addressLine1",
+            "controlType": "input",
+            "label": "Premanent Address - Line 1"
+        },
+        {
+            "name": "addressLine2",
+            "controlType": "input",
+            "label": "Premanent Address - Line 2"
+        },
+        {
+            "name": "city",
+            "controlType": "input",
+            "label": "Premanent City"
+        },
+        {
+            "name": "state",
+            "controlType": "dropDown",
+            "label": "Premanent State"
+        },
+        {
+            "name": "pincode",
+            "controlType": "input",
+            "label": "Premanent Pin Code"
+        },
+        {
+            "name": "country",
+            "controlType": "input",
+            "label": "Premanent Country"
+        },
+        {
+            "name": "phoneNumber",
+            "controlType": "input",
+            "label": "Phone"
+        },
+        {
+            "name": "email",
+            "controlType": "input",
+            "label": "Email"
+        },
+        {
+            "name": "occupation",
+            "controlType": "input",
+            "label": "Occupation"
+        },
+        {
+            "name": "annualSalary",
+            "controlType": "input",
+            "label": "Annual Salary"
+        },
+        {
+            "name": "qualification",
+            "controlType": "input",
+            "label": "Qualification"
+        },
+        {
+            "name": "createdAt",
+            "controlType": "hidden"
+        },
+        {
+            "name": "updatedAt",
+            "controlType": "hidden"
+        }
+    ]
+}

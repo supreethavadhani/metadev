@@ -1,0 +1,47 @@
+{
+    "name": "level",
+    "schemaName": "level",
+    "dbOperations": [
+        "get",
+        "create",
+        "update",
+        "filter",
+        "bulk"
+    ],
+    "controls": [
+        {
+            "name": "levelId",
+            "controlType": "hidden"
+        },
+        {
+            "name": "programId",
+            "controlType": "hidden"
+        },
+        {
+            "name": "instituteId",
+            "controlType": "hidden"
+        },
+       {
+            "name": "name",
+            "controlType": "input",
+            "label": "Name"
+        },
+        {
+            "name": "code",
+            "controlType": "input",
+            "label": "Code"
+        },
+        {
+            "name": "levelSeq",
+            "controlType": "hidden"
+        },
+        {
+            "name": "createdAt",
+            "controlType": "hidden"
+        },
+        {
+            "name": "updatedAt",
+            "controlType": "hidden"
+        }
+    ]
+}

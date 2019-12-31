@@ -1,0 +1,126 @@
+{
+    "name": "guardian",
+    "nameInDb": "guardians",
+    "useTimestampCheck": false,
+    "fields": [
+        {
+            "name": "guardianId",
+            "dataType": "id",
+            "dbColumnName": "guardian_id",
+            "columnType": "primaryKey"
+        },
+        {
+            "name": "instituteId",
+            "dataType": "tenantKey",
+            "dbColumnName": "institute_id",
+            "columnType": "tenantKey"
+        },
+        {
+            "name": "studentId",
+            "dataType": "id",
+            "dbColumnName": "student_id",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "relationType",
+            "dataType": "text",
+            "dbColumnName": "relation_type",
+            "columnType": "requiredData",
+            "listName": "relationType"
+        },
+        {
+            "name": "occupation",
+            "dataType": "text",
+            "dbColumnName": "occupation",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "annualSalary",
+            "dataType": "income",
+            "dbColumnName": "annual_salary",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "qualification",
+            "dataType": "text",
+            "dbColumnName": "qualification",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "name",
+            "dataType": "name",
+            "dbColumnName": "name",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "addressLine1",
+            "dataType": "desc",
+            "dbColumnName": "address_line1",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "addressLine2",
+            "dataType": "desc",
+            "dbColumnName": "address_line2",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "city",
+            "dataType": "name",
+            "dbColumnName": "city",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "state",
+            "dataType": "state",
+            "dbColumnName": "state",
+            "columnType": "requiredData",
+            "listName": "state",
+            "listKey": "country"
+        },
+        {
+            "name": "pincode",
+            "dataType": "pin",
+            "dbColumnName": "pincode",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "country",
+            "dataType": "country",
+            "dbColumnName": "country",
+            "columnType": "requiredData",
+            "defaultValue": "130"
+        },
+        {
+            "name": "phoneNumber",
+            "dataType": "phone",
+            "dbColumnName": "phone_number",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "email",
+            "dataType": "email",
+            "dbColumnName": "email",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "gender",
+            "dataType": "gender",
+            "dbColumnName": "gender",
+            "columnType": "requiredData",
+            "listName": "gender"
+        },
+        {
+            "name": "updatedAt",
+            "dataType": "timestamp",
+            "dbColumnName": "updated_at",
+            "columnType": "modifiedAt"
+        },
+        {
+            "name": "createdAt",
+            "dataType": "timestamp",
+            "dbColumnName": "created_at",
+            "columnType": "createdAt"
+        }
+    ]
+}

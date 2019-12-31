@@ -3,9 +3,9 @@ package org.simplity.fm.test.gen.list;
 import org.simplity.fm.core.validn.ValueList;
 public class RelationType extends ValueList {
 	 private static final Object[][] VALUES = { 
-		{"Mother", null}, 
-		{"Father", null}, 
-		{"Legal Guardian", null}
+		{"Mother", "Mother"}, 
+		{"Father", "Father"}, 
+		{"Legal Guardian", "Legal Guardian"}
 	};
 	 private static final String NAME = "relationType";
 

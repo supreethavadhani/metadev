@@ -1,0 +1,118 @@
+{
+    "name": "user",
+    "nameInDb": "users",
+    "useTimestampCheck": false,
+    "fields": [
+        {
+            "name": "userId",
+            "dataType": "id",
+            "dbColumnName": "user_id",
+            "columnType": "generatedPrimaryKey"
+        },
+        {
+            "name": "instituteId",
+            "dataType": "tenantKey",
+            "dbColumnName": "institute_id",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "trustId",
+            "dataType": "id",
+            "dbColumnName": "trust_id",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "userType",
+            "dataType": "userType",
+            "dbColumnName": "user_type",
+            "columnType": "requiredData",
+            "defaultValue": "Student",
+            "listName": "userType"
+        },
+        {
+            "name": "loginId",
+            "dataType": "loginId",
+            "dbColumnName": "login_id",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "password",
+            "dataType": "text",
+            "dbColumnName": "password",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "loginEnabled",
+            "dataType": "bool",
+            "dbColumnName": "login_enabled",
+            "columnType": "requiredData",
+            "defaultValue": "false"
+        },
+        {
+            "name": "previousLoginAt",
+            "dataType": "timestamp",
+            "dbColumnName": "previous_login_at",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "currentLoginAt",
+            "dataType": "timestamp",
+            "dbColumnName": "current_login_at",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "resetPasswordCount",
+            "dataType": "integer",
+            "dbColumnName": "reset_password_count",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "resetPasswordSentAt",
+            "dataType": "timestamp",
+            "dbColumnName": "reset_password_sent_at",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "currentLoginIp",
+            "dataType": "ip",
+            "dbColumnName": "current_login_ip",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "previousLoginIp",
+            "dataType": "ip",
+            "dbColumnName": "previous_login_ip",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "loginCount",
+            "dataType": "integer",
+            "dbColumnName": "login_count",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "confirmationToken",
+            "dataType": "text",
+            "dbColumnName": "confirmation_token",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "loginToken",
+            "dataType": "text",
+            "dbColumnName": "login_token",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "createdAt",
+            "dataType": "timestamp",
+            "dbColumnName": "created_at",
+            "columnType": "createdAt"
+        },
+        {
+            "name": "updatedAt",
+            "dataType": "timestamp",
+            "dbColumnName": "updated_at",
+            "columnType": "modifiedAt"
+        }
+    ]
+}

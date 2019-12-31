@@ -1,259 +1,407 @@
 {
-	"name":"banyaanTree",
-	"tenantFieldName":"instituteId",
-	"tenantDbName":"institute_id",
-	"dataTypes":{
-		"booleanTypes":{
-			"bool":{
-				"errorId": "invalidBool",
-				"trueLabel": "True",
-				"falseLabel": "False"
-			}
-		},
-		"decimalTypes":{
-			"grade":{
-				"errorId": "invalidGrade",
-				"maxValue":999,
-				"nbrFractions":2
-			}
-		},
-		"dateTypes":{
-			"date":{
-				"errorId":"invalidDate",
-				"maxPastDays":73000,
-				"maxFutureDays":73000
-			}
-		},
-		"integerTypes":{
-			"country":{
-				"errorId":"invalidCountry",
-				"maxValue": 999
-			},
-			"id":{
-				"errorId":"invalidId"
-			},
-			"integer":{
-				"errorId":"invalidInteger",
-				"minVlue": -99999999999
-			},
-			"income":{
-				"errorId":"invalidIncome"
-			},
-			"tenantKey":{
-				"errorId":"invalidTenentKey"
-			}
-		},
-		"textTypes":{
-			"accountStatus":{
-				"errorId":"invalidAccountStatus",
-				"maxLength":10
-			},
-			"code":{
-				"errorId":"invalidCode",
-				"maxLength":50
-			},
-			"desc":{
-				"errorId":"invalidDesc",
-				"maxLength":1000
-			},
-			"email":{
-				"errorId":"invalidEmail",
-				"maxLength":1000
-			},
-			"gender":{
-				"errorId":"invalidGender",
-				"maxLength":10
-			},
-			"govtCode":{
-				"errorId":"invalidGovtCode",
-				"maxLength":50
-			},
-			"ip":{
-				"errorId":"invalidIp",
-				"maxLength":1000
-			},
-			"json":{
-				"errorId":"invalidJson",
-				"maxLength":10000
-			},
-			"loginId":{
-				"errorId":"invalidLoginId",
-				"maxLength":50
-			},
-			"name":{
-				"errorId":"invalidName",
-				"maxLength":50
-			},
-			"phone":{
-				"errorId":"invalidPhone",
-				"maxLength":20
-			},
-			"pin":{
-				"errorId":"invalidPin",
-				"minLength":6,
-				"maxLength":6,
-				"regex":"[1-9][0-9]{5}"
-			},
-			"state":{
-				"errorId":"invalidState",
-				"maxLength":50
-			},
-			"text":{
-				"errorId":"invalidText",
-				"maxLength":1000
-			},
-			"uniqueId":{
-				"errorId":"invalidUniqueId",
-				"regex":"[1-9][0-9]{15}",
-				"minLength":16,
-				"maxLength":16
-			},
-			"url":{
-				"errorId":"invalidUrl",
-				"maxLength":1000
-			},
-			"userType":{
-				"errorId":"invalidUserType",
-				"maxLength":20
-			}
-		},
-		"timestampTypes":{
-			"timestamp":{
-				"errorId":"invalidTimestamp"
-			}
-		}
-	},
-	"valueLists":{
-		"accountStatus":[
-			{"value":"Active","display":"Active"},
-			{"value":"Suspended","display":"Suspended"},
-			{"value":"Closed","display":"Closed"}
-		],
-		"userType":[
-			{"value":"student","display":"student"},
-			{"value":"staff","display":"staff"},
-			{"value":"admin","display":"admin"},
-			{"value":"guardian","display":"guardian"},
-			{"value":"trustee","display":"trustee"}
-		],
-	
-		"instType":[
-			{"value":"DSERTPS","display":"Karnataka State Syllabus Primary School"},
-			{"value":"DSERTPHS","display":"Karnataka State Syllabus Higher School"},
-			{"value":"CBSE ","display":"CBSE"},
-			{"value":"ENG_A_VTU","display":"Engineering College (Automonus Under VTU)"},
-			{"value":"ENG_VTU","display":"Engineering College ( VTU)"}
-		],
-		
-		"admissionQuota":[
-			{"value":"CET","display":"CET"}, 
-			{"value":"COMEDK","display":"COMEDK"},
-			{"value":"CETSNQ","display":"CET-SNQ"},
-			{"value":"MANG","display":"MANAGEMENT"},
-			{"value":"NRI","display":"NRI"},
-			{"value":"GOI","display":"GOI"},
-			{"value":"Other","display":"Other"}
-		],
-		
-		"religion":[
-			{"value":"Hindu","display":"Hindu"},
-			{"value":"Muslim","display":"Muslim"},
-			{"value":"Christian","display":"Christian"},
-			{"value":"Sikh","display":"Sikh"},
-			{"value":"Jain","display":"Jain"},
-			{"value":"Others","display":"Other"}
-		],
-		
-		"relationType":[
-			{"value":"Mother","display":"Mother"},
-			{"value":"Father","display":"Father"},
-			{"value":"Legal Guardian","display":"Legal Guardian"}
-		],
-			
-		"documentType":[{"value":"Marks Card","display":"Marks Card"},
-			{"value":"Certificate","display":"Ceritifcate (e.g: Birth Certificate etc)"},
-			{"value":"Photo","display":"Photo"},
-			{"value":"Govt Id","display":"Govt Id(e.g.: Passport, DL etc)"}
-		],
-		
-		"domicileState":[
-			{"value":"Karnataka","display":"Karnataka"},
-			{"value":"Non-Karnataka","display":"Non-Karnataka"}, 
-			{"value":"Foreign","display":"Foreign"}
-		],
-		
-		"gender":[
-			{"value":"Male","display":"Male"},
-			{"value":"Female","display":"Female"},
-			{"value":"Others","display":"Others"},
-			{"value":"Not Applicable","display":"Not Applicable"}
-		]
-	},
-	"keyedLists":{
-		"states":{"130":[
-			{"value":"Karnataka", "diaplay":"Karnataka"},
-			{"value":"Tamil Nadu", "diaplay":"Tamil Nadu"},
-			{"value":"Kerala", "diaplay":"Kerala"},
-			{"value":"Uttar Pradesh", "diaplay":" Pradesh"}
-		]}
-	},
-	"runtimeLists":{
-		"instituteList":{
-			"dbTableName":"institutes",
-			"dbColumn1":"institute_id",
-			"dbColumn1IsIngeter":true,
-			"dbColumn2":"name",
-			"keyColumn":"trust_id",
-			"keyIsInteger":true,
-			"isTenantSpecific":false
-		},
-		"roleList":{
-			"dbTableName":"roles",
-			"dbColumn1":"role_id",
-			"dbColumn1IsIngeter":true,
-			"dbColumn2":"roleName",
-			"isTenantSpecific":true
-		},
-		"programList":{
-			"dbTableName":"programs",
-			"dbColumn1":"program_id",
-			"dbColumn1IsIngeter":true,
-			"dbColumn2":"name",
-			"keyColumn":"department_id",
-			"keyIsInteger":true,
-			"isTenantSpecific":true
-		},
-		"departmentList":{
-			"dbTableName":"departments",
-			"dbColumn1":"department_id",
-			"dbColumn1IsIngeter":true,
-			"dbColumn2":"name",
-			"isTenantSpecific":true
-		},
-		"levelList":{
-			"dbTableName":"levels",
-			"dbColumn1":"level_id",
-			"dbColumn1IsIngeter":true,
-			"dbColumn2":"name",
-			"keyColumn":"program_id",
-			"keyIsInteger":true,
-			"isTenantSpecific":true
-		},
-		"seasonList":{
-			"dbTableName":"seasons",
-			"dbColumn1":"season_id",
-			"dbColumn1IsIngeter":true,
-			"dbColumn2":"name",
-			"isTenantSpecific":true
-		},
-		"sectionList":{
-			"dbTableName":"sections",
-			"dbColumn1":"section_id",
-			"dbColumn1IsIngeter":true,
-			"dbColumn2":"name",
-			"keyColumn":"level_id",
-			"keyIsInteger":true,
-			"isTenantSpecific":true
-		}
-	}
-}
+    "name": "banyaanTree",
+    "tenantFieldName": "instituteId",
+    "tenantDbName": "institute_id",
+    "runtimeLists": {
+      "instituteList": {
+        "dbTableName": "institutes",
+        "dbColumn1": "institute_id",
+        "dbColumn2": "name",
+        "keyColumn": "trust_id",
+        "valueIsNumeric": true,
+        "keyIsNumeric": true
+      },
+      "departmentList": {
+        "dbTableName": "departments",
+        "dbColumn1": "department_id",
+        "dbColumn2": "name",
+        "valueIsNumeric": true,
+        "tenantColumnName": "institute_id"
+      },
+      "programList": {
+        "dbTableName": "programs",
+        "dbColumn1": "program_id",
+        "dbColumn2": "name",
+        "keyColumn": "department_id",
+        "keyIsNumeric": true,
+        "valueIsNumeric": true,
+        "tenantColumnName": "institute_id"
+      },
+      "levelList": {
+        "dbTableName": "levels",
+        "dbColumn1": "level_id",
+        "dbColumn2": "name",
+        "keyColumn": "program_id",
+        "keyIsNumeric": true,
+        "valueIsNumeric": true,
+        "tenantColumnName": "institute_id"
+      },
+      "sectionList": {
+        "dbTableName": "sections",
+        "dbColumn1": "section_id",
+        "dbColumn2": "name",
+        "keyColumn": "level_id",
+        "keyIsNumeric": true,
+        "valueIsNumeric": true,
+        "tenantColumnName": "institute_id"
+      },
+      "roleList": {
+        "dbTableName": "roles",
+        "dbColumn1": "role_id",
+        "dbColumn2": "role_name",
+        "valueIsNumeric": true,
+        "tenantColumnName": "institute_id"
+      },
+      "seasonList": {
+        "dbTableName": "seasons",
+        "dbColumn1": "season_id",
+        "dbColumn2": "name",
+        "valueIsNumeric": true,
+        "tenantColumnName": "institute_id"
+      }
+    },
+    "dataTypes": {
+      "booleanTypes": {
+        "bool": {
+          "errorId": "invalidBool"
+        }
+      },
+      "decimalTypes": {
+        "grade": {
+          "errorId": "invalidGrade",
+          "maxValue": 100,
+          "nbrFractions": 2
+        }
+      },
+      "dateTypes": {
+        "date": {
+          "errorId": "invalidDate",
+          "maxPastDays": 73000,
+          "maxFutureDays": 73000
+        }
+      },
+      "integerTypes": {
+        "country": {
+          "errorId": "invalidCountry",
+          "maxValue": 999
+        },
+        "id": {
+          "errorId": "invalidId",
+          "maxValue": 9999999999999
+        },
+        "integer": {
+          "errorId": "invalidInteger",
+          "minVlue": -99999999999,
+          "maxValue": 9999999999999
+        },
+        "income": {
+          "errorId": "invalidIncome",
+          "maxValue": 9999999999999
+        },
+        "tenantKey": {
+          "errorId": "invalidTenentKey",
+          "maxValue": 9999999999999
+        }
+      },
+      "textTypes": {
+        "accountStatus": {
+          "errorId": "invalidAccountStatus",
+          "maxLength": 10
+        },
+        "code": {
+          "errorId": "invalidCode",
+          "maxLength": 50
+        },
+        "desc": {
+          "errorId": "invalidDesc",
+          "maxLength": 1000
+        },
+        "email": {
+          "errorId": "invalidEmail",
+          "maxLength": 1000
+        },
+        "gender": {
+          "errorId": "invalidGender",
+          "maxLength": 10
+        },
+        "govtCode": {
+          "errorId": "invalidGovtCode",
+          "maxLength": 50
+        },
+        "ip": {
+          "errorId": "invalidIp",
+          "maxLength": 1000
+        },
+        "json": {
+          "errorId": "invalidJson",
+          "maxLength": 10000
+        },
+        "loginId": {
+          "errorId": "invalidLoginId",
+          "maxLength": 50
+        },
+        "name": {
+          "errorId": "invalidName",
+          "maxLength": 50
+        },
+        "phone": {
+          "errorId": "invalidPhone",
+          "maxLength": 20
+        },
+        "pin": {
+          "errorId": "invalidPin",
+          "minLength": 6,
+          "maxLength": 6,
+          "regex": "[1-9][0-9]{5}"
+        },
+        "state": {
+          "errorId": "invalidState",
+          "maxLength": 50
+        },
+        "text": {
+          "errorId": "invalidText",
+          "maxLength": 1000
+        },
+        "uniqueId": {
+          "errorId": "invalidUniqueId",
+          "regex": "[1-9][0-9]{15}",
+          "minLength": 16,
+          "maxLength": 16
+        },
+        "url": {
+          "errorId": "invalidUrl",
+          "maxLength": 1000
+        },
+        "userType": {
+          "errorId": "invalidUserType",
+          "maxLength": 20
+        }
+      },
+      "timestampTypes": {
+        "timestamp": {
+          "errorId": "invalidTimestamp"
+        }
+      }
+    },
+    "valueLists": {
+      "accountStatus": [
+        {
+          "value": "Active",
+          "label": "Active"
+        },
+        {
+          "value": "Suspended",
+          "label": "Suspended"
+        },
+        {
+          "value": "Closed",
+          "label": "Closed"
+        }
+      ],
+      "userType": [
+        {
+          "value": "student",
+          "label": "student"
+        },
+        {
+          "value": "staff",
+          "label": "staff"
+        },
+        {
+          "value": "admin",
+          "label": "admin"
+        },
+        {
+          "value": "guardian",
+          "label": "guardian"
+        },
+        {
+          "value": "trustee",
+          "label": "trustee"
+        }
+      ],
+      "instituteType": [
+        {
+          "value": "DSERTPS",
+          "label": "Karnataka State Syllabus Primary School"
+        },
+        {
+          "value": "DSERTPHS",
+          "label": "Karnataka State Syllabus Higher School"
+        },
+        {
+          "value": "CBSE ",
+          "label": "CBSE"
+        },
+        {
+          "value": "ENG_A_VTU",
+          "label": "Engineering College (Automonus Under VTU)"
+        },
+        {
+          "value": "ENG_VTU",
+          "label": "Engineering College ( VTU)"
+        }
+      ],
+      "admissionQuota": [
+        {
+          "value": "CET",
+          "label": "CET"
+        },
+        {
+          "value": "COMEDK",
+          "label": "COMEDK"
+        },
+        {
+          "value": "CETSNQ",
+          "label": "CET-SNQ"
+        },
+        {
+          "value": "MANG",
+          "label": "MANAGEMENT"
+        },
+        {
+          "value": "NRI",
+          "label": "NRI"
+        },
+        {
+          "value": "GOI",
+          "label": "GOI"
+        },
+        {
+          "value": "Other",
+          "label": "Other"
+        }
+      ],
+      "religion": [
+        {
+          "value": "Hindu",
+          "label": "Hindu"
+        },
+        {
+          "value": "Muslim",
+          "label": "Muslim"
+        },
+        {
+          "value": "Christian",
+          "label": "Christian"
+        },
+        {
+          "value": "Sikh",
+          "label": "Sikh"
+        },
+        {
+          "value": "Jain",
+          "label": "Jain"
+        },
+        {
+          "value": "Others",
+          "label": "Other"
+        }
+      ],
+      "relationType": [
+        {
+          "value": "Mother",
+          "label": "Mother"
+        },
+        {
+          "value": "Father",
+          "label": "Father"
+        },
+        {
+          "value": "Legal Guardian",
+          "label": "Legal Guardian"
+        }
+      ],
+      "documentType": [
+        {
+          "value": "Marks Card",
+          "label": "Marks Card"
+        },
+        {
+          "value": "Certificate",
+          "label": "Ceritifcate (e.g: Birth Certificate etc)"
+        },
+        {
+          "value": "Photo",
+          "label": "Photo"
+        },
+        {
+          "value": "Govt Id",
+          "label": "Govt Id(e.g.: Passport, DL etc)"
+        }
+      ],
+      "domicileState": [
+        {
+          "value": "Karnataka",
+          "label": "Karnataka"
+        },
+        {
+          "value": "Non-Karnataka",
+          "label": "Non-Karnataka"
+        },
+        {
+          "value": "Foreign",
+          "label": "Foreign"
+        }
+      ],
+      "gender": [
+        {
+          "value": "Male",
+          "label": "Male"
+        },
+        {
+          "value": "Female",
+          "label": "Female"
+        },
+        {
+          "value": "Others",
+          "label": "Others"
+        },
+        {
+          "value": "Not Applicable",
+          "label": "Not Applicable"
+        }
+      ]
+    },
+    "keyedLists": {
+      "state": {
+        "130": [
+          {
+            "value": "Karnataka",
+            "label": "Karnataka"
+          },
+          {
+            "value": "Tamil Nadu",
+            "label": "Tamil Nadu"
+          },
+          {
+            "value": "Kerala",
+            "label": "Kerala"
+          },
+          {
+            "value": "Uttar Pradesh",
+            "label": "Uttar Pradesh"
+          }
+        ],
+        "91": [
+          {
+            "value": "Karnataka",
+            "label": "Karnataka"
+          },
+          {
+            "value": "Tamil Nadu",
+            "label": "Tamil Nadu"
+          },
+          {
+            "value": "Kerala",
+            "label": "Kerala"
+          },
+          {
+            "value": "Uttar Pradesh",
+            "label": "Uttar Pradesh"
+          }
+        ]
+
+      }
+    }
+  }

@@ -3,12 +3,12 @@ package org.simplity.fm.test.gen.list;
 import org.simplity.fm.core.validn.ValueList;
 public class Religion extends ValueList {
 	 private static final Object[][] VALUES = { 
-		{"Hindu", null}, 
-		{"Muslim", null}, 
-		{"Christian", null}, 
-		{"Sikh", null}, 
-		{"Jain", null}, 
-		{"Others", null}
+		{"Hindu", "Hindu"}, 
+		{"Muslim", "Muslim"}, 
+		{"Christian", "Christian"}, 
+		{"Sikh", "Sikh"}, 
+		{"Jain", "Jain"}, 
+		{"Others", "Other"}
 	};
 	 private static final String NAME = "religion";
 

@@ -1,0 +1,80 @@
+{
+    "name": "studentForList",
+    "nameInDb": "students_for_list",
+    "useTimestampCheck": false,
+    "dbOperations": ["filter"],
+    "fields": [
+        {
+            "name": "studentId",
+            "dataType": "id",
+            "dbColumnName": "student_id",
+            "columnType": "primaryKey"
+        },
+        {
+            "name": "instituteId",
+            "dataType": "tenantKey",
+            "dbColumnName": "institute_id",
+            "columnType": "tenantKey"
+        },
+        {
+            "name": "departmentId",
+            "dataType": "id",
+            "dbColumnName": "department_id",
+            "columnType": "requiredData",
+            "listName": "departmentList"
+        },
+        {
+            "name": "programId",
+            "dataType": "id",
+            "dbColumnName": "program_id",
+            "columnType": "requiredData",
+            "listName": "programList",
+            "listKey": "departmentId"
+        },
+        {
+            "name": "levelId",
+            "dataType": "id",
+            "dbColumnName": "level_id",
+            "columnType": "optionalData",
+            "listName": "levelList",
+            "listKey": "programId"
+        },
+        {
+            "name": "sectionId",
+            "dataType": "id",
+            "dbColumnName": "section_id",
+            "columnType": "optionalData",
+            "listName": "sectionList"
+        },
+        {
+            "name": "usn",
+            "dataType": "text",
+            "dbColumnName": "usn",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "departmentName",
+            "dataType": "name",
+            "dbColumnName": "department_name",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "programName",
+            "dataType": "name",
+            "dbColumnName": "program_name",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "levelName",
+            "dataType": "name",
+            "dbColumnName": "level_name",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "section",
+            "dataType": "name",
+            "dbColumnName": "section",
+            "columnType": "optionalData"
+        }
+    ]
+}

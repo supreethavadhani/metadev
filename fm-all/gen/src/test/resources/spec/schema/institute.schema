@@ -1,0 +1,107 @@
+{
+    "name": "institute",
+    "nameInDb": "institutes",
+    "useTimestampCheck": false,
+    "fields": [
+        {
+            "name": "instituteId",
+            "dataType": "id",
+            "dbColumnName": "institute_id",
+            "columnType": "generatedPrimaryKey"
+        },
+        {
+            "name": "trustId",
+            "dataType": "id",
+            "dbColumnName": "trust_id",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "name",
+            "dataType": "name",
+            "dbColumnName": "name",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "instituteType",
+            "dataType": "text",
+            "dbColumnName": "institute_type",
+            "columnType": "requiredData",
+            "listName": "instituteType"
+        },
+        {
+            "name": "addressLine1",
+            "dataType": "desc",
+            "dbColumnName": "address_line1",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "addressLine2",
+            "dataType": "desc",
+            "dbColumnName": "address_line2",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "city",
+            "dataType": "name",
+            "dbColumnName": "city",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "state",
+            "dataType": "state",
+            "dbColumnName": "state",
+            "columnType": "requiredData",
+            "listName": "state",
+            "listKey": "country"
+        },
+        {
+            "name": "pincode",
+            "dataType": "pin",
+            "dbColumnName": "pincode",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "country",
+            "dataType": "country",
+            "dbColumnName": "country",
+            "columnType": "requiredData",
+            "defaultValue": "130"
+        },
+        {
+            "name": "govtCode",
+            "dataType": "govtCode",
+            "dbColumnName": "govt_code",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "phoneNumber",
+            "dataType": "phone",
+            "dbColumnName": "phone_number",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "email",
+            "dataType": "email",
+            "dbColumnName": "email",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "createdAt",
+            "dataType": "timestamp",
+            "dbColumnName": "created_at",
+            "columnType": "createdAt"
+        },
+        {
+            "name": "updatedAt",
+            "dataType": "timestamp",
+            "dbColumnName": "updated_at",
+            "columnType": "modifiedAt"
+        },
+        {
+            "name": "isInactive",
+            "dataType": "bool",
+            "dbColumnName": "is_inactive",
+            "columnType": "optionalData"
+        }
+    ]
+}

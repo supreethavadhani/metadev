@@ -3,11 +3,11 @@ package org.simplity.fm.test.gen.list;
 import org.simplity.fm.core.validn.ValueList;
 public class UserType extends ValueList {
 	 private static final Object[][] VALUES = { 
-		{"student", null}, 
-		{"staff", null}, 
-		{"admin", null}, 
-		{"guardian", null}, 
-		{"trustee", null}
+		{"student", "student"}, 
+		{"staff", "staff"}, 
+		{"admin", "admin"}, 
+		{"guardian", "guardian"}, 
+		{"trustee", "trustee"}
 	};
 	 private static final String NAME = "userType";
 

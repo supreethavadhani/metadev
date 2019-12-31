@@ -1,0 +1,55 @@
+{
+    "name": "level",
+    "nameInDb": "levels",
+    "useTimestampCheck": false,
+    "fields": [
+        {
+            "name": "levelId",
+            "dataType": "id",
+            "dbColumnName": "level_id",
+            "columnType": "generatedPrimaryKey"
+        },
+        {
+            "name": "programId",
+            "dataType": "id",
+            "dbColumnName": "program_id",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "instituteId",
+            "dataType": "tenantKey",
+            "dbColumnName": "institute_id",
+            "columnType": "tenantKey"
+        },
+        {
+            "name": "name",
+            "dataType": "name",
+            "dbColumnName": "name",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "code",
+            "dataType": "code",
+            "dbColumnName": "code",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "levelSeq",
+            "dataType": "integer",
+            "dbColumnName": "level_seq",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "createdAt",
+            "dataType": "timestamp",
+            "dbColumnName": "created_at",
+            "columnType": "createdAt"
+        },
+        {
+            "name": "updatedAt",
+            "dataType": "timestamp",
+            "dbColumnName": "updated_at",
+            "columnType": "modifiedAt"
+        }
+    ]
+}

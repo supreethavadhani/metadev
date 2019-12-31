@@ -3,10 +3,10 @@ package org.simplity.fm.test.gen.list;
 import org.simplity.fm.core.validn.ValueList;
 public class Gender extends ValueList {
 	 private static final Object[][] VALUES = { 
-		{"Male", null}, 
-		{"Female", null}, 
-		{"Others", null}, 
-		{"Not Applicable", null}
+		{"Male", "Male"}, 
+		{"Female", "Female"}, 
+		{"Others", "Others"}, 
+		{"Not Applicable", "Not Applicable"}
 	};
 	 private static final String NAME = "gender";
 

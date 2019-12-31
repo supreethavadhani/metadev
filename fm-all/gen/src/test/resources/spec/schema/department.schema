@@ -1,0 +1,94 @@
+{
+    "name": "department",
+    "nameInDb": "departments",
+    "useTimestampCheck": false,
+    "fields": [
+        {
+            "name": "departmentId",
+            "dataType": "id",
+            "dbColumnName": "department_id",
+            "columnType": "generatedPrimaryKey"
+        },
+        {
+            "name": "instituteId",
+            "dataType": "tenantKey",
+            "dbColumnName": "institute_id",
+            "columnType": "tenantKey"
+        },
+        {
+            "name": "name",
+            "dataType": "name",
+            "dbColumnName": "name",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "code",
+            "dataType": "code",
+            "dbColumnName": "code",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "addressLine1",
+            "dataType": "desc",
+            "dbColumnName": "address_line1",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "addressLine2",
+            "dataType": "desc",
+            "dbColumnName": "address_line2",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "city",
+            "dataType": "name",
+            "dbColumnName": "city",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "state",
+            "dataType": "state",
+            "dbColumnName": "state",
+            "columnType": "optionalData",
+            "listName": "state",
+            "listKey": "country"
+        },
+        {
+            "name": "pincode",
+            "dataType": "pin",
+            "dbColumnName": "pincode",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "country",
+            "dataType": "country",
+            "dbColumnName": "country",
+            "columnType": "optionalData",
+            "defaultValue": "130"
+        },
+        {
+            "name": "phoneNumber",
+            "dataType": "phone",
+            "dbColumnName": "phone_number",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "email",
+            "dataType": "email",
+            "dbColumnName": "email",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "createdAt",
+            "dataType": "timestamp",
+            "dbColumnName": "created_at",
+            "columnType": "createdAt"
+        },
+        {
+            "name": "updatedAt",
+            "dataType": "timestamp",
+            "dbColumnName": "updated_at",
+            "columnType": "modifiedAt"
+        }
+    ]
+}

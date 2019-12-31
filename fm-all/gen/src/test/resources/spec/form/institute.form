@@ -1,0 +1,89 @@
+{
+    "name": "institute",
+    "schemaName": "institute",
+    "dbOperations": [
+        "get",
+        "create",
+        "update",
+        "filter",
+        "bulk"
+    ],
+    "controls": [
+        {
+            "name": "instituteId",
+            "controlType": "hidden"
+        },
+        {
+            "name": "trustId",
+            "controlType": "hidden"
+        },
+        {
+            "name": "name",
+            "controlType": "input",
+            "label": "Name"
+        },
+        {
+            "name": "instituteType",
+            "controlType": "input",
+            "label": "Institute Type"
+        },
+        {
+            "name": "addressLine1",
+            "controlType": "input",
+            "label": "Address Line1"
+        },
+        {
+            "name": "addressLine2",
+            "controlType": "input",
+            "label": "Address Line2"
+        },
+        {
+            "name": "city",
+            "controlType": "input",
+            "label": "City"
+        },
+        {
+            "name": "state",
+            "controlType": "dropDown",
+            "label": "State"
+        },
+        {
+            "name": "pincode",
+            "controlType": "input",
+            "label": "Pin Code"
+        },
+        {
+            "name": "country",
+            "controlType": "hidden",
+            "label": "Country"
+        },
+        {
+            "name": "govtCode",
+            "controlType": "input",
+            "label": "Government Code"
+        },
+        {
+            "name": "phoneNumber",
+            "controlType": "input",
+            "label": "Phone Number"
+        },
+        {
+            "name": "email",
+            "controlType": "input",
+            "label": "Email"
+        },
+        {
+            "name": "createdAt",
+            "controlType": "hidden"
+        },
+        {
+            "name": "updatedAt",
+            "controlType": "hidden"
+        },
+        {
+            "name": "isInactive",
+            "controlType": "input",
+            "label": "Is Inactive"
+        }
+    ]
+}

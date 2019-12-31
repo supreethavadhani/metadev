@@ -3,13 +3,13 @@ package org.simplity.fm.test.gen.list;
 import org.simplity.fm.core.validn.ValueList;
 public class AdmissionQuota extends ValueList {
 	 private static final Object[][] VALUES = { 
-		{"CET", null}, 
-		{"COMEDK", null}, 
-		{"CETSNQ", null}, 
-		{"MANG", null}, 
-		{"NRI", null}, 
-		{"GOI", null}, 
-		{"Other", null}
+		{"CET", "CET"}, 
+		{"COMEDK", "COMEDK"}, 
+		{"CETSNQ", "CET-SNQ"}, 
+		{"MANG", "MANAGEMENT"}, 
+		{"NRI", "NRI"}, 
+		{"GOI", "GOI"}, 
+		{"Other", "Other"}
 	};
 	 private static final String NAME = "admissionQuota";
 

@@ -1,0 +1,43 @@
+{
+    "name": "program",
+    "schemaName": "program",
+    "dbOperations": [
+        "get",
+        "create",
+        "update",
+        "filter",
+        "bulk"
+    ],
+    "controls": [
+        {
+            "name": "programId",
+            "controlType": "hidden"
+        },
+        {
+            "name": "instituteId",
+            "controlType": "hidden"
+        },
+        {
+            "name": "departmentId",
+            "controlType": "hidden"
+        },
+        {
+            "name": "name",
+            "controlType": "input",
+            "label": "Name"
+        },
+        {
+            "name": "code",
+            "controlType": "input",
+            "label": "Code"
+        },
+        {
+            "name": "createdAt",
+            "controlType": "hidden"
+        },
+        {
+            "name": "updatedAt",
+            "controlType": "hidden"
+        }
+     ]
+}

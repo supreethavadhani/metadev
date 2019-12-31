@@ -69,20 +69,24 @@ public class Form {
 	Field[] keyFields;
 
 	void initialize(final Schema sch) {
-		this.schema = sch;
 		this.fields = new HashMap<>();
 		final List<Field> listFields = new ArrayList<>();
 		final List<Field> keyedFields = new ArrayList<>();
-		for (final DbField f : sch.fieldMap.values()) {
-			if (f.listName != null) {
-				listFields.add(f);
+
+		if (sch != null) {
+			this.schema = sch;
+			for (final DbField f : sch.fieldMap.values()) {
+				if (f.listName != null) {
+					listFields.add(f);
+				}
+				final ColumnType ct = f.getColumnType();
+				if (ct == ColumnType.PrimaryKey || ct == ColumnType.GeneratedPrimaryKey) {
+					keyedFields.add(f);
+				}
 			}
-			final ColumnType ct = f.getColumnType();
-			if (ct == ColumnType.PrimaryKey || ct == ColumnType.GeneratedPrimaryKey) {
-				keyedFields.add(f);
-			}
+
+			this.fields.putAll(sch.fieldMap);
 		}
-		this.fields.putAll(sch.fieldMap);
 		if (this.localFields != null) {
 			for (final Field f : this.localFields) {
 				if (this.fields.containsKey(f.name)) {

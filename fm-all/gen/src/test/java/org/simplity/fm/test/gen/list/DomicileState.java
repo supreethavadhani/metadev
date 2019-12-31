@@ -3,9 +3,9 @@ package org.simplity.fm.test.gen.list;
 import org.simplity.fm.core.validn.ValueList;
 public class DomicileState extends ValueList {
 	 private static final Object[][] VALUES = { 
-		{"Karnataka", null}, 
-		{"Non-Karnataka", null}, 
-		{"Foreign", null}
+		{"Karnataka", "Karnataka"}, 
+		{"Non-Karnataka", "Non-Karnataka"}, 
+		{"Foreign", "Foreign"}
 	};
 	 private static final String NAME = "domicileState";
 

@@ -30,7 +30,7 @@ public class Gen {
 	private static final String SPEC_ROOT = "c:/repos/forms/fm-all/gen/src/test/resources/spec/";
 	private static final String JAVA_ROOT = "c:/repos/forms/fm-all/gen/src/test/java/";
 	private static final String JAVA_PACKAGE = "org.simplity.fm.test.gen";
-	private static final String TS_ROOT = "c:/repos/forms/fm-all/gen/src/test/resources/ts/forms";
+	private static final String TS_ROOT = "c:/repos/forms/fm-all/gen/src/test/resources/ts/forms/";
 	private static final String TS_FORM_IMPORT_PREFIX = "../form/";
 
 	/**

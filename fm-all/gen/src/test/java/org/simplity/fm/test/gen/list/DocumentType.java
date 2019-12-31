@@ -3,10 +3,10 @@ package org.simplity.fm.test.gen.list;
 import org.simplity.fm.core.validn.ValueList;
 public class DocumentType extends ValueList {
 	 private static final Object[][] VALUES = { 
-		{"Marks Card", null}, 
-		{"Certificate", null}, 
-		{"Photo", null}, 
-		{"Govt Id", null}
+		{"Marks Card", "Marks Card"}, 
+		{"Certificate", "Ceritifcate (e.g: Birth Certificate etc)"}, 
+		{"Photo", "Photo"}, 
+		{"Govt Id", "Govt Id(e.g.: Passport, DL etc)"}
 	};
 	 private static final String NAME = "documentType";
 
