@@ -44,41 +44,27 @@ public class Trustee extends Schema {	private static final DbField[] FIELDS = {
 		this.validations = VALIDS;
 		this.operations = OPS;
 
-		DbAssistant a = new DbAssistant();
-
-		this.dbAssistant = a;
-		a.selectClause = SELECT;
-		a.selectParams = this.getParams(SELECT_IDX);
-		a.whereClause = WHERE;
-		a.whereParams = this.getParams(WHERE_IDX);
-		a.insertClause = INSERT;
-		a.insertParams = this.getParams(INSERT_IDX);
-		a.updateClause = UPDATE;
-		a.updateParams = this.getParams(UPDATE_IDX);
-		a.deleteClause = DELETE;
-		a.generatedColumnName = "trustee_id";
-		a.generatedKeyIdx = 0;
-		a.nbrFieldsInARow = 8;
+		this.dbAssistant = new DbAssistant(8, null, SELECT, this.getParams(SELECT_IDX), WHERE, this.getParams(WHERE_IDX), INSERT, this.getParams(INSERT_IDX), UPDATE, this.getParams(UPDATE_IDX), DELETE, "trustee_id", 0, null);
 		this.initialize();
 	}
 
 	@Override
-	public TrusteeData newDataObject() {
+	public TrusteeData newSchemaData() {
 		return new TrusteeData(this, null);
 	}
 
 	@Override
-	protected TrusteeData newDataObject(final Object[] data) {
+	protected TrusteeData newSchemaData(final Object[] data) {
 		return new TrusteeData(this, data);
 	}
 
 	@Override
-	public TrusteeDataTable newDataTable() {
+	public TrusteeDataTable newSchemaDataTable() {
 		return new TrusteeDataTable(this, null);
 	}
 
 	@Override
-	protected TrusteeDataTable newDataTable(final Object[][] data) {
+	protected TrusteeDataTable newSchemaDataTable(final Object[][] data) {
 		return new TrusteeDataTable(this, data);
 	}
 }

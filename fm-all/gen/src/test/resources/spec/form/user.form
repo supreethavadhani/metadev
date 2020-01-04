@@ -29,7 +29,7 @@
             "label": "Login Id"
         },
         {
-            "name": "loginTokan",
+            "name": "loginToken",
             "controlType": "output",
             "label": "Login Token"
         },
@@ -54,17 +54,12 @@
             "label": "Confirmation Token"
         },
         {
-            "name": "currentLoginIP",
+            "name": "currentLoginIp",
             "controlType": "output",
             "label": "Current Login IP"
         },
         {
-            "name": "country",
-            "controlType": "hidden",
-            "label": "Premanent Country"
-        },
-        {
-            "name": "previousLoginIP",
+            "name": "previousLoginIp",
             "controlType": "output",
             "label": "Previous Login IP"
         },

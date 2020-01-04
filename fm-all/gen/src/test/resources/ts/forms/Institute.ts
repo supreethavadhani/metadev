@@ -30,10 +30,22 @@ export class Institute extends Form {
 		,errorId: 'invalidName'
 		,maxLength: 50
 	};
-	instType:Field = {
-		name:'instType'
+	instituteType:Field = {
+		name:'instituteType'
 		,controlType: 'Input'
 		,label: 'Institute Type'
+		,isRequired: true
+		,listName: 'instituteType'
+		,valueList: [
+			{value:'DSERTPS',text:'Karnataka State Syllabus Primary School'},
+			{value:'DSERTPHS',text:'Karnataka State Syllabus Higher School'},
+			{value:'CBSE ',text:'CBSE'},
+			{value:'ENG_A_VTU',text:'Engineering College (Automonus Under VTU)'},
+			{value:'ENG_VTU',text:'Engineering College ( VTU)'}
+			]
+		,valueType: 0
+		,errorId: 'invalidText'
+		,maxLength: 1000
 	};
 	addressLine1:Field = {
 		name:'addressLine1'
@@ -163,6 +175,7 @@ export class Institute extends Form {
 		this.controls.set('instituteId', [Validators.required, Validators.max(9999999999999)]);
 		this.controls.set('trustId', [Validators.required, Validators.max(9999999999999)]);
 		this.controls.set('name', [Validators.required, Validators.maxLength(50)]);
+		this.controls.set('instituteType', [Validators.required, Validators.maxLength(1000)]);
 		this.controls.set('addressLine1', [Validators.required, Validators.maxLength(1000)]);
 		this.controls.set('addressLine2', [Validators.maxLength(1000)]);
 		this.controls.set('city', [Validators.required, Validators.maxLength(50)]);

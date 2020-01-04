@@ -103,11 +103,6 @@ export class Department extends Form {
 		,errorId: 'invalidCountry'
 		,maxValue: 999
 	};
-	govtCode:Field = {
-		name:'govtCode'
-		,controlType: 'Input'
-		,label: 'Government Code'
-	};
 	phoneNumber:Field = {
 		name:'phoneNumber'
 		,controlType: 'Input'

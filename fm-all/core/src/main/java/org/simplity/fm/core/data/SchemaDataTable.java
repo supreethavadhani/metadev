@@ -60,7 +60,7 @@ public abstract class SchemaDataTable implements Iterable<SchemaData> {
 	 * @return data row. null if the index is out of range
 	 */
 	protected SchemaData getSchemaData(final int idx) {
-		return this.schema.newDataObject(this.fieldValues[idx]);
+		return this.schema.newSchemaData(this.fieldValues[idx]);
 	}
 
 	/**
@@ -111,12 +111,21 @@ public abstract class SchemaDataTable implements Iterable<SchemaData> {
 	 * fetch data as per the sql
 	 *
 	 * @param handle
-	 * @param reader
+	 * @param whereClauseStartingWithWhere
+	 *            e.g. "WHERE a=? and b=?" null if all rows are to be read. Best
+	 *            practice is to use parameters rather than dynamic sql. That is
+	 *            you should use a=? rather than a = 32
+	 * @param values
+	 *            null or empty if where-clause is null or has no parameters.
+	 *            every element MUST be non-null and must be one of the standard
+	 *            objects we use String, Long, Double, Boolean, LocalDate,
+	 *            Instant
 	 * @return true if at least one row is read
 	 * @throws SQLException
 	 */
-	public boolean filter(final DbHandle handle, final ParsedFilter reader) throws SQLException {
-		this.fieldValues = this.schema.getDbAssistant().filter(handle, reader.getSql(), reader.getWhereParams());
+	public boolean filter(final DbHandle handle, final String whereClauseStartingWithWhere, final Object[] values)
+			throws SQLException {
+		this.fieldValues = this.schema.getDbAssistant().filter(whereClauseStartingWithWhere, values, false, handle);
 		return (this.fieldValues.length > 0);
 	}
 

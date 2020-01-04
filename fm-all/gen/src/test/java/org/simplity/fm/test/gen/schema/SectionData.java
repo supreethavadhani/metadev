@@ -29,18 +29,33 @@ public class SectionData extends SchemaData {
 	}
 
 	/**
+	 * set value for instituteId
+	 * @param value to be assigned to instituteId
+	 */
+	public void setInstituteId(long value){
+		this.fieldValues[1] = value;
+	}
+
+	/**
+	 * @return value of instituteId
+	 */
+	public long getInstituteId(){
+		return super.getLongValue(1);
+	}
+
+	/**
 	 * set value for name
 	 * @param value to be assigned to name
 	 */
 	public void setName(String value){
-		this.fieldValues[1] = value;
+		this.fieldValues[2] = value;
 	}
 
 	/**
 	 * @return value of name
 	 */
 	public String getName(){
-		return super.getStringValue(1);
+		return super.getStringValue(2);
 	}
 
 	/**
@@ -48,14 +63,14 @@ public class SectionData extends SchemaData {
 	 * @param value to be assigned to code
 	 */
 	public void setCode(String value){
-		this.fieldValues[2] = value;
+		this.fieldValues[3] = value;
 	}
 
 	/**
 	 * @return value of code
 	 */
 	public String getCode(){
-		return super.getStringValue(2);
+		return super.getStringValue(3);
 	}
 
 	/**
@@ -63,14 +78,14 @@ public class SectionData extends SchemaData {
 	 * @param value to be assigned to createdAt
 	 */
 	public void setCreatedAt(Instant value){
-		this.fieldValues[3] = value;
+		this.fieldValues[4] = value;
 	}
 
 	/**
 	 * @return value of createdAt
 	 */
 	public Instant getCreatedAt(){
-		return super.getTimestampValue(3);
+		return super.getTimestampValue(4);
 	}
 
 	/**
@@ -78,13 +93,13 @@ public class SectionData extends SchemaData {
 	 * @param value to be assigned to updatedAt
 	 */
 	public void setUpdatedAt(Instant value){
-		this.fieldValues[4] = value;
+		this.fieldValues[5] = value;
 	}
 
 	/**
 	 * @return value of updatedAt
 	 */
 	public Instant getUpdatedAt(){
-		return super.getTimestampValue(4);
+		return super.getTimestampValue(5);
 	}
 }

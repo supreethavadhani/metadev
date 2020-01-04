@@ -52,41 +52,27 @@ public class Institute extends Schema {	private static final DbField[] FIELDS = 
 		this.validations = VALIDS;
 		this.operations = OPS;
 
-		DbAssistant a = new DbAssistant();
-
-		this.dbAssistant = a;
-		a.selectClause = SELECT;
-		a.selectParams = this.getParams(SELECT_IDX);
-		a.whereClause = WHERE;
-		a.whereParams = this.getParams(WHERE_IDX);
-		a.insertClause = INSERT;
-		a.insertParams = this.getParams(INSERT_IDX);
-		a.updateClause = UPDATE;
-		a.updateParams = this.getParams(UPDATE_IDX);
-		a.deleteClause = DELETE;
-		a.generatedColumnName = "institute_id";
-		a.generatedKeyIdx = 0;
-		a.nbrFieldsInARow = 16;
+		this.dbAssistant = new DbAssistant(16, null, SELECT, this.getParams(SELECT_IDX), WHERE, this.getParams(WHERE_IDX), INSERT, this.getParams(INSERT_IDX), UPDATE, this.getParams(UPDATE_IDX), DELETE, "institute_id", 0, null);
 		this.initialize();
 	}
 
 	@Override
-	public InstituteData newDataObject() {
+	public InstituteData newSchemaData() {
 		return new InstituteData(this, null);
 	}
 
 	@Override
-	protected InstituteData newDataObject(final Object[] data) {
+	protected InstituteData newSchemaData(final Object[] data) {
 		return new InstituteData(this, data);
 	}
 
 	@Override
-	public InstituteDataTable newDataTable() {
+	public InstituteDataTable newSchemaDataTable() {
 		return new InstituteDataTable(this, null);
 	}
 
 	@Override
-	protected InstituteDataTable newDataTable(final Object[][] data) {
+	protected InstituteDataTable newSchemaDataTable(final Object[][] data) {
 		return new InstituteDataTable(this, data);
 	}
 }

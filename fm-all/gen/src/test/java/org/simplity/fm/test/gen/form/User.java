@@ -24,12 +24,12 @@ public User() {
 	}
 
 	@Override
-	protected UserData newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {
-		return new UserData(this, (UserData) schemaData, values, data);
+	protected UserFd newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {
+		return new UserFd(this, (UserData) schemaData, values, data);
 	}
 
 	@Override
-	protected UserDataTable newFormDataTable(final SchemaDataTable table, final Object[][] values) {
-		return new UserDataTable(this, (UserDataTable) table, values);
+	protected UserFdt newFormDataTable(final SchemaDataTable table, final Object[][] values) {
+		return new UserFdt(this, (UserDataTable) table, values);
 	}
 }

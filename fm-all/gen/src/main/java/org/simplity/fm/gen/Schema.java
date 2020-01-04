@@ -245,7 +245,6 @@ class Schema {
 		 *
 		 * e.g. if name a.b.schema1 then prefix is a.b and className is Schema1
 		 */
-		final String cls = Util.toClassName(this.name);
 		String pck = generatedPackage + ".schema";
 		final String qual = Util.getClassQualifier(this.name);
 		if (qual != null) {
@@ -282,10 +281,11 @@ class Schema {
 		/*
 		 * class definition
 		 */
+		final String cls = Util.toClassName(this.name);
 
 		sbf.append("\n\n/**\n * class that represents structure of ").append(this.name);
 		sbf.append("\n */ ");
-		sbf.append("\npublic class ").append(cls).append(" extends Schema {");
+		sbf.append("\npublic class ").append(cls).append("Schema extends Schema {");
 
 		this.emitJavaFields(sbf, typesName);
 		sbf.append("\n\tprivate static final ");
@@ -297,13 +297,15 @@ class Schema {
 		 * constructor
 		 */
 		sbf.append("\n\n\t/**\n\t *\n\t */");
-		sbf.append("\n\tpublic ").append(cls).append("() {");
+		sbf.append("\n\tpublic ").append(cls).append("Schema() {");
 		sbf.append("\n\t\tthis.name = \"").append(this.name).append("\";");
 		sbf.append("\n\t\tthis.nameInDb = ").append(Util.escape(this.nameInDb)).append(";");
 		sbf.append("\n\t\tthis.fields = FIELDS;");
 		sbf.append("\n\t\tthis.validations = VALIDS;");
 		sbf.append("\n\t\tthis.operations = OPS;");
-		this.emitDbMeta(sbf);
+		if (this.nameInDb != null) {
+			this.emitDbMeta(sbf);
+		}
 		sbf.append("\n\t\tthis.initialize();");
 		sbf.append("\n\t}");
 
@@ -315,23 +317,23 @@ class Schema {
 		sbf.append(over);
 
 		String c = cls + "Data";
-		sbf.append("\n\tpublic ").append(c).append(" newDataObject() {");
+		sbf.append("\n\tpublic ").append(c).append(" newSchemaData() {");
 		sbf.append("\n\t\treturn new ").append(c).append("(this, null);");
 		sbf.append("\n\t}");
 
 		sbf.append(over);
-		sbf.append("\n\tprotected ").append(c).append(" newDataObject(final Object[] data) {");
+		sbf.append("\n\tprotected ").append(c).append(" newSchemaData(final Object[] data) {");
 		sbf.append("\n\t\treturn new ").append(c).append("(this, data);");
 		sbf.append("\n\t}");
 
 		c = cls + "DataTable";
 		sbf.append(over);
-		sbf.append("\n\tpublic ").append(c).append(" newDataTable() {");
+		sbf.append("\n\tpublic ").append(c).append(" newSchemaDataTable() {");
 		sbf.append("\n\t\treturn new ").append(c).append("(this, null);");
 		sbf.append("\n\t}");
 
 		sbf.append(over);
-		sbf.append("\n\tprotected ").append(c).append(" newDataTable(final Object[][] data) {");
+		sbf.append("\n\tprotected ").append(c).append(" newSchemaDataTable(final Object[][] data) {");
 		sbf.append("\n\t\treturn new ").append(c).append("(this, data);");
 		sbf.append("\n\t}");
 
@@ -449,38 +451,33 @@ class Schema {
 
 	private void emitDbMeta(final StringBuilder sbf) {
 
-		if (this.nameInDb == null) {
-			sbf.append("\n\n\t\tthis.dbAssistant = null;");
-			return;
+		sbf.append("\n\n\t\tthis.dbAssistant = new DbAssistant(").append(this.fields.length);
+		if (this.tenantField == null) {
+			sbf.append(", null");
+		} else {
+			sbf.append(", this.fields[").append(this.tenantField.index).append("]");
 		}
-		sbf.append("\n\n\t\tDbAssistant a = new DbAssistant();");
-		sbf.append("\n\n\t\tthis.dbAssistant = a;");
-		final String p = "\n\t\ta.";
-		final char s = ';';
 
-		sbf.append(p).append("selectClause = SELECT;");
-		sbf.append(p).append("selectParams = this.getParams(SELECT_IDX);");
+		sbf.append(", SELECT, this.getParams(SELECT_IDX)");
 
 		if (this.keyFields != null) {
-			sbf.append(p).append("whereClause = WHERE;");
-			sbf.append(p).append("whereParams = this.getParams(WHERE_IDX);");
-			sbf.append(p).append("insertClause = INSERT;");
-			sbf.append(p).append("insertParams = this.getParams(INSERT_IDX);");
-			sbf.append(p).append("updateClause = UPDATE;");
-			sbf.append(p).append("updateParams = this.getParams(UPDATE_IDX);");
-			sbf.append(p).append("deleteClause = DELETE;");
-			if (this.generatedKeyField != null) {
-				sbf.append(p).append("generatedColumnName = ").append(Util.escape(this.generatedKeyField.dbColumnName))
-						.append(s);
-				sbf.append(p).append("generatedKeyIdx = ").append(this.generatedKeyField.index).append(s);
+			sbf.append(", WHERE, this.getParams(WHERE_IDX)");
+			sbf.append(", INSERT, this.getParams(INSERT_IDX)");
+			sbf.append(", UPDATE, this.getParams(UPDATE_IDX)");
+			sbf.append(", DELETE, ");
+			if (this.generatedKeyField == null) {
+				sbf.append("null, -1");
+			} else {
+				sbf.append(Util.escape(this.generatedKeyField.dbColumnName));
+				sbf.append(", ").append(this.generatedKeyField.index);
+			}
+			if (this.timestampField == null) {
+				sbf.append(", null");
+			} else {
+				sbf.append(", this.fields[").append(this.timestampField.index).append("]");
 			}
 		}
-
-		sbf.append(p).append("nbrFieldsInARow = ").append(this.fields.length).append(s);
-
-		if (this.tenantField != null) {
-			sbf.append(p).append("tenantField = this.fields[").append(this.tenantField.index).append("];");
-		}
+		sbf.append(");");
 
 	}
 
@@ -689,7 +686,7 @@ class Schema {
 		 * constructor
 		 */
 		sbf.append("\n\n\tprotected ").append(cls).append("(final ").append(schemaCls)
-				.append(" schema, final Object[] data) {\n\t\tsuper(schema, data);\n\t}");
+				.append("Schema schema, final Object[] data) {\n\t\tsuper(schema, data);\n\t}");
 
 		/*
 		 * getters and setters
@@ -731,7 +728,7 @@ class Schema {
 		 * constructor
 		 */
 		sbf.append("\n\n\tprotected ").append(cls).append("(final ").append(schemaCls)
-				.append(" schema, final Object[][] data) {\n\t\tsuper(schema, data);\n\t}");
+				.append("Schema schema, final Object[][] data) {\n\t\tsuper(schema, data);\n\t}");
 		/*
 		 * override getRow for class-specific return type
 		 */

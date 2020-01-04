@@ -24,6 +24,9 @@ export class Guardian extends Form {
 	instituteId:Field = {
 		name:'instituteId'
 		,controlType: 'Hidden'
+		,valueType: 1
+		,errorId: 'invalidTenentKey'
+		,maxValue: 9999999999999
 	};
 	relationType:Field = {
 		name:'relationType'
@@ -204,6 +207,7 @@ export class Guardian extends Form {
 		this.controls = new Map();
 		this.controls.set('guardianId', [Validators.required, Validators.max(9999999999999)]);
 		this.controls.set('studentId', [Validators.required, Validators.max(9999999999999)]);
+		this.controls.set('instituteId', [Validators.max(9999999999999)]);
 		this.controls.set('relationType', [Validators.required, Validators.maxLength(1000)]);
 		this.controls.set('name', [Validators.required, Validators.maxLength(50)]);
 		this.controls.set('gender', [Validators.required, Validators.maxLength(10)]);
@@ -237,7 +241,6 @@ export interface GuardianData extends Vo {
 	country?: number, 
 	occupation?: string, 
 	gender?: string, 
-	instituiteId?: number, 
 	city?: string, 
 	guardianId?: number, 
 	studentId?: number, 
@@ -245,6 +248,7 @@ export interface GuardianData extends Vo {
 	createdAt?: string, 
 	phoneNumber?: string, 
 	name?: string, 
+	instituteId?: number, 
 	addressLine1?: string, 
 	addressLine2?: string, 
 	state?: string, 

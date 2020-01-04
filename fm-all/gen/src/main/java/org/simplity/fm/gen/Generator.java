@@ -96,6 +96,14 @@ public class Generator {
 			return;
 		}
 
+		/*
+		 * ts folder
+		 */
+		if (!ensureFolder(new File(tsRootFolder))) {
+			logger.error("Unable to clean/create ts root folder {}", tsRootFolder);
+			return;
+		}
+
 		final String fileName = resourceRootFolder + Conventions.App.APP_FILE;
 		File f = new File(fileName);
 		if (f.exists() == false) {
@@ -190,23 +198,20 @@ public class Generator {
 
 		final String cls = Util.toClassName(fn);
 		form.emitJavaForm(sbf, rootPackageName);
-		String outName = generatedSourceRootFolder + "form/" + cls + ".java";
-		Util.writeOut(outName, sbf);
+		final String outPrefix = generatedSourceRootFolder + "form/" + cls;
+		Util.writeOut(outPrefix + "Form.java", sbf);
 
 		sbf.setLength(0);
 		form.emitJavaFormData(sbf, rootPackageName, app.dataTypes.dataTypes);
-		outName = generatedSourceRootFolder + "form/" + cls + "Data.java";
-		Util.writeOut(outName, sbf);
+		Util.writeOut(outPrefix + "Fd.java", sbf);
 
 		sbf.setLength(0);
 		form.emitJavaFormDataTable(sbf, rootPackageName);
-		outName = generatedSourceRootFolder + "form/" + cls + "DataTable.java";
-		Util.writeOut(outName, sbf);
+		Util.writeOut(outPrefix + "Fdt.java", sbf);
 
 		sbf.setLength(0);
 		form.emitTs(sbf, dataTypes.dataTypes, app.valueLists, app.keyedLists, tsImportPrefix);
-		outName = tsOutputFolder + Util.toClassName(fn) + ".ts";
-		Util.writeOut(outName, sbf);
+		Util.writeOut(tsOutputFolder + Util.toClassName(fn) + "Form.ts", sbf);
 
 	}
 
@@ -247,7 +252,7 @@ public class Generator {
 		 */
 		final StringBuilder sbf = new StringBuilder();
 		schema.emitJavaClass(sbf, packageName);
-		String outName = outNamePrefix + ".java";
+		String outName = outNamePrefix + "Schema.java";
 		Util.writeOut(outName, sbf);
 
 		/*
@@ -272,15 +277,39 @@ public class Generator {
 	private static boolean createOutputFolders(final String root, final String[] folders) {
 		boolean allOk = true;
 		for (final String folder : folders) {
-			final File f = new File(root + folder);
-			if (!f.exists()) {
-				if (!f.mkdirs()) {
-					logger.error("Unable to create folder {}. Aborting..." + f.getPath());
-					allOk = false;
-				}
+			if (!ensureFolder(new File(root + folder))) {
+				allOk = false;
 			}
 		}
 		return allOk;
+	}
+
+	private static boolean ensureFolder(final File f) {
+		final String folder = f.getAbsolutePath();
+		if (f.exists()) {
+			if (f.isDirectory()) {
+				logger.info("All files in folder {} are deleted", folder);
+				for (final File ff : f.listFiles()) {
+					if (!ff.delete()) {
+						logger.error("Unable to delete file {}", ff.getAbsolutePath());
+						return false;
+					}
+				}
+				return true;
+			}
+
+			if (f.delete()) {
+				logger.info("{} is a file. It is deleted to make way for a directory with the same name", folder);
+			} else {
+				logger.error("{} is a file. Unable to delete it to create a folder with that name", folder);
+				return false;
+			}
+		}
+		if (!f.mkdirs()) {
+			logger.error("Unable to create folder {}. Aborting..." + f.getPath());
+			return false;
+		}
+		return true;
 	}
 
 	static void emitJavaGettersAndSetters(final Field[] fields, final StringBuilder sbf,

@@ -146,12 +146,12 @@ public class Form {
 			sbf.append(imp).append(schClass).append("DataTable;");
 		}
 
+		final String cls = Util.toClassName(this.name);
 		/*
 		 * class declaration
 		 */
-		final String cls = Util.toClassName(this.name);
 		sbf.append("\n/** class for form ").append(this.name).append("  */\npublic class ").append(cls)
-				.append(" extends Form {");
+				.append("Form extends Form {");
 
 		String p = "\n\tprotected static final ";
 
@@ -211,7 +211,7 @@ public class Form {
 		 * }
 		 */
 		p = "\n\t\tthis.";
-		sbf.append("\n/** constructor */\npublic ").append(cls).append("() {");
+		sbf.append("\n/** constructor */\npublic ").append(cls).append("Form() {");
 		sbf.append(p).append("name = NAME;");
 		if (schClass != null) {
 			sbf.append(p).append("schema = ComponentProvider.getProvider().getSchema(SCHEMA);");
@@ -231,8 +231,8 @@ public class Form {
 		p = "\n\n\t@Override\n\tprotected " + cls;
 
 		sbf.append(p).append(
-				"Data newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {");
-		sbf.append("\n\t\treturn new ").append(cls).append("Data(this, ");
+				"Fd newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {");
+		sbf.append("\n\t\treturn new ").append(cls).append("Fd(this, ");
 		if (schClass != null) {
 			sbf.append("(").append(schClass).append("Data) schemaData");
 		} else {
@@ -240,8 +240,8 @@ public class Form {
 		}
 		sbf.append(", values, data);\n\t}");
 
-		sbf.append(p).append("DataTable newFormDataTable(final SchemaDataTable table, final Object[][] values) {");
-		sbf.append("\n\t\treturn new ").append(cls).append("DataTable(this, ");
+		sbf.append(p).append("Fdt newFormDataTable(final SchemaDataTable table, final Object[][] values) {");
+		sbf.append("\n\t\treturn new ").append(cls).append("Fdt(this, ");
 		if (schClass != null) {
 			sbf.append("(").append(schClass).append("DataTable) table");
 		} else {
@@ -272,7 +272,9 @@ public class Form {
 		Util.emitImport(sbf, FormData.class);
 		Util.emitImport(sbf, FormDataTable.class);
 		String schClass = null;
-		if (this.schemaName != null) {
+		if (this.schemaName == null) {
+			Util.emitImport(sbf, SchemaData.class);
+		} else {
 			schClass = Util.toClassName(this.schemaName);
 			sbf.append("\nimport ").append(packageName).append(".schema.").append(schClass).append("Data;");
 		}
@@ -286,18 +288,17 @@ public class Form {
 		 * class declaration
 		 */
 		final String cls = Util.toClassName(this.name);
-		final String d = "Data";
 		sbf.append("\n/** class for form data ").append(this.name).append("  */");
-		sbf.append("\npublic class ").append(cls).append(d).append(" extends FormData {");
+		sbf.append("\npublic class ").append(cls).append("Fd extends FormData {");
 
 		/*
 		 * constructor
 		 */
-		sbf.append("\n\tprotected ").append(cls).append(d).append("(final ").append(cls).append(" form, final ");
+		sbf.append("\n\tprotected ").append(cls).append("Fd(final ").append(cls).append("Form form, final ");
 		if (schClass == null) {
 			sbf.append("SchemaData");
 		} else {
-			sbf.append(schClass).append(d);
+			sbf.append(schClass).append("Data");
 		}
 		sbf.append(" dataObject, final Object[] values, final FormDataTable[] data) {");
 		sbf.append("\n\t\tsuper(form, dataObject, values, data);");
@@ -326,7 +327,6 @@ public class Form {
 		}
 
 		final String cls = Util.toClassName(this.name);
-		final String dt = "DataTable";
 		sbf.append("package ").append(pck).append(";\n");
 
 		/*
@@ -334,27 +334,29 @@ public class Form {
 		 */
 		Util.emitImport(sbf, FormDataTable.class);
 		String schClass = null;
-		if (this.schemaName != null) {
+		if (this.schemaName == null) {
+			Util.emitImport(sbf, SchemaDataTable.class);
+		} else {
 			schClass = Util.toClassName(this.schemaName);
-			sbf.append("\nimport ").append(packageName).append(".schema.").append(schClass).append(dt).append(";");
+			sbf.append("\nimport ").append(packageName).append(".schema.").append(schClass).append("DataTable;");
 		}
 
 		/*
 		 * class declaration
 		 */
 		sbf.append("\n/** class for form data table ").append(this.name).append("  */");
-		sbf.append("\npublic class ").append(cls).append(dt).append(" extends FormDataTable {");
+		sbf.append("\npublic class ").append(cls).append("Fdt extends FormDataTable {");
 
 		/*
 		 * constructor
 		 */
-		sbf.append("\n\tprotected ").append(cls).append(dt).append("(final ").append(cls).append(" form, final ");
+		sbf.append("\n\tprotected ").append(cls).append("Fdt(final ").append(cls).append("Form form, final ");
 		if (schClass == null) {
 			sbf.append("Schema");
 		} else {
 			sbf.append(schClass);
 		}
-		sbf.append(dt).append(" dataTable, final Object[][] values) {");
+		sbf.append("DataTable dataTable, final Object[][] values) {");
 		sbf.append("\n\t\tsuper(form, dataTable, values);");
 		sbf.append("\n\t}");
 
@@ -419,13 +421,14 @@ public class Form {
 		if (this.linkedForms != null) {
 			for (final LinkedForm child : this.linkedForms) {
 				final String fn = child.getFormName();
-				sbf.append("\nimport { ").append(Util.toClassName(fn)).append(" } from './").append(fn).append("';");
+				sbf.append("\nimport { ").append(Util.toClassName(fn)).append("Form } from './").append(fn)
+						.append("';");
 			}
 		}
 
 		final String cls = Util.toClassName(this.name);
-		sbf.append("\n\nexport class ").append(cls).append(" extends Form {");
-		sbf.append("\n\tprivate static _instance = new ").append(cls).append("();");
+		sbf.append("\n\nexport class ").append(cls).append("Form extends Form {");
+		sbf.append("\n\tprivate static _instance = new ").append(cls).append("Form();");
 
 		/*
 		 * fields as members. We also accumulate code for controls
@@ -449,8 +452,8 @@ public class Form {
 		/*
 		 * getInstance method
 		 */
-		sbf.append("\n\n\tpublic static getInstance(): ").append(cls).append(" {");
-		sbf.append("\n\t\treturn ").append(cls).append("._instance;\n\t}");
+		sbf.append("\n\n\tpublic static getInstance(): ").append(cls).append("Form {");
+		sbf.append("\n\t\treturn ").append(cls).append("Form._instance;\n\t}");
 
 		/*
 		 * constructor
@@ -508,7 +511,9 @@ public class Form {
 		/*
 		 * inter field validations
 		 */
-		this.schema.emitTs(sbf);
+		if (this.schema != null) {
+			this.schema.emitTs(sbf);
+		}
 		/*
 		 * fields with drop-downs
 		 */

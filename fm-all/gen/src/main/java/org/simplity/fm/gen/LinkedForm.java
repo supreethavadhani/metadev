@@ -41,6 +41,7 @@ class LinkedForm {
 
 	String label;
 	boolean isEditable;
+	boolean isTabular;
 	int index;
 
 	void emitJavaConstant(final StringBuilder sbf, final int idx) {
@@ -66,7 +67,7 @@ class LinkedForm {
 
 		sbf.append(C);
 		Util.emitArray(this.childLinkFields, sbf);
-
+		sbf.append(C).append(this.isTabular);
 		sbf.append(')');
 	}
 
@@ -75,14 +76,16 @@ class LinkedForm {
 	}
 
 	void emitTs(final StringBuilder sbf) {
+		final String T = ",\n\t\t";
 		sbf.append("\n\t").append(this.name).append(": ChildForm = {");
-		sbf.append("name:").append(Util.escapeTs(this.name));
-		sbf.append("\n\t\t,form:").append(Util.toClassName(this.formName)).append(".getInstance()");
-		sbf.append("\n\t\t,isEditable:").append(this.isEditable);
-		sbf.append("\n\t\t,label:").append(this.label == null ? "''" : Util.escapeTs(this.label));
-		sbf.append("\n\t\t,minRows:").append(this.minRows);
-		sbf.append("\n\t\t,maxRows:").append(this.maxRows);
-		sbf.append("\n\t\t,errorId:").append(Util.escapeTs(this.errorId));
+		sbf.append("\n\t\tname:").append(Util.escapeTs(this.name));
+		sbf.append(T).append("form:").append(Util.toClassName(this.formName)).append(".getInstance()");
+		sbf.append(T).append("isEditable:").append(this.isEditable);
+		sbf.append(T).append("isTabular:").append(this.isTabular);
+		sbf.append(T).append("label:").append(this.label == null ? "''" : Util.escapeTs(this.label));
+		sbf.append(T).append("minRows:").append(this.minRows);
+		sbf.append(T).append("maxRows:").append(this.maxRows);
+		sbf.append(T).append("errorId:").append(Util.escapeTs(this.errorId));
 
 		sbf.append("\n\t};");
 	}

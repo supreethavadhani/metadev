@@ -1,0 +1,43 @@
+{
+    "name": "section",
+    "nameInDb": "section",
+    "useTimestampCheck": false,
+    "fields": [
+        {
+            "name": "sectionId",
+            "dataType": "id",
+            "dbColumnName": "section_id",
+            "columnType": "generatedPrimaryKey"
+        },
+        {
+            "name": "instituteId",
+            "dataType": "id",
+            "dbColumnName": "institute_id",
+            "columnType": "tenantKey"
+        },
+        {
+            "name": "name",
+            "dataType": "name",
+            "dbColumnName": "name",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "code",
+            "dataType": "code",
+            "dbColumnName": "code",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "createdAt",
+            "dataType": "timestamp",
+            "dbColumnName": "created_at",
+            "columnType": "createdAt"
+        },
+        {
+            "name": "updatedAt",
+            "dataType": "timestamp",
+            "dbColumnName": "updated_at",
+            "columnType": "modifiedAt"
+        }
+    ]
+}

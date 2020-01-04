@@ -44,36 +44,40 @@ public class LinkedForm {
 	/**
 	 * non-null unique across all fields of the form
 	 */
-	protected String linkName;
+	protected final String linkName;
 
 	/**
 	 * name of the other form being linked
 	 */
-	protected String linkFormName;
+	protected final String linkFormName;
 
 	/**
 	 * if this is tabular, min rows expected from client
 	 */
-	protected int minRows;
+	protected final int minRows;
 	/**
 	 * if this is tabular, max rows expected from client.
 	 */
-	protected int maxRows;
+	protected final int maxRows;
 	/**
 	 * field names from the parent form that are used for linking
 	 */
-	protected String[] parentLinkNames;
+	protected final String[] parentLinkNames;
 	/**
 	 * field names from the child form that form the parent-key for the child
 	 * form
 	 */
-	protected String[] childLinkNames;
+	protected final String[] childLinkNames;
 	/**
 	 * in case min/max rows violated, what is the error message to be used to
 	 * report this problem
 	 */
-	protected String errorMessageId;
+	protected final String errorMessageId;
 
+	/**
+	 * is the link meant for an array of data or 1-to-1?
+	 */
+	protected final boolean isTabular;
 	/*
 	 * fields that are created at init()
 	 */
@@ -85,9 +89,9 @@ public class LinkedForm {
 
 	/**
 	 * in case the schemas are to be linked, then we need the where clause where
-	 * the column names come from the linked schema,while the values for them
+	 * the column names come from the linked schema, while the values for them
 	 * come from the parent schema
-	 * e.g. where childCol1=? and childCll2=?
+	 * e.g. childCol1=? and childCll2=?
 	 */
 	protected String linkWhereClause;
 
@@ -106,6 +110,32 @@ public class LinkedForm {
 	 */
 	protected int[] parentIndexes;
 	protected int[] childIndexes;
+
+	/**
+	 * this is used by a the classes that are generated,and hence we live with
+	 * such a long lust of arguments
+	 *
+	 * @param linkName
+	 * @param linkFormName
+	 * @param minRows
+	 * @param maxRows
+	 * @param errorMessageId
+	 * @param parentLinkNames
+	 * @param childLinkNames
+	 * @param isTabular
+	 */
+	public LinkedForm(final String linkName, final String linkFormName, final int minRows, final int maxRows,
+			final String errorMessageId, final String[] parentLinkNames, final String[] childLinkNames,
+			final boolean isTabular) {
+		this.linkName = linkName;
+		this.linkFormName = linkFormName;
+		this.minRows = minRows;
+		this.maxRows = maxRows;
+		this.parentLinkNames = parentLinkNames;
+		this.childLinkNames = childLinkNames;
+		this.errorMessageId = errorMessageId;
+		this.isTabular = isTabular;
+	}
 
 	/**
 	 * called by parent form/schema before it is used.
@@ -148,8 +178,20 @@ public class LinkedForm {
 	 * @throws SQLException
 	 */
 	public SchemaDataTable read(final DbHandle handle, final Object[] parentRow) throws SQLException {
-		final PreparedStatementParam[] params = this.createParams(parentRow);
-		return this.linkedForm.getSchema().filterToTable(handle, this.linkWhereClause, params);
+		final Object[] whereValues = this.getWhereValues(parentRow);
+		final SchemaDataTable table = this.linkedForm.getSchema().newSchemaDataTable();
+		table.filter(handle, this.linkWhereClause, whereValues);
+		return table;
+	}
+
+	private Object[] getWhereValues(final Object[] parentRow) {
+		final PreparedStatementParam[] params = new PreparedStatementParam[this.linkWhereParams.length];
+		int idx = -1;
+		for (final FieldMetaData p : this.linkWhereParams) {
+			idx++;
+			params[idx] = new PreparedStatementParam(parentRow[p.getIndex()], p.getValueType());
+		}
+		return params;
 	}
 
 	private PreparedStatementParam[] createParams(final Object[] parentRow) {

@@ -16,6 +16,9 @@ export class Section extends Form {
 	instituteId:Field = {
 		name:'instituteId'
 		,controlType: 'Hidden'
+		,valueType: 1
+		,errorId: 'invalidId'
+		,maxValue: 9999999999999
 	};
 	name:Field = {
 		name:'name'
@@ -56,6 +59,7 @@ export class Section extends Form {
 		this.fields = new Map();
 		this.controls = new Map();
 		this.controls.set('sectionId', [Validators.required, Validators.max(9999999999999)]);
+		this.controls.set('instituteId', [Validators.max(9999999999999)]);
 		this.controls.set('name', [Validators.required, Validators.maxLength(50)]);
 		this.controls.set('code', [Validators.maxLength(50)]);
 		this.controls.set('createdAt', []);
@@ -70,9 +74,10 @@ export class Section extends Form {
 
 
 export interface SectionData extends Vo {
-	name?: string, 
 	createdAt?: string, 
 	code?: string, 
+	name?: string, 
+	instituteId?: number, 
 	sectionId?: number, 
 	updatedAt?: string
 }

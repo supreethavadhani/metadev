@@ -24,12 +24,12 @@ public Institute() {
 	}
 
 	@Override
-	protected InstituteData newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {
-		return new InstituteData(this, (InstituteData) schemaData, values, data);
+	protected InstituteFd newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {
+		return new InstituteFd(this, (InstituteData) schemaData, values, data);
 	}
 
 	@Override
-	protected InstituteDataTable newFormDataTable(final SchemaDataTable table, final Object[][] values) {
-		return new InstituteDataTable(this, (InstituteDataTable) table, values);
+	protected InstituteFdt newFormDataTable(final SchemaDataTable table, final Object[][] values) {
+		return new InstituteFdt(this, (InstituteDataTable) table, values);
 	}
 }

@@ -282,7 +282,7 @@ public abstract class ComponentProvider {
 			if (form != null) {
 				return form;
 			}
-			final String cls = this.formRoot + toClassName(formId);
+			final String cls = this.formRoot + toClassName(formId) + "Form";
 			try {
 				form = (Form) Class.forName(cls).newInstance();
 			} catch (final Exception e) {
@@ -299,11 +299,11 @@ public abstract class ComponentProvider {
 			if (schema != null) {
 				return schema;
 			}
-			final String cls = this.schemaRoot + toClassName(schemaName);
+			final String cls = this.schemaRoot + toClassName(schemaName) + "Schema";
 			try {
 				schema = (Schema) Class.forName(cls).newInstance();
 			} catch (final Exception e) {
-				logger.error("No form named {} because we could not locate class {}", schemaName, cls);
+				logger.error("No schema named {} because we could not locate class {}", schemaName, cls);
 				return null;
 			}
 			this.schemas.put(schemaName, schema);

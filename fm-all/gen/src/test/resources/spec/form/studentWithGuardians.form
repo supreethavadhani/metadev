@@ -6,12 +6,30 @@
         "create",
         "update"
     ],
+    "localFields": [
+        {
+            "name": "levelId",
+            "dataType": "id",
+            "isRequired": true,
+            "listKey": "programId",
+            "listName": "levelList"
+        },
+        {
+            "name": "sectionId",
+            "dataType": "id",
+            "isRequired": true,
+            "listName": "sectionList"
+        }
+
+    ],
     "linkedForms": [
         {
             "name": "guardians",
             "formName": "guardian",
             "minRows": 1,
             "maxRows": 10,
+            "isTabular": true,
+            "isEditable": true,
             "childLinkFields": [
                 "studentId"
             ],
@@ -35,18 +53,18 @@
             "label": "Department"
         },
         {
-            "name": "program",
+            "name": "programId",
             "controlType": "dropDown",
             "label": "Progrm"
         },
         {
-            "name": "level",
+            "name": "levelId",
             "controlType": "dropDown",
             "label": "Level"
         },
         {
-            "name": "section",
-            "controlType": "input",
+            "name": "sectionId",
+            "controlType": "dropDown",
             "label": "Section"
         },
         {
@@ -160,7 +178,7 @@
             "label": "Caste"
         },
         {
-            "name": "nationlity",
+            "name": "nationality",
             "controlType": "input",
             "label": "Nationality"
         },

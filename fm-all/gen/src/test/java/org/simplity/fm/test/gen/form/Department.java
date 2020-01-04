@@ -24,12 +24,12 @@ public Department() {
 	}
 
 	@Override
-	protected DepartmentData newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {
-		return new DepartmentData(this, (DepartmentData) schemaData, values, data);
+	protected DepartmentFd newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {
+		return new DepartmentFd(this, (DepartmentData) schemaData, values, data);
 	}
 
 	@Override
-	protected DepartmentDataTable newFormDataTable(final SchemaDataTable table, final Object[][] values) {
-		return new DepartmentDataTable(this, (DepartmentDataTable) table, values);
+	protected DepartmentFdt newFormDataTable(final SchemaDataTable table, final Object[][] values) {
+		return new DepartmentFdt(this, (DepartmentDataTable) table, values);
 	}
 }

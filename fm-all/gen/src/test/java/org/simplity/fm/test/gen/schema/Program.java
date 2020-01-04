@@ -43,42 +43,27 @@ public class Program extends Schema {	private static final DbField[] FIELDS = {
 		this.validations = VALIDS;
 		this.operations = OPS;
 
-		DbAssistant a = new DbAssistant();
-
-		this.dbAssistant = a;
-		a.selectClause = SELECT;
-		a.selectParams = this.getParams(SELECT_IDX);
-		a.whereClause = WHERE;
-		a.whereParams = this.getParams(WHERE_IDX);
-		a.insertClause = INSERT;
-		a.insertParams = this.getParams(INSERT_IDX);
-		a.updateClause = UPDATE;
-		a.updateParams = this.getParams(UPDATE_IDX);
-		a.deleteClause = DELETE;
-		a.generatedColumnName = "program_id";
-		a.generatedKeyIdx = 0;
-		a.nbrFieldsInARow = 7;
-		a.tenantField = this.fields[1];
+		this.dbAssistant = new DbAssistant(7, this.fields[1], SELECT, this.getParams(SELECT_IDX), WHERE, this.getParams(WHERE_IDX), INSERT, this.getParams(INSERT_IDX), UPDATE, this.getParams(UPDATE_IDX), DELETE, "program_id", 0, null);
 		this.initialize();
 	}
 
 	@Override
-	public ProgramData newDataObject() {
+	public ProgramData newSchemaData() {
 		return new ProgramData(this, null);
 	}
 
 	@Override
-	protected ProgramData newDataObject(final Object[] data) {
+	protected ProgramData newSchemaData(final Object[] data) {
 		return new ProgramData(this, data);
 	}
 
 	@Override
-	public ProgramDataTable newDataTable() {
+	public ProgramDataTable newSchemaDataTable() {
 		return new ProgramDataTable(this, null);
 	}
 
 	@Override
-	protected ProgramDataTable newDataTable(final Object[][] data) {
+	protected ProgramDataTable newSchemaDataTable(final Object[][] data) {
 		return new ProgramDataTable(this, data);
 	}
 }

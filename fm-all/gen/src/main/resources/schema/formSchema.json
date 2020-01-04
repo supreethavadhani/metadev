@@ -12,12 +12,18 @@
         },
         "dbOperations": {
             "type": "array",
-            "items":{
-                "type":"string",
-                "enum":["Get", "Create", "Update", "Filter", "Bulk"]
+            "items": {
+                "type": "string",
+                "enum": [
+                    "get",
+                    "create",
+                    "update",
+                    "filter",
+                    "bulk"
+                ]
             }
         },
-        "tempFields": {
+        "localFields": {
             "type": "array",
             "items": {
                 "type": "object",
@@ -35,8 +41,8 @@
                     "defaultValue": {
                         "type": "string"
                     },
-                    "isRequired":{
-                        "type":"boolean"
+                    "isRequired": {
+                        "type": "boolean"
                     },
                     "listName": {
                         "type": "string"
@@ -56,11 +62,28 @@
             "items": {
                 "type": "object",
                 "required": [
-                    "name"
+                    "name",
+                    "controlType"
                 ],
                 "properties": {
                     "name": {
                         "type": "string"
+                    },
+                    "controlType": {
+                        "type": "string",
+                        "enum": [
+                            "hidden",
+                            "input",
+                            "dropDown",
+                            "checkBox",
+                            "radio",
+                            "output",
+                            "disabled",
+                            "label",
+                            "dividier",
+                            "title",
+                            "password"
+                        ]
                     },
                     "label": {
                         "type": "string"
@@ -85,9 +108,9 @@
                 "required": [
                     "name",
                     "formName",
-                    "isArray",
                     "parentLinkFields",
-                    "childLinkFields"
+                    "childLinkFields",
+                    "isTabular"
                 ],
                 "properties": {
                     "name": {
@@ -96,17 +119,32 @@
                     "formName": {
                         "type": "string"
                     },
-                    "isArray": {
+                    "isEditable": {
                         "type": "boolean"
                     },
-                    "minRows":{
-                        "type":"integer"
+                    "isTabular": {
+                        "type": "boolean"
                     },
-                    "maxRows":{
-                        "type":"integer"
+                    "minRows": {
+                        "type": "integer"
+                    },
+                    "maxRows": {
+                        "type": "integer"
                     },
                     "errorId": {
                         "type": "string"
+                    },
+                    "parentLinkFields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "childLinkFields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     }
                 },
                 "additionalProperties": false

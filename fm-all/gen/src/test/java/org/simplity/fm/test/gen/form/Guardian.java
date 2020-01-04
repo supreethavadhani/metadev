@@ -24,12 +24,12 @@ public Guardian() {
 	}
 
 	@Override
-	protected GuardianData newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {
-		return new GuardianData(this, (GuardianData) schemaData, values, data);
+	protected GuardianFd newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {
+		return new GuardianFd(this, (GuardianData) schemaData, values, data);
 	}
 
 	@Override
-	protected GuardianDataTable newFormDataTable(final SchemaDataTable table, final Object[][] values) {
-		return new GuardianDataTable(this, (GuardianDataTable) table, values);
+	protected GuardianFdt newFormDataTable(final SchemaDataTable table, final Object[][] values) {
+		return new GuardianFdt(this, (GuardianDataTable) table, values);
 	}
 }

@@ -24,12 +24,12 @@ public Section() {
 	}
 
 	@Override
-	protected SectionData newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {
-		return new SectionData(this, (SectionData) schemaData, values, data);
+	protected SectionFd newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {
+		return new SectionFd(this, (SectionData) schemaData, values, data);
 	}
 
 	@Override
-	protected SectionDataTable newFormDataTable(final SchemaDataTable table, final Object[][] values) {
-		return new SectionDataTable(this, (SectionDataTable) table, values);
+	protected SectionFdt newFormDataTable(final SchemaDataTable table, final Object[][] values) {
+		return new SectionFdt(this, (SectionDataTable) table, values);
 	}
 }

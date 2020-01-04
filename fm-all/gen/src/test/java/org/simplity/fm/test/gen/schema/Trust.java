@@ -50,41 +50,27 @@ public class Trust extends Schema {	private static final DbField[] FIELDS = {
 		this.validations = VALIDS;
 		this.operations = OPS;
 
-		DbAssistant a = new DbAssistant();
-
-		this.dbAssistant = a;
-		a.selectClause = SELECT;
-		a.selectParams = this.getParams(SELECT_IDX);
-		a.whereClause = WHERE;
-		a.whereParams = this.getParams(WHERE_IDX);
-		a.insertClause = INSERT;
-		a.insertParams = this.getParams(INSERT_IDX);
-		a.updateClause = UPDATE;
-		a.updateParams = this.getParams(UPDATE_IDX);
-		a.deleteClause = DELETE;
-		a.generatedColumnName = "trust_id";
-		a.generatedKeyIdx = 0;
-		a.nbrFieldsInARow = 14;
+		this.dbAssistant = new DbAssistant(14, null, SELECT, this.getParams(SELECT_IDX), WHERE, this.getParams(WHERE_IDX), INSERT, this.getParams(INSERT_IDX), UPDATE, this.getParams(UPDATE_IDX), DELETE, "trust_id", 0, null);
 		this.initialize();
 	}
 
 	@Override
-	public TrustData newDataObject() {
+	public TrustData newSchemaData() {
 		return new TrustData(this, null);
 	}
 
 	@Override
-	protected TrustData newDataObject(final Object[] data) {
+	protected TrustData newSchemaData(final Object[] data) {
 		return new TrustData(this, data);
 	}
 
 	@Override
-	public TrustDataTable newDataTable() {
+	public TrustDataTable newSchemaDataTable() {
 		return new TrustDataTable(this, null);
 	}
 
 	@Override
-	protected TrustDataTable newDataTable(final Object[][] data) {
+	protected TrustDataTable newSchemaDataTable(final Object[][] data) {
 		return new TrustDataTable(this, data);
 	}
 }

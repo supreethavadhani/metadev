@@ -23,7 +23,6 @@
 package org.simplity.fm.core.data;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,7 +33,6 @@ import java.util.function.Consumer;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.JsonUtil;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.RdbDriver;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.IServiceContext;
@@ -99,25 +97,25 @@ public abstract class Schema {
 	 * @param data
 	 * @return data table based on the data
 	 */
-	protected abstract SchemaDataTable newDataTable(Object[][] data);
+	protected abstract SchemaDataTable newSchemaDataTable(Object[][] data);
 
 	/**
 	 * @return a new instance of data table based on this schema
 	 */
-	public abstract SchemaDataTable newDataTable();
+	public abstract SchemaDataTable newSchemaDataTable();
 
 	/**
 	 *
 	 * @return a db data that can carry data for this schema
 	 */
-	public abstract SchemaData newDataObject();
+	public abstract SchemaData newSchemaData();
 
 	/**
 	 *
 	 * @param fieldValues
 	 * @return a db data that can carry data for this schema
 	 */
-	protected abstract SchemaData newDataObject(Object[] fieldValues);
+	protected abstract SchemaData newSchemaData(Object[] fieldValues);
 
 	/**
 	 * MUST BE CALLED after setting all protected fields
@@ -252,7 +250,7 @@ public abstract class Schema {
 				rows.add(dataRow.fieldValues);
 			}
 		});
-		return this.newDataTable(rows.toArray(new Object[0][]));
+		return this.newSchemaDataTable(rows.toArray(new Object[0][]));
 	}
 
 	/**
@@ -272,7 +270,7 @@ public abstract class Schema {
 	public SchemaData parseData(final JsonObject json, final boolean forInsert, final IServiceContext ctx,
 			final String tableName, final int rowNbr) {
 
-		final SchemaData dataRow = this.newDataObject();
+		final SchemaData dataRow = this.newSchemaData();
 		final Object[] row = dataRow.fieldValues;
 
 		for (final Field field : this.fields) {
@@ -300,7 +298,7 @@ public abstract class Schema {
 	 *         in this schema. Errors if any,are added to the ctx
 	 */
 	public SchemaData parseKeys(final JsonObject json, final IServiceContext ctx) {
-		final SchemaData dataRow = this.newDataObject();
+		final SchemaData dataRow = this.newSchemaData();
 		final Object[] row = dataRow.getRawData();
 		if (this.keyIndexes != null) {
 			for (final int idx : this.keyIndexes) {
@@ -369,7 +367,7 @@ public abstract class Schema {
 	 * @return data row. To be discarded if errors are added to ctx
 	 */
 	public SchemaData parseForInsert(final String[] data, final IServiceContext ctx) {
-		final SchemaData dataRow = this.newDataObject();
+		final SchemaData dataRow = this.newSchemaData();
 		final Object[] row = dataRow.fieldValues;
 
 		for (final Field field : this.fields) {
@@ -398,14 +396,13 @@ public abstract class Schema {
 	 *            non-null {field1: {oper:"=", value:"abcd"...}
 	 * @param sorts
 	 *            how the result to be sorted {field1:"a/d",
-	 * @param errors
 	 * @param ctx
 	 * @param maxRows
 	 *            mxRows to be read
 	 * @return filter clause that can be used to get rows from the db
 	 */
-	public ParsedFilter parseForFilter(final JsonObject conditions, final JsonObject sorts, final List<Message> errors,
-			final IServiceContext ctx, final int maxRows) {
+	public ParsedFilter parseForFilter(final JsonObject conditions, final JsonObject sorts, final IServiceContext ctx,
+			final int maxRows) {
 		return ParsedFilter.parse(conditions, sorts, this.fieldsMap, this.getTenantField(), ctx, maxRows);
 	}
 
@@ -510,16 +507,12 @@ public abstract class Schema {
 	 * @throws Exception
 	 */
 	public void filter(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final List<Message> msgs = new ArrayList<>();
 		JsonObject conditions = null;
 		JsonElement node = payload.get(Conventions.Http.TAG_CONDITIONS);
 		if (node != null && node.isJsonObject()) {
 			conditions = (JsonObject) node;
 		} else {
-			logger.error("payload for filter should have attribute named {} to contain conditions",
-					Conventions.Http.TAG_CONDITIONS);
-			ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
-			return;
+			logger.error("payload for filter has no conditions. ALl rows will be filtered");
 		}
 
 		/*
@@ -537,23 +530,22 @@ public abstract class Schema {
 			nbrRows = node.getAsInt();
 		}
 
-		final ParsedFilter reader = this.parseForFilter(conditions, sorts, msgs, ctx, nbrRows);
+		final ParsedFilter filter = this.parseForFilter(conditions, sorts, ctx, nbrRows);
 
-		if (msgs.size() > 0) {
+		if (!ctx.allOk()) {
 			logger.warn("Filtering aborted due to errors in input data");
-			ctx.addMessages(msgs);
 			return;
 		}
 
-		if (reader == null) {
+		if (filter == null) {
 			logger.error("DESIGN ERROR: form.parseForFilter() returned null, but failed to put ay error message. ");
 			ctx.addMessage(Message.newError(Message.MSG_INTERNAL_ERROR));
 			return;
 		}
 
-		final SchemaDataTable dataTable = this.newDataTable();
+		final SchemaDataTable dataTable = this.newSchemaDataTable();
 		RdbDriver.getDriver().transact(handle -> {
-			dataTable.filter(handle, reader);
+			dataTable.filter(handle, filter.getWhereClause(), filter.getWhereParamValues());
 			return true;
 		}, true);
 
@@ -568,30 +560,7 @@ public abstract class Schema {
 	}
 
 	/**
-	 * @param handle
-	 * @param whereClauseSRtartingWithWhere
-	 *            .e. "WHERE a=? and b=?". null if no where-clause is to be used
-	 *            in which case all rows from the table/view are read.
-	 * @param values
-	 *            null or empty if where-clause is null or has no parameters.
-	 *            every element MUST be non-null and must be one of the standard
-	 *            objects we use String, Long, Double, Boolean, LocalDate,
-	 *            Instant
-	 * @return non-null, possibly empty, data table with the result of a select
-	 *         query on this schema with the supplied where clause
-	 * @throws SQLException
-	 */
-	public SchemaDataTable filterToTable(final DbHandle handle, final String whereClauseSRtartingWithWhere,
-			final Object[] values) throws SQLException {
-		final Object[][] data = this.getDbAssistant().filter(whereClauseSRtartingWithWhere, values, handle);
-		if (data.length == 0) {
-			return this.newDataTable();
-		}
-		return this.newDataTable(data);
-	}
-
-	/**
-	 * service metod for delete operation
+	 * service method for delete operation
 	 *
 	 * @param ctx
 	 * @param payload

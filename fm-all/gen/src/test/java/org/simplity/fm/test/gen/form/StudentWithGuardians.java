@@ -15,9 +15,12 @@ import org.simplity.fm.test.gen.schema.StudentDataTable;
 public class StudentWithGuardians extends Form {
 	protected static final String NAME = "studentWithGuardians";
 	protected static final String SCHEMA = "student";
+	protected static final  Field[] FIELDS = {
+			new Field("levelId", 0, DefinedDataTypes.id, null, null, null, true), 
+			new Field("sectionId", 0, DefinedDataTypes.id, null, null, "sectionList", true)};
 	protected static final  boolean[] OPS = {false, false, false, false, false, false};
 	protected static final LinkedForm[] LINKED_FORMS = {
-			new LinkedForm("guardians", "guardian", 1, 10, null, new String[]{"studentId"}, new String[]{"studentId"})};
+			new LinkedForm("guardians", "guardian", 1, 10, null, new String[]{"studentId"}, new String[]{"studentId"}, true)};
 /** constructor */
 public StudentWithGuardians() {
 		this.name = NAME;
@@ -28,12 +31,12 @@ public StudentWithGuardians() {
 	}
 
 	@Override
-	protected StudentWithGuardiansData newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {
-		return new StudentWithGuardiansData(this, (StudentData) schemaData, values, data);
+	protected StudentWithGuardiansFd newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {
+		return new StudentWithGuardiansFd(this, (StudentData) schemaData, values, data);
 	}
 
 	@Override
-	protected StudentWithGuardiansDataTable newFormDataTable(final SchemaDataTable table, final Object[][] values) {
-		return new StudentWithGuardiansDataTable(this, (StudentDataTable) table, values);
+	protected StudentWithGuardiansFdt newFormDataTable(final SchemaDataTable table, final Object[][] values) {
+		return new StudentWithGuardiansFdt(this, (StudentDataTable) table, values);
 	}
 }

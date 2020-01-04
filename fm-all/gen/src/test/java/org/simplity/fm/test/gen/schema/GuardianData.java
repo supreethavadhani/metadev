@@ -29,17 +29,17 @@ public class GuardianData extends SchemaData {
 	}
 
 	/**
-	 * set value for instituiteId
-	 * @param value to be assigned to instituiteId
+	 * set value for instituteId
+	 * @param value to be assigned to instituteId
 	 */
-	public void setInstituiteId(long value){
+	public void setInstituteId(long value){
 		this.fieldValues[1] = value;
 	}
 
 	/**
-	 * @return value of instituiteId
+	 * @return value of instituteId
 	 */
-	public long getInstituiteId(){
+	public long getInstituteId(){
 		return super.getLongValue(1);
 	}
 

@@ -31,20 +31,37 @@ export class StudentWithGuardians extends Form {
 		,errorId: 'invalidId'
 		,maxValue: 9999999999999
 	};
-	program:Field = {
-		name:'program'
+	programId:Field = {
+		name:'programId'
 		,controlType: 'Dropdown'
 		,label: 'Progrm'
+		,isRequired: true
+		,listName: 'programList'
+		,listKey: 'departmentId'
+		,valueType: 1
+		,errorId: 'invalidId'
+		,maxValue: 9999999999999
 	};
-	level:Field = {
-		name:'level'
+	levelId:Field = {
+		name:'levelId'
 		,controlType: 'Dropdown'
 		,label: 'Level'
+		,isRequired: true
+		,listName: 'levelList'
+		,listKey: 'programId'
+		,valueType: 1
+		,errorId: 'invalidId'
+		,maxValue: 9999999999999
 	};
-	section:Field = {
-		name:'section'
-		,controlType: 'Input'
+	sectionId:Field = {
+		name:'sectionId'
+		,controlType: 'Dropdown'
 		,label: 'Section'
+		,isRequired: true
+		,listName: 'sectionList'
+		,valueType: 1
+		,errorId: 'invalidId'
+		,maxValue: 9999999999999
 	};
 	name:Field = {
 		name:'name'
@@ -304,10 +321,14 @@ export class StudentWithGuardians extends Form {
 		,errorId: 'invalidText'
 		,maxLength: 1000
 	};
-	nationlity:Field = {
-		name:'nationlity'
+	nationality:Field = {
+		name:'nationality'
 		,controlType: 'Input'
 		,label: 'Nationality'
+		,isRequired: true
+		,valueType: 0
+		,errorId: 'invalidText'
+		,maxLength: 1000
 	};
 	category:Field = {
 		name:'category'
@@ -404,13 +425,15 @@ export class StudentWithGuardians extends Form {
 		,errorId: 'invalidTimestamp'
 	};
 
-	guardians: ChildForm = {name:'guardians'
-		,form:Guardian.getInstance()
-		,isEditable:false
-		,label:''
-		,minRows:1
-		,maxRows:10
-		,errorId:null
+	guardians: ChildForm = {
+		name:'guardians',
+		form:Guardian.getInstance(),
+		isEditable:true,
+		isTabular:true,
+		label:'',
+		minRows:1,
+		maxRows:10,
+		errorId:null
 	};
 
 	public static getInstance(): StudentWithGuardians {
@@ -420,10 +443,15 @@ export class StudentWithGuardians extends Form {
 	constructor() {
 		super();
 		this.fields = new Map();
+		this.fields.set('levelId', this.levelId);
+		this.fields.set('sectionId', this.sectionId);
 		this.controls = new Map();
 		this.controls.set('studentId', [Validators.required, Validators.max(9999999999999)]);
 		this.controls.set('instituteId', [Validators.max(9999999999999)]);
 		this.controls.set('departmentId', [Validators.required, Validators.max(9999999999999)]);
+		this.controls.set('programId', [Validators.required, Validators.max(9999999999999)]);
+		this.controls.set('levelId', [Validators.required, Validators.max(9999999999999)]);
+		this.controls.set('sectionId', [Validators.required, Validators.max(9999999999999)]);
 		this.controls.set('name', [Validators.required, Validators.maxLength(50)]);
 		this.controls.set('gender', [Validators.required, Validators.maxLength(10)]);
 		this.controls.set('presentAddressLine1', [Validators.required, Validators.maxLength(1000)]);
@@ -446,6 +474,7 @@ export class StudentWithGuardians extends Form {
 		this.controls.set('bloodGroup', [Validators.maxLength(1000)]);
 		this.controls.set('religion', [Validators.required, Validators.maxLength(1000)]);
 		this.controls.set('caste', [Validators.required, Validators.maxLength(1000)]);
+		this.controls.set('nationality', [Validators.required, Validators.maxLength(1000)]);
 		this.controls.set('category', [Validators.required, Validators.maxLength(1000)]);
 		this.controls.set('personalId', [Validators.required, Validators.minLength(16), Validators.maxLength(16), Validators.pattern('[1-9][0-9]{15}')]);
 		this.controls.set('dateOfBirth', [Validators.required]);
@@ -460,7 +489,7 @@ export class StudentWithGuardians extends Form {
 
 		this.childForms = new Map();
 		this.childForms.set('guardians', this.guardians);
-		this.listFields = ['gender', 'departmentId', 'presentState', 'state', 'admissionQuota', 'religion', 'programId'];
+		this.listFields = ['gender', 'departmentId', 'presentState', 'state', 'admissionQuota', 'religion', 'programId', 'levelId', 'sectionId'];
 		this.keyFields = ['studentId'];
 	}
 
@@ -484,6 +513,7 @@ export interface StudentWithGuardiansData extends Vo {
 	previousClass?: string, 
 	createdAt?: string, 
 	presentState?: string, 
+	levelId?: number, 
 	addressLine1?: string, 
 	addressLine2?: string, 
 	state?: string, 
@@ -498,6 +528,7 @@ export interface StudentWithGuardiansData extends Vo {
 	caste?: string, 
 	admittedLevel?: string, 
 	dateOfBirth?: string, 
+	sectionId?: number, 
 	previousBoard?: string, 
 	qualifyingExamRank?: string, 
 	religion?: string, 

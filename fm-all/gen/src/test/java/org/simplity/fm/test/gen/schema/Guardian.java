@@ -13,7 +13,7 @@ import org.simplity.fm.test.gen.DefinedDataTypes;
  */ 
 public class Guardian extends Schema {	private static final DbField[] FIELDS = {
 			new DbField("guardianId", 0, DefinedDataTypes.id, null, null, null, "guardian_id", ColumnType.PrimaryKey), 
-			new DbField("instituiteId", 1, DefinedDataTypes.tenantKey, null, null, null, "institute_id", ColumnType.TenantKey), 
+			new DbField("instituteId", 1, DefinedDataTypes.tenantKey, null, null, null, "institute_id", ColumnType.TenantKey), 
 			new DbField("studentId", 2, DefinedDataTypes.id, null, null, null, "student_id", ColumnType.RequiredData), 
 			new DbField("relationType", 3, DefinedDataTypes.text, null, null, "relationType", "relation_type", ColumnType.RequiredData), 
 			new DbField("occupation", 4, DefinedDataTypes.text, null, null, null, "occupation", ColumnType.RequiredData), 
@@ -55,40 +55,27 @@ public class Guardian extends Schema {	private static final DbField[] FIELDS = {
 		this.validations = VALIDS;
 		this.operations = OPS;
 
-		DbAssistant a = new DbAssistant();
-
-		this.dbAssistant = a;
-		a.selectClause = SELECT;
-		a.selectParams = this.getParams(SELECT_IDX);
-		a.whereClause = WHERE;
-		a.whereParams = this.getParams(WHERE_IDX);
-		a.insertClause = INSERT;
-		a.insertParams = this.getParams(INSERT_IDX);
-		a.updateClause = UPDATE;
-		a.updateParams = this.getParams(UPDATE_IDX);
-		a.deleteClause = DELETE;
-		a.nbrFieldsInARow = 19;
-		a.tenantField = this.fields[1];
+		this.dbAssistant = new DbAssistant(19, this.fields[1], SELECT, this.getParams(SELECT_IDX), WHERE, this.getParams(WHERE_IDX), INSERT, this.getParams(INSERT_IDX), UPDATE, this.getParams(UPDATE_IDX), DELETE, null, -1, null);
 		this.initialize();
 	}
 
 	@Override
-	public GuardianData newDataObject() {
+	public GuardianData newSchemaData() {
 		return new GuardianData(this, null);
 	}
 
 	@Override
-	protected GuardianData newDataObject(final Object[] data) {
+	protected GuardianData newSchemaData(final Object[] data) {
 		return new GuardianData(this, data);
 	}
 
 	@Override
-	public GuardianDataTable newDataTable() {
+	public GuardianDataTable newSchemaDataTable() {
 		return new GuardianDataTable(this, null);
 	}
 
 	@Override
-	protected GuardianDataTable newDataTable(final Object[][] data) {
+	protected GuardianDataTable newSchemaDataTable(final Object[][] data) {
 		return new GuardianDataTable(this, data);
 	}
 }

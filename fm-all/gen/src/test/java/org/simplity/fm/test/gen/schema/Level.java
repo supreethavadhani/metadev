@@ -44,42 +44,27 @@ public class Level extends Schema {	private static final DbField[] FIELDS = {
 		this.validations = VALIDS;
 		this.operations = OPS;
 
-		DbAssistant a = new DbAssistant();
-
-		this.dbAssistant = a;
-		a.selectClause = SELECT;
-		a.selectParams = this.getParams(SELECT_IDX);
-		a.whereClause = WHERE;
-		a.whereParams = this.getParams(WHERE_IDX);
-		a.insertClause = INSERT;
-		a.insertParams = this.getParams(INSERT_IDX);
-		a.updateClause = UPDATE;
-		a.updateParams = this.getParams(UPDATE_IDX);
-		a.deleteClause = DELETE;
-		a.generatedColumnName = "level_id";
-		a.generatedKeyIdx = 0;
-		a.nbrFieldsInARow = 8;
-		a.tenantField = this.fields[2];
+		this.dbAssistant = new DbAssistant(8, this.fields[2], SELECT, this.getParams(SELECT_IDX), WHERE, this.getParams(WHERE_IDX), INSERT, this.getParams(INSERT_IDX), UPDATE, this.getParams(UPDATE_IDX), DELETE, "level_id", 0, null);
 		this.initialize();
 	}
 
 	@Override
-	public LevelData newDataObject() {
+	public LevelData newSchemaData() {
 		return new LevelData(this, null);
 	}
 
 	@Override
-	protected LevelData newDataObject(final Object[] data) {
+	protected LevelData newSchemaData(final Object[] data) {
 		return new LevelData(this, data);
 	}
 
 	@Override
-	public LevelDataTable newDataTable() {
+	public LevelDataTable newSchemaDataTable() {
 		return new LevelDataTable(this, null);
 	}
 
 	@Override
-	protected LevelDataTable newDataTable(final Object[][] data) {
+	protected LevelDataTable newSchemaDataTable(final Object[][] data) {
 		return new LevelDataTable(this, data);
 	}
 }

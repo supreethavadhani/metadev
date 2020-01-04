@@ -24,12 +24,12 @@ public Level() {
 	}
 
 	@Override
-	protected LevelData newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {
-		return new LevelData(this, (LevelData) schemaData, values, data);
+	protected LevelFd newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {
+		return new LevelFd(this, (LevelData) schemaData, values, data);
 	}
 
 	@Override
-	protected LevelDataTable newFormDataTable(final SchemaDataTable table, final Object[][] values) {
-		return new LevelDataTable(this, (LevelDataTable) table, values);
+	protected LevelFdt newFormDataTable(final SchemaDataTable table, final Object[][] values) {
+		return new LevelFdt(this, (LevelDataTable) table, values);
 	}
 }

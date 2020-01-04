@@ -54,10 +54,13 @@ export class User extends Form {
 		,errorId: 'invalidLoginId'
 		,maxLength: 50
 	};
-	loginTokan:Field = {
-		name:'loginTokan'
+	loginToken:Field = {
+		name:'loginToken'
 		,controlType: 'Output'
 		,label: 'Login Token'
+		,valueType: 0
+		,errorId: 'invalidText'
+		,maxLength: 1000
 	};
 	loginEnabled:Field = {
 		name:'loginEnabled'
@@ -92,20 +95,21 @@ export class User extends Form {
 		,errorId: 'invalidText'
 		,maxLength: 1000
 	};
-	currentLoginIP:Field = {
-		name:'currentLoginIP'
+	currentLoginIp:Field = {
+		name:'currentLoginIp'
 		,controlType: 'Output'
 		,label: 'Current Login IP'
+		,valueType: 0
+		,errorId: 'invalidIp'
+		,maxLength: 1000
 	};
-	country:Field = {
-		name:'country'
-		,controlType: 'Hidden'
-		,label: 'Premanent Country'
-	};
-	previousLoginIP:Field = {
-		name:'previousLoginIP'
+	previousLoginIp:Field = {
+		name:'previousLoginIp'
 		,controlType: 'Output'
 		,label: 'Previous Login IP'
+		,valueType: 0
+		,errorId: 'invalidIp'
+		,maxLength: 1000
 	};
 	currentLoginAt:Field = {
 		name:'currentLoginAt'
@@ -154,10 +158,13 @@ export class User extends Form {
 		this.controls.set('trustId', [Validators.max(9999999999999)]);
 		this.controls.set('userType', [Validators.required, Validators.maxLength(20)]);
 		this.controls.set('loginId', [Validators.required, Validators.maxLength(50)]);
+		this.controls.set('loginToken', [Validators.maxLength(1000)]);
 		this.controls.set('loginEnabled', [Validators.required]);
 		this.controls.set('resetPasswordCount', [Validators.max(9999999999999)]);
 		this.controls.set('loginCount', [Validators.max(9999999999999)]);
 		this.controls.set('confirmationToken', [Validators.maxLength(1000)]);
+		this.controls.set('currentLoginIp', [Validators.maxLength(1000)]);
+		this.controls.set('previousLoginIp', [Validators.maxLength(1000)]);
 		this.controls.set('currentLoginAt', []);
 		this.controls.set('previousLoginAt', []);
 		this.controls.set('resetPasswordSentAt', []);

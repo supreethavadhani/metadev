@@ -70,7 +70,7 @@ public abstract class SchemaData {
 	 * data for (or from) the schema. Each element is the value of the
 	 * corresponding field in the schema
 	 */
-	protected final Object[] fieldValues;
+	protected Object[] fieldValues;
 
 	protected SchemaData(final Schema schema, final Object[] values) {
 		this.schema = schema;
@@ -212,25 +212,32 @@ public abstract class SchemaData {
 	}
 
 	/**
-	 * fetch data for this form from a db using a filter condition, that is
-	 * likely to get only one row. In any case,this method stops at first row.
-	 *
 	 * @param handle
-	 * @param sql
-	 *            sql that is likely to result in only one row.
-	 *
-	 * @return true if it is one row read.false if no data found for this form
-	 *         (key not
-	 *         found...)
+	 * @param whereClauseStartingWithWhere
+	 *            e.g. "WHERE a=? and b=?" null if all rows are to be read. Best
+	 *            practice is to use parameters rather than dynamic sql. That is
+	 *            you should use a=? rather than a = 32
+	 * @param values
+	 *            null or empty if where-clause is null or has no parameters.
+	 *            every element MUST be non-null and must be one of the standard
+	 *            objects we use String, Long, Double, Boolean, LocalDate,
+	 *            Instant
+	 * @return true if a row was read into this object. false otherwise
 	 * @throws SQLException
 	 */
-	public boolean readFirstOne(final DbHandle handle, final ParsedFilter sql) throws SQLException {
+	public boolean filterFirstOne(final DbHandle handle, final String whereClauseStartingWithWhere,
+			final Object[] values) throws SQLException {
 		final DbAssistant asst = this.schema.getDbAssistant();
 		if (asst == null) {
 			this.noOps();
 			return false;
 		}
-		return asst.readFirstOne(handle, sql.getSql(), sql.getWhereParams(), this.fieldValues);
+		final Object[][] data = asst.filter(whereClauseStartingWithWhere, values, true, handle);
+		if (data.length == 0) {
+			return false;
+		}
+		this.fieldValues = data[0];
+		return true;
 	}
 
 	/**

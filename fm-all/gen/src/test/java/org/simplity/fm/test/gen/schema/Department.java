@@ -50,42 +50,27 @@ public class Department extends Schema {	private static final DbField[] FIELDS =
 		this.validations = VALIDS;
 		this.operations = OPS;
 
-		DbAssistant a = new DbAssistant();
-
-		this.dbAssistant = a;
-		a.selectClause = SELECT;
-		a.selectParams = this.getParams(SELECT_IDX);
-		a.whereClause = WHERE;
-		a.whereParams = this.getParams(WHERE_IDX);
-		a.insertClause = INSERT;
-		a.insertParams = this.getParams(INSERT_IDX);
-		a.updateClause = UPDATE;
-		a.updateParams = this.getParams(UPDATE_IDX);
-		a.deleteClause = DELETE;
-		a.generatedColumnName = "department_id";
-		a.generatedKeyIdx = 0;
-		a.nbrFieldsInARow = 14;
-		a.tenantField = this.fields[1];
+		this.dbAssistant = new DbAssistant(14, this.fields[1], SELECT, this.getParams(SELECT_IDX), WHERE, this.getParams(WHERE_IDX), INSERT, this.getParams(INSERT_IDX), UPDATE, this.getParams(UPDATE_IDX), DELETE, "department_id", 0, null);
 		this.initialize();
 	}
 
 	@Override
-	public DepartmentData newDataObject() {
+	public DepartmentData newSchemaData() {
 		return new DepartmentData(this, null);
 	}
 
 	@Override
-	protected DepartmentData newDataObject(final Object[] data) {
+	protected DepartmentData newSchemaData(final Object[] data) {
 		return new DepartmentData(this, data);
 	}
 
 	@Override
-	public DepartmentDataTable newDataTable() {
+	public DepartmentDataTable newSchemaDataTable() {
 		return new DepartmentDataTable(this, null);
 	}
 
 	@Override
-	protected DepartmentDataTable newDataTable(final Object[][] data) {
+	protected DepartmentDataTable newSchemaDataTable(final Object[][] data) {
 		return new DepartmentDataTable(this, data);
 	}
 }

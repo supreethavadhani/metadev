@@ -78,40 +78,27 @@ public class Student extends Schema {	private static final DbField[] FIELDS = {
 		this.validations = VALIDS;
 		this.operations = OPS;
 
-		DbAssistant a = new DbAssistant();
-
-		this.dbAssistant = a;
-		a.selectClause = SELECT;
-		a.selectParams = this.getParams(SELECT_IDX);
-		a.whereClause = WHERE;
-		a.whereParams = this.getParams(WHERE_IDX);
-		a.insertClause = INSERT;
-		a.insertParams = this.getParams(INSERT_IDX);
-		a.updateClause = UPDATE;
-		a.updateParams = this.getParams(UPDATE_IDX);
-		a.deleteClause = DELETE;
-		a.nbrFieldsInARow = 40;
-		a.tenantField = this.fields[1];
+		this.dbAssistant = new DbAssistant(40, this.fields[1], SELECT, this.getParams(SELECT_IDX), WHERE, this.getParams(WHERE_IDX), INSERT, this.getParams(INSERT_IDX), UPDATE, this.getParams(UPDATE_IDX), DELETE, null, -1, null);
 		this.initialize();
 	}
 
 	@Override
-	public StudentData newDataObject() {
+	public StudentData newSchemaData() {
 		return new StudentData(this, null);
 	}
 
 	@Override
-	protected StudentData newDataObject(final Object[] data) {
+	protected StudentData newSchemaData(final Object[] data) {
 		return new StudentData(this, data);
 	}
 
 	@Override
-	public StudentDataTable newDataTable() {
+	public StudentDataTable newSchemaDataTable() {
 		return new StudentDataTable(this, null);
 	}
 
 	@Override
-	protected StudentDataTable newDataTable(final Object[][] data) {
+	protected StudentDataTable newSchemaDataTable(final Object[][] data) {
 		return new StudentDataTable(this, data);
 	}
 }

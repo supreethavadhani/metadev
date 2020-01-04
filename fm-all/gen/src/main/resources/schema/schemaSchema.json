@@ -1,5 +1,5 @@
 {
-	"$schema": "http://json-schema.org/draft-07/schema#",
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "description": "Schema for data base schema.json",
     "required": [
         "name",
@@ -19,6 +19,19 @@
         "useTimestampCheck": {
             "type": "boolean"
         },
+        "dbOperations": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "get",
+                    "create",
+                    "update",
+                    "filter",
+                    "bulk"
+                ]
+            }
+        },
         "fields": {
             "type": "array",
             "items": {
@@ -34,7 +47,35 @@
                         "type": "string"
                     },
                     "dataType": {
-                        "type": "string"
+                        "type": "string",
+                        "enum": [
+                            "accountStatus",
+                            "bool",
+                            "code",
+                            "country",
+                            "date",
+                            "desc",
+                            "email",
+                            "govtCode",
+                            "id",
+                            "ip",
+                            "json",
+                            "loginId",
+                            "money",
+                            "name",
+                            "integer",
+                            "phone",
+                            "pin",
+                            "state",
+                            "tenantKey",
+                            "text",
+                            "timestamp",
+                            "uniqueId",
+                            "url",
+                            "userType",
+                            "gender",
+                            "income"
+                        ]
                     },
                     "defaultValue": {
                         "type": "string"
@@ -45,24 +86,21 @@
                     "columnType": {
                         "type": "string",
                         "enum": [
-                            "GeneratedPrimaryKey",
-                            "PrimaryKey",
-                            "TenantKey",
-                            "CreatedBy",
-                            "CreatedAt",
-                            "ModifiedBy",
-                            "ModifiedAt",
-                            "RequiredData",
-                            "OptionalData"
+                            "generatedPrimaryKey",
+                            "primaryKey",
+                            "tenantKey",
+                            "createdBy",
+                            "createdAt",
+                            "modifiedBy",
+                            "modifiedAt",
+                            "requiredData",
+                            "optionalData"
                         ]
                     },
                     "listName": {
                         "type": "string"
                     },
                     "listKey": {
-                        "type": "string"
-                    },
-                    "errorId": {
                         "type": "string"
                     }
                 },

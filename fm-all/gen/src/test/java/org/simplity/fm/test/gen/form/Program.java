@@ -24,12 +24,12 @@ public Program() {
 	}
 
 	@Override
-	protected ProgramData newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {
-		return new ProgramData(this, (ProgramData) schemaData, values, data);
+	protected ProgramFd newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {
+		return new ProgramFd(this, (ProgramData) schemaData, values, data);
 	}
 
 	@Override
-	protected ProgramDataTable newFormDataTable(final SchemaDataTable table, final Object[][] values) {
-		return new ProgramDataTable(this, (ProgramDataTable) table, values);
+	protected ProgramFdt newFormDataTable(final SchemaDataTable table, final Object[][] values) {
+		return new ProgramFdt(this, (ProgramDataTable) table, values);
 	}
 }

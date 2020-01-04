@@ -58,11 +58,6 @@
             "label": "Country"
         },
         {
-            "name": "govtCode",
-            "controlType": "input",
-            "label": "Government Code"
-        },
-        {
             "name": "phoneNumber",
             "controlType": "input",
             "label": "Phone Number"

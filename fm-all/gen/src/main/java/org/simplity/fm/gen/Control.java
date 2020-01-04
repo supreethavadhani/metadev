@@ -58,8 +58,11 @@ class Control {
 		final String b = "\n\t\t,";
 		def.append(b).append("controlType: '").append(this.getControlType().name()).append('\'');
 
-		if (this.label != null) {
-			def.append(b).append("label: ").append(Util.escapeTs(this.label));
+		def.append(b).append("label: ");
+		if (this.label == null) {
+			def.append(Util.escapeTs(this.name));
+		} else {
+			def.append(Util.escapeTs(this.label));
 		}
 
 		if (this.placeHolder != null) {

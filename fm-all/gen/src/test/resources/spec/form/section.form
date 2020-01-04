@@ -1,0 +1,39 @@
+{
+    "name": "section",
+    "schemaName": "section",
+    "dbOperations": [
+        "get",
+        "create",
+        "update",
+        "filter",
+        "bulk"
+    ],
+    "controls": [
+        {
+            "name": "sectionId",
+            "controlType": "hidden"
+        },
+        {
+            "name": "instituteId",
+            "controlType": "hidden"
+        },
+       {
+            "name": "name",
+            "controlType": "input",
+            "label": "Name"
+        },
+        {
+            "name": "code",
+            "controlType": "input",
+            "label": "Code"
+        },
+        {
+            "name": "createdAt",
+            "controlType": "hidden"
+        },
+        {
+            "name": "updatedAt",
+            "controlType": "hidden"
+        }
+    ]
+}

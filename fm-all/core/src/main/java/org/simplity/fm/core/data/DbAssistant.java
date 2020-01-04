@@ -43,8 +43,8 @@ import org.slf4j.LoggerFactory;
  * instance.
  *
  * <p>
- * NOTE: An instance of this class is created only in generated code. The code
- * sets the right attributes values after creating the instance
+ * NOTE: We do not expect user code to create instance of this class. The
+ * constructor is scary enough for any programmer to run away
  * </p>
  *
  * @author simplity.org
@@ -55,70 +55,140 @@ public class DbAssistant {
 	/**
 	 * e.g. where a=? and b=?
 	 */
-	protected String whereClause;
+	protected final String whereClause;
 	/**
 	 * db parameters to be used for the where clause
 	 */
-	protected FieldMetaData[] whereParams;
+	protected final FieldMetaData[] whereParams;
 	/**
 	 * e.g. select a,b,c from t
 	 */
-	protected String selectClause;
+	protected final String selectClause;
 	/**
 	 * db parameters to be used to receive data from the result set of the
 	 * select query
 	 */
-	protected FieldMetaData[] selectParams;
+	protected final FieldMetaData[] selectParams;
 	/**
 	 * e.g insert a,b,c,d into table1 values(?,?,?,?)
 	 */
-	protected String insertClause;
+	protected final String insertClause;
 	/**
 	 * db parameters for the insert sql
 	 */
-	protected FieldMetaData[] insertParams;
+	protected final FieldMetaData[] insertParams;
 
 	/**
 	 * e.g. update table1 set a=?, b=?, c=?
 	 */
-	protected String updateClause;
+	protected final String updateClause;
 	/**
 	 * db parameters for the update sql
 	 */
-	protected FieldMetaData[] updateParams;
+	protected final FieldMetaData[] updateParams;
 
 	/**
 	 * e.g. delete from table1. Note that where is not part of this.
 	 */
-	protected String deleteClause;
+	protected final String deleteClause;
 
 	/**
 	 * db column name that is generated as internal key. null if this is not
 	 * relevant
 	 */
-	protected String generatedColumnName;
+	protected final String generatedColumnName;
 
 	/**
 	 *
 	 */
-	protected int generatedKeyIdx = -1;
+	protected final int generatedKeyIdx;
 
 	/**
 	 * if this APP is designed for multi-tenant deployment, and this table has
 	 * data across tenants..
 	 */
-	protected DbField tenantField;
+	protected final DbField tenantField;
 
 	/**
 	 * if this table allows update, and needs to use time-stamp-match technique
 	 * to avoid concurrent updates..
 	 */
-	protected DbField timestampField;
+	protected final DbField timestampField;
 
 	/**
 	 * number of fields in the schema to which this meta data is attached
 	 */
-	protected int nbrFieldsInARow;
+	protected final int nbrFieldsInARow;
+
+	/**
+	 * Designed for code generation. Not to be used by the programmers
+	 * constructor when there is no primary key. only filter will be allowed
+	 *
+	 * @param nbrFieldsInARow
+	 * @param tenantField
+	 * @param selectClause
+	 * @param selectParams
+	 */
+	public DbAssistant(final int nbrFieldsInARow, final DbField tenantField, final String selectClause,
+			final FieldMetaData[] selectParams) {
+		this.nbrFieldsInARow = nbrFieldsInARow;
+		this.tenantField = tenantField;
+		this.selectClause = selectClause;
+		this.selectParams = selectParams;
+		this.whereClause = null;
+		this.whereParams = null;
+		this.insertClause = null;
+		this.insertParams = null;
+		this.updateClause = null;
+		this.updateParams = null;
+		this.deleteClause = null;
+		this.generatedColumnName = null;
+		this.generatedKeyIdx = -1;
+		this.timestampField = null;
+	}
+
+	/**
+	 * Constructor with so many parameter!!
+	 * Designed for code generation. Not to be used by the programmers.
+	 *
+	 * Builder pattern not used because this is meant for generated code, and
+	 * not a programmer
+	 *
+	 * @param nbrFieldsInARow
+	 * @param tenantField
+	 * @param selectClause
+	 * @param selectParams
+	 * @param whereClause
+	 * @param whereParams
+	 * @param insertClause
+	 * @param insertParams
+	 * @param updateClause
+	 * @param updateParams
+	 * @param deleteClause
+	 * @param generatedColumnName
+	 * @param generatedKeyIdx
+	 * @param timestampField
+	 */
+	public DbAssistant(final int nbrFieldsInARow, final DbField tenantField, final String selectClause,
+			final FieldMetaData[] selectParams, final String whereClause, final FieldMetaData[] whereParams,
+			final String insertClause, final FieldMetaData[] insertParams, final String updateClause,
+			final FieldMetaData[] updateParams, final String deleteClause, final String generatedColumnName,
+			final int generatedKeyIdx, final DbField timestampField) {
+		this.nbrFieldsInARow = nbrFieldsInARow;
+		this.tenantField = tenantField;
+		this.selectClause = selectClause;
+		this.selectParams = selectParams;
+		this.whereClause = whereClause;
+		this.whereParams = whereParams;
+		this.insertClause = insertClause;
+		this.insertParams = insertParams;
+		this.updateClause = updateClause;
+		this.updateParams = updateParams;
+		this.deleteClause = deleteClause;
+		this.generatedColumnName = generatedColumnName;
+		this.generatedKeyIdx = generatedKeyIdx;
+		this.timestampField = timestampField;
+	}
 
 	/**
 	 * insert/create this form data into the db.
@@ -130,7 +200,7 @@ public class DbAssistant {
 	 *         existing form with the same id/key
 	 * @throws SQLException
 	 */
-	public boolean insert(final DbHandle handle, final Object[] values) throws SQLException {
+	boolean insert(final DbHandle handle, final Object[] values) throws SQLException {
 		int n = 0;
 		if (this.generatedColumnName == null) {
 			n = writeWorker(handle, this.insertClause, this.insertParams, values);
@@ -166,7 +236,7 @@ public class DbAssistant {
 	 *         update
 	 * @throws SQLException
 	 */
-	public boolean update(final DbHandle handle, final Object[] values) throws SQLException {
+	boolean update(final DbHandle handle, final Object[] values) throws SQLException {
 		final int nbr = writeWorker(handle, this.updateClause, this.updateParams, values);
 		return nbr > 0;
 	}
@@ -180,7 +250,7 @@ public class DbAssistant {
 	 * @return true if it is indeed deleted happened. false otherwise
 	 * @throws SQLException
 	 */
-	public boolean delete(final DbHandle handle, final Object[] values) throws SQLException {
+	boolean delete(final DbHandle handle, final Object[] values) throws SQLException {
 		final String sql = this.deleteClause + this.whereClause;
 		final int nbr = writeWorker(handle, sql, this.whereParams, values);
 		return nbr > 0;
@@ -207,37 +277,18 @@ public class DbAssistant {
 
 			@Override
 			public boolean setParams(final PreparedStatement ps) throws SQLException {
-				int posn = 1;
+				int posn = 0;
 				final StringBuilder sbf = new StringBuilder("Parameter Values");
 				for (final FieldMetaData p : params) {
+					posn++;
 					final Object value = p.setPsParam(ps, values, posn);
 					sbf.append('\n').append(posn).append('=').append(value);
-					posn++;
 				}
 				logger.info(sbf.toString());
 				return true;
 			}
 
 		};
-	}
-
-	/**
-	 * @param handle
-	 * @param row
-	 * @return true if this row was indeed saved
-	 * @throws SQLException
-	 */
-	public boolean save(final DbHandle handle, final Object[] row) throws SQLException {
-		if (this.generatedKeyIdx == -1) {
-			final String msg = "Save operation not valid as teh key is not generated";
-			logger.error(msg);
-			throw new SQLException(msg);
-		}
-		final Object key = row[this.generatedKeyIdx];
-		if (key != null && ((Long) key) != 0) {
-			return this.update(handle, row);
-		}
-		return this.insert(handle, row);
 	}
 
 	/**
@@ -254,7 +305,7 @@ public class DbAssistant {
 	 *         roll-back if this is false
 	 * @throws SQLException
 	 */
-	public boolean saveAll(final DbHandle handle, final Object[][] rows) throws SQLException {
+	boolean saveAll(final DbHandle handle, final Object[][] rows) throws SQLException {
 		if (this.generatedKeyIdx == -1) {
 			logger.info("Schema has no generated key. Each rowis first updated, failing which it is inserted.");
 			return this.updateOrInsert(handle, rows);
@@ -295,6 +346,32 @@ public class DbAssistant {
 		return insertOk && updateOk;
 	}
 
+	/**
+	 * save all rows into the db. A row is inserted if it has no primary key,
+	 * and is updated if it has primary key.
+	 * NOTE: if any of the operation fails, we return a false. this may be used
+	 * to roll-back the transaction.
+	 *
+	 * @param handle
+	 *
+	 * @param fieldValues
+	 *            data to be saved
+	 * @return true if it was indeed inserted or updated
+	 * @throws SQLException
+	 */
+	boolean save(final DbHandle handle, final Object[] fieldValues) throws SQLException {
+		if (this.generatedKeyIdx == -1) {
+			final String msg = "Schema has no generated key. save opertion is not possible.";
+			logger.error(msg);
+			throw new SQLException(msg);
+		}
+		final Object key = fieldValues[this.generatedKeyIdx];
+		if (key == null || ((Long) key) == 0L) {
+			return this.insert(handle, fieldValues);
+		}
+		return this.update(handle, fieldValues);
+	}
+
 	private boolean updateOrInsert(final DbHandle handle, final Object[][] rows) throws SQLException {
 		for (final Object[] row : rows) {
 			final boolean updated = this.update(handle, row);
@@ -324,7 +401,7 @@ public class DbAssistant {
 	 *         to insert.
 	 * @throws SQLException
 	 */
-	public boolean insertAll(final DbHandle handle, final Object[][] rows) throws SQLException {
+	boolean insertAll(final DbHandle handle, final Object[][] rows) throws SQLException {
 
 		return writeMany(handle, this.insertClause, this.insertParams, rows);
 	}
@@ -341,7 +418,7 @@ public class DbAssistant {
 	 *         row failed to update
 	 * @throws SQLException
 	 */
-	public boolean updateAll(final DbHandle handle, final Object[][] rows) throws SQLException {
+	boolean updateAll(final DbHandle handle, final Object[][] rows) throws SQLException {
 
 		return writeMany(handle, this.updateClause, this.updateParams, rows);
 	}
@@ -393,7 +470,7 @@ public class DbAssistant {
 		for (final int n : nbrs) {
 			idx++;
 			if (n == 0) {
-				logger.error("Row at index {} failed to write to eh data base");
+				logger.error("Row at index {} failed to write to the data base", idx);
 				allOk = false;
 			}
 		}
@@ -431,7 +508,7 @@ public class DbAssistant {
 	 *         found...)
 	 * @throws SQLException
 	 */
-	public boolean read(final DbHandle handle, final Object[] values) throws SQLException {
+	boolean read(final DbHandle handle, final Object[] values) throws SQLException {
 		if (values == null || values.length < this.nbrFieldsInARow) {
 			logger.error(
 					"This schema has {} fields but an array of length {} is assigned to receive data. Data not extracted.",
@@ -449,8 +526,9 @@ public class DbAssistant {
 
 			@Override
 			public void setParams(final PreparedStatement ps) throws SQLException {
-				final int posn = 0;
+				int posn = 0;
 				for (final FieldMetaData p : DbAssistant.this.whereParams) {
+					posn++;
 					final Object value = p.setPsParam(ps, values, posn);
 					if (value == null) {
 						logger.error("fetch() invoked with key at index {} as null ", p.getIndex());
@@ -480,59 +558,6 @@ public class DbAssistant {
 	/**
 	 * select multiple rows from the db based on the filtering criterion
 	 *
-	 * @param handle
-	 * @param filterWhereClause
-	 *            like "WHERE a=? and b=?". possibly null if no where criterion
-	 *            is required
-	 * @param params
-	 *            one for each parameter in the where clause. null/empty array
-	 *            if no where clause is used
-	 * @return non-null, possibly empty array of rows
-	 * @throws SQLException
-	 */
-	public Object[][] filter(final DbHandle handle, final String filterWhereClause,
-			final PreparedStatementParam[] params) throws SQLException {
-		final List<Object[]> result = new ArrayList<>();
-		handle.read(new IDbReader() {
-
-			@Override
-			public String getPreparedStatement() {
-				if (filterWhereClause == null) {
-					return DbAssistant.this.selectClause;
-				}
-				return DbAssistant.this.selectClause + filterWhereClause;
-			}
-
-			@Override
-			public void setParams(final PreparedStatement ps) throws SQLException {
-				if (params == null) {
-					return;
-				}
-				int posn = 0;
-				for (final PreparedStatementParam p : params) {
-					posn++;
-					p.setPsParam(ps, posn);
-				}
-			}
-
-			@Override
-			public boolean readARow(final ResultSet rs) throws SQLException {
-				final Object[] row = new Object[DbAssistant.this.nbrFieldsInARow];
-				result.add(row);
-				int posn = 0;
-				for (final FieldMetaData p : DbAssistant.this.selectParams) {
-					posn++;
-					p.getFromRs(rs, posn, row);
-				}
-				return true;
-			}
-		});
-		return result.toArray(new Object[0][]);
-	}
-
-	/**
-	 * select multiple rows from the db based on the filtering criterion
-	 *
 	 * @param whereClauseStartingWithWhere
 	 *            e.g. "WHERE a=? and b=?" null if all rows are to be read. Best
 	 *            practice is to use parameters rather than dynamic sql. That is
@@ -542,13 +567,16 @@ public class DbAssistant {
 	 *            every element MUST be non-null and must be one of the standard
 	 *            objects we use String, Long, Double, Boolean, LocalDate,
 	 *            Instant
+	 * @param readOnlyOne
+	 *            true if only the first row is to be read. false to read all
+	 *            rows as per filtering criterion
 	 *
 	 * @param handle
 	 * @return non-null, possibly empty array of rows
 	 * @throws SQLException
 	 */
-	public Object[][] filter(final String whereClauseStartingWithWhere, final Object[] values, final DbHandle handle)
-			throws SQLException {
+	Object[][] filter(final String whereClauseStartingWithWhere, final Object[] values, final boolean readOnlyOne,
+			final DbHandle handle) throws SQLException {
 		final List<Object[]> result = new ArrayList<>();
 		handle.read(new IDbReader() {
 
@@ -581,82 +609,9 @@ public class DbAssistant {
 					posn++;
 					p.getFromRs(rs, posn, row);
 				}
-				return true;
+				return !readOnlyOne;
 			}
 		});
 		return result.toArray(new Object[0][]);
 	}
-
-	/**
-	 * to be used when a select query is expected to get a single(or no) row,
-	 * though it is not a key-based read. It
-	 *
-	 * @param handle
-	 * @param filterWhere
-	 *            starts with " WHERE " and contains 0 or more ? as parameters.
-	 *            Can be null if no where clause is required, though this is
-	 *            extremely unlikely
-	 * @param params
-	 *            provides value type and actual values for each of the ? in the
-	 *            where clause. null if there are no parameters
-	 * @param values
-	 *            array to which output (selected) values are to be copied to.
-	 *            Length of this array should be at least the size of the
-	 *            form-fields.Typically, this is the underlying array of the
-	 *            form data
-	 * @return true if one row was read. false otherwise
-	 * @throws SQLException
-	 */
-	public boolean readFirstOne(final DbHandle handle, final String filterWhere, final PreparedStatementParam[] params,
-			final Object[] values) throws SQLException {
-		if (values == null || values.length < this.nbrFieldsInARow) {
-			logger.error(
-					"This schema has {} fields but an array of length {} is assigned to receive data. Data not extracted.",
-					this.nbrFieldsInARow, values == null ? 0 : values.length);
-			return false;
-		}
-
-		final boolean[] result = new boolean[1];
-		handle.read(new IDbReader() {
-
-			@Override
-			public String getPreparedStatement() {
-				if (filterWhere == null) {
-					return DbAssistant.this.selectClause;
-				}
-
-				return DbAssistant.this.selectClause + filterWhere;
-			}
-
-			@Override
-			public void setParams(final PreparedStatement ps) throws SQLException {
-				if (params == null) {
-					return;
-				}
-
-				int posn = 0;
-				for (final PreparedStatementParam p : params) {
-					posn++;
-					p.setPsParam(ps, posn);
-				}
-			}
-
-			@Override
-			public boolean readARow(final ResultSet rs) throws SQLException {
-				int posn = 0;
-				for (final FieldMetaData p : DbAssistant.this.selectParams) {
-					posn++;
-					p.getFromRs(rs, posn, values);
-				}
-				result[0] = true;
-				/*
-				 * return false to signal that we are not interested in reading
-				 * any more rows
-				 */
-				return false;
-			}
-		});
-		return result[0];
-	}
-
 }
