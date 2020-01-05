@@ -413,8 +413,10 @@ public class Form {
 	void emitTs(final StringBuilder sbf, final Map<String, DataType> dataTypes, final Map<String, ValueList> lists,
 			final Map<String, KeyedList> keyedLists, final String tsImportPrefix) {
 		sbf.append("\nimport { Form , Field, ChildForm } from '").append(tsImportPrefix).append("form';");
+		sbf.append("\nimport { FormData } from '").append(tsImportPrefix).append("formData';");
 		sbf.append("\nimport { SelectOption, Vo } from '").append(tsImportPrefix).append("types';");
 		sbf.append("\nimport { Validators } from '@angular/forms'");
+		sbf.append("\nimport { ServiceAgent} from '").append(tsImportPrefix).append("serviceAgent';");
 		/*
 		 * import for child forms being referred
 		 */
@@ -549,15 +551,15 @@ public class Form {
 
 		sbf.append("\n}\n");
 
-		this.emitTsFormData(sbf, dataTypes);
-
+		this.emitTsFormFd(sbf);
+		this.emitTsFormVo(sbf, dataTypes);
 	}
 
 	/**
 	 * create an interface for the data model of this form
 	 */
-	private void emitTsFormData(final StringBuilder sbf, final Map<String, DataType> dataTypes) {
-		sbf.append("\n\nexport interface ").append(Util.toClassName(this.name)).append("Data extends Vo {");
+	private void emitTsFormVo(final StringBuilder sbf, final Map<String, DataType> dataTypes) {
+		sbf.append("\n\nexport interface ").append(Util.toClassName(this.name)).append("Vo extends Vo {");
 		boolean isFirst = true;
 		for (final Field field : this.fields.values()) {
 			if (isFirst) {
@@ -568,6 +570,43 @@ public class Form {
 			final DataType dt = dataTypes.get(field.dataType);
 			sbf.append("\n\t").append(field.name).append("?: ").append(getTsValueType(dt));
 		}
+		sbf.append("\n}\n");
+
+	}
+
+	/**
+	 * extend form data to restrict name field to valid names of this form
+	 */
+	private void emitTsFormFd(final StringBuilder sbf) {
+		final char col = '\'';
+		/*
+		 * names is like 'f1' | 'f2' | 'f3'
+		 */
+		final StringBuilder names = new StringBuilder();
+		boolean isFirst = true;
+		for (final Field field : this.fields.values()) {
+			if (isFirst) {
+				isFirst = false;
+			} else {
+				names.append(" | ");
+			}
+			names.append(col).append(field.name).append(col);
+		}
+		/*
+		 * formFd extends FormData() to extend setFieldValue() and
+		 * getFieldValue()
+		 */
+		final String cls = Util.toClassName(this.name);
+		sbf.append("\n\nexport class ").append(cls).append("Fd extends FormData {");
+		sbf.append("\n\tconstructor(form: ").append(cls).append("Form, sa: ServiceAgent) {");
+		sbf.append("\n\t\tsuper(form, sa);\n\t}");
+
+		final String types = "string | number | boolean | null";
+		sbf.append("\n\n\tsetFieldValue(name: ").append(names).append(", value: ").append(types).append(" ): void {");
+		sbf.append("\n\t\tsuper.setFieldValue(name, value);\n\t}");
+
+		sbf.append("\n\n\tgetFieldValue(name: ").append(names).append(" ): ").append(types).append(" {");
+		sbf.append("\n\t\treturn super.getFieldValue(name);\n\t}");
 		sbf.append("\n}\n");
 
 	}
