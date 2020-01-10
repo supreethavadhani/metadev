@@ -310,13 +310,14 @@ public class Conventions {
 	 */
 	public class Db {
 		/**
-		 * this is app-specific. We will push to this config. This is temp.
-		 * we have to set to "" or null based on App design principles.
+		 * We strongly recommend treating null in db as empty string in the
+		 * programming world, there by reducing possible null-pointer
+		 * exceptions.
 		 */
 		public static final String TEXT_VALUE_OF_NULL = "";
 		/**
-		 * this is app-specific. We will push to this config. This is temp.
-		 * we have to set to 0 or null based on App design principles.
+		 * this is app-specific. BUt we do not intend to push it there till we
+		 * have compelling use case to do so.
 		 */
 		public static final boolean TREAT_NULL_AS_ZERO = true;
 	}

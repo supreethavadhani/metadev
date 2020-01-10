@@ -23,6 +23,7 @@
 package org.simplity.fm.core.datatypes;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
@@ -154,42 +155,63 @@ public class ValueTypeTest {
 
 	@Nested
 	@DisplayName("Test ValueType.Integer")
-	class INtegerTest {
+	class IntegerTest {
 		@ParameterizedTest
-		@ValueSource(strings = { "1", " true", "TRUE ", "  True ", "tRuE" })
-		void shouldParseAsTrue(final String value) {
-			assertEquals(true, ValueType.Boolean.parse(value));
-		}
-
-		@ParameterizedTest
-		@ValueSource(strings = { "  0 ", "false", "FALSE  ", "False", "FaLSe" })
-		void shouldParseAsFalse(final String value) {
-			assertEquals(false, ValueType.Boolean.parse(value));
-		}
-
-		@ParameterizedTest
-		@ValueSource(strings = { "", "a", "3", "Yes", "t", "f", "true1", "true true" })
-		void shouldParseAsNull(final String value) {
-			assertEquals(null, ValueType.Boolean.parse(value));
-		}
-
-		@ParameterizedTest
-		@ValueSource(booleans = { true, false })
-		void shouldSetBoolValueToPs(final boolean value) throws SQLException {
-			Mockito.reset(ValueTypeTest.this.ps);
-			ValueType.Boolean.setPsParam(ValueTypeTest.this.ps, 1, value);
-			Mockito.verify(ValueTypeTest.this.ps).setBoolean(1, value);
+		@ValueSource(strings = { "1a", "a1", "1+1", "1 1", "tRuE", " ", "1  a" })
+		void shouldParseNonNumbersAsNull(final String value) {
+			assertNull(ValueType.Integer.parse(value));
 		}
 
 		@Test
-		void shouldSetNullToPsAsPerConvention() throws SQLException {
+		void shouldParseUpTo19Digits() {
+			assertEquals(1234567890123456789L, ValueType.Integer.parse("1234567890123456789"));
+		}
+
+		@Test
+		void shouldFailIfMoreThan19Digits() {
+			assertNull(ValueType.Integer.parse("12345678901234567890"));
+		}
+
+		@Test
+		void shouldParseNumberStartingWith0() {
+			assertEquals(1L, ValueType.Integer.parse("01"));
+		}
+
+		@Test
+		void shouldParseNumbersStartingWithPlus() {
+			assertEquals(1L, ValueType.Integer.parse("+1"));
+		}
+
+		@Test
+		void shouldParseNumbersStartingWithMinus() {
+			assertEquals(-1L, ValueType.Integer.parse("-1"));
+		}
+
+		@ParameterizedTest
+		@ValueSource(strings = { "1.0", "1.49", "0.5" })
+		void shouldParseDecimalsAsRounded(final String value) {
+			assertEquals(1L, ValueType.Integer.parse(value));
+		}
+
+		@ParameterizedTest
+		@ValueSource(strings = { "-1.0", "-1.5", "-0.6", "-.56" })
+		void shouldParseNegativeDecimalsAsRounded(final String value) {
+			assertEquals(-1L, ValueType.Integer.parse(value));
+		}
+
+		@ParameterizedTest
+		@ValueSource(longs = { 0L, 1L, -1L })
+		void shouldSetLongValueToPs(final long value) throws SQLException {
+			Mockito.reset(ValueTypeTest.this.ps);
+			ValueType.Integer.setPsParam(ValueTypeTest.this.ps, 1, value);
+			Mockito.verify(ValueTypeTest.this.ps).setLong(1, value);
+		}
+
+		@Test
+		void shouldSet0WhenNull() throws SQLException {
 			Mockito.reset(ValueTypeTest.this.ps);
 			ValueType.Integer.setPsParam(ValueTypeTest.this.ps, 1, null);
-			if (Conventions.Db.TREAT_NULL_AS_ZERO) {
-				Mockito.verify(ValueTypeTest.this.ps).setLong(1, 0);
-			} else {
-				Mockito.verify(ValueTypeTest.this.ps).setNull(1, Types.INTEGER);
-			}
+			Mockito.verify(ValueTypeTest.this.ps).setLong(1, 0L);
 		}
 
 		@Test
@@ -200,7 +222,7 @@ public class ValueTypeTest {
 		}
 
 		@Test
-		void shouldGetLongValueFromRes() throws SQLException {
+		void shouldGetLongValueFromRs() throws SQLException {
 			Mockito.reset(ValueTypeTest.this.rs);
 			when(ValueTypeTest.this.rs.wasNull()).thenReturn(false);
 			when(ValueTypeTest.this.rs.getLong(1)).thenReturn(0L);
@@ -210,17 +232,13 @@ public class ValueTypeTest {
 		}
 
 		@Test
-		void shouldTreatNullFromRsAsPerConvention() throws SQLException {
-			Object expectedValue = null;
-			if (Conventions.Db.TREAT_NULL_AS_ZERO) {
-				expectedValue = 0;
-			}
+		void shouldTreatNullFromRsAs0() throws SQLException {
 			Mockito.reset(ValueTypeTest.this.rs);
 			when(ValueTypeTest.this.rs.wasNull()).thenReturn(true);
 			when(ValueTypeTest.this.rs.getLong(1)).thenReturn(1L);
 			when(ValueTypeTest.this.rs.getLong(2)).thenReturn(2L);
-			assertEquals(expectedValue, ValueType.Integer.getFromRs(ValueTypeTest.this.rs, 1));
-			assertEquals(expectedValue, ValueType.Integer.getFromRs(ValueTypeTest.this.rs, 2));
+			assertEquals(0L, ValueType.Integer.getFromRs(ValueTypeTest.this.rs, 1));
+			assertEquals(0L, ValueType.Integer.getFromRs(ValueTypeTest.this.rs, 2));
 		}
 	}
 }

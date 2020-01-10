@@ -73,13 +73,25 @@ public enum ValueType {
 	Integer {
 		@Override
 		public Long doParse(final String value) {
-			/*
-			 * we are okay with decimals but we take the long value of that
-			 */
 			try {
-				return ((Number) Double.parseDouble(value)).longValue();
+				return (Long.parseLong(value));
 			} catch (final Exception e) {
-				return null;
+				try {
+					final double d = Double.parseDouble(value);
+
+					final int idx = value.indexOf('.');
+					if (idx == -1 || idx > 19) {
+						/*
+						 * it was not a decimal, but a long that is longer than
+						 * what long could be
+						 */
+						return null;
+					}
+					return Math.round(d);
+
+				} catch (final Exception e1) {
+					return null;
+				}
 			}
 		}
 
