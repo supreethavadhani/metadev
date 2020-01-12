@@ -131,5 +131,6 @@ class Field implements Util.INamedMember {
 		}
 
 		controls.append("]);");
+		controls.append("\n\t\tthis.fields.set('").append(this.name).append("', this.").append(this.name).append(");");
 	}
 }

@@ -216,6 +216,15 @@ public class Conventions {
 		 */
 		public static final String FOLDER_NAME_SCHEMA = "schema";
 		/**
+		 * generated form classes are named with this suffix. e.g. instituteForm
+		 */
+		public static final String FORM_CLASS_SUFIX = "Form";
+		/**
+		 * generated schema classes are named with this suffix. e.g.
+		 * instituteSchema
+		 */
+		public static final String SCHEMA_CLASS_SUFIX = "Schema";
+		/**
 		 * predefined name for list service
 		 */
 		public static final String SERVICE_LIST = "list";
@@ -234,6 +243,10 @@ public class Conventions {
 		 * name with which the user data is saved in the context
 		 */
 		public static final String USER_IN_CTX = "_user";
+		/**
+		 * name of schema to be used to get user details for creating context
+		 */
+		public static final String USER_SCHEMA_NAME = "user";
 
 	}
 

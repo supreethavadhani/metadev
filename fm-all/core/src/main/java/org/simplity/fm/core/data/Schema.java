@@ -628,6 +628,7 @@ public abstract class Schema {
 	 */
 	public IService getService(final IoType opern) {
 		if (this.operations == null || this.operations[opern.ordinal()] == false) {
+			logger.warn("{} is not a valid operation for schema {}", opern, this.getName());
 			return null;
 		}
 

@@ -52,7 +52,7 @@ public class Form {
 
 	String name;
 	String schemaName;
-	String[] operations;
+	String[] dbOperations;
 	Field[] localFields;
 	Control[] controls;
 	LinkedForm[] linkedForms;
@@ -184,7 +184,7 @@ public class Form {
 		 * protected static final boolean[] OPS = {true, false,..};
 		 */
 		sbf.append(p);
-		getOps(this.operations, sbf);
+		getOps(this.dbOperations, sbf);
 
 		/*
 		 * protected static final LinkedForm[] LINKED_FORMS = {......};
@@ -490,10 +490,10 @@ public class Form {
 		/*
 		 * auto-service operations?
 		 */
-		if (this.operations != null && this.operations.length > 0) {
+		if (this.dbOperations != null && this.dbOperations.length > 0) {
 			sbf.append("\n\t\tthis.opsAllowed = {");
 			boolean first = true;
-			for (String op : this.operations) {
+			for (String op : this.dbOperations) {
 				op = op.trim().toLowerCase();
 				final Integer obj = OP_INDEXES.get(op);
 				if (obj == null) {

@@ -24,6 +24,7 @@ package org.simplity.fm.core.data;
 
 import java.io.IOException;
 
+import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.JsonUtil;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.rdb.RdbDriver;
@@ -46,6 +47,7 @@ import com.google.gson.stream.JsonWriter;
 public abstract class Form {
 	static protected final Logger logger = LoggerFactory.getLogger(Form.class);
 
+	protected static final String SCHEMA_CLASS_SUFIX = Conventions.App.SCHEMA_CLASS_SUFIX;
 	protected String name;
 	protected Schema schema;
 	protected Field[] localFields;
@@ -67,7 +69,7 @@ public abstract class Form {
 	/**
 	 * @return unique name of this form across all forms
 	 */
-	public String getNamea() {
+	public String getName() {
 		return this.name;
 	}
 
@@ -355,6 +357,7 @@ public abstract class Form {
 	 */
 	public IService getService(final IoType opern) {
 		if (this.operations == null || this.operations[opern.ordinal()] == false) {
+			logger.warn("{} is not a valid operation for form {}", opern, this.getName());
 			return null;
 		}
 
