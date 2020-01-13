@@ -211,7 +211,7 @@ public class Generator {
 
 		sbf.setLength(0);
 		form.emitTs(sbf, dataTypes.dataTypes, app.valueLists, app.keyedLists, tsImportPrefix);
-		Util.writeOut(tsOutputFolder + Util.toClassName(fn) + "Form.ts", sbf);
+		Util.writeOut(tsOutputFolder + fn + "Form.ts", sbf);
 
 	}
 

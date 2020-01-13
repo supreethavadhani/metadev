@@ -424,13 +424,13 @@ public class Form {
 			for (final LinkedForm child : this.linkedForms) {
 				final String fn = child.getFormName();
 				sbf.append("\nimport { ").append(Util.toClassName(fn)).append("Form } from './").append(fn)
-						.append("';");
+						.append("Form';");
 			}
 		}
 
-		final String cls = Util.toClassName(this.name);
-		sbf.append("\n\nexport class ").append(cls).append("Form extends Form {");
-		sbf.append("\n\tprivate static _instance = new ").append(cls).append("Form();");
+		final String cls = Util.toClassName(this.name) + "Form";
+		sbf.append("\n\nexport class ").append(cls).append(" extends Form {");
+		sbf.append("\n\tprivate static _instance = new ").append(cls).append("();");
 
 		/*
 		 * fields as members. We also accumulate code for controls

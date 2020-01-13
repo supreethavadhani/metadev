@@ -79,7 +79,7 @@ class LinkedForm {
 		final String T = ",\n\t\t";
 		sbf.append("\n\t").append(this.name).append(": ChildForm = {");
 		sbf.append("\n\t\tname:").append(Util.escapeTs(this.name));
-		sbf.append(T).append("form:").append(Util.toClassName(this.formName)).append(".getInstance()");
+		sbf.append(T).append("form:").append(Util.toClassName(this.formName)).append("Form.getInstance()");
 		sbf.append(T).append("isEditable:").append(this.isEditable);
 		sbf.append(T).append("isTabular:").append(this.isTabular);
 		sbf.append(T).append("label:").append(this.label == null ? "''" : Util.escapeTs(this.label));
