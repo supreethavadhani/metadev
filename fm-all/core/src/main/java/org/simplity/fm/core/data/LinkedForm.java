@@ -185,13 +185,13 @@ public class LinkedForm {
 	}
 
 	private Object[] getWhereValues(final Object[] parentRow) {
-		final PreparedStatementParam[] params = new PreparedStatementParam[this.linkWhereParams.length];
+		final Object[] values = new Object[this.linkWhereParams.length];
 		int idx = -1;
 		for (final FieldMetaData p : this.linkWhereParams) {
 			idx++;
-			params[idx] = new PreparedStatementParam(parentRow[p.getIndex()], p.getValueType());
+			values[idx] = parentRow[p.getIndex()];
 		}
-		return params;
+		return values;
 	}
 
 	private PreparedStatementParam[] createParams(final Object[] parentRow) {
