@@ -481,4 +481,14 @@ public abstract class Form {
 			}
 		}
 	}
+
+	/**
+	 * @return an empty form data
+	 */
+	public abstract FormData newFormData();
+
+	/**
+	 * @return an empty form data
+	 */
+	public abstract FormDataTable newFormDataTable();
 }

@@ -39,7 +39,11 @@ public abstract class FormDataTable implements Iterable<FormData> {
 
 	protected FormDataTable(final Form form, final SchemaDataTable dataTable, final Object[][] fieldValues) {
 		this.form = form;
-		this.dataTable = dataTable;
+		if (dataTable == null) {
+			this.dataTable = form.getSchema().newSchemaDataTable();
+		} else {
+			this.dataTable = dataTable;
+		}
 		this.fieldValues = fieldValues;
 	}
 

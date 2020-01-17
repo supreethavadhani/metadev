@@ -89,4 +89,15 @@ class LinkedForm {
 
 		sbf.append("\n\t};");
 	}
+
+	/**
+	 * @param sbf
+	 */
+	void emitJavaGetter(final StringBuilder sbf) {
+		final String c = Util.toClassName(this.formName);
+		sbf.append("\n\n\t/** get form table for this linked form ").append(c).append(" **/");
+		sbf.append("\n\tpublic ").append(c).append("Fdt get").append(c).append("Fdt() {");
+		sbf.append("\n\t\treturn (").append(c).append("Fdt)this.linkedData[").append(this.index).append("];\n\t}");
+
+	}
 }

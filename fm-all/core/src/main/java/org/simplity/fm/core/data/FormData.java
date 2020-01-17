@@ -73,7 +73,11 @@ public abstract class FormData {
 	protected FormData(final Form form, final SchemaData dataObject, final Object[] fieldValues,
 			final FormDataTable[] linkedData) {
 		this.form = form;
-		this.dataObject = dataObject;
+		if (dataObject == null) {
+			this.dataObject = this.form.getSchema().newSchemaData();
+		} else {
+			this.dataObject = dataObject;
+		}
 		this.fieldValues = fieldValues;
 		this.linkedData = linkedData;
 	}
@@ -221,5 +225,13 @@ public abstract class FormData {
 	public void serializeFields(final JsonWriter writer) throws IOException {
 		this.form.serializeToJson(this.dataObject, this.fieldValues, this.linkedData, writer);
 
+	}
+
+	/**
+	 *
+	 * @return schema data associate with this form data. COuld be null
+	 */
+	public SchemaData getSchemaData() {
+		return this.dataObject;
 	}
 }

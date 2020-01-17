@@ -347,5 +347,8 @@ public enum ValueType {
 			ps.setTimestamp(oneBaedPosition, java.sql.Timestamp.from((Instant) value));
 			return;
 		}
+		throw new SQLException(
+				"Value set to a psparameter must be a non-null instance of String, Long, Souble, Boolean, LocalDate or Instance. Supplied value is "
+						+ value.getClass().getName());
 	}
 }

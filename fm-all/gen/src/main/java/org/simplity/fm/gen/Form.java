@@ -37,9 +37,13 @@ import org.simplity.fm.core.data.FormDataTable;
 import org.simplity.fm.core.data.IoType;
 import org.simplity.fm.core.data.SchemaData;
 import org.simplity.fm.core.data.SchemaDataTable;
+import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 /**
  * @author simplity.org
@@ -88,6 +92,7 @@ public class Form {
 			this.fields.putAll(sch.fieldMap);
 		}
 		if (this.localFields != null) {
+			int idx = 0;
 			for (final Field f : this.localFields) {
 				if (this.fields.containsKey(f.name)) {
 					logger.error(
@@ -95,7 +100,8 @@ public class Form {
 							f.name);
 					continue;
 				}
-
+				f.index = idx;
+				idx++;
 				this.fields.put(f.name, f);
 				if (f.listName != null) {
 					listFields.add(f);
@@ -109,6 +115,13 @@ public class Form {
 
 		if (keyedFields.size() > 0) {
 			this.keyFields = keyedFields.toArray(new Field[0]);
+		}
+		if (this.linkedForms != null) {
+			int idx = 0;
+			for (final LinkedForm lf : this.linkedForms) {
+				lf.index = idx;
+				idx++;
+			}
 		}
 	}
 
@@ -132,6 +145,9 @@ public class Form {
 		Util.emitImport(sbf, FormData.class);
 		Util.emitImport(sbf, SchemaData.class);
 		Util.emitImport(sbf, SchemaDataTable.class);
+		Util.emitImport(sbf, JsonObject.class);
+		Util.emitImport(sbf, JsonArray.class);
+		Util.emitImport(sbf, IServiceContext.class);
 		/*
 		 * data types are directly referred to the static declarations
 		 */
@@ -228,8 +244,38 @@ public class Form {
 		 * methods to be implemented. Schema is cast to specific class if it is
 		 * defined, else null is used
 		 */
-		p = "\n\n\t@Override\n\tprotected " + cls;
+		p = "\n\n\t@Override\n\tpublic " + cls;
 
+		/*
+		 * newormData();
+		 */
+		sbf.append(p).append("Fd newFormData() {");
+		sbf.append("\n\t\treturn new ").append(cls).append("Fd(this, null, null, null);\n\t}");
+
+		/*
+		 *
+		 * public FormData parse(...)
+		 */
+		sbf.append(p).append("Fd  parse(final JsonObject json, final boolean forInsert, final IServiceContext ctx) {");
+		sbf.append("\n\t\treturn (").append(cls).append("Fd)super.parse(json, forInsert, ctx);\n\t}");
+
+		/*
+		 * public formDataTable parseTable(...)
+		 */
+		sbf.append(p).append(
+				"Fdt  parseTable(final JsonArray arr, final boolean forInsert, final IServiceContext ctx, final String tableName) {");
+		sbf.append("\n\t\treturn (").append(cls).append("Fdt)super.parseTable(arr, forInsert, ctx, tableName);\n\t}");
+
+		/*
+		 * newFormDataTable();
+		 */
+		sbf.append(p).append("Fdt newFormDataTable() {");
+		sbf.append("\n\t\treturn new ").append(cls).append("Fdt(this, null, null);\n\t}");
+
+		p = "\n\n\t@Override\n\tprotected " + cls;
+		/*
+		 * newFormData(schemaData, values, data)
+		 */
 		sbf.append(p).append(
 				"Fd newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {");
 		sbf.append("\n\t\treturn new ").append(cls).append("Fd(this, ");
@@ -240,6 +286,9 @@ public class Form {
 		}
 		sbf.append(", values, data);\n\t}");
 
+		/*
+		 * newFormDataTable(table, values);
+		 */
 		sbf.append(p).append("Fdt newFormDataTable(final SchemaDataTable table, final Object[][] values) {");
 		sbf.append("\n\t\treturn new ").append(cls).append("Fdt(this, ");
 		if (schClass != null) {
@@ -305,10 +354,26 @@ public class Form {
 		sbf.append("\n\t}");
 
 		/*
+		 * override getSchemaData() to return concrete class
+		 */
+		if (schClass != null) {
+			sbf.append("\n\n\t@Override\n\tpublic ").append(schClass).append("Data getSchemaData() {");
+			sbf.append("\n\t\treturn (").append(schClass).append("Data) this.dataObject;\n\t}");
+		}
+		/*
 		 * setters and getters in case we have local fields
 		 */
 		if (this.localFields != null) {
 			Generator.emitJavaGettersAndSetters(this.localFields, sbf, dataTypes);
+		}
+
+		/*
+		 * getters for linked table if required
+		 */
+		if (this.linkedForms != null) {
+			for (final LinkedForm lf : this.linkedForms) {
+				lf.emitJavaGetter(sbf);
+			}
 		}
 
 		sbf.append("\n}\n");
@@ -359,6 +424,14 @@ public class Form {
 		sbf.append("DataTable dataTable, final Object[][] values) {");
 		sbf.append("\n\t\tsuper(form, dataTable, values);");
 		sbf.append("\n\t}");
+
+		/*
+		 * getSchemaDataTable()
+		 */
+		if (schClass != null) {
+			sbf.append("\n\n\t@Override\n\tpublic ").append(schClass).append("DataTable getDataTable() {");
+			sbf.append("\n\t\t return (").append(schClass).append("DataTable) this.dataTable;\n\t}");
+		}
 
 		sbf.append("\n}\n");
 	}
@@ -454,8 +527,8 @@ public class Form {
 		/*
 		 * getInstance method
 		 */
-		sbf.append("\n\n\tpublic static getInstance(): ").append(cls).append("Form {");
-		sbf.append("\n\t\treturn ").append(cls).append("Form._instance;\n\t}");
+		sbf.append("\n\n\tpublic static getInstance(): ").append(cls).append(" {");
+		sbf.append("\n\t\treturn ").append(cls).append("._instance;\n\t}");
 
 		/*
 		 * constructor

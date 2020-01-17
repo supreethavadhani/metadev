@@ -36,6 +36,7 @@ import org.simplity.fm.core.data.ColumnType;
 import org.simplity.fm.core.data.DbAssistant;
 import org.simplity.fm.core.data.SchemaData;
 import org.simplity.fm.core.data.SchemaDataTable;
+import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.DependentListValidation;
 import org.simplity.fm.core.validn.ExclusiveValidation;
 import org.simplity.fm.core.validn.FromToValidation;
@@ -44,6 +45,9 @@ import org.simplity.fm.core.validn.InclusiveValidation;
 import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 /**
  * represents the contents of a spread sheet for a form
@@ -259,6 +263,9 @@ class Schema {
 		Util.emitImport(sbf, org.simplity.fm.core.data.Schema.class);
 		Util.emitImport(sbf, IValidation.class);
 		Util.emitImport(sbf, DbAssistant.class);
+		Util.emitImport(sbf, IServiceContext.class);
+		Util.emitImport(sbf, JsonObject.class);
+		Util.emitImport(sbf, JsonArray.class);
 		Util.emitImport(sbf, ColumnType.class);
 
 		/*
@@ -326,6 +333,12 @@ class Schema {
 		sbf.append("\n\t\treturn new ").append(c).append("(this, data);");
 		sbf.append("\n\t}");
 
+		sbf.append(over);
+		sbf.append("\n\tpublic ").append(c).append(
+				" parseData(JsonObject json, boolean forInsert, IServiceContext ctx, String tableName, int row) {");
+		sbf.append("\n\t\treturn (").append(c).append(") super.parseData(json, forInsert, ctx, tableName, row);");
+		sbf.append("\n\t}");
+
 		c = cls + "DataTable";
 		sbf.append(over);
 		sbf.append("\n\tpublic ").append(c).append(" newSchemaDataTable() {");
@@ -335,6 +348,12 @@ class Schema {
 		sbf.append(over);
 		sbf.append("\n\tprotected ").append(c).append(" newSchemaDataTable(final Object[][] data) {");
 		sbf.append("\n\t\treturn new ").append(c).append("(this, data);");
+		sbf.append("\n\t}");
+
+		sbf.append(over);
+		sbf.append("\n\tpublic ").append(c)
+				.append(" parseTable(JsonArray arr, boolean forInsert, IServiceContext ctx, String tableName) {");
+		sbf.append("\n\t\treturn (").append(c).append(") super.parseTable(arr, forInsert, ctx, tableName);");
 		sbf.append("\n\t}");
 
 		sbf.append("\n}\n");

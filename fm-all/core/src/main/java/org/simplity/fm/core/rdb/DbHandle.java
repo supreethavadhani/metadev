@@ -337,6 +337,64 @@ public class DbHandle {
 	}
 
 	/**
+	 * API that is close to the JDBC API for updating/inserting/deleting. You
+	 * should consider using the Can be
+	 * used if and only if every value is non-null and the objects follow strict
+	 * conventions.
+	 *
+	 * @param sql
+	 *            a prepared statement that manipulates data.
+	 * @param nonNullvalues
+	 *            can be null if sql requires no parameters. Every element in
+	 *            the array MUST be non-null. Also, every value MUST be an
+	 *            instance of one of our standard classes : String, Long,
+	 *            Double, Boolean, LocalDate and Instant
+	 * @return number of affected rows. -1 if the driver was unable to
+	 *         determine it
+	 * @throws SQLException
+	 */
+	public int write(final String sql, final Object[] nonNullvalues) throws SQLException {
+		logger.info("Generic Write SQL:{}", sql);
+
+		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
+			int posn = 0;
+			for (final Object val : nonNullvalues) {
+				posn++;
+				ValueType.setObjectAsPsParam(val, ps, posn);
+			}
+			final int n = ps.executeUpdate();
+			logger.info("{} rows affected ", n);
+			return n;
+		}
+	}
+
+	/**
+	 * use a prepared statement, and values for the parameters to run it
+	 *
+	 * @param sql
+	 *            a prepared statement that manipulates data.
+	 * @param paramValues
+	 *            Each element is a non-null array that contains non-null values
+	 *            for each parameter in the prepared statement. to be set to the
+	 *            prepared statement.
+	 * @return number of affected rows, on element per batch. -1 implies
+	 *         that the driver was unable to determine it
+	 * @throws SQLException
+	 */
+	public int[] writeMany(final String sql, final Object[][] paramValues) throws SQLException {
+		logger.info("Generic Batch SQL:{}", sql);
+		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
+			for (final Object[] row : paramValues) {
+				for (int i = 0; i < row.length; i++) {
+					ValueType.setObjectAsPsParam(row[i], ps, i + 1);
+				}
+				ps.addBatch();
+			}
+			return ps.executeBatch();
+		}
+	}
+
+	/**
 	 * API that is close to the JDBC API for updating/inserting/deleting
 	 *
 	 * @param sql
