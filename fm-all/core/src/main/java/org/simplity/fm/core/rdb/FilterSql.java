@@ -22,32 +22,36 @@
 
 package org.simplity.fm.core.rdb;
 
-import org.simplity.fm.core.datatypes.ValueType;
+import java.sql.SQLException;
+
+import org.simplity.fm.core.data.ValueObject;
+import org.simplity.fm.core.data.ValueTable;
 
 /**
- * a sql parameter that is used for input (for setting value to a
- * preparedStatment) or output (extracting value from a result set)
- *
- * This is an immutable class.
+ * A Sql that is designed to filter rows from the RDBMS. That is, result may
+ * contain more than one rows
  *
  * @author simplity.org
+ * @param <T>
+ *            concrete class of output value object that can be used to access
+ *            the out data elements
  *
  */
-public class SqlParam {
-	protected final String name;
-	protected final ValueType valueType;
-	protected final int idx;
+public abstract class FilterSql<T extends ValueObject> extends Sql {
+
+	protected abstract ValueTable<T> newValueTable();
 
 	/**
-	 * construct an immutable parameter
+	 * read a row from the db. must be called ONLY AFTER setting all input
+	 * parameters
 	 *
-	 * @param name
-	 * @param valueType
-	 * @param idx
+	 * @param handle
+	 * @return value object with output data. null if dta is not read.
+	 * @throws SQLException
 	 */
-	public SqlParam(final String name, final ValueType valueType, final int idx) {
-		this.name = name;
-		this.valueType = valueType;
-		this.idx = idx;
+	public ValueTable<T> filter(final DbHandle handle) throws SQLException {
+		final ValueTable<T> result = this.newValueTable();
+		handle.read(this.sqlText, this.inputData, result);
+		return result;
 	}
 }

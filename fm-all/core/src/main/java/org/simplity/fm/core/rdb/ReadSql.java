@@ -22,43 +22,37 @@
 
 package org.simplity.fm.core.rdb;
 
+import java.sql.SQLException;
+
+import org.simplity.fm.core.data.ValueObject;
+
 /**
- * represents a sql with required data input/output to be used at run time for
- * an interaction with the RDBMS for a given sql.
- *
- * a concrete class is generated for each concrete generated Sql class.
+ * A Sql that is designed to read just one row from the RDBMS
  *
  * @author simplity.org
+ * @param <T>
+ *            concrete class of output value object that can be used to access
+ *            the out data elements
  *
  */
-public class RunnableSql {
-	protected final Sql sql;
-	protected final Object[] inputData;
-	protected final Object[] outputData;
+public abstract class ReadSql<T extends ValueObject> extends Sql {
 
-	private boolean isExecuted;
-	private int nbrAffetedRows;
+	protected abstract T newOutputData();
 
-	protected RunnableSql(final Sql sql) {
-		this.sql = sql;
-		if (sql.isDml) {
-			this.outputData = null;
-		} else {
-			this.outputData = new Object[sql.outputParams.length];
+	/**
+	 * read a row from the db. must be called ONLY AFTER setting all input
+	 * parameters
+	 *
+	 * @param handle
+	 * @return value object with output data. null if data is not read.
+	 * @throws SQLException
+	 */
+	public T read(final DbHandle handle) throws SQLException {
+		final T result = this.newOutputData();
+		final boolean ok = handle.read(this.sqlText, this.inputData, result);
+		if (ok) {
+			return result;
 		}
-		if (sql.inputParams == null) {
-			this.inputData = null;
-		} else {
-			this.inputData = new Object[sql.inputParams.length];
-		}
+		return null;
 	}
-
-	protected void assignInput(final int idx, final Object value) {
-		this.inputData[idx] = value;
-	}
-
-	protected Object extractOutput(final int idx) {
-		return this.outputData[idx];
-	}
-
 }

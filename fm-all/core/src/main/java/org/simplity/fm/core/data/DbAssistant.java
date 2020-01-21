@@ -209,7 +209,7 @@ public class DbAssistant {
 
 		try {
 			final long[] generatedKeys = new long[1];
-			n = handle.insertAndGenerteKeys(getWriter(this.insertClause, this.insertParams, values),
+			n = handle.insertAndGenerateKey(getWriter(this.insertClause, this.insertParams, values),
 					this.generatedColumnName, generatedKeys);
 			final long id = generatedKeys[0];
 			if (id == 0) {
@@ -540,11 +540,7 @@ public class DbAssistant {
 
 			@Override
 			public boolean readARow(final ResultSet rs) throws SQLException {
-				int posn = 0;
-				for (final FieldMetaData p : DbAssistant.this.selectParams) {
-					posn++;
-					p.getFromRs(rs, posn, values);
-				}
+				DbAssistant.this.readWorker(rs, values);
 				result[0] = true;
 				/*
 				 * return false to ask the driver to stop reading.
@@ -553,6 +549,14 @@ public class DbAssistant {
 			}
 		});
 		return result[0];
+	}
+
+	protected void readWorker(final ResultSet rs, final Object[] values) throws SQLException {
+		int posn = 0;
+		for (final FieldMetaData p : this.selectParams) {
+			posn++;
+			p.getFromRs(rs, posn, values);
+		}
 	}
 
 	/**
@@ -578,23 +582,37 @@ public class DbAssistant {
 	Object[][] filter(final String whereClauseStartingWithWhere, final Object[] values, final boolean readOnlyOne,
 			final DbHandle handle) throws SQLException {
 		final List<Object[]> result = new ArrayList<>();
+		this.filterWroer(handle, whereClauseStartingWithWhere, values, null, result);
+
+		return result.toArray(new Object[0][]);
+	}
+
+	boolean filterFirst(final String whereClauseStartingWithWhere, final Object[] inputValues,
+			final Object[] outputValues, final DbHandle handle) throws SQLException {
+		return this.filterWroer(handle, whereClauseStartingWithWhere, inputValues, outputValues, null);
+	}
+
+	boolean filterWroer(final DbHandle handle, final String where, final Object[] inputValues,
+			final Object[] outputValues, final List<Object[]> outputRows) throws SQLException {
+
+		final boolean result[] = new boolean[1];
 		handle.read(new IDbReader() {
 
 			@Override
 			public String getPreparedStatement() {
-				if (whereClauseStartingWithWhere == null) {
+				if (where == null) {
 					return DbAssistant.this.selectClause;
 				}
-				return DbAssistant.this.selectClause + ' ' + whereClauseStartingWithWhere;
+				return DbAssistant.this.selectClause + ' ' + where;
 			}
 
 			@Override
 			public void setParams(final PreparedStatement ps) throws SQLException {
-				if (values == null || values.length == 0) {
+				if (inputValues == null || inputValues.length == 0) {
 					return;
 				}
 				int posn = 0;
-				for (final Object value : values) {
+				for (final Object value : inputValues) {
 					posn++;
 					ValueType.setObjectAsPsParam(value, ps, posn);
 				}
@@ -602,16 +620,22 @@ public class DbAssistant {
 
 			@Override
 			public boolean readARow(final ResultSet rs) throws SQLException {
-				final Object[] row = new Object[DbAssistant.this.nbrFieldsInARow];
-				result.add(row);
-				int posn = 0;
-				for (final FieldMetaData p : DbAssistant.this.selectParams) {
-					posn++;
-					p.getFromRs(rs, posn, row);
+				/*
+				 * receive data into a new row if this is for multiple rows
+				 */
+				Object[] vals = outputValues;
+				if (vals == null) {
+					vals = new Object[DbAssistant.this.nbrFieldsInARow];
+					outputRows.add(vals);
 				}
-				return !readOnlyOne;
+				DbAssistant.this.readWorker(rs, outputValues);
+				result[0] = true;
+				/*
+				 * return false if we are to read just one row
+				 */
+				return outputValues == null;
 			}
 		});
-		return result.toArray(new Object[0][]);
+		return result[0];
 	}
 }

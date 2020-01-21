@@ -44,6 +44,7 @@ public class Generator {
 
 	private static final String EXT_FRM = ".form";
 	private static final String EXT_SCH = ".schema";
+	private static final String EXT_SQL = ".sql.json";
 
 	/**
 	 *
@@ -92,7 +93,8 @@ public class Generator {
 		/*
 		 * create output folders if required
 		 */
-		if (createOutputFolders(generatedSourceRootFolder, new String[] { "schema/", "form/", "list/" }) == false) {
+		if (createOutputFolders(generatedSourceRootFolder,
+				new String[] { "schema/", "form/", "list/", "sql/" }) == false) {
 			return;
 		}
 
@@ -126,24 +128,24 @@ public class Generator {
 		app.emitJava(generatedSourceRootFolder, javaRootPackage, Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME);
 
 		logger.info("Going to process schemas under folder {}", resourceRootFolder);
+		final Map<String, Schema> schemas = new HashMap<>();
 		f = new File(resourceRootFolder + "schema/");
 		if (f.exists() == false) {
 			logger.error("Schema folder {} not found. No schemas are processed", f.getPath());
-			return;
-		}
+		} else {
 
-		final Map<String, Schema> schemas = new HashMap<>();
-		for (final File file : f.listFiles()) {
-			final String fn = file.getName();
-			if (fn.endsWith(EXT_SCH) == false) {
-				logger.info("Skipping non-schema file {}", fn);
-				continue;
-			}
+			for (final File file : f.listFiles()) {
+				final String fn = file.getName();
+				if (fn.endsWith(EXT_SCH) == false) {
+					logger.info("Skipping non-schema file {}", fn);
+					continue;
+				}
 
-			final Schema schema = emitSchema(file, generatedSourceRootFolder, tsRootFolder, app.dataTypes, app,
-					javaRootPackage, tsImportPrefix);
-			if (schema != null) {
-				schemas.put(schema.name, schema);
+				final Schema schema = emitSchema(file, generatedSourceRootFolder, tsRootFolder, app.dataTypes, app,
+						javaRootPackage, tsImportPrefix);
+				if (schema != null) {
+					schemas.put(schema.name, schema);
+				}
 			}
 		}
 
@@ -151,17 +153,33 @@ public class Generator {
 		f = new File(resourceRootFolder + "form/");
 		if (f.exists() == false) {
 			logger.error("Forms folder {} not found. No forms are processed", f.getPath());
-			return;
+		} else {
+
+			for (final File file : f.listFiles()) {
+				final String fn = file.getName();
+				if (fn.endsWith(EXT_FRM) == false) {
+					logger.info("Skipping non-form file {} ", fn);
+					continue;
+				}
+				emitForm(file, generatedSourceRootFolder, tsRootFolder, app.dataTypes, app, javaRootPackage,
+						tsImportPrefix, schemas);
+			}
 		}
 
-		for (final File file : f.listFiles()) {
-			final String fn = file.getName();
-			if (fn.endsWith(EXT_FRM) == false) {
-				logger.info("Skipping non-form file {} ", fn);
-				continue;
+		logger.info("Going to process sqls under folder {}sql/", resourceRootFolder);
+		f = new File(resourceRootFolder + "sql/");
+		if (f.exists() == false) {
+			logger.error("Sql folder {} not found. No sqls processed", f.getPath());
+		} else {
+
+			for (final File file : f.listFiles()) {
+				final String fn = file.getName();
+				if (fn.endsWith(EXT_SQL) == false) {
+					logger.info("Skipping non-sql file {} ", fn);
+					continue;
+				}
+				emitSql(file, generatedSourceRootFolder, app.dataTypes, javaRootPackage);
 			}
-			emitForm(file, generatedSourceRootFolder, tsRootFolder, app.dataTypes, app, javaRootPackage, tsImportPrefix,
-					schemas);
 		}
 	}
 
@@ -272,6 +290,28 @@ public class Generator {
 		Util.writeOut(outName, sbf);
 
 		return schema;
+	}
+
+	private static void emitSql(final File file, final String generatedSourceRootFolder, final DataTypes dataTypes,
+			final String packageName) {
+		String fn = file.getName();
+		fn = fn.substring(0, fn.length() - EXT_SQL.length());
+		logger.info("Going to generate Sql " + fn);
+		final Sql sql;
+		try (final JsonReader reader = new JsonReader(new FileReader(file))) {
+			sql = Util.GSON.fromJson(reader, Sql.class);
+		} catch (final Exception e) {
+			e.printStackTrace();
+			logger.error("Sql {} not generated. Error : {}, {}", fn, e, e.getMessage());
+			return;
+		}
+
+		final String cls = Util.toClassName(fn) + "Sql";
+		final StringBuilder sbf = new StringBuilder();
+		sql.emitJava(sbf, packageName, cls, Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME, dataTypes.dataTypes);
+		final String outName = generatedSourceRootFolder + "sql/" + Util.toClassName(fn) + "Sql.java";
+		Util.writeOut(outName, sbf);
+
 	}
 
 	private static boolean createOutputFolders(final String root, final String[] folders) {

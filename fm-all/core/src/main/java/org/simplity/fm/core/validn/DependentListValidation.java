@@ -61,11 +61,11 @@ public class DependentListValidation implements IValidation {
 
 	@Override
 	public boolean isValid(final SchemaData dataRow, final IServiceContext ctx) {
-		final Object fieldValue = dataRow.getObject(this.fieldIndex);
+		final Object fieldValue = dataRow.getValue(this.fieldIndex);
 		if (fieldValue == null) {
 			return true;
 		}
-		final Object keyValue = dataRow.getObject(this.parentFieldIndex);
+		final Object keyValue = dataRow.getValue(this.parentFieldIndex);
 		if (keyValue == null) {
 			return true;
 		}

@@ -80,8 +80,8 @@ public class InclusiveValidation implements IValidation {
 
 	@Override
 	public boolean isValid(final SchemaData dataRow, final IServiceContext ctx) {
-		final Object main = dataRow.getObject(this.mainIndex);
-		final Object dep = dataRow.getObject(this.dependentIndex);
+		final Object main = dataRow.getValue(this.mainIndex);
+		final Object dep = dataRow.getValue(this.dependentIndex);
 
 		boolean mainSpecified = false;
 		if (main != null) {

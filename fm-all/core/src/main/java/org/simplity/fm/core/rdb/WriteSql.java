@@ -22,17 +22,20 @@
 
 package org.simplity.fm.core.rdb;
 
-import org.simplity.fm.core.data.ValueObject;
+import java.sql.SQLException;
 
 /**
  * @author simplity.org
  *
  */
-public abstract class Sql {
-	protected String sqlText;
-	protected ValueObject inputData;
-
-	protected void setInputValue(final int idx, final Object value) {
-		this.inputData.setValue(idx, value);
+public abstract class WriteSql extends Sql {
+	/**
+	 *
+	 * @param handle
+	 * @return number of affected rows. could be 0.
+	 * @throws SQLException
+	 */
+	public int write(final DbHandle handle) throws SQLException {
+		return handle.write(this.sqlText, this.inputData);
 	}
 }

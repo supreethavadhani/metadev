@@ -26,8 +26,8 @@ import java.sql.SQLException;
 import java.util.Map;
 
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.data.SchemaData;
 import org.simplity.fm.core.data.Schema;
+import org.simplity.fm.core.data.SchemaData;
 import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.service.IServiceContext;
 
@@ -130,7 +130,7 @@ class FormLoader {
 		}
 
 		if (this.generatedKeyOutputName != null) {
-			final Object key = fd.getObject(this.keyIdx);
+			final Object key = fd.getValue(this.keyIdx);
 			if (key != null) {
 				values.put(this.generatedKeyOutputName, key.toString());
 			}
