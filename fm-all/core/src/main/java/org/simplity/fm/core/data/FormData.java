@@ -23,10 +23,10 @@
 package org.simplity.fm.core.data;
 
 import java.io.IOException;
-import java.io.Writer;
 import java.time.Instant;
 import java.time.LocalDate;
 
+import org.simplity.fm.core.JsonUtil;
 import org.simplity.fm.core.datatypes.ValueType;
 
 import com.google.gson.stream.JsonWriter;
@@ -210,21 +210,26 @@ public abstract class FormData {
 	 * @param writer
 	 * @throws IOException
 	 */
-	public void serializeAsJson(final Writer writer) throws IOException {
-		try (JsonWriter jw = new JsonWriter(writer)) {
-			jw.beginObject();
-			this.serializeFields(jw);
-			jw.endObject();
-		}
-	}
-
-	/**
-	 * @param writer
-	 * @throws IOException
-	 */
 	public void serializeFields(final JsonWriter writer) throws IOException {
-		this.form.serializeToJson(this.dataObject, this.fieldValues, this.linkedData, writer);
+		if (this.dataObject != null) {
+			this.dataObject.serializeFields(writer);
+		}
 
+		if (this.form.localFields != null) {
+			JsonUtil.writeFields(this.form.localFields, this.fieldValues, writer);
+		}
+
+		if (this.linkedData != null) {
+			int idx = -1;
+			for (final LinkedForm lf : this.form.linkedForms) {
+				idx++;
+				final FormDataTable table = this.linkedData[idx];
+				if (table != null) {
+					writer.name(lf.linkName);
+					table.serializeRows(writer);
+				}
+			}
+		}
 	}
 
 	/**

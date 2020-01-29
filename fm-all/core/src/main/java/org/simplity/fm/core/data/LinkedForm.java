@@ -22,7 +22,6 @@
 
 package org.simplity.fm.core.data;
 
-import java.io.IOException;
 import java.sql.SQLException;
 
 import org.simplity.fm.core.ComponentProvider;
@@ -32,7 +31,6 @@ import org.simplity.fm.core.service.IServiceContext;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.gson.stream.JsonWriter;
 
 /**
  * this is used in generated classes
@@ -313,24 +311,4 @@ public class LinkedForm {
 		handle.write(this.deleteSql, params);
 		return true;
 	}
-
-	/**
-	 * @param table
-	 * @param writer
-	 * @throws IOException
-	 */
-	public void serializeToJson(final FormDataTable table, final JsonWriter writer) throws IOException {
-		if (table == null) {
-			return;
-		}
-		writer.name(this.linkName);
-		writer.beginArray();
-		for (final FormData fd : table) {
-			writer.beginObject();
-			fd.serializeFields(writer);
-			writer.endObject();
-		}
-		writer.endArray();
-	}
-
 }

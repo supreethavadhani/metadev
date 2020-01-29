@@ -193,9 +193,13 @@ public class Conventions {
 		 */
 		public static final String FOLDER_NAME_SERVICE = "service";
 		/**
-		 * folder name under which services are defined
+		 * folder name under which functions are defined
 		 */
 		public static final String FOLDER_NAME_FN = "fn";
+		/**
+		 * folder name under which sqls are defined
+		 */
+		public static final String FOLDER_NAME_SQL = "sql";
 		/**
 		 * folder name under which classes related to list are generated
 		 */
@@ -219,6 +223,10 @@ public class Conventions {
 		 * generated form classes are named with this suffix. e.g. instituteForm
 		 */
 		public static final String FORM_CLASS_SUFIX = "Form";
+		/**
+		 * generated sql classes are named with this suffix. e.g. instituteForm
+		 */
+		public static final String SQL_CLASS_SUFIX = "Sql";
 		/**
 		 * generated schema classes are named with this suffix. e.g.
 		 * instituteSchema

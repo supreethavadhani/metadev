@@ -582,17 +582,17 @@ public class DbAssistant {
 	Object[][] filter(final String whereClauseStartingWithWhere, final Object[] values, final boolean readOnlyOne,
 			final DbHandle handle) throws SQLException {
 		final List<Object[]> result = new ArrayList<>();
-		this.filterWroer(handle, whereClauseStartingWithWhere, values, null, result);
+		this.filterWorker(handle, whereClauseStartingWithWhere, values, null, result);
 
 		return result.toArray(new Object[0][]);
 	}
 
 	boolean filterFirst(final String whereClauseStartingWithWhere, final Object[] inputValues,
 			final Object[] outputValues, final DbHandle handle) throws SQLException {
-		return this.filterWroer(handle, whereClauseStartingWithWhere, inputValues, outputValues, null);
+		return this.filterWorker(handle, whereClauseStartingWithWhere, inputValues, outputValues, null);
 	}
 
-	boolean filterWroer(final DbHandle handle, final String where, final Object[] inputValues,
+	boolean filterWorker(final DbHandle handle, final String where, final Object[] inputValues,
 			final Object[] outputValues, final List<Object[]> outputRows) throws SQLException {
 
 		final boolean result[] = new boolean[1];
@@ -628,7 +628,7 @@ public class DbAssistant {
 					vals = new Object[DbAssistant.this.nbrFieldsInARow];
 					outputRows.add(vals);
 				}
-				DbAssistant.this.readWorker(rs, outputValues);
+				DbAssistant.this.readWorker(rs, vals);
 				result[0] = true;
 				/*
 				 * return false if we are to read just one row

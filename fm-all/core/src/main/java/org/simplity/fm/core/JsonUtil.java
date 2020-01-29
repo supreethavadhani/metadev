@@ -28,6 +28,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 
 import org.simplity.fm.core.data.Field;
+import org.simplity.fm.core.data.FormData;
+import org.simplity.fm.core.data.FormDataTable;
+import org.simplity.fm.core.data.SchemaData;
+import org.simplity.fm.core.data.SchemaDataTable;
 import org.simplity.fm.core.datatypes.ValueType;
 
 import com.google.gson.JsonObject;
@@ -301,5 +305,98 @@ public class JsonUtil {
 			return null;
 		}
 		return (Instant) ValueType.Timestamp.parse(ele.getAsString());
+	}
+
+	/**
+	 * write data from a schema table as response to a client request
+	 *
+	 * @param writer
+	 * @param table
+	 * @throws IOException
+	 */
+	public static void writeFilter(final Writer writer, final FormDataTable table) throws IOException {
+		try (JsonWriter jw = new JsonWriter(writer)) {
+			jw.beginObject();
+			jw.name(Conventions.Http.TAG_LIST);
+			table.serializeRows(jw);
+			jw.endObject();
+		}
+	}
+
+	/**
+	 * write data from a schema table as response to a client request
+	 *
+	 * @param writer
+	 * @param table
+	 * @throws IOException
+	 */
+	public static void writeFilter(final Writer writer, final SchemaDataTable table) throws IOException {
+		try (JsonWriter jw = new JsonWriter(writer)) {
+			jw.beginObject();
+			jw.name(Conventions.Http.TAG_LIST);
+			table.serializeRows(jw);
+			jw.endObject();
+		}
+
+	}
+
+	/**
+	 * write data from a schema table as response to a client request
+	 *
+	 * @param writer
+	 * @throws IOException
+	 */
+	public static void writeEmptyFilter(final Writer writer) throws IOException {
+		try (JsonWriter jw = new JsonWriter(writer)) {
+			jw.beginObject();
+			jw.name(Conventions.Http.TAG_LIST);
+			jw.beginArray();
+			jw.endArray();
+			jw.endObject();
+		}
+	}
+
+	/**
+	 * write data from a schema table as response to a client request
+	 *
+	 * @param writer
+	 * @param data
+	 * @throws IOException
+	 */
+	public static void writeResponse(final Writer writer, final FormData data) throws IOException {
+		try (JsonWriter jw = new JsonWriter(writer)) {
+			jw.beginObject();
+			data.serializeFields(jw);
+			jw.endObject();
+		}
+	}
+
+	/**
+	 * write data from a schema table as response to a client request
+	 *
+	 * @param writer
+	 * @param data
+	 * @throws IOException
+	 */
+	public static void writeResponse(final Writer writer, final SchemaData data) throws IOException {
+		try (JsonWriter jw = new JsonWriter(writer)) {
+			jw.beginObject();
+			data.serializeFields(jw);
+			jw.endObject();
+		}
+
+	}
+
+	/**
+	 * write data from a schema table as response to a client request
+	 *
+	 * @param writer
+	 * @throws IOException
+	 */
+	public static void writeEmptyResponse(final Writer writer) throws IOException {
+		try (JsonWriter jw = new JsonWriter(writer)) {
+			jw.beginObject();
+			jw.endObject();
+		}
 	}
 }

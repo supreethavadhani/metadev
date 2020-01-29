@@ -23,7 +23,6 @@
 package org.simplity.fm.core.data;
 
 import java.io.IOException;
-import java.io.Writer;
 import java.util.Iterator;
 
 import com.google.gson.stream.JsonWriter;
@@ -92,20 +91,14 @@ public abstract class FormDataTable implements Iterable<FormData> {
 	 * @param writer
 	 * @throws IOException
 	 */
-	public void serializeAsJson(final Writer writer) throws IOException {
-		try (JsonWriter jw = new JsonWriter(writer)) {
-			jw.beginObject();
-			this.form.getSchema().serializeToJson(this.fieldValues, jw);
-			jw.endObject();
+	public void serializeRows(final JsonWriter writer) throws IOException {
+		writer.beginArray();
+		for (final FormData fd : this) {
+			writer.beginObject();
+			fd.serializeFields(writer);
+			writer.endObject();
 		}
-	}
-
-	/**
-	 * @param writer
-	 * @throws IOException
-	 */
-	public void serializeFields(final JsonWriter writer) throws IOException {
-		this.form.getSchema().serializeToJson(this.fieldValues, writer);
+		writer.endArray();
 	}
 
 	/**

@@ -392,18 +392,13 @@ public abstract class Schema {
 	/**
 	 * parse the input into a filter clause
 	 *
-	 * @param conditions
-	 *            non-null {field1: {oper:"=", value:"abcd"...}
-	 * @param sorts
-	 *            how the result to be sorted {field1:"a/d",
+	 * @param json
+	 *            json tht has the filter condition as per our conventions
 	 * @param ctx
-	 * @param maxRows
-	 *            mxRows to be read
 	 * @return filter clause that can be used to get rows from the db
 	 */
-	public ParsedFilter parseForFilter(final JsonObject conditions, final JsonObject sorts, final IServiceContext ctx,
-			final int maxRows) {
-		return ParsedFilter.parse(conditions, sorts, this.fieldsMap, this.getTenantField(), ctx, maxRows);
+	public ParsedFilter parseForFilter(final JsonObject json, final IServiceContext ctx) {
+		return ParsedFilter.parse(json, this.fieldsMap, this.getTenantField(), ctx);
 	}
 
 	/**
@@ -427,13 +422,7 @@ public abstract class Schema {
 		}, true);
 
 		if (result[0]) {
-			try {
-				dataRow.serializeAsJson(ctx.getResponseWriter());
-			} catch (final IOException e) {
-				final String msg = "I/O error while serializing e=" + e + ". message=" + e.getMessage();
-				logger.error(msg);
-				ctx.addMessage(Message.newError(msg));
-			}
+			JsonUtil.writeResponse(ctx.getResponseWriter(), dataRow);
 		} else {
 			logger.error("No data found for the requested keys");
 			ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -507,30 +496,8 @@ public abstract class Schema {
 	 * @throws Exception
 	 */
 	public void filter(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		JsonObject conditions = null;
-		JsonElement node = payload.get(Conventions.Http.TAG_CONDITIONS);
-		if (node != null && node.isJsonObject()) {
-			conditions = (JsonObject) node;
-		} else {
-			logger.error("payload for filter has no conditions. ALl rows will be filtered");
-		}
 
-		/*
-		 * sort order
-		 */
-		JsonObject sorts = null;
-		node = payload.get(Conventions.Http.TAG_SORT);
-		if (node != null && node.isJsonObject()) {
-			sorts = (JsonObject) node;
-		}
-
-		int nbrRows = Conventions.Http.DEFAULT_NBR_ROWS;
-		node = payload.get(Conventions.Http.TAG_MAX_ROWS);
-		if (node != null && node.isJsonPrimitive()) {
-			nbrRows = node.getAsInt();
-		}
-
-		final ParsedFilter filter = this.parseForFilter(conditions, sorts, ctx, nbrRows);
+		final ParsedFilter filter = ParsedFilter.parse(payload, this.fieldsMap, this.getTenantField(), ctx);
 
 		if (!ctx.allOk()) {
 			logger.warn("Filtering aborted due to errors in input data");
@@ -551,12 +518,7 @@ public abstract class Schema {
 
 		logger.info(" {} rows filtered", dataTable.length());
 
-		try (JsonWriter writer = new JsonWriter(ctx.getResponseWriter())) {
-			writer.beginObject();
-			writer.name(Conventions.Http.TAG_LIST);
-			dataTable.serializeAsJson(writer);
-			writer.endObject();
-		}
+		JsonUtil.writeFilter(ctx.getResponseWriter(), dataTable);
 	}
 
 	/**

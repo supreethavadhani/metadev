@@ -215,10 +215,9 @@ public abstract class Form {
 				jw.name(lf.linkName);
 				final SchemaDataTable dt = childData[idx];
 				if (dt != null) {
-					dt.serializeAsJson(jw);
+					dt.serializeRows(jw);
 				} else {
 					jw.beginArray();
-
 					jw.endArray();
 				}
 			}
@@ -456,30 +455,6 @@ public abstract class Form {
 			f.parseIntoRow(value, values, false, ctx, null, 0);
 		}
 		return values;
-	}
-
-	/**
-	 * @param schemaData
-	 * @param values
-	 * @param tables
-	 * @param writer
-	 * @throws IOException
-	 */
-	public void serializeToJson(final SchemaData schemaData, final Object[] values, final FormDataTable[] tables,
-			final JsonWriter writer) throws IOException {
-		if (this.schema != null && schemaData != null) {
-			this.schema.serializeToJson(schemaData.getRawData(), writer);
-		}
-
-		if (this.localFields != null && values != null) {
-			JsonUtil.writeFields(this.localFields, values, writer);
-		}
-
-		if (this.linkedForms != null && tables != null) {
-			for (int i = 0; i < this.linkedForms.length; i++) {
-				this.linkedForms[i].serializeToJson(tables[i], writer);
-			}
-		}
 	}
 
 	/**

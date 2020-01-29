@@ -97,11 +97,11 @@ public abstract class SchemaDataTable implements Iterable<SchemaData> {
 	 * @param writer
 	 * @throws IOException
 	 */
-	public void serializeAsJson(final JsonWriter writer) throws IOException {
+	public void serializeRows(final JsonWriter writer) throws IOException {
 		writer.beginArray();
-		for (final Object[] row : this.fieldValues) {
+		for (final SchemaData sd : this) {
 			writer.beginObject();
-			this.schema.serializeToJson(row, writer);
+			sd.serializeFields(writer);
 			writer.endObject();
 		}
 		writer.endArray();

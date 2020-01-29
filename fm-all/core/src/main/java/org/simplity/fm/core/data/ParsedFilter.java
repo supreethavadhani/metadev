@@ -100,24 +100,43 @@ public class ParsedFilter {
 	/**
 	 * parse a filter-sql from the json for a schema
 	 *
-	 * @param conditions
-	 *            json that has the where conditions
-	 * @param sorts
-	 *            json that has the sort fields
+	 * @param json
+	 *            input json that has the filter details
 	 * @param fields
-	 *            fields from the schema for which filter conditions are created
+	 *            fields that can be filtered
 	 * @param tenantField
-	 *            null if the calling schema doe snot use a tenant field. used
-	 *            for forcing a condition for teh tenant field
+	 *            null if the calling schema does not use a tenant field. used
+	 *            for forcing a condition for the tenant field
 	 * @param ctx
-	 * @param maxRows
-	 *            0 if no limits.else limit the output to these many rows
 	 * @return parsed instance. null in case of any error. error is added to the
 	 *         context.
 	 */
-	public static ParsedFilter parse(final JsonObject conditions, final JsonObject sorts,
-			final Map<String, DbField> fields, final DbField tenantField, final IServiceContext ctx,
-			final int maxRows) {
+	public static ParsedFilter parse(final JsonObject json, final Map<String, DbField> fields,
+			final DbField tenantField, final IServiceContext ctx) {
+		JsonObject conditions = null;
+		JsonElement node = json.get(Conventions.Http.TAG_CONDITIONS);
+		if (node != null && node.isJsonObject()) {
+			conditions = (JsonObject) node;
+		} else {
+			logger.warn("payload for filter has no conditions. ALl rows will be filtered");
+		}
+
+		/*
+		 * sort order
+		 */
+		JsonObject sorts = null;
+		node = json.get(Conventions.Http.TAG_SORT);
+		if (node != null && node.isJsonObject()) {
+			sorts = (JsonObject) node;
+		}
+
+		int nbrRows = Conventions.Http.DEFAULT_NBR_ROWS;
+		node = json.get(Conventions.Http.TAG_MAX_ROWS);
+		if (node != null && node.isJsonPrimitive()) {
+			nbrRows = node.getAsInt();
+		}
+
+		logger.info("Number of max rows is set to {}. It is ignored as of now.", nbrRows);
 		final StringBuilder sql = new StringBuilder();
 		final List<Object> values = new ArrayList<>();
 
@@ -183,7 +202,6 @@ public class ParsedFilter {
 		}
 		logger.info("Filter parameters : {}", sbf.toString());
 		return new ParsedFilter(sqlText, values.toArray(new Object[0]));
-
 	}
 
 	private static boolean parseConditions(final Map<String, DbField> fields, final JsonObject json,

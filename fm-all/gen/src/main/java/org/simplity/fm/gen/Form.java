@@ -233,6 +233,10 @@ public class Form {
 			sbf.append(p).append("schema = ComponentProvider.getProvider().getSchema(SCHEMA);");
 		}
 		sbf.append(p).append("operations = OPS;");
+		if (this.localFields != null) {
+			sbf.append(p).append("localFields = FIELDS;");
+		}
+
 		if (this.linkedForms != null) {
 			sbf.append(p).append("linkedForms = LINKED_FORMS;");
 			sbf.append(p).append("initialize();");
@@ -343,7 +347,7 @@ public class Form {
 		/*
 		 * constructor
 		 */
-		sbf.append("\n\tprotected ").append(cls).append("Fd(final ").append(cls).append("Form form, final ");
+		sbf.append("\n\tpublic ").append(cls).append("Fd(final ").append(cls).append("Form form, final ");
 		if (schClass == null) {
 			sbf.append("SchemaData");
 		} else {
@@ -415,7 +419,7 @@ public class Form {
 		/*
 		 * constructor
 		 */
-		sbf.append("\n\tprotected ").append(cls).append("Fdt(final ").append(cls).append("Form form, final ");
+		sbf.append("\n\tpublic ").append(cls).append("Fdt(final ").append(cls).append("Form form, final ");
 		if (schClass == null) {
 			sbf.append("Schema");
 		} else {

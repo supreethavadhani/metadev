@@ -22,15 +22,11 @@
 
 package org.simplity.fm.core.data;
 
-import java.io.IOException;
-import java.io.Writer;
 import java.sql.SQLException;
 
 import org.simplity.fm.core.rdb.DbHandle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.gson.stream.JsonWriter;
 
 /**
  * <p>
@@ -67,18 +63,6 @@ public abstract class SchemaData extends ValueObject {
 	protected SchemaData(final Schema schema, final Object[] values) {
 		super(schema.fields, values);
 		this.schema = schema;
-	}
-
-	/**
-	 * @param writer
-	 * @throws IOException
-	 */
-	public void serializeAsJson(final Writer writer) throws IOException {
-		try (JsonWriter jw = new JsonWriter(writer)) {
-			jw.beginObject();
-			this.schema.serializeToJson(this.fieldValues, jw);
-			jw.endObject();
-		}
 	}
 
 	/**

@@ -77,13 +77,24 @@ public enum ValueType {
 				return (Long.parseLong(value));
 			} catch (final Exception e) {
 				try {
+					/*
+					 * not long. is it decimal?
+					 */
 					final double d = Double.parseDouble(value);
-
+					/*
+					 * why was it not valid lng but a valid decimal?
+					 */
 					final int idx = value.indexOf('.');
-					if (idx == -1 || idx > 19) {
+					if (idx == -1) {
 						/*
-						 * it was not a decimal, but a long that is longer than
-						 * what long could be
+						 * it was a long that was longer than long!
+						 */
+						return null;
+					}
+					if (idx > 19) {
+						/*
+						 * valid decimal, but has more than 19 digits. cannot be
+						 * accepted as long
 						 */
 						return null;
 					}
@@ -238,7 +249,7 @@ public enum ValueType {
 			try {
 				return Instant.parse(value);
 			} catch (final Exception e) {
-				//
+				System.err.println(value + " is not a vlid instant");
 			}
 			return null;
 		}
@@ -307,44 +318,44 @@ public enum ValueType {
 	 *            Double, Boolean, LocalDate or Instant
 	 * @param ps
 	 *            non-null prepared statement
-	 * @param oneBaedPosition
+	 * @param oneBasedPosition
 	 *            position of the parameter. note that the first position starts
 	 *            at 1 and not 0
 	 * @throws SQLException
 	 */
-	public static void setObjectAsPsParam(final Object value, final PreparedStatement ps, final int oneBaedPosition)
+	public static void setObjectAsPsParam(final Object value, final PreparedStatement ps, final int oneBasedPosition)
 			throws SQLException {
 		if (value == null) {
 			throw new SQLException("Null value can not be set to a psparameter using this method");
 		}
 
 		if (value instanceof String) {
-			ps.setString(oneBaedPosition, (String) value);
+			ps.setString(oneBasedPosition, (String) value);
 			return;
 		}
 
 		if (value instanceof Long) {
-			ps.setLong(oneBaedPosition, (Long) value);
+			ps.setLong(oneBasedPosition, (Long) value);
 			return;
 		}
 
 		if (value instanceof Double) {
-			ps.setDouble(oneBaedPosition, (Double) value);
+			ps.setDouble(oneBasedPosition, (Double) value);
 			return;
 		}
 
 		if (value instanceof Boolean) {
-			ps.setBoolean(oneBaedPosition, (Boolean) value);
+			ps.setBoolean(oneBasedPosition, (Boolean) value);
 			return;
 		}
 
 		if (value instanceof LocalDate) {
-			ps.setDate(oneBaedPosition, java.sql.Date.valueOf((LocalDate) value));
+			ps.setDate(oneBasedPosition, java.sql.Date.valueOf((LocalDate) value));
 			return;
 		}
 
 		if (value instanceof Instant) {
-			ps.setTimestamp(oneBaedPosition, java.sql.Timestamp.from((Instant) value));
+			ps.setTimestamp(oneBasedPosition, java.sql.Timestamp.from((Instant) value));
 			return;
 		}
 		throw new SQLException(

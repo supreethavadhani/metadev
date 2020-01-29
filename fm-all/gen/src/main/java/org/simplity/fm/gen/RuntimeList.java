@@ -30,6 +30,9 @@ import org.simplity.fm.gen.Util.INamedMember;
  */
 class RuntimeList implements INamedMember {
 	private static final String C = ", ";
+	private static final String WHERE = " WERE ";
+	private static final String AND = " AND ";
+
 	String name;
 	String dbTableName;
 	String dbColumn1;
@@ -38,6 +41,7 @@ class RuntimeList implements INamedMember {
 	boolean keyIsNumeric;
 	boolean valueIsNumeric;
 	String tenantColumnName;
+	String activeColumnName;
 	/*
 	 * in case this list is also required in batches
 	 */
@@ -63,14 +67,26 @@ class RuntimeList implements INamedMember {
 		sbf.append("\n\t private static final String LIST_SQL = \"SELECT ");
 		sbf.append(this.dbColumn1).append(C).append(this.dbColumn2).append(" FROM ").append(this.dbTableName);
 
+		boolean whereAdded = false;
+		if (this.activeColumnName != null) {
+			sbf.append(WHERE).append(this.activeColumnName).append("=true");
+			whereAdded = true;
+		}
 		if (this.keyColumn != null) {
-			sbf.append(" WHERE ").append(this.keyColumn).append("=?");
+			if (whereAdded) {
+				sbf.append(AND);
+			} else {
+				sbf.append(WHERE);
+				whereAdded = true;
+			}
+			sbf.append(this.keyColumn).append("=?");
 		}
 		if (this.tenantColumnName != null) {
-			if (this.keyColumn == null) {
-				sbf.append(" WHERE ");
+			if (whereAdded) {
+				sbf.append(AND);
 			} else {
-				sbf.append(" AND ");
+				sbf.append(WHERE);
+				whereAdded = true;
 			}
 			sbf.append(this.tenantColumnName).append("=?");
 		}
@@ -78,9 +94,12 @@ class RuntimeList implements INamedMember {
 
 		sbf.append("\n\t private static final String CHECK_SQL = \"SELECT ").append(this.dbColumn1).append(" FROM ")
 				.append(this.dbTableName);
-		sbf.append(" WHERE ").append(this.dbColumn1).append("=?");
+		sbf.append(WHERE).append(this.dbColumn1).append("=?");
+		if (this.activeColumnName != null) {
+			sbf.append(AND).append(this.activeColumnName).append("=true");
+		}
 		if (this.keyColumn != null) {
-			sbf.append(" and ").append(this.keyColumn).append("=?");
+			sbf.append(AND).append(this.keyColumn).append("=?");
 		}
 		sbf.append("\";");
 
@@ -88,9 +107,9 @@ class RuntimeList implements INamedMember {
 			sbf.append("\n\t private static final String ALL_SQL = \"SELECT a.").append(this.dbColumn1);
 			sbf.append(", a.").append(this.dbColumn2).append(", b.").append(this.parentNameColumnName).append(" FROM ");
 			sbf.append(this.dbTableName).append(" a, ").append(this.parentTable).append(" b ");
-			sbf.append(" WHERE a.").append(this.keyColumn).append("=b.").append(this.parentIdColumnName);
+			sbf.append(WHERE).append("a.").append(this.keyColumn).append("=b.").append(this.parentIdColumnName);
 			if (this.tenantColumnName != null) {
-				sbf.append(" and ").append(this.tenantColumnName).append("=?");
+				sbf.append(AND).append(this.tenantColumnName).append("=?");
 			}
 			sbf.append("\";");
 		}
