@@ -30,7 +30,7 @@ import org.simplity.fm.gen.Util.INamedMember;
  */
 class RuntimeList implements INamedMember {
 	private static final String C = ", ";
-	private static final String WHERE = " WERE ";
+	private static final String WHERE = " WHERE ";
 	private static final String AND = " AND ";
 
 	String name;
