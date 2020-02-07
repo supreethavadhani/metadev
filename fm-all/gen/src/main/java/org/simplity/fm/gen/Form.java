@@ -276,7 +276,6 @@ public class Form {
 		sbf.append(p).append("Fdt newFormDataTable() {");
 		sbf.append("\n\t\treturn new ").append(cls).append("Fdt(this, null, null);\n\t}");
 
-		p = "\n\n\t@Override\n\tprotected " + cls;
 		/*
 		 * newFormData(schemaData, values, data)
 		 */

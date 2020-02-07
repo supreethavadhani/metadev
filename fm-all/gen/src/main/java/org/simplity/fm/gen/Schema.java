@@ -339,6 +339,11 @@ class Schema {
 		sbf.append("\n\t\treturn (").append(c).append(") super.parseData(json, forInsert, ctx, tableName, row);");
 		sbf.append("\n\t}");
 
+		sbf.append(over);
+		sbf.append("\n\tpublic ").append(c).append(" parseKeys(JsonObject json, IServiceContext ctx) {");
+		sbf.append("\n\t\treturn (").append(c).append(") super.parseKeys(json, ctx);");
+		sbf.append("\n\t}");
+
 		c = cls + "DataTable";
 		sbf.append(over);
 		sbf.append("\n\tpublic ").append(c).append(" newSchemaDataTable() {");

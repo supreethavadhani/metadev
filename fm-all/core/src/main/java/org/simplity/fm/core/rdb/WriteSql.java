@@ -23,12 +23,18 @@
 package org.simplity.fm.core.rdb;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.simplity.fm.core.data.ValueObject;
 
 /**
  * @author simplity.org
  *
  */
 public abstract class WriteSql extends Sql {
+	private List<ValueObject> batchData;
+
 	/**
 	 *
 	 * @param handle
@@ -36,6 +42,41 @@ public abstract class WriteSql extends Sql {
 	 * @throws SQLException
 	 */
 	public int write(final DbHandle handle) throws SQLException {
+		if (this.batchData != null) {
+			throw new SQLException("Sql is prepared for batch, but write is issued.");
+		}
 		return handle.write(this.sqlText, this.inputData);
 	}
+
+	/**
+	 *
+	 * @param handle
+	 * @return number of affected rows. could be 0.
+	 * @throws SQLException
+	 */
+	public int writeBatch(final DbHandle handle) throws SQLException {
+		if (this.batchData == null) {
+			throw new SQLException("Sql is not prepared for batch, but writeBatch is issued.");
+		}
+		final int n = handle.writeMany(this.sqlText, this.batchData.toArray(new ValueObject[0]));
+		this.batchData = null;
+		return n;
+	}
+
+	/**
+	 * add a batch after setting value to all the fields. Note that this MUST be
+	 * called before invoking writeBatch();
+	 *
+	 * @throws SQLException
+	 *             if any field in the Vo is null
+	 */
+	public void addBatch() throws SQLException {
+		if (this.batchData == null) {
+			this.batchData = new ArrayList<>();
+		}
+		this.batchData.add(this.inputData);
+		this.inputData = this.newValueObject();
+	}
+
+	protected abstract ValueObject newValueObject();
 }

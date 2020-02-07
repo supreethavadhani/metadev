@@ -99,7 +99,8 @@ public class DbHandle {
 	 *            receive data from the result set
 	 * @throws SQLException
 	 */
-	public void read(final String sql, final ValueObject inputData, final ValueTable outputTable) throws SQLException {
+	public void read(final String sql, final ValueObject inputData, final ValueTable<?> outputTable)
+			throws SQLException {
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			if (inputData != null) {
 				inputData.setPsParams(ps);
@@ -307,21 +308,51 @@ public class DbHandle {
 				ps.addBatch();
 			}
 
-			final int[] nbrs = ps.executeBatch();
-			int n = 0;
-			for (final int i : nbrs) {
-				/*
-				 * some drivers return -1 indicating inability to get nbr rows
-				 * affected
-				 */
-				if (i < 0) {
-					n = 1;
-					break;
-				}
+			return accumulate(ps.executeBatch());
+		}
+	}
+
+	private static int accumulate(final int[] counts) {
+		int n = 0;
+		for (final int i : counts) {
+			/*
+			 * some drivers return -1 indicating inability to get nbr rows
+			 * affected
+			 */
+			if (i < 0) {
+				logger.warn("Driver returned -1 as number of rows affected for a batch. assumed to be 1");
+				n++;
+			} else {
 				n += i;
 			}
-			logger.info("{} rows affected ", n);
-			return n;
+		}
+		logger.info("{} rows affected ", n);
+		return n;
+	}
+
+	/**
+	 * use a prepared statement, and values for the parameters to run it
+	 *
+	 * @param sql
+	 *            a prepared statement that manipulates data.
+	 * @param paramValues
+	 *            Each element is a non-null array that contains non-null values
+	 *            for each parameter in the prepared statement. to be set to the
+	 *            prepared statement.
+	 * @return number of affected rows. Not reliable. If driver returns -1, we
+	 *         assume it to be 1
+	 * @throws SQLException
+	 */
+	public int writeMany(final String sql, final Object[][] paramValues) throws SQLException {
+		logger.info("Generic Batch SQL:{}", sql);
+		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
+			for (final Object[] row : paramValues) {
+				for (int i = 0; i < row.length; i++) {
+					ValueType.setObjectAsPsParam(row[i], ps, i + 1);
+				}
+				ps.addBatch();
+			}
+			return accumulate(ps.executeBatch());
 		}
 	}
 
@@ -334,20 +365,18 @@ public class DbHandle {
 	 *            Each element is a non-null array that contains non-null values
 	 *            for each parameter in the prepared statement. to be set to the
 	 *            prepared statement.
-	 * @return number of affected rows, on element per batch. -1 implies
-	 *         that the driver was unable to determine it
+	 * @return number of affected rows. Not reliable. If driver returns -1, we
+	 *         assume it to be 1
 	 * @throws SQLException
 	 */
-	public int[] writeMany(final String sql, final Object[][] paramValues) throws SQLException {
+	public int writeMany(final String sql, final ValueObject[] paramValues) throws SQLException {
 		logger.info("Generic Batch SQL:{}", sql);
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
-			for (final Object[] row : paramValues) {
-				for (int i = 0; i < row.length; i++) {
-					ValueType.setObjectAsPsParam(row[i], ps, i + 1);
-				}
+			for (final ValueObject row : paramValues) {
+				row.setPsParams(ps);
 				ps.addBatch();
 			}
-			return ps.executeBatch();
+			return accumulate(ps.executeBatch());
 		}
 	}
 

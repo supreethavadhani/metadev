@@ -94,6 +94,9 @@ public abstract class FormData {
 	}
 
 	protected Object getObject(final int index) {
+		if (this.fieldValues == null) {
+			return null;
+		}
 		return this.fieldValues[index];
 	}
 
@@ -102,6 +105,9 @@ public abstract class FormData {
 	}
 
 	protected Object[] getFieldValues() {
+		if (this.fieldValues == null) {
+			return null;
+		}
 		return this.fieldValues;
 	}
 
@@ -215,7 +221,7 @@ public abstract class FormData {
 			this.dataObject.serializeFields(writer);
 		}
 
-		if (this.form.localFields != null) {
+		if (this.form.localFields != null && this.fieldValues != null) {
 			JsonUtil.writeFields(this.form.localFields, this.fieldValues, writer);
 		}
 

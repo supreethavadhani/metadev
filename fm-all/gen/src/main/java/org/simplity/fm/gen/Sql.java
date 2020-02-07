@@ -73,7 +73,7 @@ public class Sql {
 			baseCls = "ReadSql<" + className + ".OutputVo>";
 			Util.emitImport(sbf, ReadSql.class);
 		} else {
-			logger.error("{} is not a valid sqlType");
+			logger.error("{} is not a valid sqlType", this.sqlType);
 			sbf.append("Class not generated becaue sqlType is set to '").append(this.sqlType);
 			sbf.append("while we expect one of read,write,filter ");
 			return;
@@ -119,11 +119,21 @@ public class Sql {
 		if (this.sqlParams != null) {
 			this.emitSetters(sbf, dataTypes);
 		}
-		if (!hasOutput) {
-			sbf.append("\n}\n");
-			return;
+		if (hasOutput) {
+			this.emitOutMethods(sbf, dataTypes);
+		} else {
+			emitWriteMethods(sbf);
 		}
+		sbf.append("\n}\n");
+	}
 
+	private static void emitWriteMethods(final StringBuilder sbf) {
+		sbf.append("\n\n\t@Override\n\tprotected ValueObject newValueObject() {");
+		sbf.append("\n\t\treturn new ValueObject(IN, null);");
+		sbf.append("\n\t}");
+	}
+
+	private void emitOutMethods(final StringBuilder sbf, final Map<String, DataType> dataTypes) {
 		/*
 		 * abstract method to be implemented
 		 */
@@ -147,8 +157,8 @@ public class Sql {
 		sbf.append("\n\t\t\tsuper(fields, null);\n\t\t}");
 
 		this.emitGetters(sbf, dataTypes);
+		sbf.append("\n\t}");
 
-		sbf.append("\n\t}\n}\n");
 	}
 
 	private void emitSetters(final StringBuilder sbf, final Map<String, DataType> dataTypes) {
