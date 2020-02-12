@@ -28,6 +28,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.simplity.fm.core.data.PreparedStatementParam;
 import org.simplity.fm.core.data.ValueObject;
@@ -80,6 +82,96 @@ public class DbHandle {
 					return true;
 				}
 				return false;
+			}
+		}
+	}
+
+	/**
+	 * method to be used to read into a valueObject using a sql component.
+	 *
+	 * @param sql
+	 *            non-null valid prepared statement to read from the database
+	 * @param paramValues
+	 *            null if the prepared statement has no parameters. must contain
+	 *            the right non-values in the right order for parameters in the
+	 *            select sql
+	 * @param outputTypes
+	 *            non-null. must have the right types in the right order to
+	 *            receive data from the result set
+	 * @return extracted data as an array of objects. null if no row is read
+	 * @throws SQLException
+	 */
+	public Object[] read(final String sql, final Object[] paramValues, final ValueType[] outputTypes)
+			throws SQLException {
+		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
+			if (paramValues != null) {
+				int posn = 0;
+				for (final Object val : paramValues) {
+					posn++;
+					if (val == null) {
+						throw new SQLException(
+								"Value at " + posn + " is null. Input parameter values must be non-null");
+					}
+					ValueType.setObjectAsPsParam(val, ps, posn);
+				}
+			}
+			try (ResultSet rs = ps.executeQuery()) {
+				if (!rs.next()) {
+					return null;
+				}
+				final Object[] result = new Object[outputTypes.length];
+				for (int i = 0; i < outputTypes.length; i++) {
+					final ValueType vt = outputTypes[i];
+					result[i] = vt.getFromRs(rs, i + 1);
+				}
+				return result;
+			}
+		}
+	}
+
+	/**
+	 * method to be used to read into a valueObject using a sql component.
+	 *
+	 * @param sql
+	 *            non-null valid prepared statement to read from the database
+	 * @param paramValues
+	 *            null if the prepared statement has no parameters. must contain
+	 *            the right non-values in the right order for parameters in the
+	 *            select sql
+	 * @param outputTypes
+	 *            non-null. must have the right types in the right order to
+	 *            receive data from the result set
+	 * @return extracted data as an array of rows. null if no row is read
+	 * @throws SQLException
+	 */
+	public Object[][] filter(final String sql, final Object[] paramValues, final ValueType[] outputTypes)
+			throws SQLException {
+		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
+			if (paramValues != null) {
+				int posn = 0;
+				for (final Object val : paramValues) {
+					posn++;
+					if (val == null) {
+						throw new SQLException(
+								"Value at " + posn + " is null. Input parameter values must be non-null");
+					}
+					ValueType.setObjectAsPsParam(val, ps, posn);
+				}
+			}
+			try (ResultSet rs = ps.executeQuery()) {
+				final List<Object[]> result = new ArrayList<>();
+				while (rs.next()) {
+					final Object[] row = new Object[outputTypes.length];
+					result.add(row);
+					for (int i = 0; i < outputTypes.length; i++) {
+						final ValueType vt = outputTypes[i];
+						row[i] = vt.getFromRs(rs, i + 1);
+					}
+				}
+				if (result.size() == 0) {
+					return null;
+				}
+				return result.toArray(new Object[0][]);
 			}
 		}
 	}
