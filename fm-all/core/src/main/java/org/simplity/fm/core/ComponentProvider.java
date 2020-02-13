@@ -287,8 +287,12 @@ public abstract class ComponentProvider {
 			final String cls = this.formRoot + toClassName(formId) + FORM;
 			try {
 				form = (Form) Class.forName(cls).newInstance();
-			} catch (final Exception e) {
+			} catch (final ClassNotFoundException e) {
 				logger.error("No form named {} because we could not locate class {}", formId, cls);
+				return null;
+			} catch (final Exception e) {
+				logger.error("Internal Error: Form named " + formId
+						+ " exists but an excption occured while creating an instance. Error :", e);
 				return null;
 			}
 			this.forms.put(formId, form);
@@ -304,8 +308,12 @@ public abstract class ComponentProvider {
 			final String cls = this.schemaRoot + toClassName(schemaName) + SCHEMA;
 			try {
 				schema = (Schema) Class.forName(cls).newInstance();
-			} catch (final Exception e) {
+			} catch (final ClassNotFoundException e) {
 				logger.error("No schema named {} because we could not locate class {}", schemaName, cls);
+				return null;
+			} catch (final Exception e) {
+				logger.error("Internal Error: Schema named" + schemaName
+						+ " exists but an excption occured while while creating an instance. Error :", e);
 				return null;
 			}
 			this.schemas.put(schemaName, schema);
@@ -331,8 +339,12 @@ public abstract class ComponentProvider {
 				final String cls1 = this.customListRoot + clsName;
 				try {
 					list = (IValueList) Class.forName(cls1).newInstance();
-				} catch (final Exception e1) {
+				} catch (final ClassNotFoundException e1) {
 					logger.error("No list named {} because we could not locate class {} or {}", listId, cls, cls1);
+					return null;
+				} catch (final Exception e1) {
+					logger.error("Internal Error: List named" + listId
+							+ " exists but an excption occured while while creating an instance. Error :", e);
 					return null;
 				}
 			}

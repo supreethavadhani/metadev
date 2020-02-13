@@ -154,7 +154,16 @@ public class LinkedForm {
 		final Schema linkedSchema = this.linkedForm.getSchema();
 		for (int i = 0; i < nbr; i++) {
 			final DbField parentField = parentSchema.getField(this.parentLinkNames[i]);
+			/*
+			 * child field name is not verified during generation... we may get
+			 * run-time exception
+			 */
 			final DbField childField = linkedSchema.getField(this.childLinkNames[i]);
+			if (childField == null) {
+				throw new RuntimeException("Field " + this.childLinkNames[i]
+						+ " is defined as childLinkName, but is not defined as a field in the linked form "
+						+ this.linkFormName);
+			}
 			this.parentIndexes[i] = parentField.index;
 			this.childIndexes[i] = childField.index;
 			if (i != 0) {

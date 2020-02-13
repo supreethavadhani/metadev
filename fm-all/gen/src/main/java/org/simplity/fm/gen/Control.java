@@ -80,7 +80,10 @@ class Control {
 		if (fields != null && this.name != null) {
 			final Field field = fields.get(this.name);
 			if (field == null) {
-				logger.info("Control {} is not defined as a field. No form control generated", this.name);
+				final String msg = "Control " + this.name
+						+ "is not defined as a field. Control generated to result in compilation error";
+				def.append(msg);
+				logger.error(msg);
 			} else {
 				field.emitTs(def, controls, dataTypes, b, lists, keyedLists);
 			}

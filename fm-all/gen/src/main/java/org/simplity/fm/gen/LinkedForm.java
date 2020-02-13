@@ -22,6 +22,8 @@
 
 package org.simplity.fm.gen;
 
+import java.util.Map;
+
 /**
  * represents a Table row in tables sheet of a forms work book
  *
@@ -53,7 +55,7 @@ class LinkedForm {
 	 *
 	 * @param sbf
 	 */
-	void emitJavaCode(final StringBuilder sbf) {
+	void emitJavaCode(final StringBuilder sbf, final Map<String, Field> fields) {
 		sbf.append("new LinkedForm(");
 
 		sbf.append(Util.escape(this.name));
@@ -63,6 +65,15 @@ class LinkedForm {
 		sbf.append(C).append(Util.escape(this.errorId));
 
 		sbf.append(C);
+		for (final String s : this.parentLinkFields) {
+			if (fields.get(s) == null) {
+				final String msg = "link field " + s
+						+ " is not defined as a field in this form. generating jave code tha will give compilation error";
+				Form.logger.error("msg");
+				sbf.append(msg);
+
+			}
+		}
 		Util.emitArray(this.parentLinkFields, sbf);
 
 		sbf.append(C);
