@@ -449,7 +449,8 @@ class Schema {
 				}
 				final DbField f = this.fieldMap.get(field.listKey);
 				if (f == null) {
-					logger.error("DbField {} specifies {} as listKey, but that field is not defined");
+					logger.error("DbField {} specifies {} as listKey, but that field is not defined", field.name,
+							field.listKey);
 					continue;
 				}
 

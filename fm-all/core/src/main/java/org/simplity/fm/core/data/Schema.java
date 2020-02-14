@@ -65,7 +65,7 @@ public abstract class Schema {
 
 	/*
 	 * db operations that are to be exposed thru this form. array corresponds to
-	 * the ordinals of IoType
+	 * the ordinal of IoType
 	 */
 	protected boolean[] operations;
 	/**

@@ -289,11 +289,16 @@ public abstract class Form {
 				return false;
 			}
 
-			int idx = -1;
-			for (final LinkedForm lf : this.linkedForms) {
-				idx++;
-				if (lf.insert(handle, linkedData[idx].getDataTable(), dataObject.fieldValues) == false) {
-					return false;
+			if (linkedData != null) {
+				int idx = -1;
+				for (final LinkedForm lf : this.linkedForms) {
+					idx++;
+					final FormDataTable fdt = linkedData[idx];
+					if (fdt != null) {
+						if (lf.insert(handle, fdt.getDataTable(), dataObject.fieldValues) == false) {
+							return false;
+						}
+					}
 				}
 			}
 			result[0] = true;
