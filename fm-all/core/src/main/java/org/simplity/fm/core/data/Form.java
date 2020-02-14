@@ -252,10 +252,15 @@ public abstract class Form {
 			}
 
 			int idx = -1;
-			for (final LinkedForm lf : this.linkedForms) {
-				idx++;
-				if (lf.save(handle, linkedData[idx].getDataTable(), dataRow.fieldValues) == false) {
-					return false;
+			if (linkedData != null) {
+				for (final LinkedForm lf : this.linkedForms) {
+					idx++;
+					final FormDataTable fdt = linkedData[idx];
+					if (fdt != null) {
+						if (lf.save(handle, fdt.getDataTable(), dataRow.fieldValues) == false) {
+							return false;
+						}
+					}
 				}
 			}
 			result[0] = true;
