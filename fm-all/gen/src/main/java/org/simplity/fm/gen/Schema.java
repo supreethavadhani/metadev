@@ -306,11 +306,11 @@ class Schema {
 		sbf.append("\n\n\t/**\n\t *\n\t */");
 		sbf.append("\n\tpublic ").append(cls).append("Schema() {");
 		sbf.append("\n\t\tthis.name = \"").append(this.name).append("\";");
-		sbf.append("\n\t\tthis.nameInDb = ").append(Util.escape(this.nameInDb)).append(";");
 		sbf.append("\n\t\tthis.fields = FIELDS;");
 		sbf.append("\n\t\tthis.validations = VALIDS;");
-		sbf.append("\n\t\tthis.operations = OPS;");
 		if (this.nameInDb != null) {
+			sbf.append("\n\t\tthis.nameInDb = ").append(Util.escape(this.nameInDb)).append(";");
+			sbf.append("\n\t\tthis.operations = OPS;");
 			this.emitDbMeta(sbf);
 		}
 		sbf.append("\n\t\tthis.initialize();");
@@ -366,7 +366,13 @@ class Schema {
 
 	private void emitDbStuff(final StringBuilder sbf) {
 		if (this.nameInDb == null || this.nameInDb.isEmpty()) {
-			logger.warn("dbName not set. no db related code generated for this form");
+			if (this.dbOperations != null) {
+				final String msg = "nameInDb not specified, but dbOpertions specified. No db opertion is possible without a table/view name";
+				logger.error(msg);
+				sbf.append("\n//compiltion error created to highlight an error\nint a = \"").append(msg).append("\";");
+			} else {
+				logger.warn("dbName not set. no db related code generated for this form");
+			}
 			return;
 		}
 

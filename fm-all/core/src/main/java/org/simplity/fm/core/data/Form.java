@@ -107,6 +107,30 @@ public abstract class Form {
 		return this.newFormData(dataObject, fieldValues, childData);
 	}
 
+	/**
+	 * parse for a read operation. only key fields are expected
+	 *
+	 * @param json
+	 * @param ctx
+	 * @return FormData instance of the right concrete class if all ok. null in
+	 *         case of any error in which case the ctx has the message(s)
+	 */
+	public FormData parseKeys(final JsonObject json, final IServiceContext ctx) {
+		if (this.schema == null) {
+			final String msg = "Form " + this.getClass().getName()
+					+ " does not have a schema nad hence it can not be used to parse keys";
+			throw new RuntimeException(msg);
+		}
+
+		final SchemaData dataObject = this.schema.parseKeys(json, ctx);
+		if (ctx.allOk()) {
+			return this.newFormData(dataObject, null, null);
+		}
+
+		logger.error("Error while reading fields from the input payload");
+		return null;
+	}
+
 	protected abstract FormDataTable newFormDataTable(SchemaDataTable schemaTable, Object[][] fieldValues);
 
 	/**

@@ -64,20 +64,36 @@ class LinkedForm {
 		sbf.append(C).append(this.maxRows);
 		sbf.append(C).append(Util.escape(this.errorId));
 
-		sbf.append(C);
-		for (final String s : this.parentLinkFields) {
-			if (fields.get(s) == null) {
-				final String msg = "link field " + s
-						+ " is not defined as a field in this form. generating jave code tha will give compilation error";
-				Form.logger.error("msg");
-				sbf.append(msg);
-
+		boolean linkExists = false;
+		if (this.parentLinkFields == null) {
+			if (this.childLinkFields != null) {
+				Form.logger.error("childLinkFields ignored as parentLinkFields not specified");
+			}
+		} else {
+			if (this.childLinkFields == null) {
+				Form.logger.error("parentLinkFields ignored as childLinkFieldsnot specified");
+			} else {
+				linkExists = true;
 			}
 		}
-		Util.emitArray(this.parentLinkFields, sbf);
+		if (linkExists) {
+			sbf.append(C);
+			for (final String s : this.parentLinkFields) {
+				if (fields.get(s) == null) {
+					final String msg = "link field " + s
+							+ " is not defined as a field in this form. generating jave code tha will give compilation error";
+					Form.logger.error("msg");
+					sbf.append(msg);
 
-		sbf.append(C);
-		Util.emitArray(this.childLinkFields, sbf);
+				}
+			}
+			Util.emitArray(this.parentLinkFields, sbf);
+
+			sbf.append(C);
+			Util.emitArray(this.childLinkFields, sbf);
+		} else {
+			sbf.append(",null ,null");
+		}
 		sbf.append(C).append(this.isTabular);
 		sbf.append(')');
 	}

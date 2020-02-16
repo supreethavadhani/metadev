@@ -264,6 +264,13 @@ public class Form {
 		sbf.append("\n\t\treturn (").append(cls).append("Fd)super.parse(json, forInsert, ctx);\n\t}");
 
 		/*
+		 *
+		 * public FormData parse(...)
+		 */
+		sbf.append(p).append("Fd  parseKeys(final JsonObject json, final IServiceContext ctx) {");
+		sbf.append("\n\t\treturn (").append(cls).append("Fd)super.parseKeys(json, ctx);\n\t}");
+
+		/*
 		 * public formDataTable parseTable(...)
 		 */
 		sbf.append(p).append(

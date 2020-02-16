@@ -22,91 +22,148 @@
 
 package org.simplity.fm.core.service;
 
+import java.io.IOException;
 import java.io.Writer;
 import java.util.Collection;
 
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.data.FormData;
+import org.simplity.fm.core.data.FormDataTable;
+import org.simplity.fm.core.data.SchemaData;
+import org.simplity.fm.core.data.SchemaDataTable;
 import org.simplity.fm.core.http.LoggedInUser;
 
 /**
  * context for a service execution thread. App specific instance is made
  * available to all components that participate in the service execution path
- * 
+ *
  * @author simplity.org
  *
  */
 public interface IServiceContext {
 
 	/**
-	 * 
+	 *
 	 * @param key
 	 * @return object associated with this key, null if no such key, or teh
 	 *         value is null
 	 */
-	public Object getValue(String key);
+	Object getValue(String key);
 
 	/**
 	 * put an name-value pair in the context
-	 * 
+	 *
 	 * @param key
 	 *            non-null
 	 * @param value
 	 *            null has same effect as removing it. hence remove not
 	 *            provided.
 	 */
-	public void setValue(String key, Object value);
+	void setValue(String key, Object value);
 
 	/**
 	 * @return non-null user on whose behalf this service is requested
 	 */
-	public LoggedInUser getUser();
+	LoggedInUser getUser();
 
 	/**
-	 * 
+	 *
 	 * @return non-null writer for sending response to the request.
 	 */
-	public Writer getResponseWriter();
+	Writer getResponseWriter();
 
 	/**
-	 * 
+	 *
 	 * @return true if all ok. false if at least one error message is added to
 	 *         the context;
 	 */
-	public boolean allOk();
+	boolean allOk();
 
 	/**
-	 * 
+	 *
 	 * @param message
 	 *            non-null message
 	 */
-	public void addMessage(Message message);
+	void addMessage(Message message);
 
 	/**
-	 * 
+	 *
 	 * @param messages
 	 *            non-null messages
 	 */
-	public void addMessages(Collection<Message> messages);
+	void addMessages(Collection<Message> messages);
 
 	/**
-	 * 
+	 *
 	 * @return non-null array all messages added so far. empty if no message
 	 *         added so far;
 	 */
-	public Message[] getMessages();
+	Message[] getMessages();
 
 	/**
 	 * @return tenantId, if this APP is designed for multi-tenant deployment.
 	 *         null if it is not.
 	 */
-	public Object getTenantId();
+	Object getTenantId();
 
 	/**
 	 * messages is not necessarily all errors. Some clients may want to track
 	 * errors.
-	 * 
+	 *
 	 * @return number errors accumulated in the context. Note that the count
 	 *         gets reset if the messages are reset
 	 */
-	public int getNbrErrors();
+	int getNbrErrors();
+
+	/**
+	 * serialize this data as response. Note that this can be called only once
+	 * with success. any subsequent call will result in no action and a return
+	 * value of false;
+	 *
+	 * @param schemaData
+	 *            non-null;
+	 * @return true if all ok. false if a response is already set.
+	 * @throws IOException
+	 *             while writing a serialized response based on this data
+	 */
+	boolean setAsResponse(SchemaData schemaData) throws IOException;
+
+	/**
+	 * serialize this data as response. Note that this can be called only once
+	 * with success. any subsequent call will result in no action and a return
+	 * value of false;
+	 *
+	 * @param table
+	 *            non-null;
+	 * @return true if all ok. false if a response is already set.
+	 * @throws IOException
+	 *             while writing a serialized response based on this data
+	 */
+	boolean setAsResponse(SchemaDataTable table) throws IOException;
+
+	/**
+	 * serialize this data as response. Note that this can be called only once
+	 * with success. any subsequent call will result in no action and a return
+	 * value of false;
+	 *
+	 * @param fd
+	 *            non-null;
+	 * @return true if all ok. false if a response is already set.
+	 * @throws IOException
+	 *             while writing a serialized response based on this data
+	 */
+	boolean setAsResponse(FormData fd) throws IOException;
+
+	/**
+	 * serialize this data as response. Note that this can be called only once
+	 * with success. any subsequent call will result in no action and a return
+	 * value of false;
+	 *
+	 * @param fdt
+	 *            non-null;
+	 * @return true if all ok. false if a response is already set.
+	 * @throws IOException
+	 *             while writing a serialized response based on this data
+	 */
+	boolean setAsResponse(FormDataTable fdt) throws IOException;
 }
