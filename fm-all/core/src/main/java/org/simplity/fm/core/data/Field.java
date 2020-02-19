@@ -205,6 +205,7 @@ public class Field {
 	public boolean validateNull(final boolean forInsert, final IServiceContext ctx, final String tableName,
 			final int idx) {
 		if (this.isRequired(forInsert)) {
+			logger.error("Field {} is required but no data is received", this.name);
 			ctx.addMessage(Message.newValidationError(this, tableName, idx));
 			return false;
 		}
