@@ -24,10 +24,10 @@ package org.simplity.fm.gen;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Conventions;
@@ -68,24 +68,19 @@ public class Form {
 	Map<String, Field> fields;
 	Schema schema;
 
-	Field[] fieldsWithList;
+	final Set<String> keyFieldNames = new HashSet<>();
 
 	Field[] keyFields;
 
 	void initialize(final Schema sch) {
 		this.fields = new HashMap<>();
-		final List<Field> listFields = new ArrayList<>();
-		final List<Field> keyedFields = new ArrayList<>();
 
 		if (sch != null) {
 			this.schema = sch;
 			for (final DbField f : sch.fieldMap.values()) {
-				if (f.listName != null) {
-					listFields.add(f);
-				}
 				final ColumnType ct = f.getColumnType();
 				if (ct == ColumnType.PrimaryKey || ct == ColumnType.GeneratedPrimaryKey) {
-					keyedFields.add(f);
+					this.keyFieldNames.add(f.name);
 				}
 			}
 
@@ -103,19 +98,9 @@ public class Form {
 				f.index = idx;
 				idx++;
 				this.fields.put(f.name, f);
-				if (f.listName != null) {
-					listFields.add(f);
-				}
 			}
 		}
 
-		if (listFields.size() > 0) {
-			this.fieldsWithList = listFields.toArray(new Field[0]);
-		}
-
-		if (keyedFields.size() > 0) {
-			this.keyFields = keyedFields.toArray(new Field[0]);
-		}
 		if (this.linkedForms != null) {
 			int idx = 0;
 			for (final LinkedForm lf : this.linkedForms) {
@@ -516,12 +501,41 @@ public class Form {
 		sbf.append("\n\tprivate static _instance = new ").append(cls).append("();");
 
 		/*
+		 * form may not have all fields as control.As far as the client is
+		 * concerned, only controls are assumed to be fields. so we ignore li
+		 */
+
+		/*
 		 * fields as members. We also accumulate code for controls
 		 */
 		final StringBuilder sbfCon = new StringBuilder();
+		final StringBuilder keysSbf = new StringBuilder();
+		final StringBuilder listsSbf = new StringBuilder();
 		if (this.controls != null) {
 			for (final Control control : this.controls) {
 				control.emitTs(sbf, sbfCon, this.fields, dataTypes, lists, keyedLists);
+				/*
+				 * populate the other two sbfs if required
+				 */
+				final String nam = control.name;
+				final Field f = this.fields.get(nam);
+				if (f != null) {
+					final String s = Util.escapeTs(nam);
+
+					if (f.listName != null) {
+						if (listsSbf.length() > 0) {
+							listsSbf.append(',');
+						}
+						listsSbf.append(s);
+					}
+
+					if (this.keyFieldNames.contains(nam)) {
+						if (keysSbf.length() > 0) {
+							keysSbf.append(',');
+						}
+						keysSbf.append(s);
+					}
+				}
 			}
 		}
 		/*
@@ -551,12 +565,6 @@ public class Form {
 		 */
 		sbf.append("\n\t\tthis.fields = new Map();");
 
-		if (this.localFields != null) {
-			for (final Field field : this.localFields) {
-				sbf.append("\n\t\tthis.fields.set('").append(field.name).append("', this.");
-				sbf.append(field.name).append(");");
-			}
-		}
 		sbf.append("\n\t\tthis.controls = new Map();").append(sbfCon.toString());
 
 		/*
@@ -602,26 +610,14 @@ public class Form {
 		/*
 		 * fields with drop-downs
 		 */
-		if (this.fieldsWithList != null) {
-			sbf.append("\n\t\tthis.listFields = [");
-			for (final Field f : this.fieldsWithList) {
-				sbf.append(Util.escapeTs(f.name));
-				sbf.append(C);
-			}
-			sbf.setLength(sbf.length() - C.length());
-			sbf.append("];");
+		if (listsSbf.length() > 0) {
+			sbf.append("\n\t\tthis.listFields = [").append(listsSbf).append("];");
 		}
 		/*
-		 * are there key fields?
+		 * key fields
 		 */
-		if (this.keyFields != null) {
-			sbf.append("\n\t\tthis.keyFields = [");
-			for (final Field f : this.keyFields) {
-				sbf.append(Util.escapeTs(f.name));
-				sbf.append(C);
-			}
-			sbf.setLength(sbf.length() - C.length());
-			sbf.append("];");
+		if (keysSbf.length() > 0) {
+			sbf.append("\n\t\tthis.keyFields = [").append(keysSbf).append("];");
 		}
 		/*
 		 * end of constructor
