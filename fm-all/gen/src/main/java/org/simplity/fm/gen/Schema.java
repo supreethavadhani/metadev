@@ -494,7 +494,11 @@ class Schema {
 		if (this.keyFields != null) {
 			sbf.append(", WHERE, this.getParams(WHERE_IDX)");
 			sbf.append(", INSERT, this.getParams(INSERT_IDX)");
-			sbf.append(", UPDATE, this.getParams(UPDATE_IDX)");
+			if (this.isUpdatable) {
+				sbf.append(", UPDATE, this.getParams(UPDATE_IDX)");
+			} else {
+				sbf.append(", null, null");
+			}
 			sbf.append(", DELETE, ");
 			if (this.generatedKeyField == null) {
 				sbf.append("null, -1");
@@ -599,8 +603,10 @@ class Schema {
 	private void emitUpdate(final StringBuilder sbf, final String whereClause, final String whereIndexes) {
 		final StringBuilder updateBuf = new StringBuilder();
 		updateBuf.append(P).append(" String UPDATE = \"UPDATE ").append(this.nameInDb).append(" SET ");
+
 		final StringBuilder idxBuf = new StringBuilder();
 		idxBuf.append(P).append(" int[] UPDATE_IDX = {");
+
 		boolean firstOne = true;
 		boolean firstField = true;
 		for (final DbField field : this.fields) {
@@ -637,7 +643,10 @@ class Schema {
 		}
 		this.isUpdatable = true;
 		// update sql will have the where indexes at the end
-		idxBuf.append(C).append(whereIndexes);
+		if (!firstField) {
+			idxBuf.append(C);
+		}
+		idxBuf.append(whereIndexes);
 		updateBuf.append(whereClause);
 
 		if (this.useTimestampCheck) {
