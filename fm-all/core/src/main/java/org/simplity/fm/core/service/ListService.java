@@ -37,7 +37,7 @@ import com.google.gson.JsonPrimitive;
 
 /**
  * handles request to get drop-down values for a field, typically from a client
- * 
+ *
  * @author simplity.org
  *
  */
@@ -46,7 +46,7 @@ public class ListService implements IService {
 	protected static final Logger logger = LoggerFactory.getLogger(ListService.class);
 
 	/**
-	 * 
+	 *
 	 * @return non-null instance
 	 */
 	public static ListService getInstance() {
@@ -63,7 +63,7 @@ public class ListService implements IService {
 	}
 
 	@Override
-	public void serve(IServiceContext ctx, JsonObject payload) throws Exception {
+	public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
 		String listName = null;
 		JsonPrimitive ele = payload.getAsJsonPrimitive("list");
 		if (ele != null) {
@@ -73,7 +73,7 @@ public class ListService implements IService {
 			ctx.addMessage(Message.newError("list is required for listService"));
 			return;
 		}
-		IValueList list = ComponentProvider.getProvider().getValueList(listName);
+		final IValueList list = ComponentProvider.getProvider().getValueList(listName);
 		if (list == null) {
 			ctx.addMessage(Message.newError("list " + listName + " is not configured"));
 			return;
@@ -89,20 +89,23 @@ public class ListService implements IService {
 				return;
 			}
 		}
-		Object[][] result = list.getList(key, ctx);
-		if (result == null || result.length == 0) {
-			ctx.addMessage(Message.newError("list " + listName + " did not return any values for key " + key));
+		final Object[][] result = list.getList(key, ctx);
+		if (result == null) {
+			ctx.addMessage(Message.newError("Error while getting values for list " + listName + " for key " + key));
 			return;
+		}
+		if (result.length == 0) {
+			logger.warn("List {} has no values for key {]. sending an empty response", listName, key);
 		}
 		writeOut(ctx.getResponseWriter(), result);
 	}
 
-	private static void writeOut(Writer writer, Object[][] rows) throws IOException {
+	private static void writeOut(final Writer writer, final Object[][] rows) throws IOException {
 		writer.write("{\"");
 		writer.write(Conventions.Http.TAG_LIST);
 		writer.write("\":[");
 		boolean firstOne = true;
-		for (Object[] row : rows) {
+		for (final Object[] row : rows) {
 			if (firstOne) {
 				firstOne = false;
 			} else {
@@ -110,7 +113,7 @@ public class ListService implements IService {
 			}
 
 			writer.write("{\"value\":");
-			Object val = row[0];
+			final Object val = row[0];
 			if (val instanceof Number || val instanceof Boolean) {
 				writer.write(val.toString());
 			} else {

@@ -30,8 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.simplity.fm.core.rdb.DbHandle;
-import org.simplity.fm.core.rdb.IDbClient;
 import org.simplity.fm.core.rdb.IDbReader;
 import org.simplity.fm.core.rdb.RdbDriver;
 import org.simplity.fm.core.service.IServiceContext;
@@ -40,7 +38,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * represents meta data for a value list to be fetched at run time
- * 
+ *
  * @author simplity.org
  *
  */
@@ -66,7 +64,7 @@ public class RuntimeList implements IValueList {
 	}
 
 	@Override
-	public Object[][] getList(final Object key, IServiceContext ctx) {
+	public Object[][] getList(final Object key, final IServiceContext ctx) {
 		if (this.hasKey) {
 			if (key == null) {
 				logger.error("Key should have value for list {}", this.name);
@@ -77,7 +75,7 @@ public class RuntimeList implements IValueList {
 		if (this.keyIsNumeric) {
 			try {
 				l = Long.parseLong(key.toString());
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				logger.error("Key should be numeric value for list {} but we got {}", this.name, key);
 				return null;
 			}
@@ -86,58 +84,54 @@ public class RuntimeList implements IValueList {
 		final List<Object[]> result = new ArrayList<>();
 		final RuntimeList that = this;
 		try {
-			RdbDriver.getDriver().transact(new IDbClient() {
+			RdbDriver.getDriver().transact(handle -> {
+				handle.read(new IDbReader() {
+					@Override
+					public String getPreparedStatement() {
+						return that.listSql;
+					}
 
-				@Override
-				public boolean transact(DbHandle handle) throws SQLException {
-					handle.read(new IDbReader() {
-						@Override
-						public String getPreparedStatement() {
-							return that.listSql;
-						}
-
-						@Override
-						public void setParams(PreparedStatement ps) throws SQLException {
-							int posn = 1;
-							if (that.hasKey) {
-								if (that.keyIsNumeric) {
-									ps.setLong(posn, numericValue);
-								} else {
-									ps.setString(posn, key.toString());
-								}
-								posn++;
-							}
-							if (that.isTenantSpecific) {
-								ps.setLong(posn, (long) ctx.getTenantId());
-								posn++;
-							}
-						}
-
-						@Override
-						public boolean readARow(ResultSet rs) throws SQLException {
-							Object[] row = new Object[2];
-							if (RuntimeList.this.valueIsNumeric) {
-								row[0] = rs.getLong(1);
+					@Override
+					public void setParams(final PreparedStatement ps) throws SQLException {
+						int posn = 1;
+						if (that.hasKey) {
+							if (that.keyIsNumeric) {
+								ps.setLong(posn, numericValue);
 							} else {
-								row[0] = rs.getString(1);
+								ps.setString(posn, key.toString());
 							}
-							row[1] = rs.getString(2);
-							result.add(row);
-							return true;
+							posn++;
 						}
+						if (that.isTenantSpecific) {
+							ps.setLong(posn, (long) ctx.getTenantId());
+							posn++;
+						}
+					}
 
-					});
-					return true;
-				}
+					@Override
+					public boolean readARow(final ResultSet rs) throws SQLException {
+						final Object[] row = new Object[2];
+						if (RuntimeList.this.valueIsNumeric) {
+							row[0] = rs.getLong(1);
+						} else {
+							row[0] = rs.getString(1);
+						}
+						row[1] = rs.getString(2);
+						result.add(row);
+						return true;
+					}
+
+				});
+				return true;
 			}, true);
-		} catch (SQLException e) {
-			String msg = e.getMessage();
+		} catch (final SQLException e) {
+			final String msg = e.getMessage();
 			logger.error("Error while getting values for list {}. ERROR: {} ", this.name, msg);
 			return null;
 		}
 		if (result.size() == 0) {
-			logger.error("No data found for list {} with key {}", this.name, key);
-			return null;
+			logger.warn("No data found for list {} with key {}", this.name, key);
+			return new Object[0][];
 		}
 		return result.toArray(new Object[0][]);
 	}
@@ -154,44 +148,40 @@ public class RuntimeList implements IValueList {
 		final boolean[] result = new boolean[1];
 
 		try {
-			RdbDriver.getDriver().transact(new IDbClient() {
+			RdbDriver.getDriver().transact(handle -> {
+				handle.read(new IDbReader() {
+					@Override
+					public String getPreparedStatement() {
+						return RuntimeList.this.checkSql;
+					}
 
-				@Override
-				public boolean transact(DbHandle handle) throws SQLException {
-					handle.read(new IDbReader() {
-						@Override
-						public String getPreparedStatement() {
-							return RuntimeList.this.checkSql;
+					@Override
+					public void setParams(final PreparedStatement ps) throws SQLException {
+						if (RuntimeList.this.valueIsNumeric) {
+							ps.setLong(1, (Long) fieldValue);
+						} else {
+							ps.setString(1, (String) fieldValue);
 						}
-
-						@Override
-						public void setParams(PreparedStatement ps) throws SQLException {
-							if (RuntimeList.this.valueIsNumeric) {
-								ps.setLong(1, (Long) fieldValue);
+						if (RuntimeList.this.hasKey) {
+							if (RuntimeList.this.keyIsNumeric) {
+								ps.setLong(2, (Long) keyValue);
 							} else {
-								ps.setString(1, (String) fieldValue);
-							}
-							if (RuntimeList.this.hasKey) {
-								if (RuntimeList.this.keyIsNumeric) {
-									ps.setLong(2, (Long) keyValue);
-								} else {
-									ps.setString(2, (String) keyValue);
-								}
+								ps.setString(2, (String) keyValue);
 							}
 						}
+					}
 
-						@Override
-						public boolean readARow(ResultSet rs) throws SQLException {
-							result[0] = true;
-							return false;
-						}
+					@Override
+					public boolean readARow(final ResultSet rs) throws SQLException {
+						result[0] = true;
+						return false;
+					}
 
-					});
-					return true;
-				}
+				});
+				return true;
 			}, true);
-		} catch (SQLException e) {
-			String msg = e.getMessage();
+		} catch (final SQLException e) {
+			final String msg = e.getMessage();
 			logger.error("Error while getting values for list {}. ERROR: {} ", this.name, msg);
 			return false;
 		}
@@ -201,47 +191,43 @@ public class RuntimeList implements IValueList {
 	/**
 	 * this is specifically for batch operations where id is to be inserted in
 	 * place of name.
-	 * 
+	 *
 	 * @param ctx
 	 * @return map to get id from name
 	 */
 	@Override
-	public Map<String, String> getAll(IServiceContext ctx) {
-		Map<String, String> result = new HashMap<>();
+	public Map<String, String> getAll(final IServiceContext ctx) {
+		final Map<String, String> result = new HashMap<>();
 
 		try {
-			RdbDriver.getDriver().transact(new IDbClient() {
+			RdbDriver.getDriver().transact(handle -> {
+				handle.read(new IDbReader() {
 
-				@Override
-				public boolean transact(DbHandle handle) throws SQLException {
-					handle.read(new IDbReader() {
+					@Override
+					public String getPreparedStatement() {
+						return RuntimeList.this.allSql;
+					}
 
-						@Override
-						public String getPreparedStatement() {
-							return RuntimeList.this.allSql;
+					@Override
+					public void setParams(final PreparedStatement ps) throws SQLException {
+						if (RuntimeList.this.isTenantSpecific) {
+							ps.setLong(1, (long) ctx.getTenantId());
 						}
+					}
 
-						@Override
-						public void setParams(PreparedStatement ps) throws SQLException {
-							if (RuntimeList.this.isTenantSpecific) {
-								ps.setLong(1, (long) ctx.getTenantId());
-							}
-						}
-
-						@Override
-						public boolean readARow(ResultSet rs) throws SQLException {
-							String id = rs.getString(1);
-							String nam = rs.getString(2);
-							String key = rs.getString(3);
-							result.put(key + '|' + nam, id);
-							return true;
-						}
-					});
-					return true;
-				}
+					@Override
+					public boolean readARow(final ResultSet rs) throws SQLException {
+						final String id = rs.getString(1);
+						final String nam = rs.getString(2);
+						final String key = rs.getString(3);
+						result.put(key + '|' + nam, id);
+						return true;
+					}
+				});
+				return true;
 			}, true);
-		} catch (SQLException e) {
-			String msg = e.getMessage();
+		} catch (final SQLException e) {
+			final String msg = e.getMessage();
 			logger.error("Error while getting values for list {}. ERROR: {} ", this.name, msg);
 		}
 		return result;
