@@ -131,7 +131,8 @@ public abstract class Form {
 		return null;
 	}
 
-	protected abstract FormDataTable newFormDataTable(SchemaDataTable schemaTable, Object[][] fieldValues);
+	protected abstract FormDataTable newFormDataTable(SchemaDataTable schemaTable, Object[][] fieldValues,
+			FormDataTable[][] linkedData);
 
 	/**
 	 * @param arr
@@ -153,7 +154,7 @@ public abstract class Form {
 		if (this.schema != null) {
 			tbl = this.schema.parseTable(arr, forInsert, ctx, tableName);
 		}
-		return this.newFormDataTable(tbl, fieldValues);
+		return this.newFormDataTable(tbl, fieldValues, null);
 	}
 
 	private Object[][] parseLocalFieldArray(final JsonArray arr, final IServiceContext ctx, final String tableName) {

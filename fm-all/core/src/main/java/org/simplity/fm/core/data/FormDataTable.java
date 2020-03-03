@@ -35,8 +35,10 @@ public abstract class FormDataTable implements Iterable<FormData> {
 	protected final Form form;
 	protected final SchemaDataTable dataTable;
 	protected final Object[][] fieldValues;
+	protected final FormDataTable[][] linkedData;
 
-	protected FormDataTable(final Form form, final SchemaDataTable dataTable, final Object[][] fieldValues) {
+	protected FormDataTable(final Form form, final SchemaDataTable dataTable, final Object[][] fieldValues,
+			final FormDataTable[][] linkedData) {
 		this.form = form;
 		if (dataTable == null) {
 			this.dataTable = form.getSchema().newSchemaDataTable();
@@ -44,6 +46,7 @@ public abstract class FormDataTable implements Iterable<FormData> {
 			this.dataTable = dataTable;
 		}
 		this.fieldValues = fieldValues;
+		this.linkedData = linkedData;
 	}
 
 	/**
@@ -85,10 +88,14 @@ public abstract class FormDataTable implements Iterable<FormData> {
 
 	protected FormData getFormData(final int idx) {
 		Object[] vals = null;
+		FormDataTable[] link = null;
 		if (this.fieldValues != null) {
 			vals = this.fieldValues[idx];
 		}
-		return this.form.newFormData(this.dataTable.getSchemaData(idx), vals, null);
+		if (this.linkedData != null) {
+			link = this.linkedData[idx];
+		}
+		return this.form.newFormData(this.dataTable.getSchemaData(idx), vals, link);
 	}
 
 	/**

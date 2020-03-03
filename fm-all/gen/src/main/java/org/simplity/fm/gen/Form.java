@@ -266,7 +266,7 @@ public class Form {
 		 * newFormDataTable();
 		 */
 		sbf.append(p).append("Fdt newFormDataTable() {");
-		sbf.append("\n\t\treturn new ").append(cls).append("Fdt(this, null, null);\n\t}");
+		sbf.append("\n\t\treturn new ").append(cls).append("Fdt(this, null, null, null);\n\t}");
 
 		/*
 		 * newFormData(schemaData, values, data)
@@ -284,14 +284,15 @@ public class Form {
 		/*
 		 * newFormDataTable(table, values);
 		 */
-		sbf.append(p).append("Fdt newFormDataTable(final SchemaDataTable table, final Object[][] values) {");
+		sbf.append(p).append(
+				"Fdt newFormDataTable(final SchemaDataTable table, final Object[][] values, FormDataTable[][] linkedData) {");
 		sbf.append("\n\t\treturn new ").append(cls).append("Fdt(this, ");
 		if (schClass != null) {
 			sbf.append("(").append(schClass).append("DataTable) table");
 		} else {
 			sbf.append("null");
 		}
-		sbf.append(", values);\n\t}");
+		sbf.append(", values, linkedData);\n\t}");
 
 		sbf.append("\n}\n");
 	}
@@ -416,8 +417,8 @@ public class Form {
 		} else {
 			sbf.append(schClass);
 		}
-		sbf.append("DataTable dataTable, final Object[][] values) {");
-		sbf.append("\n\t\tsuper(form, dataTable, values);");
+		sbf.append("DataTable dataTable, final Object[][] values, FormDataTable[][] linkedData) {");
+		sbf.append("\n\t\tsuper(form, dataTable, values, linkedData);");
 		sbf.append("\n\t}");
 
 		/*
