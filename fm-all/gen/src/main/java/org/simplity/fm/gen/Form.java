@@ -236,7 +236,7 @@ public class Form {
 		p = "\n\n\t@Override\n\tpublic " + cls;
 
 		/*
-		 * newormData();
+		 * newFormData();
 		 */
 		sbf.append(p).append("Fd newFormData() {");
 		sbf.append("\n\t\treturn new ").append(cls).append("Fd(this, null, null, null);\n\t}");
@@ -355,6 +355,11 @@ public class Form {
 		if (schClass != null) {
 			sbf.append("\n\n\t@Override\n\tpublic ").append(schClass).append("Data getSchemaData() {");
 			sbf.append("\n\t\treturn (").append(schClass).append("Data) this.dataObject;\n\t}");
+
+			sbf.append(
+					"\n\n\t/**\n\t * replace underlying data\n\t * @param table non-null \n\t */\n\tpublic void replaceSchemaData(")
+					.append(schClass).append("Data data) {");
+			sbf.append("\n\t\tthis.dataObject = data;\n\t}");
 		}
 		/*
 		 * setters and getters in case we have local fields
@@ -427,8 +432,12 @@ public class Form {
 		if (schClass != null) {
 			sbf.append("\n\n\t@Override\n\tpublic ").append(schClass).append("DataTable getDataTable() {");
 			sbf.append("\n\t\t return (").append(schClass).append("DataTable) this.dataTable;\n\t}");
-		}
 
+			sbf.append(
+					"\n\n\t/**\n\t * replace underlying data\n\t * @param table non-null \n\t */\n\tpublic void replaceSchemaDataTable(")
+					.append(schClass).append("DataTable table) {");
+			sbf.append("\n\t\tthis.dataTable = table;\n\t}");
+		}
 		sbf.append("\n}\n");
 	}
 
@@ -492,7 +501,8 @@ public class Form {
 		if (this.linkedForms != null) {
 			for (final LinkedForm child : this.linkedForms) {
 				final String fn = child.getFormName();
-				sbf.append("\nimport { ").append(Util.toClassName(fn)).append("Form } from './").append(fn)
+				final String c = Util.toClassName(fn);
+				sbf.append("\nimport { ").append(c).append("Form, ").append(c).append("Vo } from './").append(fn)
 						.append("Form';");
 			}
 		}
@@ -649,6 +659,17 @@ public class Form {
 			}
 			final DataType dt = dataTypes.get(field.dataType);
 			sbf.append("\n\t").append(field.name).append("?: ").append(getTsValueType(dt));
+		}
+		if (this.linkedForms != null) {
+			for (final LinkedForm lf : this.linkedForms) {
+				if (isFirst) {
+					isFirst = false;
+				} else {
+					sbf.append(C);
+				}
+				final String c = Util.toClassName(lf.getFormName());
+				sbf.append("\n\t").append(lf.name).append("?: ").append(c).append("Vo");
+			}
 		}
 		sbf.append("\n}\n");
 

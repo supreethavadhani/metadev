@@ -53,7 +53,7 @@ public abstract class FormData {
 	/**
 	 * data for the schema that this form is based on
 	 */
-	protected final SchemaData dataObject;
+	protected SchemaData dataObject;
 	/**
 	 * data for local fields that this form may have. null if there are no local
 	 * fields.

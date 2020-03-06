@@ -127,10 +127,17 @@ class Schema {
 				list.add(field);
 			}
 
-			final ColumnType ct = field.getColumnType();
+			ColumnType ct = field.getColumnType();
 			if (ct == null) {
-				logger.error("{} does not specify its column type ", fieldName);
-				continue;
+				if (field.dbColumnName == null) {
+					logger.warn("{} is not linked to a db-column. No I/O happens on this field.", fieldName);
+					continue;
+				}
+				logger.error(
+						"{} is linked to a db-column {} but does not specify a db-column-type. it is treated as an optionl field.",
+						fieldName, field.dbColumnName);
+				ct = ColumnType.OptionalData;
+				field.columnType = ct.name();
 			}
 
 			field.isRequired = ct.isRequired();

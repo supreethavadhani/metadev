@@ -33,7 +33,7 @@ import com.google.gson.stream.JsonWriter;
  */
 public abstract class FormDataTable implements Iterable<FormData> {
 	protected final Form form;
-	protected final SchemaDataTable dataTable;
+	protected SchemaDataTable dataTable;
 	protected final Object[][] fieldValues;
 	protected final FormDataTable[][] linkedData;
 

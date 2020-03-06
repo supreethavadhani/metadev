@@ -54,6 +54,15 @@ public class RdbDriver {
 		return new RdbDriver();
 	}
 
+	/**
+	 * is a driver set up?
+	 * 
+	 * @return true if a driver is set up. false otherwise
+	 */
+	public static boolean isDriverSetup() {
+		return factory != null;
+	}
+
 	private RdbDriver() {
 		//
 	}
