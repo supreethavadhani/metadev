@@ -501,4 +501,25 @@ public abstract class Form {
 	 * @return an empty form data
 	 */
 	public abstract FormDataTable newFormDataTable();
+
+	/**
+	 * @param i
+	 * @return linked form at i. null if i is not valid
+	 */
+	public LinkedForm getLinkedForm(final int i) {
+		if (this.linkedForms == null || i >= this.linkedForms.length) {
+			return null;
+		}
+		return this.linkedForms[i];
+	}
+
+	/**
+	 * @return number of linked forms. 0 if none.
+	 */
+	public int getNbrLinks() {
+		if (this.linkedForms == null) {
+			return 0;
+		}
+		return this.linkedForms.length;
+	}
 }

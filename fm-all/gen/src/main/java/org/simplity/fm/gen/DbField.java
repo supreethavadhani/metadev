@@ -36,7 +36,7 @@ import org.simplity.fm.core.data.ColumnType;
 class DbField extends Field {
 	private static final Map<String, ColumnType> columnTypes = createMap();
 	String dbColumnName;
-	String columnType;
+	private String columnType;
 
 	@Override
 	protected void emitJavaSpecific(final StringBuilder sbf) {
@@ -55,9 +55,14 @@ class DbField extends Field {
 	 */
 	public ColumnType getColumnType() {
 		if (this.columnType == null) {
-			return null;
+			return ColumnType.OptionalData;
 		}
-		return columnTypes.get(this.columnType.toLowerCase());
+		final ColumnType ct = columnTypes.get(this.columnType.toLowerCase());
+		if (ct != null) {
+			return ct;
+		}
+		logger.error("{} is an invalid columnType for field {}. optional data is  assumed", this.columnType, this.name);
+		return ColumnType.OptionalData;
 	}
 
 	/**

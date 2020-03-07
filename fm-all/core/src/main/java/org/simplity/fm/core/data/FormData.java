@@ -28,6 +28,8 @@ import java.time.LocalDate;
 
 import org.simplity.fm.core.JsonUtil;
 import org.simplity.fm.core.datatypes.ValueType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.stream.JsonWriter;
 
@@ -48,6 +50,7 @@ import com.google.gson.stream.JsonWriter;
  *
  */
 public abstract class FormData {
+	private static final Logger logger = LoggerFactory.getLogger(FormData.class);
 
 	protected final Form form;
 	/**
@@ -73,13 +76,39 @@ public abstract class FormData {
 	protected FormData(final Form form, final SchemaData dataObject, final Object[] fieldValues,
 			final FormDataTable[] linkedData) {
 		this.form = form;
-		if (dataObject == null) {
-			this.dataObject = this.form.getSchema().newSchemaData();
-		} else {
+		final Schema sch = form.schema;
+		if (sch == null) {
+			this.dataObject = null;
+		} else if (dataObject == null) {
+			this.dataObject = sch.newSchemaData();
+		} else if (sch.name.equals(dataObject.schema.name)) {
 			this.dataObject = dataObject;
+		} else {
+			throw new IllegalArgumentException("Form data uses schema " + sch.name + " but data created using schema "
+					+ dataObject.schema.name + " is being set");
 		}
-		this.fieldValues = fieldValues;
-		this.linkedData = linkedData;
+
+		if (this.form.localFields == null) {
+			this.fieldValues = null;
+		} else if (fieldValues == null) {
+			this.fieldValues = new Object[this.form.localFields.length];
+		} else {
+			if (this.form.localFields.length != fieldValues.length) {
+				throw new IllegalArgumentException("Form " + this.form.name + " has " + this.form.localFields.length
+						+ " local fields but " + fieldValues.length + " values are provided");
+			}
+			this.fieldValues = fieldValues;
+		}
+
+		if (this.form.linkedForms == null || linkedData == null) {
+			this.linkedData = null;
+		} else {
+			if (this.form.linkedForms.length != linkedData.length) {
+				throw new IllegalArgumentException("Form " + this.form.name + " has " + this.form.linkedForms.length
+						+ " linked forms but " + linkedData.length + " data tables are provided");
+			}
+			this.linkedData = linkedData;
+		}
 	}
 
 	protected Form getForm() {
@@ -209,7 +238,16 @@ public abstract class FormData {
 	}
 
 	protected FormDataTable getLinkedData(final int idx) {
-		return this.linkedData[idx];
+		if (this.linkedData == null) {
+			return null;
+		}
+		try {
+			return this.linkedData[idx];
+		} catch (final ArrayIndexOutOfBoundsException e) {
+			logger.error("Form has {} linked forms but {} index is requested. returning null.", this.linkedData.length,
+					idx);
+			return null;
+		}
 	}
 
 	/**
@@ -225,12 +263,21 @@ public abstract class FormData {
 			JsonUtil.writeFields(this.form.localFields, this.fieldValues, writer);
 		}
 
-		if (this.linkedData != null) {
-			int idx = -1;
-			for (final LinkedForm lf : this.form.linkedForms) {
-				idx++;
-				final FormDataTable table = this.linkedData[idx];
-				if (table != null) {
+		if (this.linkedData == null) {
+			return;
+		}
+
+		for (int i = 0; i < this.linkedData.length; i++) {
+			final FormDataTable table = this.linkedData[i];
+			if (table == null) {
+				logger.warn("Data for linked form at {} is null. Data not serialized", i);
+			} else {
+				final LinkedForm lf = this.form.getLinkedForm(i);
+				if (lf == null) {
+					logger.error(
+							"Linked form at {} is null. Data is not in synch with form structure. data not serialized",
+							i);
+				} else {
 					writer.name(lf.linkName);
 					table.serializeRows(writer);
 				}

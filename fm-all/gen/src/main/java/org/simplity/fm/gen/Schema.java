@@ -137,7 +137,6 @@ class Schema {
 						"{} is linked to a db-column {} but does not specify a db-column-type. it is treated as an optionl field.",
 						fieldName, field.dbColumnName);
 				ct = ColumnType.OptionalData;
-				field.columnType = ct.name();
 			}
 
 			field.isRequired = ct.isRequired();

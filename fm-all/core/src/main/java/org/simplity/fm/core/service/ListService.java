@@ -95,7 +95,7 @@ public class ListService implements IService {
 			return;
 		}
 		if (result.length == 0) {
-			logger.warn("List {} has no values for key {]. sending an empty response", listName, key);
+			logger.warn("List {} has no values for key {}. sending an empty response", listName, key);
 		}
 		writeOut(ctx.getResponseWriter(), result);
 	}

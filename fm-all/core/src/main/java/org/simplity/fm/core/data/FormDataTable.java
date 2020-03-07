@@ -25,6 +25,9 @@ package org.simplity.fm.core.data;
 import java.io.IOException;
 import java.util.Iterator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.gson.stream.JsonWriter;
 
 /**
@@ -32,6 +35,8 @@ import com.google.gson.stream.JsonWriter;
  *
  */
 public abstract class FormDataTable implements Iterable<FormData> {
+	private static final Logger logger = LoggerFactory.getLogger(FormDataTable.class);
+
 	protected final Form form;
 	protected SchemaDataTable dataTable;
 	protected final Object[][] fieldValues;
@@ -40,13 +45,49 @@ public abstract class FormDataTable implements Iterable<FormData> {
 	protected FormDataTable(final Form form, final SchemaDataTable dataTable, final Object[][] fieldValues,
 			final FormDataTable[][] linkedData) {
 		this.form = form;
-		if (dataTable == null) {
-			this.dataTable = form.getSchema().newSchemaDataTable();
-		} else {
+
+		/*
+		 * ensure that the schema matches before accepting data
+		 */
+		final Schema sch = form.schema;
+
+		if (sch == null) {
+			this.dataTable = null;
+		} else if (dataTable == null) {
+			this.dataTable = sch.newSchemaDataTable();
+		} else if (sch.name.equals(dataTable.schema.name)) {
 			this.dataTable = dataTable;
+		} else {
+			throw new IllegalArgumentException("FormData " + this.form.name + " uses schema " + sch.name
+					+ " but data created for schema " + dataTable.schema.name + " is provided");
 		}
-		this.fieldValues = fieldValues;
-		this.linkedData = linkedData;
+
+		/*
+		 * local fields, if present, must have at least the right number of
+		 * elements
+		 */
+		if (this.form.localFields == null || fieldValues == null) {
+			this.fieldValues = null;
+		} else {
+			if (this.form.localFields.length != fieldValues.length) {
+				throw new IllegalArgumentException("Form " + this.form.name + " has " + this.form.localFields.length
+						+ " local fields but " + fieldValues.length + " values are provided");
+			}
+			this.fieldValues = fieldValues;
+		}
+
+		/*
+		 * we check only for this first dimension..
+		 */
+		if (this.dataTable == null || this.form.linkedForms == null || linkedData == null) {
+			this.linkedData = null;
+		} else {
+			if (this.dataTable.length() != linkedData.length) {
+				throw new IllegalArgumentException("Form data table is assigned dataTable of " + this.dataTable.length()
+						+ " elements but linked data is provided for " + this.form.linkedForms.length + " elements");
+			}
+			this.linkedData = linkedData;
+		}
 	}
 
 	/**
@@ -86,16 +127,28 @@ public abstract class FormDataTable implements Iterable<FormData> {
 		};
 	}
 
+	/**
+	 * @param idx
+	 * @return form data at the index. null if no data at that index
+	 */
 	protected FormData getFormData(final int idx) {
-		Object[] vals = null;
-		FormDataTable[] link = null;
-		if (this.fieldValues != null) {
-			vals = this.fieldValues[idx];
+		try {
+			Object[] vals = null;
+			FormDataTable[] link = null;
+			if (this.fieldValues != null) {
+				vals = this.fieldValues[idx];
+			}
+
+			if (this.linkedData != null) {
+				link = this.linkedData[idx];
+			}
+
+			return this.form.newFormData(this.dataTable.getSchemaData(idx), vals, link);
+		} catch (final ArrayIndexOutOfBoundsException e) {
+			logger.error("Form data table has " + this.dataTable.length() + " elements, but a request for " + idx
+					+ " is received", e);
+			return null;
 		}
-		if (this.linkedData != null) {
-			link = this.linkedData[idx];
-		}
-		return this.form.newFormData(this.dataTable.getSchemaData(idx), vals, link);
 	}
 
 	/**
@@ -104,7 +157,9 @@ public abstract class FormDataTable implements Iterable<FormData> {
 	 */
 	public void serializeRows(final JsonWriter writer) throws IOException {
 		writer.beginArray();
-		for (final FormData fd : this) {
+		final int nbr = this.length();
+		for (int i = 0; i < nbr; i++) {
+			final FormData fd = this.getFormData(i);
 			writer.beginObject();
 			fd.serializeFields(writer);
 			writer.endObject();
