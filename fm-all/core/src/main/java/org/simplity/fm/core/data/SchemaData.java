@@ -102,6 +102,91 @@ public abstract class SchemaData extends ValueObject {
 	}
 
 	/**
+	 * update is expected to succeed. hence an exception is thrown in case if no
+	 * row is updated
+	 *
+	 * @param handle
+	 *
+	 * @throws SQLException
+	 */
+	public void updateOrFail(final DbHandle handle) throws SQLException {
+		final DbAssistant asst = this.schema.getDbAssistant();
+		if (asst == null) {
+			throw new SQLException("Update not allowed on schema " + this.schema.name);
+		}
+		if (!asst.update(handle, this.fieldValues)) {
+			throw new SQLException("Update failed silently for " + this.schema.name + this.emitKeys());
+		}
+	}
+
+	/**
+	 * delete is expected to succeed. hence an exception is thrown in case if no
+	 * row is not deleted
+	 *
+	 * @param handle
+	 *
+	 * @throws SQLException
+	 */
+	public void deleteOrFail(final DbHandle handle) throws SQLException {
+		final DbAssistant asst = this.schema.getDbAssistant();
+		if (asst == null) {
+			throw new SQLException("Update not allowed on schema " + this.schema.name);
+		}
+		if (!asst.delete(handle, this.fieldValues)) {
+			throw new SQLException("Delete failed silently for " + this.schema.name + this.emitKeys());
+		}
+	}
+
+	/**
+	 * insert is expected to succeed. hence an exception is thrown in case if no
+	 * row is not inserted
+	 *
+	 * @param handle
+	 *
+	 * @throws SQLException
+	 */
+	public void insertOrFail(final DbHandle handle) throws SQLException {
+		final DbAssistant asst = this.schema.getDbAssistant();
+		if (asst == null) {
+			throw new SQLException("Insert not allowed on schema " + this.schema.name);
+		}
+		if (!asst.insert(handle, this.fieldValues)) {
+			throw new SQLException("Insert failed silently for " + this.schema.name + this.emitKeys());
+		}
+	}
+
+	/**
+	 * read is expected to succeed. hence an exception is thrown in case if no
+	 * row is not read
+	 *
+	 * @param handle
+	 *
+	 * @throws SQLException
+	 */
+	public void readOrFail(final DbHandle handle) throws SQLException {
+		final DbAssistant asst = this.schema.getDbAssistant();
+		if (asst == null) {
+			throw new SQLException("Read not allowed on schema " + this.schema.name);
+		}
+
+		if (!asst.insert(handle, this.fieldValues)) {
+			throw new SQLException("Read failed for " + this.schema.name + this.emitKeys());
+		}
+	}
+
+	private String emitKeys() {
+		final int[] ids = this.schema.getKeyIndexes();
+		if (ids == null) {
+			return "No keys";
+		}
+		final StringBuilder sbf = new StringBuilder();
+		for (final int idx : ids) {
+			sbf.append(this.schema.getField(idx).name).append(" = ").append(this.fieldValues[idx]).append("  ");
+		}
+		return sbf.toString();
+	}
+
+	/**
 	 * remove this form data from the db
 	 *
 	 * @param handle
