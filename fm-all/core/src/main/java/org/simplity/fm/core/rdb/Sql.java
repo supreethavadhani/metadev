@@ -22,17 +22,35 @@
 
 package org.simplity.fm.core.rdb;
 
+import java.io.StringWriter;
+
 import org.simplity.fm.core.data.ValueObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.gson.stream.JsonWriter;
 
 /**
  * @author simplity.org
  *
  */
 public abstract class Sql {
+	protected static final Logger logger = LoggerFactory.getLogger(Sql.class);
 	protected String sqlText;
 	protected ValueObject inputData;
 
 	protected void setInputValue(final int idx, final Object value) {
 		this.inputData.setValue(idx, value);
+	}
+
+	protected String getState() {
+		try (StringWriter writer = new StringWriter(); JsonWriter jw = new JsonWriter(writer)) {
+			this.inputData.serializeFields(jw);
+			this.inputData.serializeFields(jw);
+			return "SQL= " + this.sqlText + "\n" + writer.toString();
+
+		} catch (final Exception e) {
+			return "";
+		}
 	}
 }

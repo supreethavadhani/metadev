@@ -49,6 +49,27 @@ public abstract class WriteSql extends Sql {
 	}
 
 	/**
+	 * caller expects at least one row to be affected, failing which we are to
+	 * raise an exception
+	 *
+	 * @param handle
+	 * @return non-zero number of affected rows.
+	 * @throws SQLException
+	 *             if number of affected rows 0, or on any sql exception
+	 */
+	public int writeOrFail(final DbHandle handle) throws SQLException {
+		if (this.batchData != null) {
+			throw new SQLException("Sql is prepared for batch, but write is issued.");
+		}
+		final int n = handle.write(this.sqlText, this.inputData);
+		if (n > 0) {
+			return n;
+		}
+		logger.error(this.getState());
+		throw new SQLException("Sql is expected to affect at least one row, but no raws are affected.");
+	}
+
+	/**
 	 *
 	 * @param handle
 	 * @return number of affected rows. could be 0.
@@ -74,8 +95,10 @@ public abstract class WriteSql extends Sql {
 		if (this.batchData == null) {
 			this.batchData = new ArrayList<>();
 		}
-		this.batchData.add(this.inputData);
-		this.inputData = this.newValueObject();
+		/*
+		 * important to add a copy, and the value itself
+		 */
+		this.batchData.add(this.inputData.copy());
 	}
 
 	protected abstract ValueObject newValueObject();

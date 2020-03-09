@@ -169,7 +169,7 @@ public abstract class SchemaData extends ValueObject {
 			throw new SQLException("Read not allowed on schema " + this.schema.name);
 		}
 
-		if (!asst.insert(handle, this.fieldValues)) {
+		if (!asst.read(handle, this.fieldValues)) {
 			throw new SQLException("Read failed for " + this.schema.name + this.emitKeys());
 		}
 	}
