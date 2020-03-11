@@ -46,9 +46,7 @@ public abstract class Sql {
 	protected String getState() {
 		try (StringWriter writer = new StringWriter(); JsonWriter jw = new JsonWriter(writer)) {
 			this.inputData.serializeFields(jw);
-			this.inputData.serializeFields(jw);
 			return "SQL= " + this.sqlText + "\n" + writer.toString();
-
 		} catch (final Exception e) {
 			return "";
 		}

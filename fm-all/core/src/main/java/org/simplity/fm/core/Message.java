@@ -215,7 +215,10 @@ public class Message {
 
 		if (this.rowNumber != -1) {
 			writer.write(",\"idx\":");
-			writer.write(this.rowNumber);
+			/*
+			 * curious issue with writer while writing numbers!!
+			 */
+			writer.write("" + this.rowNumber);
 		}
 
 		writer.write("}");
