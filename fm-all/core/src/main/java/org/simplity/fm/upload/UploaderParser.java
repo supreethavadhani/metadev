@@ -29,7 +29,7 @@ import java.util.Set;
 
 import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.IFunction;
+import org.simplity.fm.core.fn.IFunction;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.IValueList;
 import org.slf4j.Logger;

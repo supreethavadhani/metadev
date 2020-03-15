@@ -66,6 +66,11 @@ public enum ValueType {
 			}
 			return val;
 		}
+
+		@Override
+		protected boolean typeOk(final Object value) {
+			return true;
+		}
 	},
 	/**
 	 * whole number
@@ -130,6 +135,11 @@ public enum ValueType {
 			}
 			return result;
 		}
+
+		@Override
+		protected boolean typeOk(final Object value) {
+			return value instanceof Number;
+		}
 	},
 	/**
 	 * whole number
@@ -168,6 +178,11 @@ public enum ValueType {
 			}
 			return result;
 		}
+
+		@Override
+		protected boolean typeOk(final Object value) {
+			return value instanceof Number;
+		}
 	},
 	/**
 	 * boolean
@@ -204,6 +219,11 @@ public enum ValueType {
 			}
 			return result;
 		}
+
+		@Override
+		protected boolean typeOk(final Object value) {
+			return value instanceof Boolean;
+		}
 	},
 	/**
 	 * Date as in calendar. No time, no time-zone. like a date-of-birth. Most
@@ -236,6 +256,11 @@ public enum ValueType {
 				return null;
 			}
 			return date.toLocalDate();
+		}
+
+		@Override
+		protected boolean typeOk(final Object value) {
+			return value instanceof LocalDate;
 		}
 	},
 
@@ -270,6 +295,11 @@ public enum ValueType {
 				return null;
 			}
 			return stamp.toInstant();
+		}
+
+		@Override
+		protected boolean typeOk(final Object value) {
+			return value instanceof Instant;
 		}
 	};
 
@@ -362,4 +392,19 @@ public enum ValueType {
 				"Value set to a psparameter must be a non-null instance of String, Long, Souble, Boolean, LocalDate or Instance. Supplied value is "
 						+ value.getClass().getName());
 	}
+
+	/**
+	 * @param value
+	 *            can be null.
+	 * @return true if the value is null, or is an instance of the right type.
+	 *         false otherwise.
+	 */
+	public boolean isRighType(final Object value) {
+		if (value == null) {
+			return true;
+		}
+		return this.typeOk(value);
+	}
+
+	protected abstract boolean typeOk(Object value);
 }

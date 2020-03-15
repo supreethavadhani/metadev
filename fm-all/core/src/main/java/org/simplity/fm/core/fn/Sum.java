@@ -20,49 +20,57 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.upload;
+package org.simplity.fm.core.fn;
 
-import java.util.Map;
-
-import org.simplity.fm.core.fn.IFunction;
+import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
- * Defines a function that evaluates to give a string
- *
- * @author simplity.org
+ * Concatenate strings
  *
  */
-class FunctionValueProvider implements IValueProvider {
-	final IFunction function;
-	final IValueProvider[] params;
+public class Sum extends AbstractFunction {
+	private static final ValueType[] TYPES = { ValueType.Integer };
 
 	/**
-	 *
-	 * @param function
-	 *            non-null function to be executed
-	 * @param params
-	 *            value providers for the parameters. number must match the
-	 *            desired number of params for the function
+	 * default constructor
 	 */
-	FunctionValueProvider(final IFunction function, final IValueProvider[] params) {
-		this.function = function;
-		this.params = params;
+	public Sum() {
+		this.argTypes = TYPES;
+		this.isVarArgs = true;
+		this.returnType = ValueType.Integer;
 	}
 
 	@Override
-	public String getValue(final Map<String, String> input, final IServiceContext ctx) {
-		String[] values = null;
-		if (this.params != null) {
-			values = new String[this.params.length];
-			for (int i = 0; i < values.length; i++) {
-				values[i] = this.params[i].getValue(input, ctx);
-			}
+	protected Long execute(final IServiceContext ctx, final Object[] args) {
+		if (args == null || args.length == 0) {
+			return 0L;
 		}
-		final Object obj = this.function.parseAndEval(ctx, values);
-		if (obj == null) {
-			return "";
+
+		long result = 0;
+		for (final Object n : args) {
+			result += ((Number) n).longValue();
 		}
-		return obj.toString();
+
+		return result;
 	}
+
+	/**
+	 *
+	 * @param args
+	 * @return sum of all the arguments
+	 */
+	public long sum(final long... args) {
+		if (args == null || args.length == 0) {
+			return 0;
+		}
+
+		long result = 0;
+		for (final long n : args) {
+			result += n;
+		}
+
+		return result;
+	}
+
 }

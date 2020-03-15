@@ -27,9 +27,9 @@ import java.util.Set;
 
 import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.IFunction;
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.Schema;
+import org.simplity.fm.core.fn.IFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

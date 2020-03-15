@@ -20,39 +20,56 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core;
+package org.simplity.fm.core.fn;
 
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
- * generic function that takes number of strings as parameters and returns a
- * string.
- * 
- * 
- * @author simplity.org
+ * Concatenate strings
  *
  */
-public interface IFunction {
-	/**
-	 * evaluate this function
-	 * 
-	 * @param ctx
-	 *            service context. Can be null in case this is executed outside
-	 *            of a service context. implementations must take care of this
-	 * 
-	 * @param params
-	 *            must have the right type of values for the function
-	 * @return result, possibly null;
-	 */
-	public String eval(IServiceContext ctx, String... params);
+public class Average extends AbstractFunction {
+	private static final ValueType[] TYPES = { ValueType.Decimal };
 
 	/**
-	 * meta data about the parameters. Can be used by the caller before calling
-	 * to validate input data
-	 * 
-	 * @return array of value types for each parameter. Note that the function
-	 *         would receive string and parse them into these types.
+	 * default constructor
 	 */
-	public ValueType[] getParamTypes();
+	public Average() {
+		this.argTypes = TYPES;
+		this.isVarArgs = true;
+		this.returnType = ValueType.Decimal;
+	}
+
+	@Override
+	protected Double execute(final IServiceContext ctx, final Object[] args) {
+		if (args == null || args.length == 0) {
+			return 0.0;
+		}
+
+		double sum = 0;
+		for (final Object n : args) {
+			sum += (double) n;
+		}
+
+		return sum / args.length;
+	}
+
+	/**
+	 *
+	 * @param args
+	 * @return sum of all the arguments
+	 */
+	public double average(final double... args) {
+		if (args == null || args.length == 0) {
+			return 0;
+		}
+
+		double sum = 0;
+		for (final double n : args) {
+			sum += n;
+		}
+
+		return sum / args.length;
+	}
 }

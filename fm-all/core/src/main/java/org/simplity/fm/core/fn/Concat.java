@@ -20,49 +20,48 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.upload;
+package org.simplity.fm.core.fn;
 
-import java.util.Map;
-
-import org.simplity.fm.core.fn.IFunction;
+import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
- * Defines a function that evaluates to give a string
- *
- * @author simplity.org
+ * Concatenate strings
  *
  */
-class FunctionValueProvider implements IValueProvider {
-	final IFunction function;
-	final IValueProvider[] params;
+public class Concat extends AbstractFunction {
+	private static final ValueType[] TYPES = { ValueType.Text };
 
 	/**
-	 *
-	 * @param function
-	 *            non-null function to be executed
-	 * @param params
-	 *            value providers for the parameters. number must match the
-	 *            desired number of params for the function
+	 * default constructor
 	 */
-	FunctionValueProvider(final IFunction function, final IValueProvider[] params) {
-		this.function = function;
-		this.params = params;
+	public Concat() {
+		this.argTypes = TYPES;
+		this.isVarArgs = true;
+		this.returnType = ValueType.Text;
 	}
 
 	@Override
-	public String getValue(final Map<String, String> input, final IServiceContext ctx) {
-		String[] values = null;
-		if (this.params != null) {
-			values = new String[this.params.length];
-			for (int i = 0; i < values.length; i++) {
-				values[i] = this.params[i].getValue(input, ctx);
-			}
-		}
-		final Object obj = this.function.parseAndEval(ctx, values);
-		if (obj == null) {
+	protected String execute(final IServiceContext ctx, final Object[] params) {
+		return this.concat(params);
+	}
+
+	/**
+	 *
+	 * @param args
+	 * @return concat of all arguments. empty string, and not null, if argument
+	 *         is null or it is empty
+	 */
+	public String concat(final Object... args) {
+		if (args == null || args.length == 0) {
 			return "";
 		}
-		return obj.toString();
+		final StringBuilder sbf = new StringBuilder();
+		for (final Object obj : args) {
+			if (obj != null) {
+				sbf.append(obj.toString());
+			}
+		}
+		return sbf.toString();
 	}
 }

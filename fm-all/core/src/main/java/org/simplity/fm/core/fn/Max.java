@@ -20,49 +20,61 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.upload;
+package org.simplity.fm.core.fn;
 
-import java.util.Map;
-
-import org.simplity.fm.core.fn.IFunction;
+import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
- * Defines a function that evaluates to give a string
- *
- * @author simplity.org
+ * Concatenate strings
  *
  */
-class FunctionValueProvider implements IValueProvider {
-	final IFunction function;
-	final IValueProvider[] params;
+public class Max extends AbstractFunction {
+	private static final ValueType[] TYPES = { ValueType.Decimal };
 
 	/**
-	 *
-	 * @param function
-	 *            non-null function to be executed
-	 * @param params
-	 *            value providers for the parameters. number must match the
-	 *            desired number of params for the function
+	 * default constructor
 	 */
-	FunctionValueProvider(final IFunction function, final IValueProvider[] params) {
-		this.function = function;
-		this.params = params;
+	public Max() {
+		this.argTypes = TYPES;
+		this.isVarArgs = true;
+		this.returnType = ValueType.Decimal;
 	}
 
 	@Override
-	public String getValue(final Map<String, String> input, final IServiceContext ctx) {
-		String[] values = null;
-		if (this.params != null) {
-			values = new String[this.params.length];
-			for (int i = 0; i < values.length; i++) {
-				values[i] = this.params[i].getValue(input, ctx);
+	protected Double execute(final IServiceContext ctx, final Object[] args) {
+		if (args == null || args.length == 0) {
+			return 0.0;
+		}
+
+		double max = Double.MIN_VALUE;
+		for (final Object n : args) {
+			final double m = (double) n;
+			if (m > max) {
+				max = m;
 			}
 		}
-		final Object obj = this.function.parseAndEval(ctx, values);
-		if (obj == null) {
-			return "";
+
+		return max;
+	}
+
+	/**
+	 *
+	 * @param args
+	 * @return sum of all the arguments
+	 */
+	public long max(final long... args) {
+		if (args == null || args.length == 0) {
+			return 0;
 		}
-		return obj.toString();
+
+		long max = Long.MIN_VALUE;
+		for (final long n : args) {
+			if (n > max) {
+				max = n;
+			}
+		}
+
+		return max;
 	}
 }

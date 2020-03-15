@@ -20,49 +20,30 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.upload;
-
-import java.util.Map;
-
-import org.simplity.fm.core.fn.IFunction;
-import org.simplity.fm.core.service.IServiceContext;
+package org.simplity.fm.core;
 
 /**
- * Defines a function that evaluates to give a string
+ * Base unchecked exception that represents an exception caused because of some
+ * flaw in the internal design/implementation of the pp.
+ * for example inconsistent data in the DB, incompatible arguments etc..
  *
- * @author simplity.org
+ * The framework throws this whenever it detects exceptions that are not
+ * supposed to happen by design. It must be caught at the highest level, say
+ * service agent.
  *
+ * Motivation for this design is to provide a mechanism for the app to centrally
+ * handle all such exceptions and plumb it to the org-wide infrastructure.
+ *
+ * Applications are encouraged to create sub-classes for better error-management
  */
-class FunctionValueProvider implements IValueProvider {
-	final IFunction function;
-	final IValueProvider[] params;
+public class ApplicationError extends Error {
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 *
-	 * @param function
-	 *            non-null function to be executed
-	 * @param params
-	 *            value providers for the parameters. number must match the
-	 *            desired number of params for the function
+	 * @param msg
 	 */
-	FunctionValueProvider(final IFunction function, final IValueProvider[] params) {
-		this.function = function;
-		this.params = params;
-	}
-
-	@Override
-	public String getValue(final Map<String, String> input, final IServiceContext ctx) {
-		String[] values = null;
-		if (this.params != null) {
-			values = new String[this.params.length];
-			for (int i = 0; i < values.length; i++) {
-				values[i] = this.params[i].getValue(input, ctx);
-			}
-		}
-		final Object obj = this.function.parseAndEval(ctx, values);
-		if (obj == null) {
-			return "";
-		}
-		return obj.toString();
+	public ApplicationError(final String msg) {
+		super(msg);
 	}
 }
