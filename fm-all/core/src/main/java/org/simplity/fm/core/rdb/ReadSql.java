@@ -55,4 +55,22 @@ public abstract class ReadSql<T extends ValueObject> extends Sql {
 		}
 		return null;
 	}
+
+	/**
+	 * read a row from the db. must be called ONLY AFTER setting all input
+	 * parameters
+	 *
+	 * @param handle
+	 * @return value object with output data. null if data is not read.
+	 * @throws SQLException
+	 */
+	public T readOrFail(final DbHandle handle) throws SQLException {
+		final T result = this.newOutputData();
+		final boolean ok = handle.read(this.sqlText, this.inputData, result);
+		if (ok) {
+			return result;
+		}
+		logger.error(this.getState());
+		throw new SQLException("Sql is expected to return one row, but it didn't.");
+	}
 }
