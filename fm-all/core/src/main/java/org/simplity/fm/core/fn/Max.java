@@ -22,54 +22,26 @@
 
 package org.simplity.fm.core.fn;
 
-import org.simplity.fm.core.datatypes.ValueType;
-import org.simplity.fm.core.service.IServiceContext;
-
 /**
  * Concatenate strings
  *
  */
-public class Max extends AbstractFunction {
-	private static final ValueType[] TYPES = { ValueType.Decimal };
-
+public class Max extends NumericFunction {
 	/**
 	 * default constructor
 	 */
 	public Max() {
-		this.argTypes = TYPES;
-		this.isVarArgs = true;
-		this.returnType = ValueType.Decimal;
+		this.setNbrArgs(-1);
 	}
 
 	@Override
-	protected Double execute(final IServiceContext ctx, final Object[] args) {
-		if (args == null || args.length == 0) {
-			return 0.0;
-		}
-
-		double max = Double.MIN_VALUE;
-		for (final Object n : args) {
-			final double m = (double) n;
-			if (m > max) {
-				max = m;
-			}
-		}
-
-		return max;
-	}
-
-	/**
-	 *
-	 * @param args
-	 * @return sum of all the arguments
-	 */
-	public long max(final long... args) {
+	public double calculate(final double[] args) {
 		if (args == null || args.length == 0) {
 			return 0;
 		}
 
-		long max = Long.MIN_VALUE;
-		for (final long n : args) {
+		double max = Double.MIN_VALUE;
+		for (final double n : args) {
 			if (n > max) {
 				max = n;
 			}

@@ -58,15 +58,11 @@ public interface IFunction {
 	/**
 	 * evaluate this function
 	 *
-	 * @param ctx
-	 *            service context. Can be null in case this is executed outside
-	 *            of a service context. implementations must take care of this
-	 *
 	 * @param params
 	 *            must have the right type of values for the function
 	 * @return result, possibly null; only primitive value/object are expected.
 	 */
-	Object eval(IServiceContext ctx, Object... params);
+	Object eval(Object... params);
 
 	/**
 	 * meta data about the parameters. Can be used by the caller before calling
@@ -75,7 +71,7 @@ public interface IFunction {
 	 * @return array of value types for each parameter. has only one element if
 	 *         variable arguments used. null if no arguments are expected
 	 */
-	ValueType[] getParamTypes();
+	ValueType[] getArgumentTypes();
 
 	/**
 	 * meta data about the parameters. Can be used by the caller before calling
@@ -90,7 +86,7 @@ public interface IFunction {
 	 *
 	 * @return -1 if it accepts var-args. 0 if no parameters are expected.
 	 */
-	int getNbrParams();
+	int getNbrArguments();
 
 	/**
 	 *
@@ -98,5 +94,5 @@ public interface IFunction {
 	 *         false otherwise. Note that the function can not be defined to
 	 *         take its last argument as var-args
 	 */
-	boolean accepstVarArgs();
+	boolean acceptsVarArgs();
 }

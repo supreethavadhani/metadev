@@ -22,48 +22,20 @@
 
 package org.simplity.fm.core.fn;
 
-import org.simplity.fm.core.datatypes.ValueType;
-import org.simplity.fm.core.service.IServiceContext;
-
 /**
  * Minimum of the numbers
  *
  */
-public class Min extends AbstractFunction {
-	private static final ValueType[] TYPES = { ValueType.Decimal };
-
+public class Min extends NumericFunction {
 	/**
 	 * default constructor
 	 */
 	public Min() {
-		this.argTypes = TYPES;
-		this.isVarArgs = true;
-		this.returnType = ValueType.Decimal;
+		this.setNbrArgs(-1);
 	}
 
 	@Override
-	protected Double execute(final IServiceContext ctx, final Object[] args) {
-		if (args == null || args.length == 0) {
-			return 0.0;
-		}
-
-		double min = Double.MAX_VALUE;
-		for (final Object n : args) {
-			final double m = (double) n;
-			if (m < min) {
-				min = m;
-			}
-		}
-
-		return min;
-	}
-
-	/**
-	 *
-	 * @param args
-	 * @return sum of all the arguments
-	 */
-	public double min(final double... args) {
+	public double calculate(final double[] args) {
 		if (args == null || args.length == 0) {
 			return 0;
 		}

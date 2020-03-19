@@ -22,37 +22,17 @@
 
 package org.simplity.fm.core.fn;
 
-import org.simplity.fm.core.datatypes.ValueType;
-import org.simplity.fm.core.service.IServiceContext;
-
 /**
  * Concatenate strings
  *
  */
-public class Sum extends AbstractFunction {
-	private static final ValueType[] TYPES = { ValueType.Integer };
+public class Sum extends NumericFunction {
 
 	/**
 	 * default constructor
 	 */
 	public Sum() {
-		this.argTypes = TYPES;
-		this.isVarArgs = true;
-		this.returnType = ValueType.Integer;
-	}
-
-	@Override
-	protected Long execute(final IServiceContext ctx, final Object[] args) {
-		if (args == null || args.length == 0) {
-			return 0L;
-		}
-
-		long result = 0;
-		for (final Object n : args) {
-			result += ((Number) n).longValue();
-		}
-
-		return result;
+		this.setNbrArgs(-1);
 	}
 
 	/**
@@ -60,17 +40,17 @@ public class Sum extends AbstractFunction {
 	 * @param args
 	 * @return sum of all the arguments
 	 */
-	public long sum(final long... args) {
+	@Override
+	public double calculate(final double[] args) {
 		if (args == null || args.length == 0) {
 			return 0;
 		}
 
-		long result = 0;
-		for (final long n : args) {
+		double result = 0;
+		for (final double n : args) {
 			result += n;
 		}
 
 		return result;
 	}
-
 }

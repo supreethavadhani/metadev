@@ -31,8 +31,12 @@ import org.simplity.fm.core.data.Form;
 import org.simplity.fm.core.data.IoType;
 import org.simplity.fm.core.data.Schema;
 import org.simplity.fm.core.datatypes.DataType;
+import org.simplity.fm.core.fn.Average;
 import org.simplity.fm.core.fn.Concat;
 import org.simplity.fm.core.fn.IFunction;
+import org.simplity.fm.core.fn.Max;
+import org.simplity.fm.core.fn.Min;
+import org.simplity.fm.core.fn.Sum;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.ListService;
 import org.simplity.fm.core.validn.IValueList;
@@ -286,10 +290,10 @@ public abstract class ComponentProvider {
 
 		private void addStandardFuntions() {
 			this.functions.put("concat", new Concat());
-			this.functions.put("averge", new Concat());
-			this.functions.put("sum", new Concat());
-			this.functions.put("min", new Concat());
-			this.functions.put("max", new Concat());
+			this.functions.put("average", new Average());
+			this.functions.put("sum", new Sum());
+			this.functions.put("min", new Min());
+			this.functions.put("max", new Max());
 		}
 
 		@Override

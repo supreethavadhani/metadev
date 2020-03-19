@@ -29,22 +29,8 @@ import org.simplity.fm.core.service.IServiceContext;
  * Concatenate strings
  *
  */
-public class Concat extends AbstractFunction {
+public class Concat implements IFunction {
 	private static final ValueType[] TYPES = { ValueType.Text };
-
-	/**
-	 * default constructor
-	 */
-	public Concat() {
-		this.argTypes = TYPES;
-		this.isVarArgs = true;
-		this.returnType = ValueType.Text;
-	}
-
-	@Override
-	protected String execute(final IServiceContext ctx, final Object[] params) {
-		return this.concat(params);
-	}
 
 	/**
 	 *
@@ -52,7 +38,8 @@ public class Concat extends AbstractFunction {
 	 * @return concat of all arguments. empty string, and not null, if argument
 	 *         is null or it is empty
 	 */
-	public String concat(final Object... args) {
+	@Override
+	public Object eval(final Object... args) {
 		if (args == null || args.length == 0) {
 			return "";
 		}
@@ -63,5 +50,38 @@ public class Concat extends AbstractFunction {
 			}
 		}
 		return sbf.toString();
+	}
+
+	@Override
+	public Object parseAndEval(final IServiceContext ctx, final String... params) {
+		if (params == null) {
+			return null;
+		}
+		final int nbr = params.length;
+		final Object[] args = new Object[nbr];
+		for (int i = 0; i < nbr; i++) {
+			args[i] = params[i];
+		}
+		return this.eval(args);
+	}
+
+	@Override
+	public ValueType[] getArgumentTypes() {
+		return TYPES;
+	}
+
+	@Override
+	public ValueType getReturnType() {
+		return ValueType.Text;
+	}
+
+	@Override
+	public int getNbrArguments() {
+		return -1;
+	}
+
+	@Override
+	public boolean acceptsVarArgs() {
+		return true;
 	}
 }

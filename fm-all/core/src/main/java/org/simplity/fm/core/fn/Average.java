@@ -22,45 +22,21 @@
 
 package org.simplity.fm.core.fn;
 
-import org.simplity.fm.core.datatypes.ValueType;
-import org.simplity.fm.core.service.IServiceContext;
-
 /**
  * Concatenate strings
  *
  */
-public class Average extends AbstractFunction {
-	private static final ValueType[] TYPES = { ValueType.Decimal };
+public class Average extends NumericFunction {
 
 	/**
 	 * default constructor
 	 */
 	public Average() {
-		this.argTypes = TYPES;
-		this.isVarArgs = true;
-		this.returnType = ValueType.Decimal;
+		this.setNbrArgs(-1);
 	}
 
 	@Override
-	protected Double execute(final IServiceContext ctx, final Object[] args) {
-		if (args == null || args.length == 0) {
-			return 0.0;
-		}
-
-		double sum = 0;
-		for (final Object n : args) {
-			sum += (double) n;
-		}
-
-		return sum / args.length;
-	}
-
-	/**
-	 *
-	 * @param args
-	 * @return sum of all the arguments
-	 */
-	public double average(final double... args) {
+	public double calculate(final double[] args) {
 		if (args == null || args.length == 0) {
 			return 0;
 		}
