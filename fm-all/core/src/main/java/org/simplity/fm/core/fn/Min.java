@@ -35,7 +35,7 @@ public class Min extends NumericFunction {
 	}
 
 	@Override
-	public double calculate(final double[] args) {
+	public double evaluate(final double[] args) {
 		if (args == null || args.length == 0) {
 			return 0;
 		}

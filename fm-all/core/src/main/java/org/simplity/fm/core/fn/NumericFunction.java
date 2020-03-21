@@ -49,7 +49,7 @@ public abstract class NumericFunction implements IFunction {
 	 * @param n
 	 *            -1 if it is var arg
 	 */
-	protected void setNbrArgs(final int n) {
+	protected final void setNbrArgs(final int n) {
 		this.nbrArgs = n;
 		if (n == 0) {
 			return;
@@ -64,33 +64,33 @@ public abstract class NumericFunction implements IFunction {
 	}
 
 	@Override
-	public int getNbrArguments() {
+	public final int getNbrArguments() {
 		return this.nbrArgs;
 	}
 
 	@Override
-	public boolean acceptsVarArgs() {
+	public final boolean acceptsVarArgs() {
 		return this.nbrArgs == -1;
 	}
 
 	@Override
-	public Object parseAndEval(final IServiceContext ctx, final String... params) {
+	public final Object parseAndEval(final IServiceContext ctx, final String... params) {
 		return this.calculate(this.parse(params));
 	}
 
 	@Override
-	public Object eval(final Object... args) {
+	public final Object eval(final Object... args) {
 
 		return this.calculate(this.toDouble(args));
 	}
 
 	@Override
-	public ValueType[] getArgumentTypes() {
+	public final ValueType[] getArgumentTypes() {
 		return this.argTypes;
 	}
 
 	@Override
-	public ValueType getReturnType() {
+	public final ValueType getReturnType() {
 		return ValueType.Decimal;
 	}
 
@@ -101,7 +101,12 @@ public abstract class NumericFunction implements IFunction {
 	 *            guaranteed to contain compatible length and values.
 	 * @return result
 	 */
-	public abstract double calculate(double[] args);
+	public final double calculate(final double[] args) {
+		this.ensureNbrArgs(args == null ? 0 : args.length);
+		return this.evaluate(args);
+	}
+
+	protected abstract double evaluate(double[] args);
 
 	private void ensureNbrArgs(final int nbr) {
 		if (this.nbrArgs >= 0 && nbr != this.nbrArgs) {

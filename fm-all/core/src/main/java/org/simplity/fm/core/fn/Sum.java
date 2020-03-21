@@ -41,7 +41,7 @@ public class Sum extends NumericFunction {
 	 * @return sum of all the arguments
 	 */
 	@Override
-	public double calculate(final double[] args) {
+	public double evaluate(final double[] args) {
 		if (args == null || args.length == 0) {
 			return 0;
 		}
