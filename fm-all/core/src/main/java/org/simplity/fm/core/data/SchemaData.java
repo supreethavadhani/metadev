@@ -24,6 +24,7 @@ package org.simplity.fm.core.data;
 
 import java.sql.SQLException;
 
+import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.rdb.DbHandle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -243,6 +244,34 @@ public abstract class SchemaData extends ValueObject {
 			return false;
 		}
 		return asst.filterFirst(whereClauseStartingWithWhere, values, this.fieldValues, handle);
+	}
+
+	/**
+	 * @param handle
+	 * @param whereClauseStartingWithWhere
+	 *            e.g. "WHERE a=? and b=?" null if all rows are to be read. Best
+	 *            practice is to use parameters rather than dynamic sql. That is
+	 *            you should use a=? rather than a = 32
+	 * @param values
+	 *            null or empty if where-clause is null or has no parameters.
+	 *            every element MUST be non-null and must be one of the standard
+	 *            objects we use String, Long, Double, Boolean, LocalDate,
+	 *            Instant
+	 * @throws SQLException
+	 */
+	public void filterFirstOneOrFail(final DbHandle handle, final String whereClauseStartingWithWhere,
+			final Object[] values) throws SQLException {
+		boolean ok = false;
+
+		final DbAssistant asst = this.schema.getDbAssistant();
+		if (asst != null) {
+			ok = asst.filterFirst(whereClauseStartingWithWhere, values, this.fieldValues, handle);
+		}
+
+		if (!ok) {
+			throw new ApplicationError("FilterOne failed for schema " + this.schema.name);
+		}
+
 	}
 
 	/**
