@@ -66,7 +66,7 @@ public abstract class WriteSql extends Sql {
 			return n;
 		}
 		logger.error(this.getState());
-		throw new SQLException("Sql is expected to affect at least one row, but no raws are affected.");
+		throw new SQLException("Sql is expected to affect at least one row, but no rows are affected.");
 	}
 
 	/**

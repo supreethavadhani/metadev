@@ -121,7 +121,7 @@ public class ValueObject {
 	/**
 	 * @return field values
 	 */
-	protected Object[] getRawData() {
+	public Object[] getRawData() {
 		return this.fieldValues;
 	}
 

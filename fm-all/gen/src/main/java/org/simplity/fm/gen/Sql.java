@@ -25,7 +25,6 @@ package org.simplity.fm.gen;
 import java.util.Map;
 
 import org.simplity.fm.core.data.ValueObject;
-import org.simplity.fm.core.data.ValueTable;
 import org.simplity.fm.core.rdb.FilterSql;
 import org.simplity.fm.core.rdb.ReadSql;
 import org.simplity.fm.core.rdb.WriteSql;
@@ -48,6 +47,7 @@ public class Sql {
 	String sql;
 	Field[] sqlParams;
 	Field[] outputFields;
+	String schemaName;
 
 	void emitJava(final StringBuilder sbf, final String packageName, final String className, final String dataTypesName,
 			final Map<String, DataType> dataTypes) {
@@ -59,11 +59,35 @@ public class Sql {
 
 		String baseCls = null;
 		boolean hasOutput = true;
+		boolean ok = true;
+		String sqlPrefix = "";
+		boolean isFilter = false;
 		if (this.sqlType.equals(SQL_TYPE_FILTER)) {
-			baseCls = "FilterSql<" + className + ".OutputVo>";
-			Util.emitImport(sbf, ValueTable.class);
-			Util.emitImport(sbf, FilterSql.class);
-
+			if (this.schemaName == null || this.schemaName.isEmpty()) {
+				logger.error("schemaName is required for filter sql");
+				ok = false;
+			} else {
+				final String txt = this.sql.trim().toLowerCase();
+				if (txt.startsWith("where")) {
+					logger.error(
+							"Sql for filter should not start with WHERE. It should assume that a where is already present in the sqland provide the rest of the sql.");
+					ok = false;
+				} else {
+					hasOutput = false;
+					isFilter = true;
+					sqlPrefix = " WHERE ";
+					final String schemaCls = Util.toClassName(this.schemaName);
+					baseCls = "FilterSql<" + schemaCls + "Data" + ", " + schemaCls + "DataTable>";
+					sbf.append("\nimport ").append(packageName).append(".schema.").append(schemaCls).append("Schema;");
+					sbf.append("\nimport ").append(packageName).append(".schema.").append(schemaCls).append("Data;");
+					sbf.append("\nimport ").append(packageName).append(".schema.").append(schemaCls)
+							.append("DataTable;");
+					Util.emitImport(sbf, FilterSql.class);
+				}
+			}
+		} else if (this.schemaName != null && this.schemaName.isEmpty() == false) {
+			logger.error("Schema name should not be specified for a non-filter sql.");
+			ok = false;
 		} else if (this.sqlType.equals(SQL_TYPE_WRITE)) {
 			baseCls = "WriteSql";
 			Util.emitImport(sbf, WriteSql.class);
@@ -74,11 +98,14 @@ public class Sql {
 			Util.emitImport(sbf, ReadSql.class);
 		} else {
 			logger.error("{} is not a valid sqlType", this.sqlType);
+			ok = false;
+		}
+
+		if (!ok) {
 			sbf.append("Class not generated becaue sqlType is set to '").append(this.sqlType);
 			sbf.append("while we expect one of read,write,filter ");
 			return;
 		}
-
 		/*
 		 * class
 		 */
@@ -88,7 +115,7 @@ public class Sql {
 		/*
 		 * static declarations
 		 */
-		sbf.append(P).append("String SQL =").append(Util.escape(this.sql)).append(';');
+		sbf.append(P).append("String SQL = ").append(Util.escape(sqlPrefix + this.sql)).append(';');
 		if (this.sqlParams != null) {
 			sbf.append(P).append("Field[] IN = ");
 			emitFields(sbf, this.sqlParams, dataTypesName);
@@ -97,7 +124,7 @@ public class Sql {
 
 		if (hasOutput) {
 			if (this.outputFields == null || this.outputFields.length == 0) {
-				logger.error("read/filter sqls must define output fields");
+				logger.error("read sqls must define output fields");
 				sbf.append("ERROR: no output fields defined!!!");
 				return;
 			}
@@ -113,6 +140,9 @@ public class Sql {
 		sbf.append("\n\t\tthis.sqlText = SQL;");
 		if (this.sqlParams != null) {
 			sbf.append("\n\t\tthis.inputData = new ValueObject(IN, null);");
+			if (isFilter) {
+				sbf.append("\n\t\tthis.schema = new ").append(Util.toClassName(this.schemaName)).append("Schema();");
+			}
 		}
 		sbf.append("\n\t}");
 
@@ -121,7 +151,7 @@ public class Sql {
 		}
 		if (hasOutput) {
 			this.emitOutMethods(sbf, dataTypes);
-		} else {
+		} else if (!isFilter) {
 			emitWriteMethods(sbf);
 		}
 		sbf.append("\n}\n");
