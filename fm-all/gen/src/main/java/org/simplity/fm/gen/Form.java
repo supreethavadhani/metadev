@@ -694,7 +694,7 @@ public class Form {
 		sbf.append("\n\tconstructor(form: ").append(cls).append("Form, sa: ServiceAgent) {");
 		sbf.append("\n\t\tsuper(form, sa);\n\t}");
 
-		if (this.controls == null) {
+		if (this.controls == null || this.controls.length == 0) {
 			sbf.append("\n\t/**  this form has no editable fields. data nust be accessed as Vo and not through fd **/");
 			sbf.append("\n}\n");
 			return;
