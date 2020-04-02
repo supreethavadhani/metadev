@@ -517,10 +517,9 @@ public class Form {
 		 */
 
 		/*
-		 * fields as members. We also accumulate code for controls
+		 * controls/fields as members. We also accumulate code for controls
 		 */
 		final StringBuilder sbfCon = new StringBuilder();
-		final StringBuilder keysSbf = new StringBuilder();
 		final StringBuilder listsSbf = new StringBuilder();
 		if (this.controls != null) {
 			for (final Control control : this.controls) {
@@ -538,13 +537,6 @@ public class Form {
 							listsSbf.append(',');
 						}
 						listsSbf.append(s);
-					}
-
-					if (this.keyFieldNames.contains(nam)) {
-						if (keysSbf.length() > 0) {
-							keysSbf.append(',');
-						}
-						keysSbf.append(s);
 					}
 				}
 			}
@@ -627,8 +619,18 @@ public class Form {
 		/*
 		 * key fields
 		 */
-		if (keysSbf.length() > 0) {
-			sbf.append("\n\t\tthis.keyFields = [").append(keysSbf).append("];");
+		if (this.keyFieldNames.size() > 0) {
+			sbf.append("\n\t\tthis.keyFields = [");
+			boolean firstOne = true;
+			for (final String key : this.keyFieldNames) {
+				if (firstOne) {
+					firstOne = false;
+				} else {
+					sbf.append(C);
+				}
+				sbf.append('"').append(key).append('"');
+			}
+			sbf.append("];");
 		}
 		/*
 		 * end of constructor
@@ -676,23 +678,13 @@ public class Form {
 	}
 
 	/**
-	 * extend form data to restrict name field to valid names of this form
+	 * extend form data to restrict name field to valid names of this form.
+	 * Note that these operate only on form controls, and not on other fields.
+	 * Non-control fields are manipulated through the Vo interface, with no
+	 * support for two-way binding with the form. They would be one-way through
+	 * vo.??
 	 */
 	private void emitTsFormFd(final StringBuilder sbf) {
-		final char col = '\'';
-		/*
-		 * names is like 'f1' | 'f2' | 'f3'
-		 */
-		final StringBuilder names = new StringBuilder();
-		boolean isFirst = true;
-		for (final Field field : this.fields.values()) {
-			if (isFirst) {
-				isFirst = false;
-			} else {
-				names.append(" | ");
-			}
-			names.append(col).append(field.name).append(col);
-		}
 		/*
 		 * formFd extends FormData() to extend setFieldValue() and
 		 * getFieldValue()
@@ -702,6 +694,27 @@ public class Form {
 		sbf.append("\n\tconstructor(form: ").append(cls).append("Form, sa: ServiceAgent) {");
 		sbf.append("\n\t\tsuper(form, sa);\n\t}");
 
+		if (this.controls == null) {
+			sbf.append("\n\t/**  this form has no editable fields. data nust be accessed as Vo and not through fd **/");
+			sbf.append("\n}\n");
+			return;
+		}
+
+		/*
+		 * names is like 'f1' | 'f2' | 'f3'
+		 */
+		final StringBuilder names = new StringBuilder();
+		final char col = '\'';
+		boolean isFirst = true;
+		for (final Control control : this.controls) {
+			if (isFirst) {
+				isFirst = false;
+			} else {
+				names.append(" | ");
+			}
+			names.append(col).append(control.name).append(col);
+		}
+
 		final String types = "string | number | boolean | null";
 		sbf.append("\n\n\tsetFieldValue(name: ").append(names).append(", value: ").append(types).append(" ): void {");
 		sbf.append("\n\t\tsuper.setFieldValue(name, value);\n\t}");
@@ -709,7 +722,6 @@ public class Form {
 		sbf.append("\n\n\tgetFieldValue(name: ").append(names).append(" ): ").append(types).append(" {");
 		sbf.append("\n\t\treturn super.getFieldValue(name);\n\t}");
 		sbf.append("\n}\n");
-
 	}
 
 	private static String getTsValueType(final DataType dt) {

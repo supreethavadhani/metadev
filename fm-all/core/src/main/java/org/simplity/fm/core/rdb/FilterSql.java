@@ -85,17 +85,15 @@ public abstract class FilterSql<T1 extends SchemaData, T2 extends SchemaDataTabl
 	 * filter rows into a data table
 	 *
 	 * @param handle
-	 * @return schema data table that has all the rows filtered. null if no rows
+	 * @return non-null data table that has all the rows filtered. could be
+	 *         empty
 	 * @throws SQLException
 	 */
 	@SuppressWarnings("unchecked")
 	public T2 filter(final DbHandle handle) throws SQLException {
 		final SchemaDataTable table = this.schema.newSchemaDataTable();
-		if (table.filter(handle, this.sqlText, this.inputData.getRawData())) {
-			return (T2) table;
-		}
-		return null;
-
+		table.filter(handle, this.sqlText, this.inputData.getRawData());
+		return (T2) table;
 	}
 
 	/**
@@ -104,7 +102,8 @@ public abstract class FilterSql<T1 extends SchemaData, T2 extends SchemaDataTabl
 	 * caller need not handle the case with no rows
 	 *
 	 * @param handle
-	 * @return non-null schema data table with allfiltered with the first
+	 * @return non-null non-empty schema data table with all filtered with the
+	 *         first
 	 *         filtered row
 	 * @throws SQLException
 	 *             thrown when any SQL exception, OR when no rows are filtered
@@ -112,7 +111,7 @@ public abstract class FilterSql<T1 extends SchemaData, T2 extends SchemaDataTabl
 	public T2 filterOrFail(final DbHandle handle) throws SQLException {
 		final T2 result = this.filter(handle);
 
-		if (result == null) {
+		if (result.length() == 0) {
 			throw new SQLException("Filter did not return any row. " + this.getState());
 		}
 		return result;

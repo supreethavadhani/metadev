@@ -395,6 +395,13 @@ public abstract class Form {
 			return null;
 		}
 
+		if (this.schema == null) {
+			logger.warn(
+					"Form {} is not associated with any schema, and hence requires a custom java class. No such class provided.",
+					this.getName());
+			return null;
+		}
+
 		/*
 		 * simple service works on its schema.
 		 */
