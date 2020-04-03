@@ -183,6 +183,11 @@ public abstract class Form {
 	 */
 	protected void initialize() {
 		if (this.linkedForms != null) {
+			if (this.schema == null) {
+				throw new RuntimeException("Form " + this.getName()
+						+ " uses linked fields, but has no schema. LInking forms feature is available with schema, and not with local fields");
+			}
+
 			for (final LinkedForm lf : this.linkedForms) {
 				lf.init(this.schema);
 			}
