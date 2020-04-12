@@ -34,6 +34,7 @@ import org.simplity.fm.core.data.SchemaData;
 import org.simplity.fm.core.data.SchemaDataTable;
 import org.simplity.fm.core.datatypes.ValueType;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.stream.JsonWriter;
@@ -227,10 +228,11 @@ public class JsonUtil {
 	 * @return false if it is not a boolean
 	 */
 	public static boolean getBoolean(final JsonObject json, final String attName) {
-		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
-		if (ele == null) {
+		final JsonElement j = json.get(attName);
+		if (j == null || j.isJsonPrimitive() == false) {
 			return false;
 		}
+		final JsonPrimitive ele = (JsonPrimitive) j;
 		if (ele.isBoolean()) {
 			return ele.getAsBoolean();
 		}
@@ -244,8 +246,8 @@ public class JsonUtil {
 	 * @return 0 if it is not a number
 	 */
 	public static double getDouble(final JsonObject json, final String attName) {
-		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
-		if (ele == null) {
+		final JsonElement ele = json.get(attName);
+		if (ele == null || ele.isJsonPrimitive() == false) {
 			return 0;
 		}
 		return (double) ValueType.Decimal.parse(ele.getAsString());
@@ -258,8 +260,8 @@ public class JsonUtil {
 	 * @return 0 if it is not a number
 	 */
 	public static long getLong(final JsonObject json, final String attName) {
-		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
-		if (ele == null) {
+		final JsonElement ele = json.get(attName);
+		if (ele == null || ele.isJsonPrimitive() == false) {
 			return 0;
 		}
 		return (long) ValueType.Integer.parse(ele.getAsString());
@@ -272,8 +274,8 @@ public class JsonUtil {
 	 * @return date or null
 	 */
 	public static final LocalDate getDate(final JsonObject json, final String attName) {
-		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
-		if (ele == null) {
+		final JsonElement ele = json.get(attName);
+		if (ele == null || ele.isJsonPrimitive() == false) {
 			return null;
 		}
 		return (LocalDate) ValueType.Date.parse(ele.getAsString());
@@ -286,8 +288,8 @@ public class JsonUtil {
 	 * @return string or null
 	 */
 	public static final String getSring(final JsonObject json, final String attName) {
-		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
-		if (ele == null) {
+		final JsonElement ele = json.get(attName);
+		if (ele == null || ele.isJsonPrimitive() == false) {
 			return null;
 		}
 		return ele.getAsString();
@@ -300,8 +302,8 @@ public class JsonUtil {
 	 * @return time-stamp or null
 	 */
 	public static final Instant getTimestamp(final JsonObject json, final String attName) {
-		final JsonPrimitive ele = json.getAsJsonPrimitive(attName);
-		if (ele == null) {
+		final JsonElement ele = json.get(attName);
+		if (ele == null || ele.isJsonPrimitive() == false) {
 			return null;
 		}
 		return (Instant) ValueType.Timestamp.parse(ele.getAsString());

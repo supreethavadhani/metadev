@@ -373,7 +373,7 @@ public class Form {
 		 */
 		if (this.linkedForms != null) {
 			for (final LinkedForm lf : this.linkedForms) {
-				lf.emitJavaGetter(sbf);
+				lf.emitJavaGetSetter(sbf);
 			}
 		}
 

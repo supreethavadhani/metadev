@@ -33,7 +33,6 @@ import java.util.List;
 
 import org.simplity.fm.core.data.PreparedStatementParam;
 import org.simplity.fm.core.data.ValueObject;
-import org.simplity.fm.core.data.ValueTable;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -186,21 +185,33 @@ public class DbHandle {
 	 * @param inputData
 	 *            null if the prepared statement has no parameters. must contain
 	 *            the right values in the right order
-	 * @param outputTable
-	 *            non-null. must have the right fields in the right order to
-	 *            receive data from the result set
+	 * @param outputInstance
+	 *            an instance of the VO for output. This instance is not
+	 *            modified, but used to create instances of new VOs
+	 * @return list of output Vos. could be empty, but not null
 	 * @throws SQLException
 	 */
-	public void read(final String sql, final ValueObject inputData, final ValueTable<?> outputTable)
+	public <T extends ValueObject> List<T> filter(final String sql, final ValueObject inputData, final T outputInstance)
 			throws SQLException {
+
+		logger.info("Filter called with T = {} ", outputInstance.getClass().getName());
+
+		final List<T> list = new ArrayList<>();
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			if (inputData != null) {
 				inputData.setPsParams(ps);
 			}
 			try (ResultSet rs = ps.executeQuery()) {
-				outputTable.readFromRs(rs);
+				while (rs.next()) {
+					@SuppressWarnings("unchecked")
+					final T vo = (T) outputInstance.makeEmptyCopy();
+					logger.info("New instance of {} created for filtering", vo.getClass().getName());
+					vo.readFromRs(rs);
+					list.add(vo);
+				}
 			}
 		}
+		return list;
 	}
 
 	/**

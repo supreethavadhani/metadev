@@ -26,7 +26,9 @@ import java.util.Map;
 
 import org.simplity.fm.core.data.ValueObject;
 import org.simplity.fm.core.rdb.FilterSql;
+import org.simplity.fm.core.rdb.FilterWithSchemaSql;
 import org.simplity.fm.core.rdb.ReadSql;
+import org.simplity.fm.core.rdb.ReadWithSchemaSql;
 import org.simplity.fm.core.rdb.WriteSql;
 import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
@@ -51,85 +53,123 @@ public class Sql {
 
 	void emitJava(final StringBuilder sbf, final String packageName, final String className, final String dataTypesName,
 			final Map<String, DataType> dataTypes) {
-		sbf.append("package ").append(packageName).append(".sql;\n");
 
-		Util.emitImport(sbf, org.simplity.fm.core.data.Field.class);
-		Util.emitImport(sbf, ValueObject.class);
-		sbf.append("\nimport ").append(packageName).append('.').append(dataTypesName).append(';');
+		final boolean hasSchema = this.schemaName != null && this.schemaName.isEmpty() == false;
+		final boolean hasOutFields = this.outputFields != null && this.outputFields.length > 0;
+		final boolean hasParams = this.sqlParams != null && this.sqlParams.length > 0;
+		boolean isWrite = false;
 
-		String baseCls = null;
-		boolean hasOutput = true;
-		boolean ok = true;
-		String sqlPrefix = "";
-		boolean isFilter = false;
-		if (this.sqlType.equals(SQL_TYPE_FILTER)) {
-			if (this.schemaName == null || this.schemaName.isEmpty()) {
-				logger.error("schemaName is required for filter sql");
-				ok = false;
+		String msg = null;
+		if (this.sqlType.equals(SQL_TYPE_WRITE)) {
+			isWrite = true;
+			if (hasSchema || hasOutFields) {
+				msg = "Write sql should not specify schema or output fields.";
+			}
+			if (!hasParams) {
+				msg = "Write sql MUST have sql parameters. Unconditional update to database is not allowed";
+			}
+		} else if (this.sqlType.equals(SQL_TYPE_READ) || this.sqlType.equals(SQL_TYPE_FILTER)) {
+			if ((hasSchema && hasOutFields) || (!hasSchema && !hasOutFields)) {
+				msg = "read/filter sql should have either schemaName or outputFields";
 			} else {
 				final String txt = this.sql.trim().toLowerCase();
-				if (txt.startsWith("where")) {
-					logger.error(
-							"Sql for filter should not start with WHERE. It should assume that a where is already present in the sqland provide the rest of the sql.");
-					ok = false;
+				if (hasSchema) {
+					if (txt.startsWith("where") == false) {
+						msg = "When schema is specified, the sql should start with 'where' verb, and should be valid prase to append after a select ... part.";
+					}
 				} else {
-					hasOutput = false;
-					isFilter = true;
-					sqlPrefix = " WHERE ";
-					final String schemaCls = Util.toClassName(this.schemaName);
-					baseCls = "FilterSql<" + schemaCls + "Data" + ", " + schemaCls + "DataTable>";
-					sbf.append("\nimport ").append(packageName).append(".schema.").append(schemaCls).append("Schema;");
-					sbf.append("\nimport ").append(packageName).append(".schema.").append(schemaCls).append("Data;");
-					sbf.append("\nimport ").append(packageName).append(".schema.").append(schemaCls)
-							.append("DataTable;");
-					Util.emitImport(sbf, FilterSql.class);
+					if (txt.startsWith("select") == false) {
+						msg = "When output fields are specified, sql must start be a valid select sql starting with the verb 'select'";
+					}
 				}
 			}
-		} else if (this.schemaName != null && this.schemaName.isEmpty() == false) {
-			logger.error("Schema name should not be specified for a non-filter sql.");
-			ok = false;
-		} else if (this.sqlType.equals(SQL_TYPE_WRITE)) {
-			baseCls = "WriteSql";
-			Util.emitImport(sbf, WriteSql.class);
-			hasOutput = false;
-
-		} else if (this.sqlType.equals(SQL_TYPE_READ)) {
-			baseCls = "ReadSql<" + className + ".OutputVo>";
-			Util.emitImport(sbf, ReadSql.class);
 		} else {
-			logger.error("{} is not a valid sqlType", this.sqlType);
-			ok = false;
+			msg = this.sqlType + " is invalid. it has to be read/write/filter";
 		}
 
-		if (!ok) {
-			sbf.append("Class not generated becaue sqlType is set to '").append(this.sqlType);
-			sbf.append("while we expect one of read,write,filter ");
+		if (msg != null) {
+			logger.error(msg);
+			sbf.append(msg);
 			return;
 		}
+
+		emitImports(sbf, packageName, dataTypesName);
+
+		if (isWrite) {
+			this.emitWriteSql(sbf, className, dataTypesName, dataTypes);
+			return;
+		}
+
+		if (this.sqlType.equals(SQL_TYPE_READ)) {
+			if (hasSchema) {
+				this.emitReadWithSchema(sbf, packageName, className, dataTypesName, dataTypes);
+				return;
+			}
+			this.emitRead(sbf, className, dataTypesName, dataTypes);
+			return;
+		}
+
+		if (hasSchema) {
+			this.emitFilterWithSchema(sbf, packageName, className, dataTypesName, dataTypes);
+			return;
+		}
+		this.emitFilter(sbf, className, dataTypesName, dataTypes);
+
+	}
+
+	void emitWriteSql(final StringBuilder sbf, final String className, final String dataTypesName,
+			final Map<String, DataType> dataTypes) {
+
+		Util.emitImport(sbf, WriteSql.class);
+
 		/*
 		 * class
 		 */
 		sbf.append("\n\n/** generated class for ").append(className).append(" */");
-		sbf.append("\npublic class ").append(className).append(" extends ").append(baseCls).append(" {");
+		sbf.append("\npublic class ").append(className).append(" extends WriteSql {");
 
 		/*
 		 * static declarations
 		 */
-		sbf.append(P).append("String SQL = ").append(Util.escape(sqlPrefix + this.sql)).append(';');
+		sbf.append(P).append("String SQL = ").append(Util.escape(this.sql)).append(';');
+		sbf.append(P).append("Field[] IN = ");
+		emitFields(sbf, this.sqlParams, dataTypesName);
+		sbf.append(';');
+
+		/*
+		 * constructor
+		 */
+		sbf.append("\n\n\t/** default constructor */\n\tpublic ").append(className).append("() {");
+		sbf.append("\n\t\tthis.sqlText = SQL;");
+		sbf.append("\n\t\tthis.inputData = new ValueObject(IN, null);");
+		sbf.append("\n\t}");
+
+		this.emitSetters(sbf, dataTypes);
+		sbf.append("\n}\n");
+	}
+
+	void emitFilterWithSchema(final StringBuilder sbf, final String packageName, final String className,
+			final String dataTypesName, final Map<String, DataType> dataTypes) {
+
+		Util.emitImport(sbf, FilterWithSchemaSql.class);
+		final String schemaCls = Util.toClassName(this.schemaName);
+		sbf.append("\nimport ").append(packageName).append(".schema.").append(schemaCls).append("Schema;");
+		sbf.append("\nimport ").append(packageName).append(".schema.").append(schemaCls).append("DataTable;");
+
+		/*
+		 * class
+		 */
+		sbf.append("\n\n/** generated class for ").append(className).append(" */");
+		sbf.append("\npublic class ").append(className).append(" extends FilterWithSchemaSql<").append(schemaCls)
+				.append("DataTable> {");
+
+		/*
+		 * static declarations
+		 */
+		sbf.append(P).append("String SQL = ").append(Util.escape(this.sql)).append(';');
 		if (this.sqlParams != null) {
 			sbf.append(P).append("Field[] IN = ");
 			emitFields(sbf, this.sqlParams, dataTypesName);
-			sbf.append(';');
-		}
-
-		if (hasOutput) {
-			if (this.outputFields == null || this.outputFields.length == 0) {
-				logger.error("read sqls must define output fields");
-				sbf.append("ERROR: no output fields defined!!!");
-				return;
-			}
-			sbf.append(P).append("Field[] OUT = ");
-			emitFields(sbf, this.outputFields, dataTypesName);
 			sbf.append(';');
 		}
 
@@ -140,27 +180,148 @@ public class Sql {
 		sbf.append("\n\t\tthis.sqlText = SQL;");
 		if (this.sqlParams != null) {
 			sbf.append("\n\t\tthis.inputData = new ValueObject(IN, null);");
-			if (isFilter) {
-				sbf.append("\n\t\tthis.schema = new ").append(Util.toClassName(this.schemaName)).append("Schema();");
-			}
+		}
+		sbf.append("\n\t\tthis.schema = new ").append(Util.toClassName(this.schemaName)).append("Schema();");
+		sbf.append("\n\t}");
+
+		if (this.sqlParams != null) {
+			this.emitSetters(sbf, dataTypes);
+		}
+		sbf.append("\n}\n");
+	}
+
+	void emitReadWithSchema(final StringBuilder sbf, final String packageName, final String className,
+			final String dataTypesName, final Map<String, DataType> dataTypes) {
+
+		Util.emitImport(sbf, ReadWithSchemaSql.class);
+		final String schemaCls = Util.toClassName(this.schemaName);
+		sbf.append("\nimport ").append(packageName).append(".schema.").append(schemaCls).append("Schema;");
+		sbf.append("\nimport ").append(packageName).append(".schema.").append(schemaCls).append("Data;");
+
+		/*
+		 * class
+		 */
+		sbf.append("\n\n/** generated class for ").append(className).append(" */");
+		sbf.append("\npublic class ").append(className).append(" extends ReadWithSchemaSql<").append(schemaCls)
+				.append("Data> {");
+
+		/*
+		 * static declarations
+		 */
+		sbf.append(P).append("String SQL = ").append(Util.escape(this.sql)).append(';');
+		if (this.sqlParams != null) {
+			sbf.append(P).append("Field[] IN = ");
+			emitFields(sbf, this.sqlParams, dataTypesName);
+			sbf.append(';');
+		}
+
+		/*
+		 * constructor
+		 */
+		sbf.append("\n\n\t/** default constructor */\n\tpublic ").append(className).append("() {");
+		sbf.append("\n\t\tthis.sqlText = SQL;");
+		if (this.sqlParams != null) {
+			sbf.append("\n\t\tthis.inputData = new ValueObject(IN, null);");
+		}
+		sbf.append("\n\t\tthis.schema = new ").append(Util.toClassName(this.schemaName)).append("Schema();");
+		sbf.append("\n\t}");
+
+		if (this.sqlParams != null) {
+			this.emitSetters(sbf, dataTypes);
+		}
+		sbf.append("\n}\n");
+	}
+
+	void emitRead(final StringBuilder sbf, final String className, final String dataTypesName,
+			final Map<String, DataType> dataTypes) {
+		Util.emitImport(sbf, ReadSql.class);
+		/*
+		 * class
+		 */
+		sbf.append("\n\n/** generated class for ").append(className).append(" */");
+		sbf.append("\npublic class ").append(className).append(" extends ReadSql<").append(className)
+				.append(".OutputVo> {");
+
+		/*
+		 * static declarations
+		 */
+		sbf.append(P).append("String SQL = ").append(Util.escape(this.sql)).append(';');
+		if (this.sqlParams != null) {
+			sbf.append(P).append("Field[] IN = ");
+			emitFields(sbf, this.sqlParams, dataTypesName);
+			sbf.append(';');
+		}
+
+		sbf.append("\n\tprotected static final Field[] OUT = ");
+		emitFields(sbf, this.outputFields, dataTypesName);
+		sbf.append(';');
+
+		/*
+		 * constructor
+		 */
+		sbf.append("\n\n\t/** default constructor */\n\tpublic ").append(className).append("() {");
+		sbf.append("\n\t\tthis.sqlText = SQL;");
+		if (this.sqlParams != null) {
+			sbf.append("\n\t\tthis.inputData = new ValueObject(IN, null);");
 		}
 		sbf.append("\n\t}");
 
 		if (this.sqlParams != null) {
 			this.emitSetters(sbf, dataTypes);
 		}
-		if (hasOutput) {
-			this.emitOutMethods(sbf, dataTypes);
-		} else if (!isFilter) {
-			emitWriteMethods(sbf);
-		}
+		this.emitOutMethods(sbf, dataTypes);
 		sbf.append("\n}\n");
 	}
 
-	private static void emitWriteMethods(final StringBuilder sbf) {
-		sbf.append("\n\n\t@Override\n\tprotected ValueObject newValueObject() {");
-		sbf.append("\n\t\treturn new ValueObject(IN, null);");
+	void emitFilter(final StringBuilder sbf, final String className, final String dataTypesName,
+			final Map<String, DataType> dataTypes) {
+
+		Util.emitImport(sbf, FilterSql.class);
+		/*
+		 * class
+		 */
+		sbf.append("\n\n/** generated class for ").append(className).append(" */");
+		sbf.append("\npublic class ").append(className).append(" extends FilterSql<").append(className)
+				.append(".OutputVo> {");
+
+		/*
+		 * static declarations
+		 */
+		sbf.append(P).append("String SQL = ").append(Util.escape(this.sql)).append(';');
+		if (this.sqlParams != null) {
+			sbf.append(P).append("Field[] IN = ");
+			emitFields(sbf, this.sqlParams, dataTypesName);
+			sbf.append(';');
+		}
+
+		sbf.append("\n\tprotected static final Field[] OUT = ");
+		emitFields(sbf, this.outputFields, dataTypesName);
+		sbf.append(';');
+
+		/*
+		 * constructor
+		 */
+		sbf.append("\n\n\t/** default constructor */\n\tpublic ").append(className).append("() {");
+		sbf.append("\n\t\tthis.sqlText = SQL;");
+		if (this.sqlParams != null) {
+			sbf.append("\n\t\tthis.inputData = new ValueObject(IN, null);");
+		}
 		sbf.append("\n\t}");
+
+		if (this.sqlParams != null) {
+			this.emitSetters(sbf, dataTypes);
+		}
+		this.emitOutMethods(sbf, dataTypes);
+		sbf.append("\n}\n");
+	}
+
+	private static void emitImports(final StringBuilder sbf, final String packageName, final String dataTypesName) {
+		sbf.append("package ").append(packageName).append(".sql;\n");
+
+		Util.emitImport(sbf, org.simplity.fm.core.data.Field.class);
+		Util.emitImport(sbf, ValueObject.class);
+		sbf.append("\nimport ").append(packageName).append('.').append(dataTypesName).append(';');
+
 	}
 
 	private void emitOutMethods(final StringBuilder sbf, final Map<String, DataType> dataTypes) {
@@ -168,13 +329,8 @@ public class Sql {
 		 * abstract method to be implemented
 		 */
 		sbf.append("\n\n\t@Override\n\tprotected ");
-		if (this.sqlType.equals(SQL_TYPE_FILTER)) {
-			sbf.append("ValueTable<OutputVo> newValueTable() {");
-			sbf.append("\n\t\treturn new ValueTable<>(new OutputVo(OUT));\n\t}");
-		} else {
-			sbf.append("OutputVo newOutputData() {");
-			sbf.append("\n\t\treturn new OutputVo(OUT);\n\t}");
-		}
+		sbf.append("OutputVo newOutputData() {");
+		sbf.append("\n\t\treturn new OutputVo(OUT);\n\t}");
 		/*
 		 * inner class for custom Vo
 		 */
@@ -187,6 +343,12 @@ public class Sql {
 		sbf.append("\n\t\t\tsuper(fields, null);\n\t\t}");
 
 		this.emitGetters(sbf, dataTypes);
+
+		/*
+		 * over-ride new instance
+		 */
+		sbf.append("\n\n\t@Override\n\tpublic OutputVo newInstance(Object[] arr) {");
+		sbf.append("\n\t\treturn new OutputVo(OUT);\n\t}");
 		sbf.append("\n\t}");
 
 	}

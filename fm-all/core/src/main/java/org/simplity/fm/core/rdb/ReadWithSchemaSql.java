@@ -23,53 +23,52 @@
 package org.simplity.fm.core.rdb;
 
 import java.sql.SQLException;
-import java.util.List;
 
-import org.simplity.fm.core.data.ValueObject;
+import org.simplity.fm.core.data.Schema;
+import org.simplity.fm.core.data.SchemaData;
 
 /**
- * A Sql that is designed to read just one row from the RDBMS
+ * A Sql that is designed to read just one row from the RDBMS.
  *
  * @author simplity.org
  * @param <T>
- *            concrete class of output value object that can be used to access
- *            the out data elements
+ *            SchemaData returned when reading
  *
  */
-public abstract class FilterSql<T extends ValueObject> extends Sql {
-
-	protected abstract T newOutputData();
+public abstract class ReadWithSchemaSql<T extends SchemaData> extends Sql {
+	protected Schema schema;
 
 	/**
-	 * read a row from the db. must be called ONLY AFTER setting all input
-	 * parameters
-	 *
+	 * read a row suing this sql
+	 * 
 	 * @param handle
-	 * @return array of value object with output data. empty, but not null if
-	 *         there are no rows.
+	 * @return null if read did not succeed.
 	 * @throws SQLException
 	 */
-	public List<T> filter(final DbHandle handle) throws SQLException {
-		final T instance = this.newOutputData();
-		return handle.filter(this.sqlText, this.inputData, instance);
+	@SuppressWarnings("unchecked")
+	public T filterFirst(final DbHandle handle) throws SQLException {
+		final T data = (T) this.schema.newSchemaData();
+		if (data.filterFirstOne(handle, this.sqlText, this.inputData.getRawData())) {
+			return data;
+		}
+		return null;
 	}
 
 	/**
-	 * read a row from the db. must be called ONLY AFTER setting all input
-	 * parameters
+	 * to be used when a row is expected as per our db design, and hence the
+	 * caller need not handle the case with no rows
 	 *
 	 * @param handle
-	 * @return array of value object with output data. empty, but not null if
-	 *         there are no rows.
+	 * @return non-null schema data with the first filtered row
 	 * @throws SQLException
+	 *             thrown when any SQL exception, OR when no rows are filtered
 	 */
-	public List<T> filterOrFail(final DbHandle handle) throws SQLException {
-		final T instance = this.newOutputData();
-		final List<T> list = handle.filter(this.sqlText, this.inputData, instance);
-		if (list.size() > 0) {
-			return list;
+	public T filterFirstOrFail(final DbHandle handle) throws SQLException {
+		final T result = this.filterFirst(handle);
+
+		if (result == null) {
+			throw new SQLException("Filter First did not return any row. " + this.getState());
 		}
-		logger.error(this.getState());
-		throw new SQLException("Sql is expected to return at least one row, but it didn't.");
+		return result;
 	}
 }

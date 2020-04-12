@@ -182,16 +182,23 @@ public abstract class Form {
 	 * called internally by concrete class to initialize the linked forms
 	 */
 	protected void initialize() {
-		if (this.linkedForms != null) {
-			if (this.schema == null) {
-				throw new RuntimeException("Form " + this.getName()
-						+ " uses linked fields, but has no schema. LInking forms feature is available with schema, and not with local fields");
-			}
-
-			for (final LinkedForm lf : this.linkedForms) {
-				lf.init(this.schema);
-			}
+		/*
+		 * we need initialization for linked forms, and nothing else
+		 */
+		if (this.linkedForms == null) {
+			return;
 		}
+
+		if (this.schema == null) {
+			logger.warn(
+					"Form has linked fields, but no schema. Must be manged with custom. Auto-service feature will not work");
+			return;
+		}
+
+		for (final LinkedForm lf : this.linkedForms) {
+			lf.init(this.schema);
+		}
+
 	}
 
 	/**

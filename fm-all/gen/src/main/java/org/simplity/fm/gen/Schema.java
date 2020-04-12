@@ -384,7 +384,7 @@ class Schema {
 
 		this.emitSelect(sbf);
 		if (this.keyFields == null) {
-			logger.info(
+			logger.debug(
 					"No keys defined for the db table. only filter operation is allowed. Other operations require primary key/s.");
 		} else {
 			this.emitInsert(sbf);
@@ -733,6 +733,13 @@ class Schema {
 		 */
 		sbf.append("\n\n\tprotected ").append(cls).append("(final ").append(schemaCls)
 				.append("Schema schema, final Object[] data) {\n\t\tsuper(schema, data);\n\t}");
+
+		/*
+		 * extend the required abstract method getInstance()
+		 */
+		sbf.append("\n\n\t@Override\n\tprotected ").append(cls).append(" newInstance(final Object[] arr) {");
+		sbf.append("\n\t\treturn new ").append(cls).append("((").append(schemaCls)
+				.append("Schema) this.schema, arr);\n\t}");
 
 		/*
 		 * getters and setters

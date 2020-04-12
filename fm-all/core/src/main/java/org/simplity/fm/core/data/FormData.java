@@ -100,15 +100,26 @@ public abstract class FormData {
 			this.fieldValues = fieldValues;
 		}
 
-		if (this.form.linkedForms == null || linkedData == null) {
+		if (this.form.linkedForms == null) {
 			this.linkedData = null;
-		} else {
-			if (this.form.linkedForms.length != linkedData.length) {
-				throw new IllegalArgumentException("Form " + this.form.name + " has " + this.form.linkedForms.length
-						+ " linked forms but " + linkedData.length + " data tables are provided");
-			}
-			this.linkedData = linkedData;
+			return;
 		}
+
+		final int nbrLinks = this.form.linkedForms.length;
+
+		if (linkedData == null) {
+			this.linkedData = new FormDataTable[nbrLinks];
+			return;
+		}
+
+		if (nbrLinks == linkedData.length) {
+			this.linkedData = linkedData;
+			return;
+		}
+
+		throw new IllegalArgumentException("Form " + this.form.name + " has " + this.form.linkedForms.length
+				+ " linked forms but " + linkedData.length + " data tables are provided");
+
 	}
 
 	protected Form getForm() {

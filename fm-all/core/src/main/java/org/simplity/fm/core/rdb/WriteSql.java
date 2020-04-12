@@ -98,8 +98,6 @@ public abstract class WriteSql extends Sql {
 		/*
 		 * important to add a copy, and the value itself
 		 */
-		this.batchData.add(this.inputData.copy());
+		this.batchData.add(this.inputData.makeCopy());
 	}
-
-	protected abstract ValueObject newValueObject();
 }

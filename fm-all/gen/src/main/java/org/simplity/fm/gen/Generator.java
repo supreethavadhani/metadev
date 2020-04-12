@@ -127,7 +127,7 @@ public class Generator {
 		 */
 		app.emitJava(generatedSourceRootFolder, javaRootPackage, Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME);
 
-		logger.info("Going to process schemas under folder {}", resourceRootFolder);
+		logger.debug("Going to process schemas under folder {}", resourceRootFolder);
 		final Map<String, Schema> schemas = new HashMap<>();
 		f = new File(resourceRootFolder + "schema/");
 		if (f.exists() == false) {
@@ -137,10 +137,11 @@ public class Generator {
 			for (final File file : f.listFiles()) {
 				final String fn = file.getName();
 				if (fn.endsWith(EXT_SCH) == false) {
-					logger.info("Skipping non-schema file {}", fn);
+					logger.debug("Skipping non-schema file {}", fn);
 					continue;
 				}
 
+				logger.info("file: {}", fn);
 				final Schema schema = emitSchema(file, generatedSourceRootFolder, tsRootFolder, app.dataTypes, app,
 						javaRootPackage, tsImportPrefix);
 				if (schema != null) {
@@ -149,7 +150,7 @@ public class Generator {
 			}
 		}
 
-		logger.info("Going to process forms under folder {}", resourceRootFolder);
+		logger.debug("Going to process forms under folder {}", resourceRootFolder);
 		f = new File(resourceRootFolder + "form/");
 		if (f.exists() == false) {
 			logger.error("Forms folder {} not found. No forms are processed", f.getPath());
@@ -158,15 +159,16 @@ public class Generator {
 			for (final File file : f.listFiles()) {
 				final String fn = file.getName();
 				if (fn.endsWith(EXT_FRM) == false) {
-					logger.info("Skipping non-form file {} ", fn);
+					logger.debug("Skipping non-form file {} ", fn);
 					continue;
 				}
+				logger.info("file: {}", fn);
 				emitForm(file, generatedSourceRootFolder, tsRootFolder, app.dataTypes, app, javaRootPackage,
 						tsImportPrefix, schemas);
 			}
 		}
 
-		logger.info("Going to process sqls under folder {}sql/", resourceRootFolder);
+		logger.debug("Going to process sqls under folder {}sql/", resourceRootFolder);
 		f = new File(resourceRootFolder + "sql/");
 		if (f.exists() == false) {
 			logger.error("Sql folder {} not found. No sqls processed", f.getPath());
@@ -175,9 +177,10 @@ public class Generator {
 			for (final File file : f.listFiles()) {
 				final String fn = file.getName();
 				if (fn.endsWith(EXT_SQL) == false) {
-					logger.info("Skipping non-sql file {} ", fn);
+					logger.debug("Skipping non-sql file {} ", fn);
 					continue;
 				}
+				logger.info("file: {}", fn);
 				emitSql(file, generatedSourceRootFolder, app.dataTypes, javaRootPackage);
 			}
 		}
@@ -188,7 +191,7 @@ public class Generator {
 			final Map<String, Schema> schemas) {
 		String fn = file.getName();
 		fn = fn.substring(0, fn.length() - EXT_FRM.length());
-		logger.info("Going to generate Form " + fn);
+		logger.debug("Going to generate Form " + fn);
 		final Form form;
 		try (final JsonReader reader = new JsonReader(new FileReader(file))) {
 			form = Util.GSON.fromJson(reader, Form.class);
@@ -247,7 +250,7 @@ public class Generator {
 			final String tsImportPrefix) {
 		String fn = file.getName();
 		fn = fn.substring(0, fn.length() - EXT_SCH.length());
-		logger.info("Going to generate schema " + fn);
+		logger.debug("Going to generate schema " + fn);
 		final Schema schema;
 		try (final JsonReader reader = new JsonReader(new FileReader(file))) {
 			schema = Util.GSON.fromJson(reader, Schema.class);
@@ -296,7 +299,7 @@ public class Generator {
 			final String packageName) {
 		String fn = file.getName();
 		fn = fn.substring(0, fn.length() - EXT_SQL.length());
-		logger.info("Going to generate Sql " + fn);
+		logger.debug("Going to generate Sql " + fn);
 		final Sql sql;
 		try (final JsonReader reader = new JsonReader(new FileReader(file))) {
 			sql = Util.GSON.fromJson(reader, Sql.class);
@@ -328,7 +331,7 @@ public class Generator {
 		final String folder = f.getAbsolutePath();
 		if (f.exists()) {
 			if (f.isDirectory()) {
-				logger.info("All files in folder {} are deleted", folder);
+				logger.debug("All files in folder {} are deleted", folder);
 				for (final File ff : f.listFiles()) {
 					if (!ff.delete()) {
 						logger.error("Unable to delete file {}", ff.getAbsolutePath());
@@ -339,7 +342,7 @@ public class Generator {
 			}
 
 			if (f.delete()) {
-				logger.info("{} is a file. It is deleted to make way for a directory with the same name", folder);
+				logger.debug("{} is a file. It is deleted to make way for a directory with the same name", folder);
 			} else {
 				logger.error("{} is a file. Unable to delete it to create a folder with that name", folder);
 				return false;

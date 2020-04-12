@@ -101,7 +101,7 @@ public class Application {
 		}
 
 		if (this.tenantFieldName == null) {
-			logger.info("No tenant field for this project");
+			logger.debug("No tenant field for this project");
 		} else {
 			if (this.tenantDbName == null) {
 				logger.error("tenantDbName is required when dbFieldName is specified");

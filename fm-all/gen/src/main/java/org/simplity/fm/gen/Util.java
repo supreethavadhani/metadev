@@ -156,7 +156,7 @@ class Util {
 	static void writeOut(final String fileName, final StringBuilder sbf) {
 		try (Writer writer = new FileWriter(new File(fileName))) {
 			writer.write(sbf.toString());
-			logger.info("File {} generated.", fileName);
+			logger.debug("File {} generated.", fileName);
 		} catch (final Exception e) {
 			logger.error("Error while writing file {} \n {}", fileName, e.getMessage());
 		}
@@ -247,7 +247,7 @@ class Util {
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	static void addToMap(final Map map, final JsonReader reader, final Class cls) throws IOException {
-		logger.info("Started parsing map of class {}", cls.getName());
+		logger.debug("Started parsing map of class {}", cls.getName());
 		final int nbr = map.size();
 		int idx = nbr - 1;
 		reader.beginObject();
@@ -255,7 +255,7 @@ class Util {
 			idx++;
 			final JsonToken token = reader.peek();
 			if (token == JsonToken.END_OBJECT) {
-				logger.info("{} objects parsed", (nbr - idx));
+				logger.debug("{} objects parsed", (nbr - idx));
 				reader.endObject();
 				return;
 			}
@@ -278,7 +278,7 @@ class Util {
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	static void loadMap(final Map map, final JsonReader reader, final Class cls) throws IOException {
-		logger.info("Started loading instances of {} into a map", cls.getName());
+		logger.debug("Started loading instances of {} into a map", cls.getName());
 		final int nbr = map.size();
 		int idx = nbr - 1;
 		reader.beginObject();
@@ -287,7 +287,7 @@ class Util {
 			final JsonToken token = reader.peek();
 			if (token == JsonToken.END_OBJECT) {
 				reader.endObject();
-				logger.info("{} objects parsed", (idx - nbr));
+				logger.debug("{} objects parsed", (idx - nbr));
 				return;
 			}
 

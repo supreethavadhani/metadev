@@ -499,11 +499,29 @@ public class ValueObject {
 
 	/**
 	 * make a copy of this Vo
+	 * IMPO
 	 *
 	 * @return a copy of this that can be mutilated without affecting this
 	 */
-	public ValueObject copy() {
+	public ValueObject makeCopy() {
 		final Object[] arr = Arrays.copyOf(this.fieldValues, this.fieldValues.length);
+		return this.newInstance(arr);
+	}
+
+	/**
+	 * make a copy of this Vo
+	 *
+	 * @return a copy of this that can be mutilated without affecting this
+	 */
+	public ValueObject makeEmptyCopy() {
+		return this.newInstance(new Object[this.fields.length]);
+	}
+
+	/*
+	 * concrete classes are better-off extending this if they use getters and
+	 * setters
+	 */
+	protected ValueObject newInstance(final Object[] arr) {
 		return new ValueObject(this.fields, arr);
 	}
 }

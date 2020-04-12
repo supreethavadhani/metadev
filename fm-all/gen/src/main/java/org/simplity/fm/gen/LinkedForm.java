@@ -120,11 +120,15 @@ class LinkedForm {
 	/**
 	 * @param sbf
 	 */
-	void emitJavaGetter(final StringBuilder sbf) {
+	void emitJavaGetSetter(final StringBuilder sbf) {
 		final String c = Util.toClassName(this.formName);
 		sbf.append("\n\n\t/** get form table for this linked form ").append(c).append(" **/");
 		sbf.append("\n\tpublic ").append(c).append("Fdt get").append(c).append("Fdt() {");
 		sbf.append("\n\t\treturn (").append(c).append("Fdt)this.linkedData[").append(this.index).append("];\n\t}");
+
+		sbf.append("\n\n\t/** set form table for this linked form ").append(c).append(" **/");
+		sbf.append("\n\tpublic void set").append(c).append("Fdt(").append(c).append("Fdt fdt) {");
+		sbf.append("\n\t\t this.linkedData[").append(this.index).append("] = (").append(c).append("Fdt) fdt;\n\t}");
 
 	}
 }
