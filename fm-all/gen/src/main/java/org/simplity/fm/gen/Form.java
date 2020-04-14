@@ -198,7 +198,7 @@ public class Form {
 				}
 				sbf.append("\n\t\t\t");
 				this.linkedForms[i].emitJavaCode(sbf, this.fields,
-						(this.schemaName == null || this.schemaName.isEmpty()));
+						(this.schemaName != null && this.schemaName.isEmpty() == false));
 			}
 			sbf.append("};");
 		}

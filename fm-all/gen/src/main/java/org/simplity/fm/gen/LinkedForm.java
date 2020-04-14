@@ -74,7 +74,7 @@ class LinkedForm {
 
 		if (linkExists && !parentHasSchema) {
 			Form.logger.error(
-					"Link fields specified with no schema for the parent. link fields ignored whilegenerating code.");
+					"Link fields specified with no schema for the parent. link fields ignored while generating code.");
 			linkExists = false;
 		}
 
