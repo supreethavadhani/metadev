@@ -191,8 +191,7 @@ public abstract class Form {
 
 		if (this.schema == null) {
 			logger.warn(
-					"Form has linked fields, but no schema. Must be manged with custom. Auto-service feature will not work");
-			return;
+					"Form has linked fields, but no schema. Must be managed with custom. Auto-service feature will not work");
 		}
 
 		for (final LinkedForm lf : this.linkedForms) {

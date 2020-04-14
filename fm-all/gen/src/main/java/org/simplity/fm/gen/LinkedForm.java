@@ -50,12 +50,7 @@ class LinkedForm {
 		sbf.append("\n\tpublic static final int ").append(this.name).append(" = ").append(idx).append(';');
 	}
 
-	/**
-	 * push this as an element of an array
-	 *
-	 * @param sbf
-	 */
-	void emitJavaCode(final StringBuilder sbf, final Map<String, Field> fields) {
+	void emitJavaCode(final StringBuilder sbf, final Map<String, Field> fields, final boolean parentHasSchema) {
 		sbf.append("new LinkedForm(");
 
 		sbf.append(Util.escape(this.name));
@@ -76,6 +71,13 @@ class LinkedForm {
 				linkExists = true;
 			}
 		}
+
+		if (linkExists && !parentHasSchema) {
+			Form.logger.error(
+					"Link fields specified with no schema for the parent. link fields ignored whilegenerating code.");
+			linkExists = false;
+		}
+
 		if (linkExists) {
 			sbf.append(C);
 			for (final String s : this.parentLinkFields) {

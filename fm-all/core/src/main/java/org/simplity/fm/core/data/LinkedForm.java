@@ -142,7 +142,7 @@ public class LinkedForm {
 	 */
 	void init(final Schema parentSchema) {
 		this.linkedForm = ComponentProvider.getProvider().getForm(this.linkFormName);
-		if (this.childLinkNames == null || this.childLinkNames.length == 0) {
+		if (parentSchema == null || this.childLinkNames == null || this.childLinkNames.length == 0) {
 			return;
 		}
 
