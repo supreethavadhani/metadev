@@ -64,8 +64,14 @@ public abstract class SchemaDataTable implements Iterable<SchemaData> {
 	}
 
 	/**
+	 * USE WITH CAUTION: ANy manipulation of the returned data will make this
+	 * instance unstable. To be used for read-only purpose, or by utility
+	 * classes.
 	 *
-	 * @return data row. null if the index is out of range
+	 * Underlying data behid this instance is returned
+	 *
+	 * @return array of rows of data in this data table. each row is an array of
+	 *         values in the order that the schme understands
 	 */
 	public Object[][] getRawData() {
 		return this.fieldValues;
