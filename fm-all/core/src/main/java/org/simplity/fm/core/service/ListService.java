@@ -27,13 +27,13 @@ import java.io.Writer;
 
 import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Conventions;
+import org.simplity.fm.core.JsonUtil;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.validn.IValueList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 
 /**
  * handles request to get drop-down values for a field, typically from a client
@@ -64,11 +64,7 @@ public class ListService implements IService {
 
 	@Override
 	public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		String listName = null;
-		JsonPrimitive ele = payload.getAsJsonPrimitive("list");
-		if (ele != null) {
-			listName = ele.getAsString();
-		}
+		final String listName = JsonUtil.getString(payload, "list");
 		if (listName == null || listName.isEmpty()) {
 			ctx.addMessage(Message.newError("list is required for listService"));
 			return;
@@ -80,10 +76,7 @@ public class ListService implements IService {
 		}
 		String key = null;
 		if (list.isKeyBased()) {
-			ele = payload.getAsJsonPrimitive("key");
-			if (ele != null) {
-				key = ele.getAsString();
-			}
+			key = JsonUtil.getString(payload, "key");
 			if (key == null || key.isEmpty()) {
 				ctx.addMessage(Message.newError("list " + listName + " is key based. key is missing in the request"));
 				return;

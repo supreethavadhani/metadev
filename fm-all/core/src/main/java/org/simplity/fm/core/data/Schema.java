@@ -94,10 +94,20 @@ public abstract class Schema {
 	protected DbAssistant dbAssistant;
 
 	/**
+	 * TO BE USED WITH CAUTION. Use of this method with improper argument may
+	 * induce bugs that are almost impossible to trace back to it. Exception
+	 * will be thrown else-where and it may be quite difficult to debug and
+	 * trace it back to this method.
+	 *
 	 * @param data
+	 *            each row of this array Must have the right data in the right
+	 *            order for the underlying schema. This is not checked by this
+	 *            method, and hence any error will make the application
+	 *            unstable
 	 * @return data table based on the data
 	 */
-	protected abstract SchemaDataTable newSchemaDataTable(Object[][] data);
+	@Deprecated
+	public abstract SchemaDataTable newSchemaDataTable(Object[][] data);
 
 	/**
 	 * @return a new instance of data table based on this schema

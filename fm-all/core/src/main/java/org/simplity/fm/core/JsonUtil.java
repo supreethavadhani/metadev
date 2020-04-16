@@ -287,7 +287,7 @@ public class JsonUtil {
 	 * @param attName
 	 * @return string or null
 	 */
-	public static final String getSring(final JsonObject json, final String attName) {
+	public static final String getString(final JsonObject json, final String attName) {
 		final JsonElement ele = json.get(attName);
 		if (ele == null || ele.isJsonPrimitive() == false) {
 			return null;

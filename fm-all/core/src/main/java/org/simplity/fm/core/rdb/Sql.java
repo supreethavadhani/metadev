@@ -43,7 +43,10 @@ public abstract class Sql {
 		this.inputData.setValue(idx, value);
 	}
 
-	protected String getState() {
+	/**
+	 * @return string that describe set the current state of this sql
+	 */
+	public String getState() {
 		try (StringWriter writer = new StringWriter(); JsonWriter jw = new JsonWriter(writer)) {
 			this.inputData.serializeFields(jw);
 			return "SQL= " + this.sqlText + "\n" + writer.toString();

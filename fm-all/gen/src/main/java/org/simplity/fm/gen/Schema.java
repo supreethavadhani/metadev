@@ -357,7 +357,7 @@ class Schema {
 		sbf.append("\n\t}");
 
 		sbf.append(over);
-		sbf.append("\n\tprotected ").append(c).append(" newSchemaDataTable(final Object[][] data) {");
+		sbf.append("\n\tpublic ").append(c).append(" newSchemaDataTable(final Object[][] data) {");
 		sbf.append("\n\t\treturn new ").append(c).append("(this, data);");
 		sbf.append("\n\t}");
 
