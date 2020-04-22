@@ -273,6 +273,7 @@ class Schema {
 		Util.emitImport(sbf, JsonObject.class);
 		Util.emitImport(sbf, JsonArray.class);
 		Util.emitImport(sbf, ColumnType.class);
+		Util.emitImport(sbf, List.class);
 
 		/*
 		 * validation imports on need basis
@@ -356,8 +357,16 @@ class Schema {
 		sbf.append("\n\t\treturn new ").append(c).append("(this, null);");
 		sbf.append("\n\t}");
 
+		sbf.append("\n\n\t/** \n\t * create a data table from a list of schema data");
+		sbf.append("\n\t * @param list non-null, possibly empty list of schema data");
+		sbf.append("\n\t * @return non-null possibly empty data table\n\t */");
+
+		sbf.append("\n\tpublic ").append(c).append(" listToTable(final List<").append(cls).append("Data> list) {");
+		sbf.append("\n\t\treturn new ").append(c).append("(this, this.listToObject(list));");
+		sbf.append("\n\t}");
+
 		sbf.append(over);
-		sbf.append("\n\tpublic ").append(c).append(" newSchemaDataTable(final Object[][] data) {");
+		sbf.append("\n\tprotected ").append(c).append(" newSchemaDataTable(final Object[][] data) {");
 		sbf.append("\n\t\treturn new ").append(c).append("(this, data);");
 		sbf.append("\n\t}");
 
