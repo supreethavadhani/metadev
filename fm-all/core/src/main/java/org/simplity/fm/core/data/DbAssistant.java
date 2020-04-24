@@ -191,6 +191,17 @@ public class DbAssistant {
 	}
 
 	/**
+	 * return the select clause (like select a,b,...) without the where clause
+	 * for this schema
+	 *
+	 * @return string that is a valid select-part of a sql that can be used with
+	 *         a were clause to filter rows from the underlying dbtable.view
+	 */
+	public String getSelectClause() {
+		return this.selectClause;
+	}
+
+	/**
 	 * insert/create this form data into the db.
 	 *
 	 * @param handle

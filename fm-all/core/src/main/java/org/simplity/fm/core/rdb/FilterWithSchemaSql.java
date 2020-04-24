@@ -22,9 +22,12 @@
 
 package org.simplity.fm.core.rdb;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.simplity.fm.core.data.Schema;
+import org.simplity.fm.core.data.SchemaData;
 import org.simplity.fm.core.data.SchemaDataTable;
 
 /**
@@ -71,6 +74,40 @@ public abstract class FilterWithSchemaSql<T extends SchemaDataTable> extends Sql
 			throw new SQLException("Filter did not return any row. " + this.getState());
 		}
 		return result;
+	}
+
+	/**
+	 * iterator on the result of filtering. To be used if we have no need to get
+	 * the entire dataTable,
+	 *
+	 * @param handle
+	 * @param fn
+	 *            call back function that takes SchemaData as parameter, and
+	 *            returns true to continue to read, and false if it is not
+	 *            interested in getting any more rows
+	 * @throws SQLException
+	 */
+	public void forEach(final DbHandle handle, final RowProcessor fn) throws SQLException {
+		final String sql = this.schema.getDbAssistant().getSelectClause() + this.sqlText;
+		handle.read(new IDbReader() {
+
+			@Override
+			public String getPreparedStatement() {
+				return sql;
+			}
+
+			@Override
+			public void setParams(final PreparedStatement ps) throws SQLException {
+				FilterWithSchemaSql.this.inputData.setPsParams(ps);
+			}
+
+			@Override
+			public boolean readARow(final ResultSet rs) throws SQLException {
+				final SchemaData data = FilterWithSchemaSql.this.schema.newSchemaData();
+				data.readFromRs(rs);
+				return fn.process(data);
+			}
+		});
 	}
 
 }

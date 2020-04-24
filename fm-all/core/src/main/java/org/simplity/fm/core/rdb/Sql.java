@@ -23,6 +23,7 @@
 package org.simplity.fm.core.rdb;
 
 import java.io.StringWriter;
+import java.sql.SQLException;
 
 import org.simplity.fm.core.data.ValueObject;
 import org.slf4j.Logger;
@@ -54,4 +55,22 @@ public abstract class Sql {
 			return "";
 		}
 	}
+
+	/**
+	 * function that accepts row as a valueObject
+	 *
+	 * @author simplity.org
+	 *
+	 */
+	public interface RowProcessor {
+		/**
+		 *
+		 * @param vo
+		 * @return true if the iteration should continue. false if it should
+		 *         stop
+		 * @throws SQLException
+		 */
+		boolean process(ValueObject vo) throws SQLException;
+	}
+
 }

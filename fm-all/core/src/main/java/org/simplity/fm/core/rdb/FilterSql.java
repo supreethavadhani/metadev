@@ -22,6 +22,8 @@
 
 package org.simplity.fm.core.rdb;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -71,5 +73,38 @@ public abstract class FilterSql<T extends ValueObject> extends Sql {
 		}
 		logger.error(this.getState());
 		throw new SQLException("Sql is expected to return at least one row, but it didn't.");
+	}
+
+	/**
+	 * iterator on the result of filtering. To be used if we have no need to get
+	 * the entire dataTable,
+	 *
+	 * @param handle
+	 * @param fn
+	 *            call back function that takes Vo as parameter, and
+	 *            returns true to continue to read, and false if it is not
+	 *            interested in getting any more rows
+	 * @throws SQLException
+	 */
+	public void forEach(final DbHandle handle, final RowProcessor fn) throws SQLException {
+		handle.read(new IDbReader() {
+
+			@Override
+			public String getPreparedStatement() {
+				return FilterSql.this.sqlText;
+			}
+
+			@Override
+			public void setParams(final PreparedStatement ps) throws SQLException {
+				FilterSql.this.inputData.setPsParams(ps);
+			}
+
+			@Override
+			public boolean readARow(final ResultSet rs) throws SQLException {
+				final ValueObject vo = FilterSql.this.newOutputData();
+				vo.readFromRs(rs);
+				return fn.process(vo);
+			}
+		});
 	}
 }
