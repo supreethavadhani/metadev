@@ -113,6 +113,9 @@ class Schema {
 
 		int idx = -1;
 		for (final DbField field : this.fields) {
+			if (field == null) {
+				continue;
+			}
 			idx++;
 			field.index = idx;
 			final String fieldName = field.name;
