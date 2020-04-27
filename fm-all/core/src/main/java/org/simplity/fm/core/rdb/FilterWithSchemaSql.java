@@ -88,7 +88,7 @@ public abstract class FilterWithSchemaSql<T extends SchemaDataTable> extends Sql
 	 * @throws SQLException
 	 */
 	public void forEach(final DbHandle handle, final RowProcessor fn) throws SQLException {
-		final String sql = this.schema.getDbAssistant().getSelectClause() + this.sqlText;
+		final String sql = this.schema.getDbAssistant().getSelectClause() + ' ' + this.sqlText;
 		handle.read(new IDbReader() {
 
 			@Override

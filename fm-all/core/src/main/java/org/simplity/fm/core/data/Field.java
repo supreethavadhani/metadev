@@ -264,13 +264,11 @@ public class Field {
 		 */
 		if (this.isTenantKey()) {
 			row[this.index] = ctx.getTenantId();
-			logger.info("tenant id set to field {}", this.name);
 			return;
 		}
 
 		if (this.isUserId()) {
 			row[this.index] = ctx.getUser().getUserId();
-			logger.info("Field {} is user field, and is assigned value from the context", this.name);
 			return;
 		}
 
