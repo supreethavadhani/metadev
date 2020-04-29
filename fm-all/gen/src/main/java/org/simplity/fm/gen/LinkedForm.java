@@ -84,7 +84,7 @@ class LinkedForm {
 				if (fields.get(s) == null) {
 					final String msg = "link field " + s
 							+ " is not defined as a field in this form. generating jave code tha will give compilation error";
-					Form.logger.error("msg");
+					Form.logger.error(msg);
 					sbf.append(msg);
 
 				}
