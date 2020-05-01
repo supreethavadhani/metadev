@@ -275,7 +275,7 @@ public abstract class ComponentProvider {
 			this.formRoot = genRoot + Conventions.App.FOLDER_NAME_FORM + DOT;
 			this.schemaRoot = genRoot + Conventions.App.FOLDER_NAME_SCHEMA + DOT;
 			this.listRoot = genRoot + Conventions.App.FOLDER_NAME_LIST + DOT;
-			this.customListRoot = rootPackage + Conventions.App.FOLDER_NAME_CUSTOM_LIST + DOT;
+			this.customListRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_CUSTOM_LIST + DOT;
 			this.serviceRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_SERVICE + DOT;
 			this.fnRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_FN + DOT;
 			/*
