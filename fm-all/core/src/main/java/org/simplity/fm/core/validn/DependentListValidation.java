@@ -74,7 +74,7 @@ public class DependentListValidation implements IValidation {
 		if (vl == null) {
 			return true;
 		}
-		if (vl.isValid(fieldValue, keyValue)) {
+		if (vl.isValid(fieldValue, keyValue, ctx)) {
 			return true;
 		}
 		ctx.addMessage(Message.newFieldError(this.fieldName, this.messaageId));

@@ -137,7 +137,7 @@ public class RuntimeList implements IValueList {
 	}
 
 	@Override
-	public boolean isValid(final Object fieldValue, final Object keyValue) {
+	public boolean isValid(final Object fieldValue, final Object keyValue, final IServiceContext ctx) {
 		if (this.hasKey) {
 			if (keyValue == null) {
 				logger.error("Key should have value for list {}", this.name);

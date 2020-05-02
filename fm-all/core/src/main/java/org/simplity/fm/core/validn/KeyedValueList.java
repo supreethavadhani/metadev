@@ -33,23 +33,23 @@ import org.slf4j.LoggerFactory;
  * Base class to specify an enumeration of valid values for a field. The
  * enumeration are further restricted based on a key field. This class is
  * extended by the generated key value list classes
- * 
+ *
  * @author simplity.org
  */
-public class KeyedValueList implements IValueList{
+public class KeyedValueList implements IValueList {
 	protected static final Logger logger = LoggerFactory.getLogger(KeyedValueList.class);
 	protected String name;
 	protected Map<Object, ValueList> values = new HashMap<>();
 
 	@Override
-	public boolean isValid(Object fieldValue, Object keyValue) {
-		ValueList vl  = this.values.get(keyValue);
+	public boolean isValid(final Object fieldValue, final Object keyValue, final IServiceContext ctx) {
+		final ValueList vl = this.values.get(keyValue);
 		if (vl == null) {
-			logger.error("Key {} is not valid for keyed list {}",keyValue, this.name);
+			logger.error("Key {} is not valid for keyed list {}", keyValue, this.name);
 			return false;
 		}
-		boolean ok =  vl.isValid(fieldValue, null);
-		if(!ok) {
+		final boolean ok = vl.isValid(fieldValue, null, ctx);
+		if (!ok) {
 			logger.error("{} is not in the list for key {} is keyed list {}", fieldValue, keyValue, this.name);
 		}
 		return ok;
@@ -66,8 +66,8 @@ public class KeyedValueList implements IValueList{
 	}
 
 	@Override
-	public Object[][] getList(Object keyValue, IServiceContext ctx) {
-		ValueList vl  = this.values.get(keyValue);
+	public Object[][] getList(final Object keyValue, final IServiceContext ctx) {
+		final ValueList vl = this.values.get(keyValue);
 		if (vl == null) {
 			logger.error("Key {} is not valid for keyed list {}. Null list returned.", keyValue, this.name);
 			return null;
@@ -76,11 +76,11 @@ public class KeyedValueList implements IValueList{
 	}
 
 	@Override
-	public Map<String, String> getAll(IServiceContext ctx) {
+	public Map<String, String> getAll(final IServiceContext ctx) {
 		final Map<String, String> result = new HashMap<>();
-		for(Map.Entry<Object, ValueList> entry: this.values.entrySet()) {
-			String key = entry.getKey().toString() + '|';
-			for(Object[] row : entry.getValue().valueList) {
+		for (final Map.Entry<Object, ValueList> entry : this.values.entrySet()) {
+			final String key = entry.getKey().toString() + '|';
+			for (final Object[] row : entry.getValue().valueList) {
 				result.put(key + row[1].toString(), row[0].toString());
 			}
 		}

@@ -233,7 +233,7 @@ public class Field {
 			return null;
 		}
 
-		if (this.valueList != null && this.valueList.isValid(obj, null) == false) {
+		if (this.valueList != null && this.valueList.isValid(obj, null, ctx) == false) {
 			logger.error("{} is not found in the list of valid values for  for field {}", inputValue, this.name);
 			ctx.addMessage(Message.newValidationError(this, tableName, idx));
 			return null;

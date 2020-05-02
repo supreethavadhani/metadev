@@ -29,28 +29,28 @@ import org.simplity.fm.core.service.IServiceContext;
 /**
  * design-time or run-time list that can be used for validating a field value
  * and supplying possible list of values for that field
- * 
+ *
  * @author simplity.org
  *
  */
 public interface IValueList {
 	/**
-	 * 
+	 *
 	 * @return unique name of this list. This is normally string,but it can be
 	 *         long as well.
 	 */
-	public Object getName();
+	Object getName();
 
 	/**
 	 * is this list key-based?
-	 * 
+	 *
 	 * @return true if the list depends on a key. false if the list is fixed
 	 */
-	public boolean isKeyBased();
+	boolean isKeyBased();
 
 	/**
 	 * get a list of valid values
-	 * 
+	 *
 	 * @param keyValue
 	 *            null if this list is not key-based.
 	 * @param ctx
@@ -59,26 +59,30 @@ public interface IValueList {
 	 * @return array of [internalValue, displayValue]. internal value could be
 	 *         string or number. null if no such list
 	 */
-	public Object[][] getList(Object keyValue, IServiceContext ctx);
+	Object[][] getList(Object keyValue, IServiceContext ctx);
 
 	/**
 	 * is the field value valid as per this list?
-	 * 
+	 *
 	 * @param fieldVale
 	 *            non-null value of the right type. Typically either String or
 	 *            Long
 	 * @param keyValue
 	 *            null if this list is not key-based. value of the right type if
 	 *            it is key-based
+	 * @param ctx
+	 *            service context. Could be null in case the validation is
+	 *            required outside of a service context. Implementations must
+	 *            handle the case when this is null
 	 * @return true of the field value is valid. false if it is invalid, or
 	 *         these is any error in the validation process
 	 */
-	public boolean isValid(Object fieldVale, Object keyValue);
+	boolean isValid(Object fieldVale, Object keyValue, IServiceContext ctx);
 
 	/**
 	 * Reverse look-up. get internal id for a display name
-	 * 
-	 * 
+	 *
+	 *
 	 * @param ctx
 	 *            null if a static list is to be used.must be non-null for
 	 *            runtime lists
@@ -87,5 +91,5 @@ public interface IValueList {
 	 *         displyaText=Karnataka, then we will have an entry with
 	 *         key="India|Karnataka" and value="KA"
 	 */
-	public Map<String, String> getAll(IServiceContext ctx);
+	Map<String, String> getAll(IServiceContext ctx);
 }

@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Base class for defining a set of enumerations as valid values of a field.
  * This class is extended by the generated ValueList classes
- * 
+ *
  * @author simplity.org
  */
 public class ValueList implements IValueList {
@@ -45,23 +45,27 @@ public class ValueList implements IValueList {
 	protected Object name;
 	protected Set<Object> values;
 	/*
-	 * [object,string][] first element could be either number or text, but the second one always is text
+	 * [object,string][] first element could be either number or text, but the
+	 * second one always is text
 	 */
 	protected Object[][] valueList;
 
 	/**
-	 * 
-	 * @param name non-null unique name
-	 * @param valueList non-null non-empty [Object, String][]
+	 *
+	 * @param name
+	 *            non-null unique name
+	 * @param valueList
+	 *            non-null non-empty [Object, String][]
 	 */
-	public ValueList(Object name, Object[][] valueList) {
+	public ValueList(final Object name, final Object[][] valueList) {
 		this.name = name;
 		this.valueList = valueList;
 		this.values = new HashSet<>();
-		for(Object[] arr: valueList) {
+		for (final Object[] arr : valueList) {
 			this.values.add(arr[0]);
 		}
 	}
+
 	@Override
 	public Object getName() {
 		return this.name;
@@ -71,24 +75,25 @@ public class ValueList implements IValueList {
 	public boolean isKeyBased() {
 		return false;
 	}
+
 	@Override
-	public boolean isValid(Object fieldValue, Object keyValue) {
-		boolean ok = this.values.contains(fieldValue.toString());
-		if(!ok) {
+	public boolean isValid(final Object fieldValue, final Object keyValue, final IServiceContext ctx) {
+		final boolean ok = this.values.contains(fieldValue.toString());
+		if (!ok) {
 			logger.error("{} is not found in list {}", fieldValue, this.name);
 		}
 		return ok;
 	}
 
 	@Override
-	public Object[][] getList(Object keyValue, IServiceContext ctx) {
+	public Object[][] getList(final Object keyValue, final IServiceContext ctx) {
 		return this.valueList;
 	}
-	
+
 	@Override
-	public Map<String, String> getAll(IServiceContext ctx) {
-		Map<String, String> result = new HashMap<>();
-		for(Object[] row : this.valueList) {
+	public Map<String, String> getAll(final IServiceContext ctx) {
+		final Map<String, String> result = new HashMap<>();
+		for (final Object[] row : this.valueList) {
 			result.put(row[1].toString(), row[0].toString());
 		}
 		return result;
