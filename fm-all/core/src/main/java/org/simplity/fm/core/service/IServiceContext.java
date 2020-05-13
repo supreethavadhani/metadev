@@ -27,8 +27,10 @@ import java.io.Writer;
 import java.util.Collection;
 
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.FormData;
 import org.simplity.fm.core.data.FormDataTable;
+import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.data.SchemaData;
 import org.simplity.fm.core.data.SchemaDataTable;
 import org.simplity.fm.core.http.LoggedInUser;
@@ -133,6 +135,19 @@ public interface IServiceContext {
 	 * with success. any subsequent call will result in no action and a return
 	 * value of false;
 	 *
+	 * @param record
+	 *            non-null;
+	 * @return true if all ok. false if a response is already set.
+	 * @throws IOException
+	 *             while writing a serialized response based on this data
+	 */
+	boolean setAsResponse(Record record) throws IOException;
+
+	/**
+	 * serialize this data as response. Note that this can be called only once
+	 * with success. any subsequent call will result in no action and a return
+	 * value of false;
+	 *
 	 * @param table
 	 *            non-null;
 	 * @return true if all ok. false if a response is already set.
@@ -166,4 +181,14 @@ public interface IServiceContext {
 	 *             while writing a serialized response based on this data
 	 */
 	boolean setAsResponse(FormDataTable fdt) throws IOException;
+
+	/**
+	 * serialize this data as response. Note that this can be called only once
+	 * with success. any subsequent call will result in no action and a return
+	 * value of false;
+	 * 
+	 * @param fields
+	 * @param objects
+	 */
+	void setAsResponse(Field[] fields, Object[][] objects);
 }

@@ -22,7 +22,9 @@
 
 package org.simplity.fm.core.data;
 
+import org.simplity.fm.core.Message;
 import org.simplity.fm.core.datatypes.DataType;
+import org.simplity.fm.core.service.IServiceContext;
 
 /**
  * @author simplity.org
@@ -46,7 +48,7 @@ public class DbField extends Field {
 	 * @param fieldName
 	 *            unique within its data structure
 	 * @param index
-	 *            0-based index of this field in the prent form
+	 *            0-based index of this field in the parent form
 	 * @param dataType
 	 *            pre-defined data type. used for validating data coming from a
 	 *            client
@@ -74,7 +76,10 @@ public class DbField extends Field {
 		this.columnType = columnType;
 	}
 
-	@Override
+	/**
+	 *
+	 * @return db column name with which this field is associated with
+	 */
 	public String getColumnName() {
 		return this.columnName;
 	}
@@ -86,29 +91,73 @@ public class DbField extends Field {
 		return this.columnType;
 	}
 
-	@Override
-	public boolean isRequired(final boolean forInsert) {
-		if (forInsert && this.columnType == ColumnType.GeneratedPrimaryKey) {
-			return false;
-		}
-		return this.columnType.isRequired();
-	}
-
 	/**
 	 * @return true if this column is part of the primary key
 	 */
-	@Override
 	public boolean isPrimaryKey() {
 		return this.columnType == ColumnType.PrimaryKey || this.columnType == ColumnType.GeneratedPrimaryKey;
 	}
 
-	@Override
+	/**
+	 * @return true if this field is the tenant key.
+	 */
 	public boolean isTenantKey() {
 		return this.columnType == ColumnType.TenantKey;
 	}
 
-	@Override
+	/**
+	 * @return true if this field is user id, like createdBy and modifiedBy.
+	 */
 	public boolean isUserId() {
 		return this.columnType == ColumnType.ModifiedBy || this.columnType == ColumnType.CreatedBy;
+	}
+
+	/**
+	 * special fields need some additional validation, as well as setting
+	 * pre-defined data
+	 *
+	 * @param data
+	 * @param forInsert
+	 * @param ctx
+	 * @param tableName
+	 * @param rowNbr
+	 * @return true if all OK. false if an error message is addedd to the
+	 *         context
+	 */
+	public boolean validate(final Object[] data, final boolean forInsert, final IServiceContext ctx,
+			final String tableName, final int rowNbr) {
+		final Object val = data[this.index];
+
+		switch (this.columnType) {
+		/*
+		 * tenant key is ignored from the client, and populated from the context
+		 */
+		case TenantKey:
+			data[this.index] = ctx.getTenantId();
+			return true;
+
+		/*
+		 * user id is also populated from the context
+		 */
+		case CreatedBy:
+		case ModifiedBy:
+			data[this.index] = ctx.getUser();
+			return true;
+
+		/*
+		 * generated primary key is set as "optional". However this is required
+		 * if the input is for an update operation
+		 */
+		case GeneratedPrimaryKey:
+			if (forInsert == false && val == null) {
+				ctx.addMessage(Message.newValidationError(this, tableName, rowNbr));
+				return false;
+			}
+			return true;
+
+		default:
+			return true;
+
+		}
 	}
 }

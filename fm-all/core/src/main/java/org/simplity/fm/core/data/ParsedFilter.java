@@ -23,6 +23,7 @@
 package org.simplity.fm.core.data;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -111,8 +112,8 @@ public class ParsedFilter {
 	 * @return parsed instance. null in case of any error. error is added to the
 	 *         context.
 	 */
-	public static ParsedFilter parse(final JsonObject json, final Map<String, DbField> fields,
-			final DbField tenantField, final IServiceContext ctx) {
+	public static ParsedFilter parse(final JsonObject json, final DbField[] fields, final DbField tenantField,
+			final IServiceContext ctx) {
 		JsonObject conditions = null;
 		JsonElement node = json.get(Conventions.Http.TAG_CONDITIONS);
 		if (node != null && node.isJsonObject()) {
@@ -148,8 +149,13 @@ public class ParsedFilter {
 			values.add(ctx.getTenantId());
 		}
 
+		final Map<String, DbField> map = new HashMap<>();
+		for (final DbField field : fields) {
+			map.put(field.name, field);
+		}
+
 		if (conditions != null && conditions.size() > 0) {
-			final boolean ok = parseConditions(fields, conditions, ctx, values, sql);
+			final boolean ok = parseConditions(map, conditions, ctx, values, sql);
 			if (!ok) {
 				return null;
 			}
@@ -163,9 +169,9 @@ public class ParsedFilter {
 			boolean isFirst = true;
 			for (final Entry<String, JsonElement> entry : sorts.entrySet()) {
 				final String f = entry.getKey();
-				final Field field = fields.get(f);
+				final DbField field = map.get(f);
 				if (field == null) {
-					logger.error("{} is not a field in teh form. Sort order ignored");
+					logger.error("{} is not a field in the form. Sort order ignored");
 					continue;
 				}
 				if (isFirst) {

@@ -32,6 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * A field represents an atomic data element in the application. It has the meta
+ * data to parse, validate and serialize a value meant for this data element
+ *
  * @author simplity.org
  *
  */
@@ -43,7 +46,7 @@ public class Field {
 	protected final String name;
 
 	/**
-	 * 0-based index of the field in the record;
+	 * 0-based index of the field in the record. T;
 	 */
 	protected final int index;
 	/**
@@ -155,11 +158,9 @@ public class Field {
 	}
 
 	/**
-	 * @param forInsert
-	 *            if the operation is insert
 	 * @return the isRequired
 	 */
-	public boolean isRequired(final boolean forInsert) {
+	public boolean isRequired() {
 		return this.isRequired;
 	}
 
@@ -172,44 +173,36 @@ public class Field {
 	}
 
 	/**
-	 * @return true if this field is the tenant key.
-	 */
-	public boolean isTenantKey() {
-		return false;
-	}
-
-	/**
-	 * @return true if this field is the tenant key.
-	 */
-	public boolean isPrimaryKey() {
-		return false;
-	}
-
-	/**
-	 * @return true if this field is user id, like createdBy and modifiedBy.
-	 */
-	public boolean isUserId() {
-		return false;
-	}
-
-	/**
-	 * validate if null/empty-string is ok for this field
 	 *
-	 * @param forInsert
+	 * @param value
+	 *            string value that is to be parsed. can be null or empty
+	 * @param row
+	 *            into which parsed values is to be set to. MUST be array with
+	 *            the right number of elements
 	 * @param ctx
-	 *            non-null
+	 *            into which any error message is added
 	 * @param tableName
-	 * @param idx
-	 * @return true if it is ok. false if an error message has been added to ctx
+	 *            if this row is inside a table. used for reporting error
+	 * @param rowNbr
+	 *            used for reporting error is this is part of table
+	 * @return true if all ok. false if an error message is added to the context
 	 */
-	public boolean validateNull(final boolean forInsert, final IServiceContext ctx, final String tableName,
-			final int idx) {
-		if (this.isRequired(forInsert)) {
-			logger.error("Field {} is required but no data is received", this.name);
-			ctx.addMessage(Message.newValidationError(this, tableName, idx));
-			return false;
+	public boolean parseIntoRow(final String value, final Object[] row, final IServiceContext ctx,
+			final String tableName, final int rowNbr) {
+
+		if (value == null || value.isEmpty()) {
+			row[this.index] = null;
+			if (this.isRequired) {
+				logger.error("Field {} is required but no data is received", this.name);
+				ctx.addMessage(Message.newValidationError(this, tableName, rowNbr));
+				return false;
+			}
+			return true;
 		}
-		return true;
+
+		final Object val = this.parse(value, ctx, tableName, rowNbr);
+		row[this.index] = val;
+		return val != null;
 	}
 
 	/**
@@ -224,7 +217,7 @@ public class Field {
 	 * @param idx
 	 * @return object of the right type. or null if the value is invalid
 	 */
-	public Object parse(final String inputValue, final IServiceContext ctx, final String tableName, final int idx) {
+	private Object parse(final String inputValue, final IServiceContext ctx, final String tableName, final int idx) {
 		final Object obj = this.dataType.parse(inputValue);
 		if (obj == null) {
 			logger.error("{} is not valid for field {} as per data type {}", inputValue, this.name,
@@ -239,54 +232,5 @@ public class Field {
 			return null;
 		}
 		return obj;
-	}
-
-	/**
-	 *
-	 * @param value
-	 *            string value that is to be parsed. can be null or empty
-	 * @param row
-	 *            into which parsed values is to be set to. MUST be array with
-	 *            the right number of elements
-	 * @param forInsert
-	 *            true if this parsing is for an insert operation
-	 * @param ctx
-	 *            into which any error message is added
-	 * @param tableName
-	 *            if this row is inside a table. used for reporting error
-	 * @param rowNbr
-	 *            used for reporting error is this is part of table
-	 */
-	public void parseIntoRow(final String value, final Object[] row, final boolean forInsert, final IServiceContext ctx,
-			final String tableName, final int rowNbr) {
-		/*
-		 * do we have to set value from our side?
-		 */
-		if (this.isTenantKey()) {
-			row[this.index] = ctx.getTenantId();
-			return;
-		}
-
-		if (this.isUserId()) {
-			row[this.index] = ctx.getUser().getUserId();
-			return;
-		}
-
-		if (value == null || value.isEmpty()) {
-			row[this.index] = null;
-			this.validateNull(forInsert, ctx, tableName, rowNbr);
-			return;
-		}
-
-		row[this.index] = this.parse(value, ctx, tableName, rowNbr);
-	}
-
-	/**
-	 *
-	 * @return column name if this is relevant. null if column name is not
-	 *         relevant. Is non-null in case of DbField instances
-	 */
-	public Object getColumnName() {
-		return null;
 	}
 }

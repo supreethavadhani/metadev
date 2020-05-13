@@ -401,4 +401,23 @@ public class JsonUtil {
 			jw.endObject();
 		}
 	}
+
+	/**
+	 * @param fields
+	 * @param rows
+	 * @param writer
+	 * @throws IOException
+	 */
+	public static void writeRows(final Field[] fields, final Object[][] rows, final JsonWriter writer)
+			throws IOException {
+		writer.beginArray();
+		if (rows != null) {
+			for (final Object[] row : rows) {
+				writer.beginObject();
+				writeFields(fields, row, writer);
+				writer.endObject();
+			}
+		}
+		writer.endArray();
+	}
 }

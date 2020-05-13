@@ -145,7 +145,7 @@ public abstract class Schema {
 	 * @return tenant field, or null if this schema does not define a tenant
 	 *         field
 	 */
-	public DbField getTenantField() {
+	private DbField getTenantField() {
 		if (this.dbAssistant == null) {
 			return null;
 		}
