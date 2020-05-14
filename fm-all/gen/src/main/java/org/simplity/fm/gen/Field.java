@@ -23,9 +23,11 @@
 package org.simplity.fm.gen;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.simplity.fm.core.data.ColumnType;
 import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +39,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 class Field implements Util.INamedMember {
+	private static final Map<String, ColumnType> columnTypes = createMap();
 	protected static final Logger logger = LoggerFactory.getLogger(Field.class);
 	protected static final String C = ", ";
 
@@ -48,6 +51,8 @@ class Field implements Util.INamedMember {
 	String listName;
 	String listKey;
 	int index;
+	String dbColumnName;
+	private String columnType;
 
 	@Override
 	public void setNameAndIdx(final String name, final int idx) {
@@ -55,9 +60,12 @@ class Field implements Util.INamedMember {
 		this.index = idx;
 	}
 
-	void emitJavaCode(final StringBuilder sbf, final String dataTypesName) {
-		sbf.append("\n\t\t\tnew ").append(this.getClass().getSimpleName()).append("(\"");
-		sbf.append(this.name).append('"');
+	void emitJavaCode(final StringBuilder sbf, final String dataTypesName, final boolean isDb) {
+		sbf.append("\n\t\t\tnew ");
+		if (isDb) {
+			sbf.append("Db");
+		}
+		sbf.append("Field(\"").append(this.name).append('"');
 		sbf.append(C).append(this.index);
 		sbf.append(C).append(dataTypesName).append('.').append(this.dataType);
 		sbf.append(C).append(Util.escape(this.defaultValue));
@@ -70,12 +78,20 @@ class Field implements Util.INamedMember {
 		} else {
 			sbf.append(C).append("null");
 		}
-		this.emitJavaSpecific(sbf);
-		sbf.append(')');
-	}
+		if (isDb) {
+			sbf.append(C).append(Util.escape(this.dbColumnName));
+			sbf.append(C);
+			final ColumnType ct = this.getColumnType();
+			if (ct == null) {
+				sbf.append("null");
+			} else {
+				sbf.append("ColumnType.").append(ct.name());
+			}
 
-	protected void emitJavaSpecific(final StringBuilder sbf) {
-		sbf.append(C).append(this.isRequired);
+		} else {
+			sbf.append(C).append(this.isRequired);
+		}
+		sbf.append(')');
 	}
 
 	protected void emitTs(final StringBuilder def, final StringBuilder controls, final Map<String, DataType> dataTypes,
@@ -132,5 +148,31 @@ class Field implements Util.INamedMember {
 
 		controls.append("]);");
 		controls.append("\n\t\tthis.fields.set('").append(this.name).append("', this.").append(this.name).append(");");
+	}
+
+	/**
+	 * @return column type, or null.
+	 */
+	public ColumnType getColumnType() {
+		if (this.columnType == null) {
+			return ColumnType.OptionalData;
+		}
+		final ColumnType ct = columnTypes.get(this.columnType.toLowerCase());
+		if (ct != null) {
+			return ct;
+		}
+		logger.error("{} is an invalid columnType for field {}. optional data is  assumed", this.columnType, this.name);
+		return ColumnType.OptionalData;
+	}
+
+	/**
+	 * @return
+	 */
+	private static Map<String, ColumnType> createMap() {
+		final Map<String, ColumnType> map = new HashMap<>();
+		for (final ColumnType vt : ColumnType.values()) {
+			map.put(vt.name().toLowerCase(), vt);
+		}
+		return map;
 	}
 }

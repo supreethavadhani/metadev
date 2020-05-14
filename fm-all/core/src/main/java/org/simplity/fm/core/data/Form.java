@@ -24,6 +24,8 @@ package org.simplity.fm.core.data;
 
 import java.io.IOException;
 
+import javax.xml.validation.Schema;
+
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.JsonUtil;
 import org.simplity.fm.core.Message;

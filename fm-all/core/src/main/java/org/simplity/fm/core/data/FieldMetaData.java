@@ -61,7 +61,7 @@ public class FieldMetaData {
 	 * @param field
 	 */
 	public FieldMetaData(final Field field) {
-		this.idx = field.index;
+		this.idx = field.getIndex();
 		this.valueType = field.getValueType();
 	}
 

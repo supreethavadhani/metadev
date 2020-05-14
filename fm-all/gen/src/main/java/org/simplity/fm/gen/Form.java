@@ -77,7 +77,7 @@ public class Form {
 
 		if (sch != null) {
 			this.schema = sch;
-			for (final DbField f : sch.fieldMap.values()) {
+			for (final Field f : sch.fieldMap.values()) {
 				final ColumnType ct = f.getColumnType();
 				if (ct == ColumnType.PrimaryKey || ct == ColumnType.GeneratedPrimaryKey) {
 					this.keyFieldNames.add(f.name);

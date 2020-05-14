@@ -40,12 +40,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 /**
- * just data structure to collect and pass info fromForm to FormData
+ * Utility class used by dbRecord to parse input for a filter service
  *
  * @author simplity.org
  *
  */
-public class ParsedFilter {
+class ParsedFilter {
 	private static final Logger logger = LoggerFactory.getLogger(ParsedFilter.class);
 	private static final String IN = " IN (";
 	private static final String LIKE = " LIKE ? escape '\\'";
@@ -58,61 +58,20 @@ public class ParsedFilter {
 	final private String whereClause;
 	final private Object[] whereParamValues;
 
-	/**
-	 * constructor with all attributes
-	 *
-	 * @param whereClauseStartingWithWhere
-	 *            e.g. "WHERE a=? and b=? ORDER BY k DESC".
-	 *
-	 *            null if all rows are to be read. Best
-	 *            practice is to use parameters rather than dynamic sql. That is
-	 *            you should use a=? rather than a = 32.
-	 * @param whereParamValues
-	 *            array with each element as non-null. If any condition requires
-	 *            comparison with null, then it should be embedded into the
-	 *            clause rather than as a parameter. Each element should be
-	 *            one of standard types String, Long, Double, Boolean,
-	 *            LocalDate, Instant. Can be null if where clause is null or it
-	 *            has no parameters
-	 *
-	 *
-	 */
-	public ParsedFilter(final String whereClauseStartingWithWhere, final Object[] whereParamValues) {
+	ParsedFilter(final String whereClauseStartingWithWhere, final Object[] whereParamValues) {
 		this.whereClause = whereClauseStartingWithWhere;
 		this.whereParamValues = whereParamValues;
 	}
 
-	/**
-	 * @return the where clause. null if all rows are to be read.
-	 */
-	public String getWhereClause() {
+	String getWhereClause() {
 		return this.whereClause;
 	}
 
-	/**
-	 * @return values to be set to the parameters in the where clause. can be
-	 *         null if the where-clause is null or the where-clause has no
-	 *         parameters.
-	 */
-	public Object[] getWhereParamValues() {
+	Object[] getWhereParamValues() {
 		return this.whereParamValues;
 	}
 
-	/**
-	 * parse a filter-sql from the json for a schema
-	 *
-	 * @param json
-	 *            input json that has the filter details
-	 * @param fields
-	 *            fields that can be filtered
-	 * @param tenantField
-	 *            null if the calling schema does not use a tenant field. used
-	 *            for forcing a condition for the tenant field
-	 * @param ctx
-	 * @return parsed instance. null in case of any error. error is added to the
-	 *         context.
-	 */
-	public static ParsedFilter parse(final JsonObject json, final DbField[] fields, final DbField tenantField,
+	static ParsedFilter parse(final JsonObject json, final DbField[] fields, final DbField tenantField,
 			final IServiceContext ctx) {
 		JsonObject conditions = null;
 		JsonElement node = json.get(Conventions.Http.TAG_CONDITIONS);
@@ -151,7 +110,7 @@ public class ParsedFilter {
 
 		final Map<String, DbField> map = new HashMap<>();
 		for (final DbField field : fields) {
-			map.put(field.name, field);
+			map.put(field.getName(), field);
 		}
 
 		if (conditions != null && conditions.size() > 0) {

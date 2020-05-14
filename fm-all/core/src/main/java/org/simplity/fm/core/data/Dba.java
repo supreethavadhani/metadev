@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.simplity.fm.core.JsonUtil;
+import org.simplity.fm.core.Message;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.IDbReader;
@@ -36,6 +38,8 @@ import org.simplity.fm.core.rdb.IDbWriter;
 import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.gson.JsonObject;
 
 /**
  * Manages persistence related functionality for a <code>DbRecord</code>
@@ -47,88 +51,196 @@ public class Dba {
 
 	protected static final Logger logger = LoggerFactory.getLogger(Dba.class);
 	/**
+	 * db operations that are to be exposed thru this form. array corresponds to
+	 * the ordinal of IoType
+	 */
+	private final boolean[] operations;
+	/**
 	 * table/view name in the database
 	 */
-	protected String nameInDb;
+	private final String nameInDb;
 
 	/**
 	 * fields that are mapped to the db. This is same as fields in the record,
 	 * except any non-db-fields are replaced with null.
 	 */
-	protected DbField[] dbFields;
+	private final DbField[] dbFields;
 
-	/**
-	 * primary key column/s. most of the times, it is one field that is
-	 * internally generated
-	 */
-	protected int[] keyIndexes;
 	/**
 	 * e.g. where a=? and b=?
 	 */
-	protected String whereClause;
+	private final String whereClause;
 	/**
 	 * db parameters to be used for the where clause
 	 */
-	protected FieldMetaData[] whereParams;
+	private final FieldMetaData[] whereParams;
 	/**
 	 * e.g. select a,b,c from t
 	 */
-	protected String selectClause;
+	private final String selectClause;
 	/**
 	 * db parameters to be used to receive data from the result set of the
 	 * select query
 	 */
-	protected FieldMetaData[] selectParams;
+	private final FieldMetaData[] selectParams;
 	/**
 	 * e.g insert a,b,c,d into table1 values(?,?,?,?)
 	 */
-	protected String insertClause;
+	private final String insertClause;
 	/**
 	 * db parameters for the insert sql
 	 */
-	protected FieldMetaData[] insertParams;
+	private final FieldMetaData[] insertParams;
 
 	/**
 	 * e.g. update table1 set a=?, b=?, c=?
 	 */
-	protected String updateClause;
+	private final String updateClause;
 	/**
 	 * db parameters for the update sql
 	 */
-	protected FieldMetaData[] updateParams;
+	private final FieldMetaData[] updateParams;
 
 	/**
 	 * e.g. delete from table1. Note that where is not part of this.
 	 */
-	protected String deleteClause;
+	private final String deleteClause;
 
+	/*
+	 * following fields are also final, but it is bit complex to adhere to the
+	 * syntax for setting final fields. Hence we have not declared them final
+	 */
 	/**
-	 * db column name that is generated as internal key. null if this is not
+	 * FINAL. primary key column/s. most of the times, it is one field that is
+	 * internally generated
+	 */
+	private int[] keyIndexes;
+	/**
+	 * FINAL. db column name that is generated as internal key. null if this is
+	 * not
 	 * relevant
 	 */
-	protected String generatedColumnName;
+	private String generatedColumnName;
+
+	/**
+	 * FINAL. index to the generatedKey
+	 */
+	private int generatedKeyIdx = -1;
+
+	/**
+	 * FINAL. if this APP is designed for multi-tenant deployment, and this
+	 * table has
+	 * data across tenants..
+	 */
+	private DbField tenantField;
+
+	/**
+	 * FINAL. if this table allows update, and needs to use time-stamp-match
+	 * technique to avoid concurrent updates.. NOT enabled in the meta data yet.
+	 */
+	@SuppressWarnings("unused")
+	private final DbField timestampField = null;
 
 	/**
 	 *
+	 * @param allFields
+	 * @param nameInDb
+	 * @param ops
+	 * @param selectClause
+	 * @param selectIndexes
+	 * @param insertClause
+	 * @param insertIndexes
+	 * @param updateClause
+	 * @param updateIndexes
+	 * @param deleteClause
+	 * @param whereClause
+	 * @param whereIndexes
 	 */
-	protected int generatedKeyIdx;
+	public Dba(final Field[] allFields, final String nameInDb, final boolean[] ops, final String selectClause,
+			final int[] selectIndexes, final String insertClause, final int[] insertIndexes, final String updateClause,
+			final int[] updateIndexes, final String deleteClause, final String whereClause, final int[] whereIndexes) {
+
+		this.dbFields = new DbField[allFields.length];
+		this.prepareFields(allFields);
+
+		this.nameInDb = nameInDb;
+		this.operations = ops;
+
+		this.selectClause = selectClause;
+		this.selectParams = this.prepareParams(selectIndexes);
+
+		this.insertClause = insertClause;
+		this.insertParams = this.prepareParams(insertIndexes);
+
+		this.updateClause = updateClause;
+		this.updateParams = this.prepareParams(updateIndexes);
+
+		this.whereClause = whereClause;
+		this.whereParams = this.prepareParams(whereIndexes);
+
+		this.deleteClause = deleteClause;
+
+	}
+
+	private void prepareFields(final Field[] allFields) {
+
+		final int keys[] = new int[allFields.length];
+		int nbrKeys = 0;
+		for (int i = 0; i < allFields.length; i++) {
+			final DbField fld = (DbField) allFields[i];
+			this.dbFields[i] = fld;
+			final ColumnType ct = fld.getColumnType();
+			if (ct == null) {
+				/*
+				 * not a true db field
+				 */
+				continue;
+			}
+			switch (ct) {
+			case TenantKey:
+				this.tenantField = fld;
+				continue;
+
+			case GeneratedPrimaryKey:
+				this.generatedColumnName = fld.getColumnName();
+				this.generatedKeyIdx = fld.getIndex();
+				keys[nbrKeys] = fld.getIndex();
+				nbrKeys++;
+				continue;
+
+			case PrimaryKey:
+				keys[nbrKeys] = fld.getIndex();
+				nbrKeys++;
+				continue;
+
+			default:
+				continue;
+			}
+		}
+		if (nbrKeys > 0) {
+			this.keyIndexes = Arrays.copyOf(keys, nbrKeys);
+		}
+
+	}
+
+	private FieldMetaData[] prepareParams(final int[] indexes) {
+		if (indexes == null) {
+			return null;
+		}
+		final FieldMetaData[] result = new FieldMetaData[indexes.length];
+		for (int i = 0; i < indexes.length; i++) {
+			result[i] = new FieldMetaData(this.dbFields[indexes[i]]);
+		}
+		return result;
+	}
 
 	/**
-	 * if this APP is designed for multi-tenant deployment, and this table has
-	 * data across tenants..
+	 *
+	 * @return name of the table/view associated with this db record
 	 */
-	protected DbField tenantField;
-
-	/**
-	 * if this table allows update, and needs to use time-stamp-match technique
-	 * to avoid concurrent updates..
-	 */
-	protected DbField timestampField;
-
-	/**
-	 * number of fields in the schema to which this meta data is attached
-	 */
-	protected int nbrFieldsInARow;
+	public String getNameInDb() {
+		return this.nameInDb;
+	}
 
 	/**
 	 * return the select clause (like select a,b,...) without the where clause
@@ -152,6 +264,10 @@ public class Dba {
 	 * @throws SQLException
 	 */
 	boolean insert(final DbHandle handle, final Object[] values) throws SQLException {
+		if (!this.operations[IoType.Create.ordinal()]) {
+			return notAllowed(IoType.Create);
+		}
+
 		int n = 0;
 		if (this.generatedColumnName == null) {
 			n = writeWorker(handle, this.insertClause, this.insertParams, values);
@@ -188,6 +304,10 @@ public class Dba {
 	 * @throws SQLException
 	 */
 	boolean update(final DbHandle handle, final Object[] values) throws SQLException {
+		if (!this.operations[IoType.Update.ordinal()]) {
+			return notAllowed(IoType.Update);
+		}
+
 		final int nbr = writeWorker(handle, this.updateClause, this.updateParams, values);
 		return nbr > 0;
 	}
@@ -202,6 +322,10 @@ public class Dba {
 	 * @throws SQLException
 	 */
 	boolean delete(final DbHandle handle, final Object[] values) throws SQLException {
+		if (!this.operations[IoType.Delete.ordinal()]) {
+			return notAllowed(IoType.Delete);
+		}
+
 		final String sql = this.deleteClause + this.whereClause;
 		final int nbr = writeWorker(handle, sql, this.whereParams, values);
 		return nbr > 0;
@@ -257,6 +381,10 @@ public class Dba {
 	 * @throws SQLException
 	 */
 	boolean saveAll(final DbHandle handle, final Object[][] rows) throws SQLException {
+		if (!this.operations[IoType.Update.ordinal()]) {
+			return notAllowed(IoType.Update);
+		}
+
 		if (this.generatedKeyIdx == -1) {
 			logger.info("Schema has no generated key. Each rowis first updated, failing which it is inserted.");
 			return this.updateOrInsert(handle, rows);
@@ -311,6 +439,9 @@ public class Dba {
 	 * @throws SQLException
 	 */
 	boolean save(final DbHandle handle, final Object[] fieldValues) throws SQLException {
+		if (!this.operations[IoType.Update.ordinal()]) {
+			return notAllowed(IoType.Update);
+		}
 		if (this.generatedKeyIdx == -1) {
 			final String msg = "Schema has no generated key. save opertion is not possible.";
 			logger.error(msg);
@@ -353,6 +484,9 @@ public class Dba {
 	 * @throws SQLException
 	 */
 	boolean insertAll(final DbHandle handle, final Object[][] rows) throws SQLException {
+		if (!this.operations[IoType.Create.ordinal()]) {
+			return notAllowed(IoType.Create);
+		}
 
 		return writeMany(handle, this.insertClause, this.insertParams, rows);
 	}
@@ -370,6 +504,9 @@ public class Dba {
 	 * @throws SQLException
 	 */
 	boolean updateAll(final DbHandle handle, final Object[][] rows) throws SQLException {
+		if (!this.operations[IoType.Update.ordinal()]) {
+			return notAllowed(IoType.Update);
+		}
 
 		return writeMany(handle, this.updateClause, this.updateParams, rows);
 	}
@@ -460,25 +597,24 @@ public class Dba {
 	 * @throws SQLException
 	 */
 	boolean read(final DbHandle handle, final Object[] values) throws SQLException {
-		if (values == null || values.length < this.nbrFieldsInARow) {
-			logger.error(
-					"This schema has {} fields but an array of length {} is assigned to receive data. Data not extracted.",
-					this.nbrFieldsInARow, values == null ? 0 : values.length);
-			return false;
+		if (!this.operations[IoType.Get.ordinal()]) {
+			return notAllowed(IoType.Get);
 		}
 
 		final boolean[] result = new boolean[1];
+		final String sql = this.selectClause + ' ' + this.whereClause;
+		final FieldMetaData[] params = this.whereParams;
 		handle.read(new IDbReader() {
 
 			@Override
 			public String getPreparedStatement() {
-				return Dba.this.selectClause + Dba.this.whereClause;
+				return sql;
 			}
 
 			@Override
 			public void setParams(final PreparedStatement ps) throws SQLException {
 				int posn = 0;
-				for (final FieldMetaData p : Dba.this.whereParams) {
+				for (final FieldMetaData p : params) {
 					posn++;
 					final Object value = p.setPsParam(ps, values, posn);
 					if (value == null) {
@@ -533,28 +669,35 @@ public class Dba {
 	List<Object[]> filter(final String whereClauseStartingWithWhere, final Object[] values, final DbHandle handle)
 			throws SQLException {
 		final List<Object[]> result = new ArrayList<>();
-		this.filterWorker(handle, whereClauseStartingWithWhere, values, null, result);
+		if (this.operations[IoType.Filter.ordinal()]) {
+			this.filterWorker(handle, whereClauseStartingWithWhere, values, null, result);
+		} else {
+			notAllowed(IoType.Filter);
+		}
 
 		return result;
 	}
 
 	boolean filterFirst(final String whereClauseStartingWithWhere, final Object[] inputValues,
 			final Object[] outputValues, final DbHandle handle) throws SQLException {
-		return this.filterWorker(handle, whereClauseStartingWithWhere, inputValues, outputValues, null);
+		if (this.operations[IoType.Filter.ordinal()]) {
+			return this.filterWorker(handle, whereClauseStartingWithWhere, inputValues, outputValues, null);
+		}
+
+		return notAllowed(IoType.Filter);
 	}
 
 	boolean filterWorker(final DbHandle handle, final String where, final Object[] inputValues,
 			final Object[] outputValues, final List<Object[]> outputRows) throws SQLException {
 
 		final boolean result[] = new boolean[1];
+		final String sql = where == null ? this.selectClause : (this.selectClause + ' ' + where);
+		final int nbrFields = this.dbFields.length;
 		handle.read(new IDbReader() {
 
 			@Override
 			public String getPreparedStatement() {
-				if (where == null) {
-					return Dba.this.selectClause;
-				}
-				return Dba.this.selectClause + ' ' + where;
+				return sql;
 			}
 
 			@Override
@@ -576,7 +719,7 @@ public class Dba {
 				 */
 				Object[] vals = outputValues;
 				if (vals == null) {
-					vals = new Object[Dba.this.nbrFieldsInARow];
+					vals = new Object[nbrFields];
 					outputRows.add(vals);
 				}
 				Dba.this.readWorker(rs, vals);
@@ -613,5 +756,94 @@ public class Dba {
 			}
 		}
 		return ok;
+	}
+
+	/**
+	 *
+	 * @param values
+	 * @return values of key fields for logging
+	 */
+	public String emitKeys(final Object[] values) {
+		if (this.keyIndexes == null) {
+			return "No keys";
+		}
+		final StringBuilder sbf = new StringBuilder();
+		for (final int idx : this.keyIndexes) {
+			sbf.append(this.dbFields[idx].getName()).append(" = ").append(values[idx]).append("  ");
+		}
+		return sbf.toString();
+	}
+
+	private static boolean notAllowed(final IoType operation) {
+		logger.error("THis record is not designed for '{}' operation", operation);
+		return false;
+	}
+
+	/**
+	 *
+	 * @param operation
+	 * @return true if this operation is allowed. false otherwise
+	 */
+	boolean operationAllowed(final IoType operation) {
+		return this.operations[operation.ordinal()];
+	}
+
+	/**
+	 * @param fieldValues
+	 * @param ctx
+	 * @return
+	 */
+	boolean parseKeys(final JsonObject json, final Object[] fieldValues, final IServiceContext ctx) {
+
+		if (this.tenantField != null) {
+			fieldValues[this.tenantField.getIndex()] = ctx.getTenantId();
+		}
+
+		if (this.keyIndexes == null) {
+			logger.error("No keys defined for this db record.");
+			ctx.addMessage(Message.newError(Message.MSG_INTERNAL_ERROR));
+			return false;
+		}
+
+		boolean ok = true;
+		for (final int idx : this.keyIndexes) {
+			final DbField f = this.dbFields[idx];
+			final String value = JsonUtil.getString(json, f.getName());
+			if (value == null || value.isEmpty()) {
+				ctx.addMessage(Message.newFieldError(f.getName(), Message.FIELD_REQUIRED, ""));
+				ok = false;
+			}
+			/*
+			 * we need to parse this as a normal field, not as DbFIeld.
+			 */
+			if (!f.parseIntoRow(value, fieldValues, ctx, null, 0)) {
+				ok = false;
+			}
+		}
+
+		return ok;
+	}
+
+	/**
+	 * @param fieldName
+	 * @return field, or null if there is no such field
+	 */
+	public DbField getField(final String fieldName) {
+		for (final DbField f : this.dbFields) {
+			if (f.getName().equals(fieldName)) {
+				return f;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 *
+	 * @param json
+	 * @param ctx
+	 * @return parsedFilter, or null in case of any error
+	 */
+	public ParsedFilter parseFilter(final JsonObject json, final IServiceContext ctx) {
+		return ParsedFilter.parse(json, this.dbFields, this.tenantField, ctx);
 	}
 }

@@ -35,12 +35,12 @@ public class DbField extends Field {
 	/**
 	 * name of the db column
 	 */
-	protected final String columnName;
+	private final String columnName;
 
 	/**
 	 * type of column
 	 */
-	protected final ColumnType columnType;
+	private final ColumnType columnType;
 
 	/**
 	 * this is generally invoked by the generated code for a Data Structure
@@ -126,14 +126,15 @@ public class DbField extends Field {
 	 */
 	public boolean validate(final Object[] data, final boolean forInsert, final IServiceContext ctx,
 			final String tableName, final int rowNbr) {
-		final Object val = data[this.index];
+		final int idx = this.getIndex();
+		final Object val = data[idx];
 
 		switch (this.columnType) {
 		/*
 		 * tenant key is ignored from the client, and populated from the context
 		 */
 		case TenantKey:
-			data[this.index] = ctx.getTenantId();
+			data[idx] = ctx.getTenantId();
 			return true;
 
 		/*
@@ -141,7 +142,7 @@ public class DbField extends Field {
 		 */
 		case CreatedBy:
 		case ModifiedBy:
-			data[this.index] = ctx.getUser();
+			data[idx] = ctx.getUser();
 			return true;
 
 		/*

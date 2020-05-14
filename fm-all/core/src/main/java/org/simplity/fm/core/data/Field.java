@@ -43,36 +43,36 @@ public class Field {
 	/**
 	 * name is unique within a record/form
 	 */
-	protected final String name;
+	private final String name;
 
 	/**
 	 * 0-based index of the field in the record. T;
 	 */
-	protected final int index;
+	private final int index;
 	/**
 	 * data type describes the type of value and restrictions (validations) on
 	 * the value
 	 */
-	protected final DataType dataType;
+	private final DataType dataType;
 	/**
 	 * default value is used only if this is optional and the value is missing.
 	 * not used if the field is mandatory
 	 */
-	protected final Object defaultValue;
+	private final Object defaultValue;
 	/**
 	 * refers to the message id/code that is used for i18n of messages
 	 */
-	protected final String messageId;
+	private final String messageId;
 	/**
 	 * required/mandatory. If set to true, text value of empty string and 0 for
 	 * integral are assumed to be not valid. Relevant only for editable fields.
 	 */
-	protected final boolean isRequired;
+	private final boolean isRequired;
 
 	/**
-	 * cached value list for
+	 * cached value list for validations
 	 */
-	protected final IValueList valueList;
+	private final IValueList valueList;
 
 	/**
 	 * this is generally invoked by the generated code for a Data Structure
@@ -127,6 +127,13 @@ public class Field {
 	}
 
 	/**
+	 * @return the index
+	 */
+	public int getIndex() {
+		return this.index;
+	}
+
+	/**
 	 * @return the dataType
 	 */
 	public DataType getDataType() {
@@ -138,13 +145,6 @@ public class Field {
 	 */
 	public Object getDefaultValue() {
 		return this.defaultValue;
-	}
-
-	/**
-	 * @return the index
-	 */
-	public int getIndex() {
-		return this.index;
 	}
 
 	/**

@@ -10,6 +10,9 @@
         "name": {
             "type": "string"
         },
+        "description": {
+            "type": "string"
+        },
         "nameInDb": {
             "type": "string"
         },
@@ -28,7 +31,8 @@
                     "create",
                     "update",
                     "filter",
-                    "bulk"
+                    "bulk",
+                    "delete"
                 ]
             }
         },
@@ -38,9 +42,7 @@
                 "type": "object",
                 "required": [
                     "name",
-                    "dataType",
-                    "dbColumnName",
-                    "columnType"
+                    "dataType"
                 ],
                 "properties": {
                     "name": {
@@ -56,6 +58,7 @@
                             "date",
                             "desc",
                             "email",
+                            "flexibleId",
                             "govtCode",
                             "id",
                             "ip",
@@ -74,7 +77,10 @@
                             "url",
                             "userType",
                             "gender",
-                            "income"
+                            "income",
+                            "marks",
+                            "marksOrAb",
+                            "valuationType"
                         ]
                     },
                     "defaultValue": {

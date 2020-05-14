@@ -1,0 +1,617 @@
+{
+  "name": "banyaanTree",
+  "tenantFieldName": "instituteId",
+  "tenantDbName": "institute_id",
+  "runtimeLists": {
+    "instituteList": {
+      "dbTableName": "institutes",
+      "dbColumn1": "institute_id",
+      "valueIsNumeric": true,
+      "dbColumn2": "name",
+      "keyColumn": "trust_id",
+      "keyIsNumeric": true,
+      "activeColumn": "is_active"
+    },
+    "departmentList": {
+      "dbTableName": "departments",
+      "dbColumn1": "department_id",
+      "valueIsNumeric": true,
+      "dbColumn2": "name",
+      "activeColumn": "is_active",
+      "tenantColumn": "institute_id"
+    },
+    "designationList": {
+      "dbTableName": "designations",
+      "dbColumn1": "designation_id",
+      "valueIsNumeric": true,
+      "dbColumn2": "name",
+      "activeColumn": "is_active",
+      "tenantColumn": "institute_id"
+    },
+    "degreeList": {
+      "dbTableName": "degrees",
+      "dbColumn1": "degree_id",
+      "valueIsNumeric": true,
+      "dbColumn2": "name",
+      "activeColumn": "is_active",
+      "tenantColumn": "institute_id"
+    },
+    "allSubjectList": {
+      "dbTableName": "all_subject_list",
+      "dbColumn1": "offered_subject_id",
+      "valueIsNumeric": true,
+      "dbColumn2": "name",
+      "keyColumn": "department_id",
+      "keyIsNumeric": true,
+      "tenantColumn": "institute_id"
+    },
+    "offeredSubjectList": {
+      "dbTableName": "offered_subject_list",
+      "dbColumn1": "offered_subject_id",
+      "valueIsNumeric": true,
+      "dbColumn2": "name",
+      "keyColumn": "department_id",
+      "keyIsNumeric": true,
+      "tenantColumn": "institute_id"
+    },
+    "taughtSubjectList": {
+      "dbTableName": "taught_subject_list",
+      "dbColumn1": "offered_subject_id",
+      "valueIsNumeric": true,
+      "dbColumn2": "name",
+      "keyColumn": "department_id",
+      "keyIsNumeric": true,
+      "tenantColumn": "institute_id"
+    },
+    "programList": {
+      "dbTableName": "programs",
+      "dbColumn1": "program_id",
+      "valueIsNumeric": true,
+      "dbColumn2": "name",
+      "keyColumn": "department_id",
+      "keyIsNumeric": true,
+      "activeColumn": "is_active",
+      "tenantColumn": "institute_id"
+    },
+    "subjectTypeList": {
+      "dbTableName": "subject_types",
+      "dbColumn1": "subject_type_id",
+      "valueIsNumeric": true,
+      "dbColumn2": "name",
+      "activeColumn": "is_active",
+      "tenantColumn": "institute_id"
+    },
+    "levelList": {
+      "dbTableName": "levels",
+      "dbColumn1": "level_id",
+      "valueIsNumeric": true,
+      "dbColumn2": "name",
+      "keyColumn": "degree_id",
+      "keyIsNumeric": true
+    },
+    "programLevelList": {
+      "dbTableName": "program_levels",
+      "dbColumn1": "level_id",
+      "valueIsNumeric": true,
+      "dbColumn2": "name",
+      "keyColumn": "program_id",
+      "keyIsNumeric": true
+    },
+    "sectionList": {
+      "dbTableName": "sections",
+      "dbColumn1": "section_id",
+      "valueIsNumeric": true,
+      "dbColumn2": "name",
+      "activeColumn": "is_active"
+    },
+    "levelSectionList": {
+      "dbTableName": "level_section_details",
+      "dbColumn1": "level_section_id",
+      "valueIsNumeric": true,
+      "dbColumn2": "name",
+      "keyColumn": "level_id",
+      "keyIsNumeric": true,
+      "activeColumn": "is_active"
+    },
+    "roleList": {
+      "dbTableName": "roles",
+      "dbColumn1": "role_id",
+      "valueIsNumeric": true,
+      "dbColumn2": "role_name",
+      "activeColumn": "is_active",
+      "tenantColumn": "institute_id"
+    },
+    "seasonList": {
+      "dbTableName": "seasons",
+      "dbColumn1": "season_id",
+      "valueIsNumeric": true,
+      "dbColumn2": "name",
+      "activeColumn": "is_active",
+      "tenantColumn": "institute_id"
+    },
+    "assessmentSchemeList": {
+      "dbTableName": "assessment_schemes",
+      "dbColumn1": "assessment_scheme_id",
+      "valueIsNumeric": true,
+      "dbColumn2": "name",
+      "tenantColumn": "institute_id"
+    },
+    "assessmentItemList": {
+      "dbTableName": "assessment_items",
+      "dbColumn1": "seq_no",
+      "valueIsNumeric": true,
+      "dbColumn2": "name",
+      "keyColumn": "assessment_scheme_id",
+      "keyIsNumeric": true,
+      "tenantColumn": "institute_id"
+    },
+    "subjectSectionList": {
+      "dbTableName": "subject_section_list",
+      "dbColumn1": "subject_section_id",
+      "valueIsNumeric": true,
+      "dbColumn2": "name",
+      "keyColumn": "offered_subject_id",
+      "keyIsNumeric": true
+    },
+    "evaluatorList": {
+      "dbTableName": "evaluators",
+      "dbColumn1": "evaluator_id",
+      "valueIsNumeric": true,
+      "dbColumn2": "name",
+      "keyColumn": "offered_subject_id",
+      "keyIsNumeric": true,
+      "tenantColumn": "institute_id"
+    }
+  },
+  "dataTypes": {
+    "booleanTypes": {
+      "bool": {
+        "errorId": "invalidBool"
+      }
+    },
+    "decimalTypes": {
+      "grade": {
+        "errorId": "invalidGrade",
+        "maxValue": 100,
+        "nbrFractions": 2
+      }
+    },
+    "dateTypes": {
+      "date": {
+        "errorId": "invalidDate",
+        "maxPastDays": 73000,
+        "maxFutureDays": 73000
+      }
+    },
+    "integerTypes": {
+      "country": {
+        "errorId": "invalidCountry",
+        "maxValue": 999
+      },
+      "flexibleId": {
+        "errorId": "invalidFlexibleId",
+        "minValue": -1,
+        "maxValue": 9999999999999
+      },
+      "id": {
+        "errorId": "invalidId",
+        "maxValue": 9999999999999
+      },
+      "integer": {
+        "errorId": "invalidInteger",
+        "minVlue": -99999999999,
+        "maxValue": 9999999999999
+      },
+      "income": {
+        "errorId": "invalidIncome",
+        "minVlue": 0,
+        "maxValue": 9999999999999
+      },
+      "marks": {
+        "errorId": "invalidMarks",
+        "minVlue": 0,
+        "maxValue": 100
+      },
+      "tenantKey": {
+        "errorId": "invalidTenentKey",
+        "maxValue": 9999999999999
+      },
+      "valuationType": {
+        "errorId": "invalidValuationType",
+        "minVlue": 1,
+        "maxValue": 3
+      }
+    },
+    "textTypes": {
+      "accountStatus": {
+        "errorId": "invalidAccountStatus",
+        "maxLength": 10
+      },
+      "code": {
+        "errorId": "invalidCode",
+        "maxLength": 50
+      },
+      "desc": {
+        "errorId": "invalidDesc",
+        "maxLength": 1000
+      },
+      "email": {
+        "errorId": "invalidEmail",
+        "maxLength": 1000
+      },
+      "gender": {
+        "errorId": "invalidGender",
+        "maxLength": 10
+      },
+      "govtCode": {
+        "errorId": "invalidGovtCode",
+        "maxLength": 50
+      },
+      "ip": {
+        "errorId": "invalidIp",
+        "maxLength": 1000
+      },
+      "json": {
+        "errorId": "invalidJson",
+        "maxLength": 10000
+      },
+      "loginId": {
+        "errorId": "invalidLoginId",
+        "maxLength": 50
+      },
+      "marksOrAb": {
+        "errorId": "invalidMarksOrAb",
+        "mnLength": 1,
+        "maxLength": 3,
+        "regex": "[ab|AB|Ab|0|[1-9][0-9]*"
+      },
+      "name": {
+        "errorId": "invalidName",
+        "maxLength": 50
+      },
+      "phone": {
+        "errorId": "invalidPhone",
+        "maxLength": 12,
+        "minLength": 10,
+        "regex": "[1-9][0-9]*"
+      },
+      "pin": {
+        "errorId": "invalidPin",
+        "minLength": 6,
+        "maxLength": 6,
+        "regex": "[1-9][0-9]{5}"
+      },
+      "state": {
+        "errorId": "invalidState",
+        "maxLength": 50
+      },
+      "text": {
+        "errorId": "invalidText",
+        "maxLength": 1000
+      },
+      "uniqueId": {
+        "errorId": "invalidUniqueId",
+        "regex": "[1-9][0-9]{15}",
+        "minLength": 16,
+        "maxLength": 16
+      },
+      "url": {
+        "errorId": "invalidUrl",
+        "maxLength": 1000
+      },
+      "userType": {
+        "errorId": "invalidUserType",
+        "maxLength": 20
+      }
+    },
+    "timestampTypes": {
+      "timestamp": {
+        "errorId": "invalidTimestamp"
+      }
+    }
+  },
+  "valueLists": {
+    "accountStatus": [
+      {
+        "value": "Active",
+        "label": "Active"
+      },
+      {
+        "value": "Suspended",
+        "label": "Suspended"
+      },
+      {
+        "value": "Closed",
+        "label": "Closed"
+      }
+    ],
+    "userType": [
+      {
+        "value": "student",
+        "label": "student"
+      },
+      {
+        "value": "staff",
+        "label": "staff"
+      },
+      {
+        "value": "admin",
+        "label": "admin"
+      },
+      {
+        "value": "guardian",
+        "label": "guardian"
+      },
+      {
+        "value": "trustee",
+        "label": "trustee"
+      }
+    ],
+    "instituteType": [
+      {
+        "value": "DSERTPS",
+        "label": "Karnataka State Syllabus Primary School"
+      },
+      {
+        "value": "DSERTPHS",
+        "label": "Karnataka State Syllabus Higher School"
+      },
+      {
+        "value": "CBSE ",
+        "label": "CBSE"
+      },
+      {
+        "value": "ENG_A_VTU",
+        "label": "Engineering College (Automonus Under VTU)"
+      },
+      {
+        "value": "ENG_VTU",
+        "label": "Engineering College ( VTU)"
+      }
+    ],
+    "admissionQuota": [
+      {
+        "value": "CET",
+        "label": "CET"
+      },
+      {
+        "value": "COMEDK",
+        "label": "COMEDK"
+      },
+      {
+        "value": "CETSNQ",
+        "label": "CET-SNQ"
+      },
+      {
+        "value": "MANG",
+        "label": "MANAGEMENT"
+      },
+      {
+        "value": "NRI",
+        "label": "NRI"
+      },
+      {
+        "value": "GOI",
+        "label": "GOI"
+      },
+      {
+        "value": "Other",
+        "label": "Other"
+      }
+    ],
+    "religion": [
+      {
+        "value": "Hindu",
+        "label": "Hindu"
+      },
+      {
+        "value": "Muslim",
+        "label": "Muslim"
+      },
+      {
+        "value": "Christian",
+        "label": "Christian"
+      },
+      {
+        "value": "Sikh",
+        "label": "Sikh"
+      },
+      {
+        "value": "Jain",
+        "label": "Jain"
+      },
+      {
+        "value": "Others",
+        "label": "Other"
+      }
+    ],
+    "relationType": [
+      {
+        "value": "Mother",
+        "label": "Mother"
+      },
+      {
+        "value": "Father",
+        "label": "Father"
+      },
+      {
+        "value": "Legal Guardian",
+        "label": "Legal Guardian"
+      }
+    ],
+    "documentType": [
+      {
+        "value": "Marks Card",
+        "label": "Marks Card"
+      },
+      {
+        "value": "Certificate",
+        "label": "Ceritifcate (e.g: Birth Certificate etc)"
+      },
+      {
+        "value": "Photo",
+        "label": "Photo"
+      },
+      {
+        "value": "Govt Id",
+        "label": "Govt Id(e.g.: Passport, DL etc)"
+      }
+    ],
+    "domicileState": [
+      {
+        "value": "Karnataka",
+        "label": "Karnataka"
+      },
+      {
+        "value": "Non-Karnataka",
+        "label": "Non-Karnataka"
+      },
+      {
+        "value": "Foreign",
+        "label": "Foreign"
+      }
+    ],
+    "gender": [
+      {
+        "value": "Male",
+        "label": "Male"
+      },
+      {
+        "value": "Female",
+        "label": "Female"
+      },
+      {
+        "value": "Others",
+        "label": "Others"
+      },
+      {
+        "value": "Not Applicable",
+        "label": "Not Applicable"
+      }
+    ],
+    "bloodGroup": [
+      {
+        "value": "O -ve",
+        "label": "O -ve"
+      },
+      {
+        "value": "O +ve",
+        "label": "O +ve"
+      },
+      {
+        "value": "A -ve",
+        "label": "A -ve"
+      },
+      {
+        "value": "A +ve",
+        "label": "A +ve"
+      },
+      {
+        "value": "B -ve",
+        "label": "B -ve"
+      },
+      {
+        "value": "B +ve",
+        "label": "B +ve"
+      },
+      {
+        "value": "AB -ve",
+        "label": "AB -ve"
+      },
+      {
+        "value": "AB +ve",
+        "label": "AB +ve"
+      }
+    ],
+    "valuationRoundList": [
+      {
+        "value": "1",
+        "label": "Initial"
+      },
+      {
+        "value": "2",
+        "label": "Revaluation"
+      },
+      {
+        "value": "3",
+        "label": "Challenge"
+      }
+    ]
+  },
+  "keyedLists": {
+    "state": {
+      "130": [
+        {
+          "value": "Karnataka",
+          "label": "Karnataka"
+        },
+        {
+          "value": "Tamil Nadu",
+          "label": "Tamil Nadu"
+        },
+        {
+          "value": "Kerala",
+          "label": "Kerala"
+        },
+        {
+          "value": "Uttar Pradesh",
+          "label": "Uttar Pradesh"
+        }
+      ],
+      "91": [
+        {
+          "value": "Karnataka",
+          "label": "Karnataka"
+        },
+        {
+          "value": "Tamil Nadu",
+          "label": "Tamil Nadu"
+        },
+        {
+          "value": "Kerala",
+          "label": "Kerala"
+        },
+        {
+          "value": "Uttar Pradesh",
+          "label": "Uttar Pradesh"
+        }
+      ]
+    },
+    "valuationType":{
+      "1":[
+        {
+          "value": "1",
+          "label": "Initial"
+        },
+        {
+          "value": "2",
+          "label": "Reval/Moderation"
+        },
+        {
+          "value": "3",
+          "label": "3rd Valuation"
+        }
+      ],
+      "2":[
+        {
+          "value": "2",
+          "label": "Revaluation"
+        },
+        {
+          "value": "3",
+          "label": "3rd Valuationn"
+        }
+      ],
+      "3":[
+        {
+          "value": "2",
+          "label": "Challenge"
+        },
+        {
+          "value": "3",
+          "label": "3rd Valuation"
+        }
+      ]
+    }
+  }
+}

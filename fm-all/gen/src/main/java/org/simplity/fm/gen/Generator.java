@@ -43,7 +43,7 @@ public class Generator {
 	private static final String FOLDER = "/";
 
 	private static final String EXT_FRM = ".form";
-	private static final String EXT_SCH = ".schema";
+	private static final String EXT_REC = ".rec.json";
 	private static final String EXT_SQL = ".sql.json";
 
 	/**
@@ -94,7 +94,7 @@ public class Generator {
 		 * create output folders if required
 		 */
 		if (createOutputFolders(generatedSourceRootFolder,
-				new String[] { "schema/", "form/", "list/", "sql/" }) == false) {
+				new String[] { "rec/", "form/", "list/", "sql/" }) == false) {
 			return;
 		}
 
@@ -127,25 +127,25 @@ public class Generator {
 		 */
 		app.emitJava(generatedSourceRootFolder, javaRootPackage, Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME);
 
-		logger.debug("Going to process schemas under folder {}", resourceRootFolder);
-		final Map<String, Schema> schemas = new HashMap<>();
-		f = new File(resourceRootFolder + "schema/");
+		logger.debug("Going to process records under folder {}", resourceRootFolder);
+		final Map<String, Record> recs = new HashMap<>();
+		f = new File(resourceRootFolder + "rec/");
 		if (f.exists() == false) {
-			logger.error("Schema folder {} not found. No schemas are processed", f.getPath());
+			logger.error("Records folder {} not found. No records are processed", f.getPath());
 		} else {
 
 			for (final File file : f.listFiles()) {
 				final String fn = file.getName();
-				if (fn.endsWith(EXT_SCH) == false) {
-					logger.debug("Skipping non-schema file {}", fn);
+				if (fn.endsWith(EXT_REC) == false) {
+					logger.debug("Skipping non-record file {}", fn);
 					continue;
 				}
 
 				logger.info("file: {}", fn);
-				final Schema schema = emitSchema(file, generatedSourceRootFolder, tsRootFolder, app.dataTypes, app,
+				final Record record = emitRecord(file, generatedSourceRootFolder, tsRootFolder, app.dataTypes, app,
 						javaRootPackage, tsImportPrefix);
-				if (schema != null) {
-					schemas.put(schema.name, schema);
+				if (record != null) {
+					recs.put(record.name, record);
 				}
 			}
 		}
@@ -163,8 +163,9 @@ public class Generator {
 					continue;
 				}
 				logger.info("file: {}", fn);
-				emitForm(file, generatedSourceRootFolder, tsRootFolder, app.dataTypes, app, javaRootPackage,
-						tsImportPrefix, schemas);
+				// emitForm(file, generatedSourceRootFolder, tsRootFolder,
+				// app.dataTypes, app, javaRootPackage,
+				// tsImportPrefix, recs);
 			}
 		}
 
@@ -245,54 +246,45 @@ public class Generator {
 	 * @param rootPackageName
 	 * @param tsImportPrefix
 	 */
-	private static Schema emitSchema(final File file, final String generatedSourceRootFolder,
+	private static Record emitRecord(final File file, final String generatedSourceRootFolder,
 			final String tsOutputFolder, final DataTypes dataTypes, final Application app, final String packageName,
 			final String tsImportPrefix) {
 		String fn = file.getName();
-		fn = fn.substring(0, fn.length() - EXT_SCH.length());
-		logger.debug("Going to generate schema " + fn);
-		final Schema schema;
+		fn = fn.substring(0, fn.length() - EXT_REC.length());
+		logger.debug("Going to generate record " + fn);
+		final Record record;
 		try (final JsonReader reader = new JsonReader(new FileReader(file))) {
-			schema = Util.GSON.fromJson(reader, Schema.class);
+			record = Util.GSON.fromJson(reader, Record.class);
 		} catch (final Exception e) {
 			e.printStackTrace();
-			logger.error("Schema {} not generated. Error : {}, {}", fn, e, e.getMessage());
+			logger.error("Record {} not generated. Error : {}, {}", fn, e, e.getMessage());
 			return null;
 		}
-		if (!fn.equals(schema.name)) {
-			logger.error("File {} contains schema named {}. It is mandatory to use schema name same as the filename",
-					fn, schema.name);
+		if (!fn.equals(record.name)) {
+			logger.error("File {} contains record named {}. It is mandatory to use record name same as the filename",
+					fn, record.name);
 			return null;
 		}
 
-		schema.init();
+		record.init();
 
-		final String outNamePrefix = generatedSourceRootFolder + "schema/" + Util.toClassName(fn);
+		final String outNamePrefix = generatedSourceRootFolder + "rec/" + Util.toClassName(fn);
 		/*
-		 * schema.java
+		 * Record.java
 		 */
 		final StringBuilder sbf = new StringBuilder();
-		schema.emitJavaClass(sbf, packageName);
-		String outName = outNamePrefix + "Schema.java";
-		Util.writeOut(outName, sbf);
-
-		/*
-		 * schemaRow.java
-		 */
-		sbf.setLength(0);
-		schema.emitJavaDataClass(sbf, packageName, dataTypes.dataTypes);
-		outName = outNamePrefix + "Data.java";
+		record.emitJavaClass(sbf, packageName);
+		String outName = outNamePrefix + "Record.java";
 		Util.writeOut(outName, sbf);
 
 		/*
 		 * schemaTable.java
 		 */
 		sbf.setLength(0);
-		schema.emitJavaTableClass(sbf, packageName);
-		outName = outNamePrefix + "DataTable.java";
+		record.emitJavaTableClass(sbf, packageName);
+		outName = outNamePrefix + "Table.java";
 		Util.writeOut(outName, sbf);
-
-		return schema;
+		return record;
 	}
 
 	private static void emitSql(final File file, final String generatedSourceRootFolder, final DataTypes dataTypes,

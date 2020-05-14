@@ -4,6 +4,9 @@
         "name"
     ],
     "properties": {
+        "description": {
+            "type": "string"
+        },
         "name": {
             "type": "string"
         },
@@ -19,7 +22,8 @@
                     "create",
                     "update",
                     "filter",
-                    "bulk"
+                    "bulk",
+                    "delete"
                 ]
             }
         },
@@ -78,10 +82,6 @@
                             "checkBox",
                             "radio",
                             "output",
-                            "disabled",
-                            "label",
-                            "dividier",
-                            "title",
                             "password"
                         ]
                     },
@@ -108,8 +108,6 @@
                 "required": [
                     "name",
                     "formName",
-                    "parentLinkFields",
-                    "childLinkFields",
                     "isTabular"
                 ],
                 "properties": {

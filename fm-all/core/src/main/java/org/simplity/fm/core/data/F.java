@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 simplity.org
+ * Copyright (c) 2020 simplity.org
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,34 +20,22 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.example;
-
-import org.simplity.fm.gen.Generator;
+package org.simplity.fm.core.data;
 
 /**
+ * Form is a client-side component. If a form is based on a record for its data,
+ * then this class is generated to deliver services for that client-side
+ * component.
+ * 
  * @author simplity.org
+ * @param <T>
+ *            record that describes the data behind this form
  *
  */
-public class Gen {
-	private static final String SPEC_ROOT = "c:/repos/forms/fm-all/example/resources/spec/";
-	private static final String JAVA_ROOT = "c:/repos/forms/fm-all/example/src/main/java/";
-	private static final String JAVA_PACKAGE = "org.simplity.fm.example.gen";
-	private static final String TS_ROOT = "c:/repos/forms/fm-all/example/ts/";
-	private static final String TS_FORM_IMPORT_PREFIX = "../form/";
+public abstract class F<T extends Record> {
+	private final T record;
 
-	/**
-	 *
-	 * @param args
-	 */
-	public static void main(final String[] args) {
-		final long start = System.currentTimeMillis();
-		if (args.length == 0) {
-			Generator.generate(SPEC_ROOT, JAVA_ROOT, JAVA_PACKAGE, TS_ROOT, TS_FORM_IMPORT_PREFIX);
-		} else if (args.length == 5) {
-			Generator.generate(args[0], args[1], args[2], args[3], args[4]);
-		} else {
-			System.err.print("Usage: Gen spec_root java_root java_package_name ts_root ts_form_import_prefix ");
-		}
-		System.out.println("generated sources in " + (System.currentTimeMillis() - start) + "ms");
+	protected F(final T record) {
+		this.record = record;
 	}
 }

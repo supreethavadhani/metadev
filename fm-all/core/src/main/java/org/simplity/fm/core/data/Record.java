@@ -67,46 +67,20 @@ import com.google.gson.stream.JsonWriter;
 public abstract class Record {
 	private static final Logger logger = LoggerFactory.getLogger(Record.class);
 
-	/**
-	 * fields that make up this record. These fields to bo
-	 */
-	protected final Field[] fields;
+	private final RecordMetaData metaData;
 
 	/**
-	 * current
+	 * current values
 	 *
 	 */
 	protected final Object[] fieldValues;
-	/**
-	 * describes all the inter-field validations, and any business validations
-	 */
-	protected IValidation[] validations;
 
 	/**
 	 * construct this record with a set of fields and values
-	 *
-	 * @param fields
-	 *            non-null non-empty array of fields
-	 * @param fieldValues
-	 *            null to create a record with default values. if non-null, then
-	 *            the array MUST contain the right number and type of elements
 	 */
-	protected Record(final Field[] fields, final Object[] fieldValues) {
-		this.fields = fields;
-		if (fieldValues == null) {
-			final int nbr = fields.length;
-
-			this.fieldValues = new Object[nbr];
-			for (int i = 0; i < fields.length; i++) {
-				this.fieldValues[i] = this.fields[i].getDefaultValue();
-			}
-			return;
-		}
-		if (fieldValues.length != fields.length) {
-			throw new RuntimeException("record is being instantiated with " + fields.length + " fields but "
-					+ fieldValues.length + " values.");
-		}
-		this.fieldValues = fieldValues;
+	protected Record(final RecordMetaData recordMeta, final Object[] values) {
+		this.metaData = recordMeta;
+		this.fieldValues = values == null ? recordMeta.getDefaultValues() : values;
 	}
 
 	/**
@@ -115,27 +89,29 @@ public abstract class Record {
 	 *         generally generated from meta data files, and this name is based
 	 *         on the conventions used in the app
 	 */
-	public abstract String getName();
+	public String getName() {
+		return this.metaData.getName();
+	}
 
 	/**
 	 * @return the validations
 	 */
 	public IValidation[] getValidations() {
-		return this.validations;
+		return this.metaData.getValidations();
 	}
 
 	/**
 	 * @return number of columns in this table
 	 */
 	public int getNbrFields() {
-		return this.fields.length;
+		return this.metaData.getValidations().length;
 	}
 
 	/**
 	 * @return the fields
 	 */
 	public Field[] getFields() {
-		return this.fields;
+		return this.metaData.getFields();
 	}
 
 	/**
@@ -216,7 +192,7 @@ public abstract class Record {
 	 *         and the value is not set
 	 */
 	protected boolean setLongValue(final int idx, final long value) {
-		final Field field = this.fields[idx];
+		final Field field = this.metaData.getField(idx);
 		if (field == null) {
 			return false;
 		}
@@ -234,7 +210,6 @@ public abstract class Record {
 		}
 
 		if (vt == ValueType.Text) {
-
 			this.fieldValues[idx] = "" + value;
 			return true;
 		}
@@ -266,7 +241,7 @@ public abstract class Record {
 	 *         the value is not set
 	 */
 	protected boolean setStringValue(final int idx, final String value) {
-		final Field field = this.fields[idx];
+		final Field field = this.metaData.getField(idx);
 		if (field == null) {
 			return false;
 		}
@@ -320,7 +295,7 @@ public abstract class Record {
 	 *         the value is not set
 	 */
 	protected boolean setDateValue(final int idx, final LocalDate value) {
-		final Field field = this.fields[idx];
+		final Field field = this.metaData.getField(idx);
 		if (field == null) {
 			return false;
 		}
@@ -372,7 +347,7 @@ public abstract class Record {
 	 *         and the value is not set
 	 */
 	protected boolean setBoolValue(final int idx, final boolean value) {
-		final Field field = this.fields[idx];
+		final Field field = this.metaData.getField(idx);
 		if (field == null) {
 			return false;
 		}
@@ -428,7 +403,7 @@ public abstract class Record {
 	 *         and the value is not set
 	 */
 	protected boolean setDecimlValue(final int idx, final double value) {
-		final Field field = this.fields[idx];
+		final Field field = this.metaData.getField(idx);
 		if (field == null) {
 			return false;
 		}
@@ -492,7 +467,7 @@ public abstract class Record {
 	 *         and the value is not set
 	 */
 	protected boolean setTimestampValue(final int idx, final Instant value) {
-		final Field field = this.fields[idx];
+		final Field field = this.metaData.getField(idx);
 		if (field == null) {
 			return false;
 		}
@@ -513,7 +488,8 @@ public abstract class Record {
 	}
 
 	private void logError(final int idx) {
-		logger.error("Invalid index {} used for setting value in a record with {} values", idx, this.fields.length);
+		logger.error("Invalid index {} used for setting value in a record with {} values", idx,
+				this.metaData.getFields().length);
 	}
 
 	/**
@@ -527,15 +503,16 @@ public abstract class Record {
 	 */
 	public boolean parse(final JsonObject json, final IServiceContext ctx, final String tableName, final int rowNbr) {
 		boolean ok = true;
-		for (final Field field : this.fields) {
+		for (final Field field : this.metaData.getFields()) {
 			final String value = JsonUtil.getString(json, field.getName());
 			if (!field.parseIntoRow(value, this.fieldValues, ctx, tableName, rowNbr)) {
 				ok = false;
 			}
 		}
 
-		if (this.validations == null) {
-			for (final IValidation vln : this.validations) {
+		final IValidation[] vals = this.metaData.getValidations();
+		if (vals != null) {
+			for (final IValidation vln : vals) {
 				if (vln.isValid(this, ctx) == false) {
 					logger.error("field {} failed an inter-field validaiton associated with it", vln.getFieldName());
 					ok = false;
@@ -550,7 +527,7 @@ public abstract class Record {
 	 * @throws IOException
 	 */
 	public void serializeFields(final JsonWriter writer) throws IOException {
-		JsonUtil.writeFields(this.fields, this.fieldValues, writer);
+		JsonUtil.writeFields(this.metaData.getFields(), this.fieldValues, writer);
 	}
 
 	/**
@@ -558,7 +535,7 @@ public abstract class Record {
 	 * @throws IOException
 	 */
 	protected void serializeRows(final JsonWriter writer, final Object[][] rows) throws IOException {
-		JsonUtil.writeRows(this.fields, rows, writer);
+		JsonUtil.writeRows(this.metaData.getFields(), rows, writer);
 	}
 
 	/**

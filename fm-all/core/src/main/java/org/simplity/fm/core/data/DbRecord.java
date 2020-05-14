@@ -22,8 +22,6 @@
 
 package org.simplity.fm.core.data;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -53,21 +51,19 @@ import com.google.gson.JsonObject;
  */
 public abstract class DbRecord extends Record {
 	protected static final Logger logger = LoggerFactory.getLogger(DbRecord.class);
-	/**
-	 * db operations that are to be exposed thru this form. array corresponds to
-	 * the ordinal of IoType
-	 */
-	protected boolean[] operations;
 
-	protected Dba dba;
+	protected final Dba dba;
 
-	protected DbRecord(final Field[] fields, final Object[] fieldValues) {
-		super(fields, fieldValues);
+	protected DbRecord(final Dba dba, final RecordMetaData meta, final Object[] fieldValues) {
+		super(meta, fieldValues);
+		this.dba = dba;
 	}
 
 	/**
-	 * parsing data for a DbREcord requires the purpose why it is done.
-	 * Specifically, if it is meant for insert or update.
+	 * dbRecord has one peculiar issue with generated primary key. it is
+	 * optional for insert operation but is mandatory for update. To take care
+	 * of this, we need a parameter to indicate the purpose of parsing. Also, we
+	 * need to populate some fields
 	 *
 	 * @param json
 	 *            input data
@@ -78,7 +74,7 @@ public abstract class DbRecord extends Record {
 	 * @param tableName
 	 *            if the input data is for a table.collection if this record,
 	 *            then this is the name of the attribute with which the table is
-	 *            received. null if the data is at te root level, else n
+	 *            received. null if the data is at the root level, else n
 	 * @param rowNbr
 	 *            relevant if tablaeName is not-null.
 	 * @return true if all ok. false if any error message is added to the
@@ -96,7 +92,6 @@ public abstract class DbRecord extends Record {
 		 * validate db-specific fields
 		 */
 		return this.dba.validate(this.fieldValues, forInsert, ctx, tableName, rowNbr);
-
 	}
 
 	/**
@@ -109,38 +104,7 @@ public abstract class DbRecord extends Record {
 	 * @return true if all ok. false if any parse error is added the ctx
 	 */
 	public boolean parseKeys(final JsonObject json, final IServiceContext ctx) {
-		return true;
-	}
-
-	/**
-	 * set parameter values to a prepared statement that uses this Vo as input
-	 * source.
-	 *
-	 * @param ps
-	 * @throws SQLException
-	 */
-	public void setPsParams(final PreparedStatement ps) throws SQLException {
-		int idx = 0;
-		for (final Field field : this.fields) {
-			final Object value = this.fieldValues[idx];
-			idx++;
-			field.getValueType().setPsParam(ps, idx, value);
-		}
-	}
-
-	/**
-	 * read values from a result set for which this record is designed as output
-	 * data structure
-	 *
-	 * @param rs
-	 * @throws SQLException
-	 */
-	public void readFromRs(final ResultSet rs) throws SQLException {
-		int idx = 0;
-		for (final Field field : this.fields) {
-			this.fieldValues[idx] = field.getValueType().getFromRs(rs, idx + 1);
-			idx++;
-		}
+		return this.dba.parseKeys(json, this.fieldValues, ctx);
 	}
 
 	/**
@@ -153,11 +117,7 @@ public abstract class DbRecord extends Record {
 	 * @throws SQLException
 	 */
 	public boolean read(final DbHandle handle) throws SQLException {
-		if (this.operations[IoType.Get.ordinal()]) {
-			return this.dba.read(handle, this.fieldValues);
-		}
-
-		return this.notAllowed(IoType.Get);
+		return this.dba.read(handle, this.fieldValues);
 	}
 
 	/**
@@ -169,12 +129,8 @@ public abstract class DbRecord extends Record {
 	 * @throws SQLException
 	 */
 	public void readOrFail(final DbHandle handle) throws SQLException {
-		if (!this.operations[IoType.Get.ordinal()]) {
-			throw new SQLException("Read not allowed on " + this.getName());
-		}
-
-		if (!this.dba.insert(handle, this.fieldValues)) {
-			throw new SQLException("Read failed for " + this.getName() + this.emitKeys());
+		if (!this.dba.read(handle, this.fieldValues)) {
+			throw new SQLException("Read failed for " + this.getName() + this.dba.emitKeys(this.fieldValues));
 		}
 	}
 
@@ -188,10 +144,7 @@ public abstract class DbRecord extends Record {
 	 * @throws SQLException
 	 */
 	public boolean insert(final DbHandle handle) throws SQLException {
-		if (this.operations[IoType.Create.ordinal()]) {
-			return this.dba.insert(handle, this.fieldValues);
-		}
-		return this.notAllowed(IoType.Create);
+		return this.dba.insert(handle, this.fieldValues);
 	}
 
 	/**
@@ -203,11 +156,9 @@ public abstract class DbRecord extends Record {
 	 * @throws SQLException
 	 */
 	public void insertOrFail(final DbHandle handle) throws SQLException {
-		if (!this.operations[IoType.Create.ordinal()]) {
-			throw new SQLException("Insert not allowed on schema " + this.getName());
-		}
 		if (!this.dba.insert(handle, this.fieldValues)) {
-			throw new SQLException("Insert failed silently for " + this.getName() + this.emitKeys());
+			throw new SQLException(
+					"Insert failed silently for " + this.getName() + this.dba.emitKeys(this.fieldValues));
 		}
 	}
 
@@ -221,10 +172,7 @@ public abstract class DbRecord extends Record {
 	 * @throws SQLException
 	 */
 	public boolean update(final DbHandle handle) throws SQLException {
-		if (this.operations[IoType.Update.ordinal()]) {
-			return this.dba.update(handle, this.fieldValues);
-		}
-		return this.notAllowed(IoType.Update);
+		return this.dba.update(handle, this.fieldValues);
 	}
 
 	/**
@@ -236,11 +184,9 @@ public abstract class DbRecord extends Record {
 	 * @throws SQLException
 	 */
 	public void updateOrFail(final DbHandle handle) throws SQLException {
-		if (!this.operations[IoType.Update.ordinal()]) {
-			throw new SQLException("Update not allowed on schema " + this.getName());
-		}
 		if (!this.dba.update(handle, this.fieldValues)) {
-			throw new SQLException("Update failed silently for " + this.getName() + this.emitKeys());
+			throw new SQLException(
+					"Update failed silently for " + this.getName() + this.dba.emitKeys(this.fieldValues));
 		}
 	}
 
@@ -253,10 +199,7 @@ public abstract class DbRecord extends Record {
 	 * @throws SQLException
 	 */
 	public boolean save(final DbHandle handle) throws SQLException {
-		if (this.operations[IoType.Update.ordinal()] && this.operations[IoType.Create.ordinal()]) {
-			return this.dba.save(handle, this.fieldValues);
-		}
-		return this.notAllowed(IoType.Update);
+		return this.dba.save(handle, this.fieldValues);
 	}
 
 	/**
@@ -268,10 +211,7 @@ public abstract class DbRecord extends Record {
 	 * @throws SQLException
 	 */
 	public boolean delete(final DbHandle handle) throws SQLException {
-		if (this.operations[IoType.Delete.ordinal()]) {
-			return this.dba.delete(handle, this.fieldValues);
-		}
-		return this.notAllowed(IoType.Delete);
+		return this.dba.delete(handle, this.fieldValues);
 	}
 
 	/**
@@ -283,29 +223,10 @@ public abstract class DbRecord extends Record {
 	 * @throws SQLException
 	 */
 	public void deleteOrFail(final DbHandle handle) throws SQLException {
-		if (!this.operations[IoType.Delete.ordinal()]) {
-			throw new SQLException("Delete not allowed on schema " + this.getName());
-		}
 		if (!this.dba.delete(handle, this.fieldValues)) {
-			throw new SQLException("Delete failed silently for " + this.getName() + this.emitKeys());
+			throw new SQLException(
+					"Delete failed silently for " + this.getName() + this.dba.emitKeys(this.fieldValues));
 		}
-	}
-
-	private String emitKeys() {
-		final int[] ids = this.dba.keyIndexes;
-		if (ids == null) {
-			return "No keys";
-		}
-		final StringBuilder sbf = new StringBuilder();
-		for (final int idx : ids) {
-			sbf.append(this.fields[idx].getName()).append(" = ").append(this.fieldValues[idx]).append("  ");
-		}
-		return sbf.toString();
-	}
-
-	private boolean notAllowed(final IoType operation) {
-		logger.error("Form {} is not designed for '{}' operation", this.getName(), operation);
-		return false;
 	}
 
 	@Override
@@ -330,38 +251,38 @@ public abstract class DbRecord extends Record {
 	 *         otherwise.
 	 */
 	public IService getService(final IoType operation) {
-		if (!this.operations[operation.ordinal()]) {
+		if (!this.dba.operationAllowed(operation)) {
 			logger.info("{} operation is not allowed on record {}", operation, this.getName());
 		}
 
-		String name = operation.name();
-		name = name.substring(0, 1).toLowerCase() + name.substring(1) + '_' + this.getName();
+		String serviceName = operation.name();
+		serviceName = serviceName.substring(0, 1).toLowerCase() + serviceName.substring(1) + '_' + this.getName();
 		switch (operation) {
 		case Get:
-			return new Reader(name);
+			return new Reader(serviceName);
 		case Create:
-			return new Creater(name);
+			return new Creater(serviceName);
 		case Update:
-			return new Updater(name);
+			return new Updater(serviceName);
 		case Delete:
-			return new Deleter(name);
+			return new Deleter(serviceName);
 		case Filter:
-			return new Filter(name);
+			return new Filter(serviceName);
 		default:
 			throw new ApplicationError("DbRecord is needs to be designed for operation " + operation.name());
 		}
 	}
 
 	protected abstract class Service implements IService {
-		private final String name;
+		private final String serviceName;
 
 		protected Service(final String name) {
-			this.name = name;
+			this.serviceName = name;
 		}
 
 		@Override
 		public String getId() {
-			return this.name;
+			return this.serviceName;
 		}
 	}
 
@@ -480,7 +401,7 @@ public abstract class DbRecord extends Record {
 		@Override
 		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
-			final ParsedFilter filter = ParsedFilter.parse(payload, rec.dba.dbFields, rec.dba.tenantField, ctx);
+			final ParsedFilter filter = rec.dba.parseFilter(payload, ctx);
 			if (!ctx.allOk()) {
 				logger.error("Error while parsing filter conditions from th einput payload");
 				return;
@@ -495,8 +416,16 @@ public abstract class DbRecord extends Record {
 				result[0] = list.toArray(new Object[0][]);
 			});
 
-			ctx.setAsResponse(rec.fields, result[0]);
+			ctx.setAsResponse(rec.getFields(), result[0]);
 		}
 
+	}
+
+	/**
+	 * @param fieldName
+	 * @return db field specified by this name, or null if there is no such name
+	 */
+	public DbField getField(final String fieldName) {
+		return this.dba.getField(fieldName);
 	}
 }
