@@ -1,0 +1,100 @@
+{
+    "name": "subjectSectionDetail",
+    "nameInDb": "subject_section_details",
+    "operations": ["filter", "get", "update"],
+    "fields": [
+        {
+            "name": "subjectSectionId",
+            "dataType": "id",
+            "dbColumnName": "subject_section_id",
+            "columnType": "primaryKey"
+        },
+        {
+            "name": "instituteId",
+            "dataType": "tenantKey",
+            "dbColumnName": "institute_id",
+            "columnType": "tenantKey"
+        },      
+        {
+            "name": "offeredSubjectId",
+            "dataType": "id",
+            "dbColumnName": "offered_subject_id",
+            "columnType": "optionalData",
+            "defaultValue":"0"
+        },      
+        {
+            "name": "subjectId",
+            "dataType": "id",
+            "dbColumnName": "subject_id",
+            "columnType": "optionalData",
+            "defaultValue":"0"
+        },      
+        {
+            "name": "levelSectionId",
+            "dataType": "id",
+            "dbColumnName": "level_section_id",
+            "columnType": "optionalData",
+            "defaultValue":"0"
+        },      
+        {
+            "name": "departmentId",
+            "dataType": "id",
+            "dbColumnName": "department_id",
+            "columnType": "optionalData"
+        },      
+        {
+            "name": "sectionId",
+            "dataType": "id",
+            "dbColumnName": "section_id",
+            "columnType": "optionalData"
+        },      
+        {
+            "name": "subjectName",
+            "dataType": "name",
+            "dbColumnName": "subject_name",
+            "columnType": "optionalData",
+            "defaultValue":""
+        },
+        {
+            "name": "subjectCode",
+            "dataType": "name",
+            "dbColumnName": "subject_code",
+            "columnType": "optionalData",
+            "defaultValue":""
+        },
+        {
+            "name": "sectionName",
+            "dataType": "name",
+            "dbColumnName": "section_name",
+            "columnType": "optionalData",
+            "defaultValue":""
+        },
+        {
+            "name": "totalClasses",
+            "dataType": "integer",
+            "dbColumnName": "total_classes",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "attendanceFrozen",
+            "dataType": "bool",
+            "dbColumnName": "attendance_frozen",
+            "columnType": "optionalData",
+            "defaultValue":"false"
+        },
+        {
+            "name": "cieFrozen",
+            "dataType": "bool",
+            "dbColumnName": "cie_frozen",
+            "columnType": "optionalData",
+            "defaultValue":"false"
+        },
+        {
+            "name": "isOffered",
+            "dataType": "bool",
+            "dbColumnName": "is_offered",
+            "columnType": "optionalData",
+            "defaultValue":"false"
+        }
+    ]
+}

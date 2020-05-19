@@ -32,6 +32,7 @@ import java.util.Map;
  */
 class LinkedForm {
 	private static final String C = ", ";
+	private static final String P = "\n\tprivate static final ";
 
 	String name;
 	String formName;
@@ -46,12 +47,8 @@ class LinkedForm {
 	boolean isTabular;
 	int index;
 
-	void emitJavaConstant(final StringBuilder sbf, final int idx) {
-		sbf.append("\n\tpublic static final int ").append(this.name).append(" = ").append(idx).append(';');
-	}
-
-	void emitJavaCode(final StringBuilder sbf, final Map<String, Field> fields, final boolean parentHasSchema) {
-		sbf.append("new LinkedForm(");
+	void emitJavaCode(final StringBuilder sbf, final Map<String, Field> fields, final int idx) {
+		sbf.append(P).append("LinkMetaData L").append(idx).append(" = new LinkMetaData(");
 
 		sbf.append(Util.escape(this.name));
 		sbf.append(C).append(Util.escape(this.formName));
@@ -70,12 +67,6 @@ class LinkedForm {
 			} else {
 				linkExists = true;
 			}
-		}
-
-		if (linkExists && !parentHasSchema) {
-			Form.logger.error(
-					"Link fields specified with no schema for the parent. link fields ignored while generating code.");
-			linkExists = false;
 		}
 
 		if (linkExists) {
@@ -97,7 +88,14 @@ class LinkedForm {
 			sbf.append(",null ,null");
 		}
 		sbf.append(C).append(this.isTabular);
-		sbf.append(')');
+		sbf.append(");");
+
+		/*
+		 * for child-form
+		 */
+		sbf.append(P).append("Form<?> F").append(idx);
+		sbf.append(" = ComponentProvider.getProvider().getForm(\"");
+		sbf.append(this.formName).append("\");");
 	}
 
 	String getFormName() {

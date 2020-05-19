@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "description": "Schema for data base schema.json",
+    "description": "Schema for record. file type *.rec.json",
     "required": [
         "name",
         "fields"
@@ -22,7 +22,7 @@
         "useTimestampCheck": {
             "type": "boolean"
         },
-        "dbOperations": {
+        "operations": {
             "type": "array",
             "items": {
                 "type": "string",
@@ -31,7 +31,6 @@
                     "create",
                     "update",
                     "filter",
-                    "bulk",
                     "delete"
                 ]
             }

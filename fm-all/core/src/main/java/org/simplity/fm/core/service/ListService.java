@@ -22,18 +22,14 @@
 
 package org.simplity.fm.core.service;
 
-import java.io.IOException;
-import java.io.Writer;
-
 import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.JsonUtil;
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.serialize.IInputObject;
+import org.simplity.fm.core.serialize.ISerializer;
 import org.simplity.fm.core.validn.IValueList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.gson.JsonObject;
 
 /**
  * handles request to get drop-down values for a field, typically from a client
@@ -63,8 +59,8 @@ public class ListService implements IService {
 	}
 
 	@Override
-	public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
-		final String listName = JsonUtil.getString(payload, "list");
+	public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
+		final String listName = payload.getString("list");
 		if (listName == null || listName.isEmpty()) {
 			ctx.addMessage(Message.newError("list is required for listService"));
 			return;
@@ -76,7 +72,7 @@ public class ListService implements IService {
 		}
 		String key = null;
 		if (list.isKeyBased()) {
-			key = JsonUtil.getString(payload, "key");
+			key = payload.getString("key");
 			if (key == null || key.isEmpty()) {
 				ctx.addMessage(Message.newError("list " + listName + " is key based. key is missing in the request"));
 				return;
@@ -90,34 +86,25 @@ public class ListService implements IService {
 		if (result.length == 0) {
 			logger.warn("List {} has no values for key {}. sending an empty response", listName, key);
 		}
-		writeOut(ctx.getResponseWriter(), result);
+		writeOut(ctx.getSerializer(), result);
 	}
 
-	private static void writeOut(final Writer writer, final Object[][] rows) throws IOException {
-		writer.write("{\"");
-		writer.write(Conventions.Http.TAG_LIST);
-		writer.write("\":[");
-		boolean firstOne = true;
+	private static void writeOut(final ISerializer writer, final Object[][] rows) {
+		writer.beginObject();
+		writer.name(Conventions.Http.TAG_LIST);
+		writer.beginArray();
 		for (final Object[] row : rows) {
-			if (firstOne) {
-				firstOne = false;
-			} else {
-				writer.write(',');
-			}
+			writer.beginObject();
 
-			writer.write("{\"value\":");
-			final Object val = row[0];
-			if (val instanceof Number || val instanceof Boolean) {
-				writer.write(val.toString());
-			} else {
-				writer.write('"');
-				writer.write(val.toString());
-				writer.write('"');
-			}
-			writer.write(",\"text\":\"");
-			writer.write(row[1].toString());
-			writer.write("\"}");
+			writer.name("value");
+			writer.primitiveObject(row[0]);
+
+			writer.name("text");
+			writer.value(row[1].toString());
+
+			writer.endObject();
 		}
-		writer.write("]}");
+		writer.endArray();
+		writer.endObject();
 	}
 }

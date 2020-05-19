@@ -7,9 +7,7 @@ import org.simplity.fm.core.data.DbTable;
  */
 public class UserTable extends DbTable<UserRecord> {
 
-	/** default constructor 
-	 * @param record 
-	 */
+	/** default constructor */
 	public UserTable() {
 		super(new UserRecord());
 	}

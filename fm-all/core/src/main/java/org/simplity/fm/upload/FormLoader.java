@@ -26,8 +26,7 @@ import java.sql.SQLException;
 import java.util.Map;
 
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.data.Schema;
-import org.simplity.fm.core.data.SchemaData;
+import org.simplity.fm.core.data.DbRecord;
 import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.service.IServiceContext;
 
@@ -37,7 +36,7 @@ import org.simplity.fm.core.service.IServiceContext;
  *
  */
 class FormLoader {
-	private final Schema form;
+	private final DbRecord record;
 	/**
 	 * if non-null, generated key is copied to the value with this name
 	 */
@@ -62,14 +61,14 @@ class FormLoader {
 	 *            must have exactly the right number and in the same order for
 	 *            the form fields
 	 */
-	FormLoader(final Schema form, final String generatedKeyOutputName, final IValueProvider[] valueProviders) {
-		this.form = form;
+	FormLoader(final DbRecord record, final String generatedKeyOutputName, final IValueProvider[] valueProviders) {
+		this.record = record;
 		this.generatedKeyOutputName = generatedKeyOutputName;
 		this.valueProviders = valueProviders;
 		if (this.generatedKeyOutputName == null) {
 			this.keyIdx = -1;
 		} else {
-			this.keyIdx = this.form.getKeyIndexes()[0];
+			this.keyIdx = this.record.getGeneratedKeyIndex();
 		}
 	}
 
@@ -84,27 +83,21 @@ class FormLoader {
 	 *         errors
 	 */
 	boolean validate(final Map<String, String> values, final IServiceContext ctx) {
-		return this.parseInput(values, ctx) != null;
+		return this.parseInput(values, ctx);
 
 	}
 
-	private SchemaData parseInput(final Map<String, String> values, final IServiceContext ctx) {
-		final String[] data = new String[this.valueProviders.length];
+	private boolean parseInput(final Map<String, String> values, final IServiceContext ctx) {
 		int idx = -1;
 		for (final IValueProvider vp : this.valueProviders) {
 			idx++;
 			if (vp != null) {
-				data[idx] = vp.getValue(values, ctx);
+				this.record.setValue(idx, vp.getValue(values, ctx));
 			}
 		}
 
-		final int nbrExistingErrors = ctx.getNbrErrors();
-		final SchemaData dataRow = this.form.parseForInsert(data, ctx);
-		final int nbrErrors = ctx.getNbrErrors();
-		if (nbrErrors > nbrExistingErrors) {
-			return null;
-		}
-		return dataRow;
+		// this.record.parseForInsert(data, ctx);
+		return true;
 	}
 
 	/**
@@ -119,18 +112,17 @@ class FormLoader {
 	 */
 	boolean loadData(final Map<String, String> values, final DbHandle handle, final IServiceContext ctx)
 			throws SQLException {
-		final SchemaData fd = this.parseInput(values, ctx);
-		if (fd == null) {
+		if (!this.parseInput(values, ctx)) {
 			return false;
 		}
 
-		if (!fd.insert(handle)) {
+		if (!this.record.insert(handle)) {
 			ctx.addMessage(Message.newError("Row not inserted, probably because of database constraints"));
 			return false;
 		}
 
 		if (this.generatedKeyOutputName != null) {
-			final Object key = fd.getValue(this.keyIdx);
+			final Object key = this.record.getValue(this.keyIdx);
 			if (key != null) {
 				values.put(this.generatedKeyOutputName, key.toString());
 			}

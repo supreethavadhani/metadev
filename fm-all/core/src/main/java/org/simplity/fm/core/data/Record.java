@@ -25,15 +25,18 @@ package org.simplity.fm.core.data;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.simplity.fm.core.JsonUtil;
 import org.simplity.fm.core.datatypes.ValueType;
+import org.simplity.fm.core.serialize.IInputArray;
+import org.simplity.fm.core.serialize.IInputObject;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.IValidation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonWriter;
 
 /**
@@ -495,16 +498,26 @@ public abstract class Record {
 	/**
 	 * parse this record from a serialized input
 	 *
-	 * @param json
+	 * @param inputObject
+	 *            input data
+	 * @param forInsert
+	 *            true if the data is being parsed for an insert operation,
+	 *            false if it is meant for an update instead
 	 * @param ctx
 	 * @param tableName
+	 *            if the input data is for a table.collection if this record,
+	 *            then this is the name of the attribute with which the table is
+	 *            received. null if the data is at the root level, else n
 	 * @param rowNbr
-	 * @return true if all ok. false if any parse error is added to the context
+	 *            relevant if tablaeName is not-null.
+	 * @return true if all ok. false if any error message is added to the
+	 *         context
 	 */
-	public boolean parse(final JsonObject json, final IServiceContext ctx, final String tableName, final int rowNbr) {
+	public boolean parse(final IInputObject inputObject, final boolean forInsert, final IServiceContext ctx,
+			final String tableName, final int rowNbr) {
 		boolean ok = true;
 		for (final Field field : this.metaData.getFields()) {
-			final String value = JsonUtil.getString(json, field.getName());
+			final String value = inputObject.getString(field.getName());
 			if (!field.parseIntoRow(value, this.fieldValues, ctx, tableName, rowNbr)) {
 				ok = false;
 			}
@@ -520,6 +533,43 @@ public abstract class Record {
 			}
 		}
 		return ok;
+	}
+
+	/**
+	 * parse this record from a serialized input
+	 *
+	 * @param arr
+	 *            input data. non-null, non-empty.
+	 * @param forInsert
+	 *            true if the data is being parsed for an insert operation,
+	 *            false if it is meant for an update instead
+	 * @param ctx
+	 * @param tableName
+	 *            if the input data is for a table.collection if this record,
+	 *            then this is the name of the attribute with which the table is
+	 *            received. null if the data is at the root level, else n
+	 * @return list of parsed data rows. null in case of any error.
+	 */
+	public List<Record> parseTable(final IInputArray arr, final boolean forInsert, final IServiceContext ctx,
+			final String tableName) {
+		final List<Record> list = new ArrayList<>();
+
+		arr.forEach(ele -> {
+			final Record rec = this.newInstance();
+			if (rec.parse(ele, forInsert, ctx, tableName, 0)) {
+				list.add(rec);
+			} else {
+				list.clear(); // indicate error condition
+			}
+			return true;
+		});
+		/*
+		 * empty least means we encountered some error
+		 */
+		if (list.isEmpty()) {
+			return null;
+		}
+		return list;
 	}
 
 	/**
@@ -557,9 +607,12 @@ public abstract class Record {
 	}
 
 	/**
-	 * make a copy of this record
+	 * make a copy of this record. to be used by utilities and frame-work
+	 * components.
+	 *
+	 * @param values
 	 *
 	 * @return a copy of this that can be mutilated without affecting this
 	 */
-	protected abstract Record newInstance(Object[] values);
+	public abstract Record newInstance(Object[] values);
 }

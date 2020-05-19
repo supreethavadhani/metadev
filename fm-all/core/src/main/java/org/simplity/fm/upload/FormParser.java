@@ -27,8 +27,9 @@ import java.util.Set;
 
 import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Conventions;
+import org.simplity.fm.core.data.DbRecord;
 import org.simplity.fm.core.data.Field;
-import org.simplity.fm.core.data.Schema;
+import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.fn.IFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,7 +78,7 @@ class FormParser {
 	/*
 	 * we are going to parse these
 	 */
-	private Schema schema;
+	private DbRecord record;
 	private String generatedKeyOutputName;
 	private IValueProvider[] valueProviders;
 
@@ -98,12 +99,18 @@ class FormParser {
 		}
 
 		final String text = ele.getAsString().trim();
-		this.schema = this.compProvider.getSchema(text);
-		if (this.schema == null) {
-			logger.error("{} is not a valid form name", text);
+		final Record rec = this.compProvider.getRecord(text);
+		if (rec == null) {
+			logger.error("{} is not a valid record name", text);
 			return null;
 		}
 
+		if (rec instanceof DbRecord == false) {
+			logger.error("{} is a Record, but not a DbRecord", text);
+			return null;
+		}
+
+		this.record = (DbRecord) rec;
 		ele = json.get(Conventions.Upload.TAG_GENERATED_KEY);
 		if (ele != null) {
 			if (ele.isJsonPrimitive()) {
@@ -124,24 +131,24 @@ class FormParser {
 			return null;
 		}
 
-		return new FormLoader(this.schema, this.generatedKeyOutputName, this.valueProviders);
+		return new FormLoader(this.record, this.generatedKeyOutputName, this.valueProviders);
 	}
 
 	private boolean parseFields(final JsonObject json) {
-		this.valueProviders = new IValueProvider[this.schema.getNbrFields()];
+		this.valueProviders = new IValueProvider[this.record.getNbrFields()];
 		for (final Map.Entry<String, JsonElement> entry : json.entrySet()) {
 
 			final String fieldName = entry.getKey();
-			final Field field = this.schema.getField(fieldName);
+			final Field field = this.record.getField(fieldName);
 
 			if (field == null) {
-				logger.error("{} is not a valid field name in the form {}", fieldName, this.schema.getName());
+				logger.error("{} is not a valid field name in the form {}", fieldName, this.record.getName());
 				return false;
 			}
 
 			final JsonElement ele = entry.getValue();
 			if (!ele.isJsonPrimitive()) {
-				logger.error("Field {} in the form {} has an invalid value", fieldName, this.schema.getName());
+				logger.error("Field {} in the form {} has an invalid value", fieldName, this.record.getName());
 				return false;
 			}
 

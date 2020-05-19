@@ -46,4 +46,13 @@ public class ApplicationError extends Error {
 	public ApplicationError(final String msg) {
 		super(msg);
 	}
+
+	/**
+	 *
+	 * @param msg
+	 * @param e
+	 */
+	public ApplicationError(final String msg, final Throwable e) {
+		super(msg, e);
+	}
 }

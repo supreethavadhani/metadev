@@ -2,6 +2,13 @@
     "name": "user",
     "nameInDb": "users",
     "useTimestampCheck": false,
+    "operations": [
+        "get",
+        "create",
+        "delete",
+        "filter",
+        "update"
+    ],
     "fields": [
         {
             "name": "userId",

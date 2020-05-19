@@ -57,7 +57,7 @@ public abstract class Sql {
 	}
 
 	/**
-	 * function that accepts row as a valueObject
+	 * function that consumes accepts row as a valueObject
 	 *
 	 * @author simplity.org
 	 *
@@ -70,7 +70,7 @@ public abstract class Sql {
 		 *         stop
 		 * @throws SQLException
 		 */
-		boolean process(ValueObject vo) throws SQLException;
+		<T extends ValueObject> boolean process(T vo) throws SQLException;
 	}
 
 }

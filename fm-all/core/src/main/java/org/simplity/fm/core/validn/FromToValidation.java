@@ -26,7 +26,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.data.SchemaData;
+import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
@@ -60,9 +60,9 @@ public class FromToValidation implements IValidation {
 	}
 
 	@Override
-	public boolean isValid(final SchemaData dataRow, final IServiceContext ctx) {
-		final Object fm = dataRow.getValue(this.fromIndex);
-		final Object to = dataRow.getValue(this.toIndex);
+	public boolean isValid(final Record record, final IServiceContext ctx) {
+		final Object fm = record.getValue(this.fromIndex);
+		final Object to = record.getValue(this.toIndex);
 		if (fm == null || to == null) {
 			return true;
 		}

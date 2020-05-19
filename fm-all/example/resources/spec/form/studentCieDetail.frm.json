@@ -1,0 +1,120 @@
+{
+ 	"name": "studentCieDetail",
+    "recordName": "studentCieDetail",
+    "operations": [
+        "get",
+        "create",
+        "update",
+        "filter"
+    ],
+    "controls": [
+        {
+            "name": "studentId",
+            "controlType": "hidden"
+        },
+        {
+        	"name":"subjectSectionId",
+        	"controlType":"hidden"
+        },
+        {
+            "name": "departmentName",
+            "controlType": "output",
+            "label": "Department Name"
+        },
+        {
+            "name": "name",
+            "controlType": "output",
+            "label": "Student Name"
+        },
+        {
+            "name": "usn",
+            "controlType": "output",
+            "label": "USN"
+        },
+        {
+            "name": "eligibility",
+            "controlType": "output",
+            "label": "Eligibility"
+        },
+        {
+            "name": "test1",
+            "controlType": "output",
+            "label": "Test 1"
+        },
+        {
+            "name": "test2",
+            "controlType": "output",
+            "label": "Test 2"
+        },
+        {
+            "name": "test3",
+            "controlType": "output",
+            "label": "Test 3"
+        },
+        {
+            "name": "quiz1",
+            "controlType": "output",
+            "label": "Quiz 1"
+        },
+        {
+            "name": "quiz2",
+            "controlType": "output",
+            "label": "Quiz 2"
+        },
+        {
+            "name": "theoryCie",
+            "controlType": "output",
+            "label": "Theory Marks"
+        },
+        {
+            "name": "theoryClassesHeld",
+            "controlType": "output",
+            "label": "theory Classes Held"
+        },
+        {
+        	"name": "theoryClassesAttended",
+            "controlType": "output",
+            "label": "theory Classes Attended"
+        },
+        {
+        	"name": "theoryClassesPercentage",
+            "controlType": "output",
+            "label": "theory Classes Percentage"
+        }, 
+        {
+        	"name": "practicalCie",
+            "controlType": "output",
+            "label": "Practicals Cie"
+        },
+        {
+        	"name": "practicalClassesHeld",
+            "controlType": "output",
+            "label": "Practical Classes Held"
+        },
+        {
+        	"name": "practicalClassesAttended",
+            "controlType": "output",
+            "label": "Practical Classes Attended"
+        },
+        {
+        	"name": "practicalClassesPercentage",
+            "controlType": "output",
+            "label": "Practical Classes Percentage"
+        },
+        {
+        	"name": "selfStudy",
+            "controlType": "output",
+            "label": "Self Study"
+        },
+        {
+        	"name": "practicalMarks",
+            "controlType": "output",
+            "label": "Practicals Marks"
+        },
+        {
+        	"name": "totalCie",
+            "controlType": "output",
+            "label": "Total Cie"
+        }
+    ]
+}

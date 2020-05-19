@@ -22,18 +22,13 @@
 
 package org.simplity.fm.core.service;
 
-import java.io.IOException;
-import java.io.Writer;
 import java.util.Collection;
 
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.data.Field;
-import org.simplity.fm.core.data.FormData;
-import org.simplity.fm.core.data.FormDataTable;
 import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.data.SchemaData;
-import org.simplity.fm.core.data.SchemaDataTable;
 import org.simplity.fm.core.http.LoggedInUser;
+import org.simplity.fm.core.serialize.ISerializer;
 
 /**
  * context for a service execution thread. App specific instance is made
@@ -70,9 +65,11 @@ public interface IServiceContext {
 
 	/**
 	 *
-	 * @return non-null writer for sending response to the request.
+	 * @return non-null serializer for writing object to the output stream.
+	 *         Throws ApplicationError() if a call is made second time, or if it
+	 *         is made after using any of the setAsResponse().
 	 */
-	Writer getResponseWriter();
+	ISerializer getSerializer();
 
 	/**
 	 *
@@ -119,76 +116,25 @@ public interface IServiceContext {
 
 	/**
 	 * serialize this data as response. Note that this can be called only once
-	 * with success. any subsequent call will result in no action and a return
-	 * value of false;
-	 *
-	 * @param schemaData
-	 *            non-null;
-	 * @return true if all ok. false if a response is already set.
-	 * @throws IOException
-	 *             while writing a serialized response based on this data
-	 */
-	boolean setAsResponse(SchemaData schemaData) throws IOException;
-
-	/**
-	 * serialize this data as response. Note that this can be called only once
-	 * with success. any subsequent call will result in no action and a return
-	 * value of false;
+	 * with success. any subsequent call will result an ApplicationError()
+	 * exception. Also, this cannot be called after a call to getSerializer() is
+	 * called
 	 *
 	 * @param record
 	 *            non-null;
-	 * @return true if all ok. false if a response is already set.
-	 * @throws IOException
-	 *             while writing a serialized response based on this data
 	 */
-	boolean setAsResponse(Record record) throws IOException;
+	void setAsResponse(Record record);
 
 	/**
+	 * /**
 	 * serialize this data as response. Note that this can be called only once
-	 * with success. any subsequent call will result in no action and a return
-	 * value of false;
+	 * with success. any subsequent call will result an ApplicationError()
+	 * exception. Also, this cannot be called after a call to getSerializer() is
+	 * called
 	 *
-	 * @param table
-	 *            non-null;
-	 * @return true if all ok. false if a response is already set.
-	 * @throws IOException
-	 *             while writing a serialized response based on this data
-	 */
-	boolean setAsResponse(SchemaDataTable table) throws IOException;
-
-	/**
-	 * serialize this data as response. Note that this can be called only once
-	 * with success. any subsequent call will result in no action and a return
-	 * value of false;
-	 *
-	 * @param fd
-	 *            non-null;
-	 * @return true if all ok. false if a response is already set.
-	 * @throws IOException
-	 *             while writing a serialized response based on this data
-	 */
-	boolean setAsResponse(FormData fd) throws IOException;
-
-	/**
-	 * serialize this data as response. Note that this can be called only once
-	 * with success. any subsequent call will result in no action and a return
-	 * value of false;
-	 *
-	 * @param fdt
-	 *            non-null;
-	 * @return true if all ok. false if a response is already set.
-	 * @throws IOException
-	 *             while writing a serialized response based on this data
-	 */
-	boolean setAsResponse(FormDataTable fdt) throws IOException;
-
-	/**
-	 * serialize this data as response. Note that this can be called only once
-	 * with success. any subsequent call will result in no action and a return
-	 * value of false;
-	 * 
 	 * @param fields
 	 * @param objects
 	 */
 	void setAsResponse(Field[] fields, Object[][] objects);
+
 }

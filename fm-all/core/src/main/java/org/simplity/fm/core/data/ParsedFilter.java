@@ -26,18 +26,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.rdb.FilterCondition;
+import org.simplity.fm.core.serialize.IInputObject;
 import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 
 /**
  * Utility class used by dbRecord to parse input for a filter service
@@ -71,32 +68,23 @@ class ParsedFilter {
 		return this.whereParamValues;
 	}
 
-	static ParsedFilter parse(final JsonObject json, final DbField[] fields, final DbField tenantField,
+	static ParsedFilter parse(final IInputObject inputObject, final DbField[] fields, final DbField tenantField,
 			final IServiceContext ctx) {
-		JsonObject conditions = null;
-		JsonElement node = json.get(Conventions.Http.TAG_CONDITIONS);
-		if (node != null && node.isJsonObject()) {
-			conditions = (JsonObject) node;
-		} else {
-			logger.warn("payload for filter has no conditions. ALl rows will be filtered");
+		IInputObject conditions = inputObject.getObject(Conventions.Http.TAG_CONDITIONS);
+		if (conditions == null || conditions.isEmpty()) {
+			logger.warn("payload for filter has no conditions. All rows will be filtered");
+			conditions = null;
 		}
 
 		/*
 		 * sort order
 		 */
-		JsonObject sorts = null;
-		node = json.get(Conventions.Http.TAG_SORT);
-		if (node != null && node.isJsonObject()) {
-			sorts = (JsonObject) node;
-		}
+		final IInputObject sorts = inputObject.getObject(Conventions.Http.TAG_SORT);
 
-		int nbrRows = Conventions.Http.DEFAULT_NBR_ROWS;
-		node = json.get(Conventions.Http.TAG_MAX_ROWS);
-		if (node != null && node.isJsonPrimitive()) {
-			nbrRows = node.getAsInt();
+		final int maxRows = (int) inputObject.getLong(Conventions.Http.TAG_MAX_ROWS);
+		if (maxRows != 0) {
+			logger.info("Number of max rows is set to {}. It is ignored as of now.", maxRows);
 		}
-
-		logger.info("Number of max rows is set to {}. It is ignored as of now.", nbrRows);
 		final StringBuilder sql = new StringBuilder();
 		final List<Object> values = new ArrayList<>();
 
@@ -113,7 +101,7 @@ class ParsedFilter {
 			map.put(field.getName(), field);
 		}
 
-		if (conditions != null && conditions.size() > 0) {
+		if (conditions != null) {
 			final boolean ok = parseConditions(map, conditions, ctx, values, sql);
 			if (!ok) {
 				return null;
@@ -126,8 +114,7 @@ class ParsedFilter {
 
 		if (sorts != null) {
 			boolean isFirst = true;
-			for (final Entry<String, JsonElement> entry : sorts.entrySet()) {
-				final String f = entry.getKey();
+			for (final String f : sorts.names()) {
 				final DbField field = map.get(f);
 				if (field == null) {
 					logger.error("{} is not a field in the form. Sort order ignored");
@@ -140,7 +127,8 @@ class ParsedFilter {
 					sql.append(", ");
 				}
 				sql.append(field.getColumnName());
-				if (entry.getValue().getAsString().toLowerCase().startsWith("d")) {
+				final String order = sorts.getString(f);
+				if (order != null && order.toLowerCase().startsWith("d")) {
 					sql.append(" DESC ");
 				}
 			}
@@ -169,37 +157,32 @@ class ParsedFilter {
 		return new ParsedFilter(sqlText, values.toArray(new Object[0]));
 	}
 
-	private static boolean parseConditions(final Map<String, DbField> fields, final JsonObject json,
+	private static boolean parseConditions(final Map<String, DbField> fields, final IInputObject object,
 			final IServiceContext ctx, final List<Object> values, final StringBuilder sql) {
 
 		/*
 		 * fairly long inside the loop for each field. But it is just
 		 * serial code. Hence left it that way
 		 */
-		for (final Map.Entry<String, JsonElement> entry : json.entrySet()) {
-			final String fieldName = entry.getKey();
+		for (final String fieldName : object.names()) {
 			final DbField field = fields.get(fieldName);
 			if (field == null) {
 				logger.warn("Input has value for a field named {} that is not part of this form", fieldName);
 				continue;
 			}
 
-			final JsonElement node = entry.getValue();
-			if (node == null || !node.isJsonObject()) {
+			final IInputObject node = object.getObject(fieldName);
+			if (node == null) {
 				logger.error("Filter condition for field {} should be an object, but it is {}", fieldName, node);
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 				return false;
 			}
-
-			final JsonObject con = (JsonObject) node;
-
-			JsonElement ele = con.get(Conventions.Http.TAG_FILTER_COMP);
-			if (ele == null || !ele.isJsonPrimitive()) {
+			final String condnText = node.getString(Conventions.Http.TAG_FILTER_COMP);
+			if (condnText == null || condnText.isEmpty()) {
 				logger.error("comp is missing for a filter condition for field {}", fieldName);
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 				return false;
 			}
-			final String condnText = ele.getAsString();
 			final FilterCondition condn = FilterCondition.parse(condnText);
 			if (condn == null) {
 				logger.error("{} is not a valid filter condition", condnText);
@@ -207,22 +190,20 @@ class ParsedFilter {
 				return false;
 			}
 
-			ele = con.get(Conventions.Http.TAG_FILTER_VALUE);
-			if (ele == null || !ele.isJsonPrimitive()) {
+			String value = node.getString(Conventions.Http.TAG_FILTER_VALUE);
+			if (value == null || value.isEmpty()) {
 				logger.error("value is missing for a filter condition");
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 				return false;
 			}
-			String value = ele.getAsString();
 			String value2 = null;
 			if (condn == FilterCondition.Between) {
-				ele = con.get(Conventions.Http.TAG_FILTER_VALUE_TO);
-				if (ele == null || !ele.isJsonPrimitive()) {
+				value2 = node.getString(Conventions.Http.TAG_FILTER_VALUE_TO);
+				if (value2 == null || value2.isEmpty()) {
 					logger.error("valueTo is missing for a filter condition");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 					return false;
 				}
-				value2 = ele.getAsString();
 			}
 
 			final int idx = values.size();

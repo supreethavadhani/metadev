@@ -20,12 +20,11 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core;
-
 /**
+ * implementation of serialization/de-serialization APIs using Google's Gson
+ * library
+ * 
  * @author simplity.org
  *
  */
-public interface IDeserializer {
-
-}
+package org.simplity.fm.core.serialize.gson;

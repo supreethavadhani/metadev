@@ -1,0 +1,58 @@
+{
+    "name": "studentDetail",
+    "nameInDb": "student_details",
+    "useTimestampCheck": false,
+    "operations": [
+        "create",
+        "delete",
+        "filter",
+        "get",
+        "update"
+    ],
+    "fields": [
+        {
+            "name": "studentId",
+            "dataType": "flexibleId",
+            "dbColumnName": "student_id",
+            "columnType": "primaryKey",
+            "defaultValue": "-1"
+        },
+        {
+            "name": "instituteId",
+            "dataType": "tenantKey",
+            "dbColumnName": "institute_id",
+            "columnType": "tenantKey"
+        },
+        {
+            "name": "departmentId",
+            "dataType": "id",
+            "dbColumnName": "department_id",
+            "columnType": "requiredData",
+            "listName": "departmentList"
+        },
+        {
+            "name": "departmentName",
+            "dataType": "text",
+            "dbColumnName": "department_name",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "usn",
+            "dataType": "text",
+            "dbColumnName": "usn",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "name",
+            "dataType": "name",
+            "dbColumnName": "name",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "phoneNumber",
+            "dataType": "phone",
+            "dbColumnName": "phone_number",
+            "columnType": "requiredData"
+        }
+    ]
+}

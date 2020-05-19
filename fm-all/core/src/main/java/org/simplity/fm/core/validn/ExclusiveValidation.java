@@ -23,7 +23,7 @@
 package org.simplity.fm.core.validn;
 
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.data.SchemaData;
+import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
@@ -64,9 +64,9 @@ public class ExclusiveValidation implements IValidation {
 	}
 
 	@Override
-	public boolean isValid(final SchemaData dataRow, final IServiceContext ctx) {
-		final Object val1 = dataRow.getValue(this.index1);
-		final Object val2 = dataRow.getValue(this.index2);
+	public boolean isValid(final Record record, final IServiceContext ctx) {
+		final Object val1 = record.getValue(this.index1);
+		final Object val2 = record.getValue(this.index2);
 
 		if (val1 == null) {
 			if (val2 == null && this.oneOfThemIsRequired) {

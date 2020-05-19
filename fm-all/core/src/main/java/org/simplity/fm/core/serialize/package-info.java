@@ -20,22 +20,11 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.data;
-
 /**
- * Form is a client-side component. If a form is based on a record for its data,
- * then this class is generated to deliver services for that client-side
- * component.
- * 
+ * classes to provide highly restricted APIs to just what we want to do in
+ * serialization and de-serialization
+ *
  * @author simplity.org
- * @param <T>
- *            record that describes the data behind this form
  *
  */
-public abstract class F<T extends Record> {
-	private final T record;
-
-	protected F(final T record) {
-		this.record = record;
-	}
-}
+package org.simplity.fm.core.serialize;

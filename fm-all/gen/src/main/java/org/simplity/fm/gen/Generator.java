@@ -42,7 +42,7 @@ public class Generator {
 	protected static final Logger logger = LoggerFactory.getLogger(Generator.class);
 	private static final String FOLDER = "/";
 
-	private static final String EXT_FRM = ".form";
+	private static final String EXT_FRM = ".frm.json";
 	private static final String EXT_REC = ".rec.json";
 	private static final String EXT_SQL = ".sql.json";
 
@@ -163,9 +163,8 @@ public class Generator {
 					continue;
 				}
 				logger.info("file: {}", fn);
-				// emitForm(file, generatedSourceRootFolder, tsRootFolder,
-				// app.dataTypes, app, javaRootPackage,
-				// tsImportPrefix, recs);
+				emitForm(file, generatedSourceRootFolder, tsRootFolder, app.dataTypes, app, javaRootPackage,
+						tsImportPrefix, recs);
 			}
 		}
 
@@ -189,7 +188,7 @@ public class Generator {
 
 	private static void emitForm(final File file, final String generatedSourceRootFolder, final String tsOutputFolder,
 			final DataTypes dataTypes, final Application app, final String rootPackageName, final String tsImportPrefix,
-			final Map<String, Schema> schemas) {
+			final Map<String, Record> records) {
 		String fn = file.getName();
 		fn = fn.substring(0, fn.length() - EXT_FRM.length());
 		logger.debug("Going to generate Form " + fn);
@@ -207,29 +206,19 @@ public class Generator {
 					form.name);
 			return;
 		}
-		Schema schema = null;
-		if (form.schemaName != null) {
-			schema = schemas.get(form.schemaName);
-			if (schema == null) {
-				logger.error("Form {} uses schema {}, but that schema is not defined", form.name, form.schemaName);
-				return;
-			}
+		Record record = null;
+		record = records.get(form.recordName);
+		if (record == null) {
+			logger.error("Form {} uses record {}, but that record is not defined", form.name, form.recordName);
+			return;
 		}
-		form.initialize(schema);
+		form.initialize(record);
 		final StringBuilder sbf = new StringBuilder();
 
 		final String cls = Util.toClassName(fn);
 		form.emitJavaForm(sbf, rootPackageName);
 		final String outPrefix = generatedSourceRootFolder + "form/" + cls;
 		Util.writeOut(outPrefix + "Form.java", sbf);
-
-		sbf.setLength(0);
-		form.emitJavaFormData(sbf, rootPackageName, app.dataTypes.dataTypes);
-		Util.writeOut(outPrefix + "Fd.java", sbf);
-
-		sbf.setLength(0);
-		form.emitJavaFormDataTable(sbf, rootPackageName);
-		Util.writeOut(outPrefix + "Fdt.java", sbf);
 
 		sbf.setLength(0);
 		form.emitTs(sbf, dataTypes.dataTypes, app.valueLists, app.keyedLists, tsImportPrefix);
@@ -278,7 +267,7 @@ public class Generator {
 		Util.writeOut(outName, sbf);
 
 		/*
-		 * schemaTable.java
+		 * dbTable.java
 		 */
 		sbf.setLength(0);
 		record.emitJavaTableClass(sbf, packageName);

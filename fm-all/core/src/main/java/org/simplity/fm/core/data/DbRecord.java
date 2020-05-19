@@ -24,17 +24,17 @@ package org.simplity.fm.core.data;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.function.Function;
 
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.RdbDriver;
+import org.simplity.fm.core.serialize.IInputObject;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.gson.JsonObject;
 
 /**
  * <p>
@@ -59,33 +59,10 @@ public abstract class DbRecord extends Record {
 		this.dba = dba;
 	}
 
-	/**
-	 * dbRecord has one peculiar issue with generated primary key. it is
-	 * optional for insert operation but is mandatory for update. To take care
-	 * of this, we need a parameter to indicate the purpose of parsing. Also, we
-	 * need to populate some fields
-	 *
-	 * @param json
-	 *            input data
-	 * @param forInsert
-	 *            true if the data is being parsed for an insert operation,
-	 *            false if it is meant for an update instead
-	 * @param ctx
-	 * @param tableName
-	 *            if the input data is for a table.collection if this record,
-	 *            then this is the name of the attribute with which the table is
-	 *            received. null if the data is at the root level, else n
-	 * @param rowNbr
-	 *            relevant if tablaeName is not-null.
-	 * @return true if all ok. false if any error message is added to the
-	 *         context
-	 */
-	public boolean parse(final JsonObject json, final boolean forInsert, final IServiceContext ctx,
+	@Override
+	public boolean parse(final IInputObject inputObject, final boolean forInsert, final IServiceContext ctx,
 			final String tableName, final int rowNbr) {
-		/*
-		 * parse it as a non-db record first..
-		 */
-		if (!super.parse(json, ctx, tableName, rowNbr)) {
+		if (!super.parse(inputObject, forInsert, ctx, tableName, rowNbr)) {
 			return false;
 		}
 		/*
@@ -97,14 +74,14 @@ public abstract class DbRecord extends Record {
 	/**
 	 * load keys from a JSON. input is suspect.
 	 *
-	 * @param json
+	 * @param inputObject
 	 *            non-null
 	 * @param ctx
 	 *            non-null. any validation error is added to it
 	 * @return true if all ok. false if any parse error is added the ctx
 	 */
-	public boolean parseKeys(final JsonObject json, final IServiceContext ctx) {
-		return this.dba.parseKeys(json, this.fieldValues, ctx);
+	public boolean parseKeys(final IInputObject inputObject, final IServiceContext ctx) {
+		return this.dba.parseKeys(inputObject, this.fieldValues, ctx);
 	}
 
 	/**
@@ -132,6 +109,84 @@ public abstract class DbRecord extends Record {
 		if (!this.dba.read(handle, this.fieldValues)) {
 			throw new SQLException("Read failed for " + this.getName() + this.dba.emitKeys(this.fieldValues));
 		}
+	}
+
+	/**
+	 * select multiple rows from the db based on the filtering criterion. Meant
+	 * for use by frame-work and utilities. End programmers should not use this
+	 * API. They should use a filter-sql instead.
+	 *
+	 * @param whereClauseStartingWithWhere
+	 *            e.g. "WHERE a=? and b=?" null if all rows are to be read. Best
+	 *            practice is to use parameters rather than dynamic sql. That is
+	 *            you should use a=? rather than a = 32
+	 * @param values
+	 *            null or empty if where-clause is null or has no parameters.
+	 *            every element MUST be non-null and must be one of the standard
+	 *            objects we use String, Long, Double, Boolean, LocalDate,
+	 *            Instant
+	 *
+	 * @param handle
+	 * @return non-null, possibly empty array of rows
+	 * @throws SQLException
+	 */
+	public List<Object[]> filter(final String whereClauseStartingWithWhere, final Object[] values,
+			final DbHandle handle) throws SQLException {
+		return this.dba.filter(whereClauseStartingWithWhere, values, handle);
+	}
+
+	/**
+	 * use filter-criterion, but only one row is expected, and hence read it
+	 * into this record.
+	 * This API is meant for utility programs,and not for end-programmers.
+	 * filter-sqls are a better choice for end-programmers as they provide
+	 * type-safe way to set/get values
+	 *
+	 * @param whereClauseStartingWithWhere
+	 *            e.g. "WHERE a=? and b=?" null if all rows are to be read. Best
+	 *            practice is to use parameters rather than dynamic sql. That is
+	 *            you should use a=? rather than a = 32
+	 * @param values
+	 *            null or empty if where-clause is null or has no parameters.
+	 *            every element MUST be non-null and must be one of the standard
+	 *            objects we use String, Long, Double, Boolean, LocalDate,
+	 *            Instant
+	 * @param handle
+	 * @return true if the first row is read. false otherwise
+	 * @throws SQLException
+	 */
+	public boolean filterFirst(final String whereClauseStartingWithWhere, final Object[] values, final DbHandle handle)
+			throws SQLException {
+		return this.dba.filterFirst(whereClauseStartingWithWhere, values, this.fieldValues, handle);
+	}
+
+	/**
+	 * use filter-criterion, but only one row is expected, and hence read it
+	 * into this record.
+	 *
+	 * This API is meant for utility programs,and not for end-programmers.
+	 * filter-sqls are a better choice for end-programmers as they provide
+	 * type-safe way to set/get values
+	 *
+	 * @param whereClauseStartingWithWhere
+	 *            e.g. "WHERE a=? and b=?" null if all rows are to be read. Best
+	 *            practice is to use parameters rather than dynamic sql. That is
+	 *            you should use a=? rather than a = 32
+	 * @param values
+	 *            null or empty if where-clause is null or has no parameters.
+	 *            every element MUST be non-null and must be one of the standard
+	 *            objects we use String, Long, Double, Boolean, LocalDate,
+	 *            Instant
+	 * @param handle
+	 * @throws SQLException
+	 */
+	public void filterFirstOrFail(final String whereClauseStartingWithWhere, final Object[] values,
+			final DbHandle handle) throws SQLException {
+		if (this.dba.filterFirst(whereClauseStartingWithWhere, values, this.fieldValues, handle)) {
+			return;
+		}
+
+		throw new SQLException("Filter operation is expected to get one row, but none turned-up!");
 	}
 
 	/**
@@ -203,6 +258,17 @@ public abstract class DbRecord extends Record {
 	}
 
 	/**
+	 * @param handle
+	 * @throws SQLException
+	 */
+	public void saveOrFail(final DbHandle handle) throws SQLException {
+		if (!this.dba.save(handle, this.fieldValues)) {
+			throw new SQLException("Save failed silently for " + this.getName() + this.dba.emitKeys(this.fieldValues));
+		}
+
+	}
+
+	/**
 	 * remove this form data from the db
 	 *
 	 * @param handle
@@ -240,36 +306,42 @@ public abstract class DbRecord extends Record {
 	}
 
 	@Override
-	protected abstract DbRecord newInstance(Object[] values);
+	public abstract DbRecord newInstance(Object[] values);
 
 	/**
 	 * get a service for the specific operation on this record
 	 *
 	 * @param operation
 	 *            non-null
+	 * @param serviceName
+	 *            optional. If not specified, record-names service name is used
 	 * @return service if this record is designed for this operation. null
 	 *         otherwise.
 	 */
-	public IService getService(final IoType operation) {
+	public IService getService(final IoType operation, final String serviceName) {
 		if (!this.dba.operationAllowed(operation)) {
 			logger.info("{} operation is not allowed on record {}", operation, this.getName());
+			return null;
 		}
 
-		String serviceName = operation.name();
-		serviceName = serviceName.substring(0, 1).toLowerCase() + serviceName.substring(1) + '_' + this.getName();
+		String sn = serviceName;
+		if (sn == null || sn.isEmpty()) {
+			sn = operation.name();
+			sn = serviceName.substring(0, 1).toLowerCase() + serviceName.substring(1) + '_' + this.getName();
+		}
 		switch (operation) {
 		case Get:
-			return new Reader(serviceName);
+			return new Reader(sn);
 		case Create:
-			return new Creater(serviceName);
+			return new Creater(sn);
 		case Update:
-			return new Updater(serviceName);
+			return new Updater(sn);
 		case Delete:
-			return new Deleter(serviceName);
+			return new Deleter(sn);
 		case Filter:
-			return new Filter(serviceName);
+			return new Filter(sn);
 		default:
-			throw new ApplicationError("DbRecord is needs to be designed for operation " + operation.name());
+			throw new ApplicationError("DbRecord needs to be designed for operation " + operation.name());
 		}
 	}
 
@@ -293,7 +365,7 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
+		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			if (!rec.parseKeys(payload, ctx)) {
 				logger.error("Error while reading keys from the input payload");
@@ -320,7 +392,7 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
+		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			if (!rec.parse(payload, true, ctx, null, 0)) {
 				logger.error("Error while validating the input payload");
@@ -346,7 +418,7 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
+		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			if (!rec.parse(payload, false, ctx, null, 0)) {
 				logger.error("Error while validating data from the input payload");
@@ -372,7 +444,7 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
+		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			if (!rec.parseKeys(payload, ctx)) {
 				logger.error("Error while validating keys");
@@ -399,7 +471,7 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public void serve(final IServiceContext ctx, final JsonObject payload) throws Exception {
+		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			final ParsedFilter filter = rec.dba.parseFilter(payload, ctx);
 			if (!ctx.allOk()) {
@@ -427,5 +499,33 @@ public abstract class DbRecord extends Record {
 	 */
 	public DbField getField(final String fieldName) {
 		return this.dba.getField(fieldName);
+	}
+
+	/**
+	 *
+	 * @return index of the generated key, or -1 if this record has no generated
+	 *         key
+	 */
+	public int getGeneratedKeyIndex() {
+		return this.dba.getGeneratedKeyIndex();
+	}
+
+	/**
+	 * API meant for utility programs. End-programmers should use filter-sql
+	 * instead
+	 *
+	 * @param whereClause
+	 * @param values
+	 * @param handle
+	 * @param rowProcessor
+	 * @throws SQLException
+	 */
+	public void forEach(final String whereClause, final Object[] values, final DbHandle handle,
+			final Function<DbRecord, Boolean> rowProcessor) throws SQLException {
+
+		this.dba.forEach(handle, whereClause, values, row -> {
+			final DbRecord rec = DbRecord.this.newInstance(row);
+			return rowProcessor.apply(rec);
+		});
 	}
 }

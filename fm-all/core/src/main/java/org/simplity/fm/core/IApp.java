@@ -23,7 +23,7 @@
 package org.simplity.fm.core;
 
 import org.simplity.fm.core.data.Form;
-import org.simplity.fm.core.data.Schema;
+import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.datatypes.DataType;
 import org.simplity.fm.core.fn.IFunction;
 import org.simplity.fm.core.rdb.Sql;
@@ -61,14 +61,14 @@ public interface IApp {
 	 * @param formId
 	 * @return form instance, or null if such a form is not located
 	 */
-	Form getForm(String formId);
+	Form<?> getForm(String formId);
 
 	/**
 	 *
-	 * @param schemaName
-	 * @return form instance, or null if such a form is not located
+	 * @param recordName
+	 * @return record instance, or null if such a record is not located
 	 */
-	Schema getSchema(String schemaName);
+	Record getRecord(String recordName);
 
 	/**
 	 *

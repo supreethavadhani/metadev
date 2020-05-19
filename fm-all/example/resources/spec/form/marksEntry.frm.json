@@ -1,0 +1,32 @@
+{
+    "name": "marksEntry",
+    "description": "used for marks entry page. linked form to get rows for students ",
+    "recordName": "subjectSectionDetail",
+    "operations": [
+        "get",
+        "update"
+    ],
+    "linkedForms": [
+        {
+            "name": "students",
+            "formName": "marksForAssessment",
+            "isEditable": false,
+            "isTabular": true,
+            "minRows": 1
+        }
+    ],
+    "controls": [
+        {
+            "name": "subjectSectionId",
+            "controlType": "hidden"
+        },
+        {
+            "name": "subjectName",
+            "controlType": "output"
+        },
+        {
+            "name": "sectionName",
+            "controlType": "output"
+        }
+    ]
+}

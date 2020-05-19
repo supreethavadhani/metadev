@@ -27,7 +27,7 @@ import java.util.Map;
 
 import org.simplity.fm.core.data.Form;
 import org.simplity.fm.core.data.IoType;
-import org.simplity.fm.core.data.Schema;
+import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.datatypes.DataType;
 import org.simplity.fm.core.fn.IFunction;
 import org.simplity.fm.core.rdb.Sql;
@@ -145,13 +145,13 @@ public class App {
 		}
 
 		@Override
-		public Form getForm(final String formId) {
+		public Form<?> getForm(final String formId) {
 			logError();
 			return null;
 		}
 
 		@Override
-		public Schema getSchema(final String schemaName) {
+		public Record getRecord(final String recordName) {
 			logError();
 			return null;
 		}
@@ -204,7 +204,7 @@ public class App {
 
 	}
 
-	private static final String SCHEMA = Conventions.App.SCHEMA_CLASS_SUFIX;
+	private static final String RECORD = Conventions.App.RECORD_CLASS_SUFIX;
 	private static final String FORM = Conventions.App.FORM_CLASS_SUFIX;
 	private static final String SQL = Conventions.App.SQL_CLASS_SUFIX;
 	private static final char DOT = '.';
@@ -236,15 +236,15 @@ public class App {
 
 		private final IDataTypes dataTypes;
 		private final String formRoot;
-		private final String schemaRoot;
+		private final String recordRoot;
 		private final String listRoot;
 		private final String serviceRoot;
 		private final String customListRoot;
 		private final String fnRoot;
 		private final String sqlRoot;
 		private final IMessages messages;
-		private final Map<String, Form> forms = new HashMap<>();
-		private final Map<String, Schema> schemas = new HashMap<>();
+		private final Map<String, Form<?>> forms = new HashMap<>();
+		private final Map<String, Record> records = new HashMap<>();
 		private final Map<String, IValueList> lists = new HashMap<>();
 		private final Map<String, IService> services = new HashMap<>();
 		private final Map<String, IFunction> functions = new HashMap<>();
@@ -255,7 +255,7 @@ public class App {
 			this.messages = messages;
 			final String genRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_GEN + DOT;
 			this.formRoot = genRoot + Conventions.App.FOLDER_NAME_FORM + DOT;
-			this.schemaRoot = genRoot + Conventions.App.FOLDER_NAME_SCHEMA + DOT;
+			this.recordRoot = genRoot + Conventions.App.FOLDER_NAME_RECORD + DOT;
 			this.listRoot = genRoot + Conventions.App.FOLDER_NAME_LIST + DOT;
 			this.customListRoot = rootPackage + Conventions.App.FOLDER_NAME_CUSTOM_LIST + DOT;
 			this.serviceRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_SERVICE + DOT;
@@ -268,14 +268,14 @@ public class App {
 		}
 
 		@Override
-		public Form getForm(final String formId) {
-			Form form = this.forms.get(formId);
+		public Form<?> getForm(final String formId) {
+			Form<?> form = this.forms.get(formId);
 			if (form != null) {
 				return form;
 			}
 			final String cls = this.formRoot + toClassName(formId) + FORM;
 			try {
-				form = (Form) Class.forName(cls).newInstance();
+				form = (Form<?>) Class.forName(cls).newInstance();
 			} catch (final Exception e) {
 				logger.error("No form named {} because we could not locate class {}", formId, cls);
 				return null;
@@ -285,20 +285,20 @@ public class App {
 		}
 
 		@Override
-		public Schema getSchema(final String schemaName) {
-			Schema schema = this.schemas.get(schemaName);
-			if (schema != null) {
-				return schema;
+		public Record getRecord(final String recordName) {
+			Record record = this.records.get(recordName);
+			if (record != null) {
+				return record;
 			}
-			final String cls = this.schemaRoot + toClassName(schemaName) + SCHEMA;
+			final String cls = this.recordRoot + toClassName(recordName) + RECORD;
 			try {
-				schema = (Schema) Class.forName(cls).newInstance();
+				record = (Record) Class.forName(cls).newInstance();
 			} catch (final Exception e) {
-				logger.error("No schema named {} because we could not locate class {}", schemaName, cls);
+				logger.error("No record named {} because we could not locate class {}", recordName, cls);
 				return null;
 			}
-			this.schemas.put(schemaName, schema);
-			return schema;
+			this.records.put(recordName, record);
+			return record;
 		}
 
 		@Override
@@ -397,44 +397,32 @@ public class App {
 				return null;
 			}
 
-			String formName = serviceName.substring(idx + 1);
+			final String formName = serviceName.substring(idx + 1);
 			logger.info("Looking to generate a service for operantion {} on {}", opern, formName);
 
 			/*
-			 * we provide flexibility for the service name to have Form or
-			 * Schema
-			 * suffix at the end, failing which we try the name itself as
-			 * form
+			 * we provide flexibility for the service name to have Form suffix
+			 * at the end, failing which we try the name itself as form
 			 */
 			if (formName.endsWith(FORM)) {
-				formName = formName.substring(0, formName.length() - FORM.length());
-				final Form form = this.getForm(formName);
-				if (form == null) {
-					logger.warn("No form named {}", formName);
-					return null;
+				final String fn = formName.substring(0, formName.length() - FORM.length());
+				final Form<?> form = this.getForm(fn);
+				if (form != null) {
+					final IService service = form.getService(opern);
+					if (service != null) {
+						return service;
+					}
+					logger.info("Found a form named {} but it is not designed for ", fn, opern.name());
 				}
-				return form.getService(opern);
 			}
 
-			if (formName.endsWith(SCHEMA)) {
-				formName = formName.substring(0, formName.length() - SCHEMA.length());
-				final Schema schema = this.getSchema(formName);
-				if (schema == null) {
-					logger.warn("No Schema named {}", formName);
-					return null;
-				}
-				return schema.getService(opern);
-			}
-
-			final Form form = this.getForm(formName);
+			final Form<?> form = this.getForm(formName);
 			if (form != null) {
 				return form.getService(opern);
 			}
 
-			logger.info("{} is not a form or schema and hence a service is not genrated for oepration {}", formName,
-					opern);
+			logger.info("{} is not a form and hence a service is not genrated for oepration {}", formName, opern);
 			return null;
-
 		}
 
 		@Override

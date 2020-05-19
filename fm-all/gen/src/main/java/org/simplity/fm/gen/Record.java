@@ -67,7 +67,7 @@ class Record {
 	String nameInDb;
 	boolean useTimestampCheck;
 	String customValidation;
-	String[] dbOperations;
+	String[] operations;
 	/*
 	 * reason we have it as an array rather than a MAP is that the sequence,
 	 * though not recommended, could be hard-coded by some coders
@@ -249,9 +249,9 @@ class Record {
 	void emitJavaClass(final StringBuilder sbf, final String generatedPackage) {
 		final String typesName = Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
 		/*
-		 * our package name is rootPAckage + any prefix/qualifier in our name
+		 * our package name is rootPackage + any prefix/qualifier in our name
 		 *
-		 * e.g. if name a.b.schema1 then prefix is a.b and className is Schema1
+		 * e.g. if name a.b.record1 then prefix is a.b and className is Record1
 		 */
 		String pck = generatedPackage + ".rec";
 		final String qual = Util.getClassQualifier(this.name);
@@ -325,7 +325,7 @@ class Record {
 		/*
 		 * newInstane()
 		 */
-		sbf.append("\n\n\t@Override\n\tprotected ").append(cls).append(" newInstance(final Object[] values) {");
+		sbf.append("\n\n\t@Override\n\tpublic ").append(cls).append(" newInstance(final Object[] values) {");
 		sbf.append("\n\t\treturn new ").append(cls).append("(values);\n\t}");
 
 		sbf.append("\n}\n");
@@ -344,7 +344,7 @@ class Record {
 
 	private void emitDbSpecific(final StringBuilder sbf, final String cls) {
 		sbf.append("\n\t/* DB related */\n\tprivate static final ");
-		Form.getOps(this.dbOperations, sbf);
+		Form.getOps(this.operations, sbf);
 
 		this.emitSelect(sbf);
 		if (this.keyFields == null) {
@@ -640,7 +640,7 @@ class Record {
 		/*
 		 * our package name is rootPAckage + any prefix/qualifier in our name
 		 *
-		 * e.g. if name a.b.schema1 then prefix is a.b and className is Schema1
+		 * e.g. if name a.b.record1 then prefix is a.b and className is Record1
 		 */
 		final String c = Util.toClassName(this.name);
 		final String recCls = c + "Record";

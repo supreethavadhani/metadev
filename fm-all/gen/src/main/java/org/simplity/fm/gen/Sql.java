@@ -26,9 +26,9 @@ import java.util.Map;
 
 import org.simplity.fm.core.data.ValueObject;
 import org.simplity.fm.core.rdb.FilterSql;
-import org.simplity.fm.core.rdb.FilterWithSchemaSql;
+import org.simplity.fm.core.rdb.FilterWithRecordSql;
 import org.simplity.fm.core.rdb.ReadSql;
-import org.simplity.fm.core.rdb.ReadWithSchemaSql;
+import org.simplity.fm.core.rdb.ReadWithRecordSql;
 import org.simplity.fm.core.rdb.WriteSql;
 import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
@@ -49,12 +49,12 @@ public class Sql {
 	String sql;
 	Field[] sqlParams;
 	Field[] outputFields;
-	String schemaName;
+	String recordName;
 
 	void emitJava(final StringBuilder sbf, final String packageName, final String className, final String dataTypesName,
 			final Map<String, DataType> dataTypes) {
 
-		final boolean hasSchema = this.schemaName != null && this.schemaName.isEmpty() == false;
+		final boolean hasRecord = this.recordName != null && this.recordName.isEmpty() == false;
 		final boolean hasOutFields = this.outputFields != null && this.outputFields.length > 0;
 		final boolean hasParams = this.sqlParams != null && this.sqlParams.length > 0;
 		boolean isWrite = false;
@@ -62,20 +62,20 @@ public class Sql {
 		String msg = null;
 		if (this.sqlType.equals(SQL_TYPE_WRITE)) {
 			isWrite = true;
-			if (hasSchema || hasOutFields) {
-				msg = "Write sql should not specify schema or output fields.";
+			if (hasRecord || hasOutFields) {
+				msg = "Write sql should not specify record or output fields.";
 			}
 			if (!hasParams) {
 				msg = "Write sql MUST have sql parameters. Unconditional update to database is not allowed";
 			}
 		} else if (this.sqlType.equals(SQL_TYPE_READ) || this.sqlType.equals(SQL_TYPE_FILTER)) {
-			if ((hasSchema && hasOutFields) || (!hasSchema && !hasOutFields)) {
-				msg = "read/filter sql should have either schemaName or outputFields";
+			if ((hasRecord && hasOutFields) || (!hasRecord && !hasOutFields)) {
+				msg = "read/filter sql should have either recordName or outputFields";
 			} else {
 				final String txt = this.sql.trim().toLowerCase();
-				if (hasSchema) {
+				if (hasRecord) {
 					if (txt.startsWith("where") == false) {
-						msg = "When schema is specified, the sql should start with 'where' verb, and should be valid prase to append after a select ... part.";
+						msg = "When record is specified, the sql should start with 'where' verb, and should be valid prase to append after a select ... part.";
 					}
 				} else {
 					if (txt.startsWith("select") == false) {
@@ -101,16 +101,16 @@ public class Sql {
 		}
 
 		if (this.sqlType.equals(SQL_TYPE_READ)) {
-			if (hasSchema) {
-				this.emitReadWithSchema(sbf, packageName, className, dataTypesName, dataTypes);
+			if (hasRecord) {
+				this.emitReadWithRecord(sbf, packageName, className, dataTypesName, dataTypes);
 				return;
 			}
 			this.emitRead(sbf, className, dataTypesName, dataTypes);
 			return;
 		}
 
-		if (hasSchema) {
-			this.emitFilterWithSchema(sbf, packageName, className, dataTypesName, dataTypes);
+		if (hasRecord) {
+			this.emitFilterWithRecord(sbf, packageName, className, dataTypesName, dataTypes);
 			return;
 		}
 		this.emitFilter(sbf, className, dataTypesName, dataTypes);
@@ -148,20 +148,19 @@ public class Sql {
 		sbf.append("\n}\n");
 	}
 
-	void emitFilterWithSchema(final StringBuilder sbf, final String packageName, final String className,
+	void emitFilterWithRecord(final StringBuilder sbf, final String packageName, final String className,
 			final String dataTypesName, final Map<String, DataType> dataTypes) {
 
-		Util.emitImport(sbf, FilterWithSchemaSql.class);
-		final String schemaCls = Util.toClassName(this.schemaName);
-		sbf.append("\nimport ").append(packageName).append(".schema.").append(schemaCls).append("Schema;");
-		sbf.append("\nimport ").append(packageName).append(".schema.").append(schemaCls).append("DataTable;");
+		Util.emitImport(sbf, FilterWithRecordSql.class);
+		final String recordCls = Util.toClassName(this.recordName) + "Record";
+		sbf.append("\nimport ").append(packageName).append(".rec.").append(recordCls).append(";");
 
 		/*
 		 * class
 		 */
 		sbf.append("\n\n/** generated class for ").append(className).append(" */");
-		sbf.append("\npublic class ").append(className).append(" extends FilterWithSchemaSql<").append(schemaCls)
-				.append("DataTable> {");
+		sbf.append("\npublic class ").append(className).append(" extends FilterWithRecordSql<");
+		sbf.append(recordCls).append("> {");
 
 		/*
 		 * static declarations
@@ -181,7 +180,7 @@ public class Sql {
 		if (this.sqlParams != null) {
 			sbf.append("\n\t\tthis.inputData = new ValueObject(IN, null);");
 		}
-		sbf.append("\n\t\tthis.schema = new ").append(Util.toClassName(this.schemaName)).append("Schema();");
+		sbf.append("\n\t\tthis.record = new ").append(recordCls).append("();");
 		sbf.append("\n\t}");
 
 		if (this.sqlParams != null) {
@@ -190,20 +189,19 @@ public class Sql {
 		sbf.append("\n}\n");
 	}
 
-	void emitReadWithSchema(final StringBuilder sbf, final String packageName, final String className,
+	void emitReadWithRecord(final StringBuilder sbf, final String packageName, final String className,
 			final String dataTypesName, final Map<String, DataType> dataTypes) {
 
-		Util.emitImport(sbf, ReadWithSchemaSql.class);
-		final String schemaCls = Util.toClassName(this.schemaName);
-		sbf.append("\nimport ").append(packageName).append(".schema.").append(schemaCls).append("Schema;");
-		sbf.append("\nimport ").append(packageName).append(".schema.").append(schemaCls).append("Data;");
+		Util.emitImport(sbf, ReadWithRecordSql.class);
+		final String recordCls = Util.toClassName(this.recordName) + "Record";
+		sbf.append("\nimport ").append(packageName).append(".rec.").append(recordCls);
 
 		/*
 		 * class
 		 */
 		sbf.append("\n\n/** generated class for ").append(className).append(" */");
-		sbf.append("\npublic class ").append(className).append(" extends ReadWithSchemaSql<").append(schemaCls)
-				.append("Data> {");
+		sbf.append("\npublic class ").append(className).append(" extends ReadWithRecordSql<").append(recordCls)
+				.append("> {");
 
 		/*
 		 * static declarations
@@ -223,7 +221,7 @@ public class Sql {
 		if (this.sqlParams != null) {
 			sbf.append("\n\t\tthis.inputData = new ValueObject(IN, null);");
 		}
-		sbf.append("\n\t\tthis.schema = new ").append(Util.toClassName(this.schemaName)).append("Schema();");
+		sbf.append("\n\t\tthis.record = new ").append(Util.toClassName(this.recordName)).append("();");
 		sbf.append("\n\t}");
 
 		if (this.sqlParams != null) {
@@ -408,7 +406,7 @@ public class Sql {
 				sbf.append(',');
 			}
 			field.index = idx;
-			field.emitJavaCode(sbf, dtName);
+			field.emitJavaCode(sbf, dtName, false);
 		}
 		sbf.append('}');
 	}

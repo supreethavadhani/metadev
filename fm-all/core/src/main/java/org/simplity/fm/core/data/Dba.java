@@ -28,18 +28,17 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
-import org.simplity.fm.core.JsonUtil;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.IDbReader;
 import org.simplity.fm.core.rdb.IDbWriter;
+import org.simplity.fm.core.serialize.IInputObject;
 import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.gson.JsonObject;
 
 /**
  * Manages persistence related functionality for a <code>DbRecord</code>
@@ -236,6 +235,15 @@ public class Dba {
 
 	/**
 	 *
+	 * @return index of the generated key, or -1 if this record has no generated
+	 *         key
+	 */
+	public int getGeneratedKeyIndex() {
+		return this.generatedKeyIdx;
+	}
+
+	/**
+	 *
 	 * @return name of the table/view associated with this db record
 	 */
 	public String getNameInDb() {
@@ -244,7 +252,7 @@ public class Dba {
 
 	/**
 	 * return the select clause (like select a,b,...) without the where clause
-	 * for this schema
+	 * for this record
 	 *
 	 * @return string that is a valid select-part of a sql that can be used with
 	 *         a were clause to filter rows from the underlying dbtable.view
@@ -386,7 +394,7 @@ public class Dba {
 		}
 
 		if (this.generatedKeyIdx == -1) {
-			logger.info("Schema has no generated key. Each rowis first updated, failing which it is inserted.");
+			logger.info("record has no generated key. Each rowis first updated, failing which it is inserted.");
 			return this.updateOrInsert(handle, rows);
 		}
 		final int nbrRows = rows.length;
@@ -443,7 +451,7 @@ public class Dba {
 			return notAllowed(IoType.Update);
 		}
 		if (this.generatedKeyIdx == -1) {
-			final String msg = "Schema has no generated key. save opertion is not possible.";
+			final String msg = "record has no generated key. save opertion is not possible.";
 			logger.error(msg);
 			throw new SQLException(msg);
 		}
@@ -529,7 +537,7 @@ public class Dba {
 
 		/*
 		 * create a new list of array, based on the params. Note that a row in
-		 * values[] is based on the fields in the schema, but we need the array
+		 * values[] is based on the fields in the record, but we need the array
 		 * based on the columns in the params. Hence we create a new list by
 		 * copying values in te right order
 		 *
@@ -584,7 +592,7 @@ public class Dba {
 
 	/**
 	 * fetch data for this form from a db based on the primary key of this
-	 * schema
+	 * record
 	 *
 	 * @param handle
 	 * @param values
@@ -733,6 +741,42 @@ public class Dba {
 		return result[0];
 	}
 
+	void forEach(final DbHandle handle, final String where, final Object[] inputValues,
+			final Function<Object[], Boolean> rowProcessor) throws SQLException {
+
+		final String sql = where == null ? this.selectClause : (this.selectClause + ' ' + where);
+		final int nbrFields = this.dbFields.length;
+		handle.read(new IDbReader() {
+
+			@Override
+			public String getPreparedStatement() {
+				return sql;
+			}
+
+			@Override
+			public void setParams(final PreparedStatement ps) throws SQLException {
+				if (inputValues == null || inputValues.length == 0) {
+					return;
+				}
+				int posn = 0;
+				for (final Object value : inputValues) {
+					posn++;
+					ValueType.setObjectAsPsParam(value, ps, posn);
+				}
+			}
+
+			@Override
+			public boolean readARow(final ResultSet rs) throws SQLException {
+				final Object[] row = new Object[nbrFields];
+				Dba.this.readWorker(rs, row);
+				/*
+				 * return false if we are to read just one row
+				 */
+				return rowProcessor.apply(row);
+			}
+		});
+	}
+
 	/**
 	 * validate the data row for db-operation. This is to be invoked after the
 	 * row is parsed/validated as a valid record (non-db)
@@ -793,7 +837,7 @@ public class Dba {
 	 * @param ctx
 	 * @return
 	 */
-	boolean parseKeys(final JsonObject json, final Object[] fieldValues, final IServiceContext ctx) {
+	boolean parseKeys(final IInputObject inputObject, final Object[] fieldValues, final IServiceContext ctx) {
 
 		if (this.tenantField != null) {
 			fieldValues[this.tenantField.getIndex()] = ctx.getTenantId();
@@ -808,7 +852,7 @@ public class Dba {
 		boolean ok = true;
 		for (final int idx : this.keyIndexes) {
 			final DbField f = this.dbFields[idx];
-			final String value = JsonUtil.getString(json, f.getName());
+			final String value = inputObject.getString(f.getName());
 			if (value == null || value.isEmpty()) {
 				ctx.addMessage(Message.newFieldError(f.getName(), Message.FIELD_REQUIRED, ""));
 				ok = false;
@@ -843,7 +887,7 @@ public class Dba {
 	 * @param ctx
 	 * @return parsedFilter, or null in case of any error
 	 */
-	public ParsedFilter parseFilter(final JsonObject json, final IServiceContext ctx) {
+	public ParsedFilter parseFilter(final IInputObject json, final IServiceContext ctx) {
 		return ParsedFilter.parse(json, this.dbFields, this.tenantField, ctx);
 	}
 }

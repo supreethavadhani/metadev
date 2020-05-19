@@ -23,7 +23,7 @@
 package org.simplity.fm.core.validn;
 
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.data.SchemaData;
+import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
@@ -79,9 +79,9 @@ public class InclusiveValidation implements IValidation {
 	}
 
 	@Override
-	public boolean isValid(final SchemaData dataRow, final IServiceContext ctx) {
-		final Object main = dataRow.getValue(this.mainIndex);
-		final Object dep = dataRow.getValue(this.dependentIndex);
+	public boolean isValid(final Record record, final IServiceContext ctx) {
+		final Object main = record.getValue(this.mainIndex);
+		final Object dep = record.getValue(this.dependentIndex);
 
 		boolean mainSpecified = false;
 		if (main != null) {

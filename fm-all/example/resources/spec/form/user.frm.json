@@ -1,0 +1,91 @@
+{
+    "name": "user",
+    "recordName": "user",
+    "operations": [
+        "get",
+        "filter"
+    ],
+    "controls": [
+        {
+            "name": "userId",
+            "controlType": "hidden"
+        },
+        {
+            "name": "instituteId",
+            "controlType": "hidden"
+        },
+        {
+            "name": "trustId",
+            "controlType": "hidden"
+        },
+         {
+            "name": "userType",
+            "controlType": "dropDown",
+            "label": "User Type"
+        },
+        {
+            "name": "loginId",
+            "controlType": "input",
+            "label": "Login Id"
+        },
+        {
+            "name": "loginToken",
+            "controlType": "output",
+            "label": "Login Token"
+        },
+        {
+            "name": "loginEnabled",
+            "controlType": "checkBox",
+            "label": "Login Enabled"
+        },
+        {
+            "name": "resetPasswordCount",
+            "controlType": "output",
+            "label": "Reset Password Count"
+        },
+        {
+            "name": "loginCount",
+            "controlType": "output",
+            "label": "Login Count"
+        },
+        {
+            "name": "confirmationToken",
+            "controlType": "output",
+            "label": "Confirmation Token"
+        },
+        {
+            "name": "currentLoginIp",
+            "controlType": "output",
+            "label": "Current Login IP"
+        },
+        {
+            "name": "previousLoginIp",
+            "controlType": "output",
+            "label": "Previous Login IP"
+        },
+        {
+            "name": "currentLoginAt",
+            "controlType": "output",
+            "label": "CurrentLogin At"
+        },
+        {
+            "name": "previousLoginAt",
+            "controlType": "output",
+            "label": "Previous Login At"
+        },
+        {
+            "name": "resetPasswordSentAt",
+            "controlType": "output",
+            "label": "Reset Password Sent At"
+        },
+        {
+            "name": "createdAt",
+            "controlType": "hidden"
+        },
+        {
+            "name": "updatedAt",
+            "controlType": "hidden"
+        }
+         
+    ]
+}

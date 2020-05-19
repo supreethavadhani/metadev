@@ -1,0 +1,148 @@
+{
+    "name": "studentCieDetail",
+    "nameInDb": "student_cie_details",
+    "useTimestampCheck": false,
+    "operations": [
+        "create",
+        "delete",
+        "filter",
+        "get",
+        "update"
+    ],
+    "fields": [
+        {
+            "name": "studentId",
+            "dataType": "flexibleId",
+            "dbColumnName": "student_id",
+            "columnType": "primaryKey",
+            "defaultValue": "-1"
+        },
+       	{
+            "name": "subjectSectionId",
+            "dataType": "id",
+            "dbColumnName": "subject_section_id",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "departmentName",
+            "dataType": "text",
+            "dbColumnName": "department_name",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "usn",
+            "dataType": "text",
+            "dbColumnName": "usn",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "name",
+            "dataType": "name",
+            "dbColumnName": "student_name",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "eligibility",
+            "dataType": "name",
+            "dbColumnName": "is_eligible",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "test1",
+            "dataType": "text",
+            "columnType": "optionalData",
+            "defaultValue":"1"
+        },
+		{
+            "name": "test2",
+            "dataType": "text",
+            "columnType": "optionalData",
+            "defaultValue":"1"
+        },
+        {
+            "name": "test3",
+            "dataType": "text",
+            "columnType": "optionalData",
+            "defaultValue":"1"
+        },
+        {
+            "name": "quiz1",
+            "dataType": "text",
+            "columnType": "optionalData",
+            "defaultValue":"1"
+        },
+        {
+            "name": "quiz2",
+            "dataType": "text",
+            "columnType": "optionalData",
+            "defaultValue":"1"
+        },
+        {
+            "name": "theoryCie",
+            "dataType": "text",
+            "columnType": "optionalData",
+            "defaultValue":"1"
+        },
+        {
+            "name": "theoryClassesHeld",
+            "dataType": "text",
+            "columnType": "optionalData",
+            "defaultValue":"1"
+        },
+        {
+            "name": "theoryClassesAttended",
+            "dataType": "text",
+            "columnType": "optionalData",
+            "defaultValue":"1"
+        },
+        {
+            "name": "theoryClassesPercentage",
+            "dataType": "text",
+            "columnType": "optionalData",
+            "defaultValue":"1"
+        },
+        {
+            "name": "practicalCie",
+            "dataType": "text",
+            "columnType": "optionalData",
+            "defaultValue":"1"
+        },
+                {
+            "name": "practicalClassesHeld",
+            "dataType": "text",
+            "columnType": "optionalData",
+            "defaultValue":"1"
+        },
+        {
+            "name": "practicalClassesAttended",
+            "dataType": "text",
+            "columnType": "optionalData",
+            "defaultValue":"1"
+        },
+                {
+            "name": "practicalClassesPercentage",
+            "dataType": "text",
+            "columnType": "optionalData",
+            "defaultValue":"1"
+        },
+        {
+            "name": "selfStudy",
+            "dataType": "text",
+            "columnType": "optionalData",
+            "defaultValue":"1"
+        },
+        {
+            "name": "practicalMarks",
+            "dataType": "text",
+            "columnType": "optionalData",
+            "defaultValue":"1"
+        },
+        {
+            "name": "totalCie",
+            "dataType": "text",
+            "columnType": "optionalData",
+            "defaultValue":"1"
+        }
+    ]
+    
+}

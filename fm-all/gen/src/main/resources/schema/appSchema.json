@@ -1,4 +1,5 @@
 {
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "description": "Schema for application.json",
     "required": [
         "name",
@@ -206,7 +207,10 @@
                     "keyColumn": {
                         "type": "string"
                     },
-                    "tenantColumnName": {
+                    "tenantColumn": {
+                        "type": "string"
+                    },
+                    "activeColumn": {
                         "type": "string"
                     },
                     "keyIsNumeric": {

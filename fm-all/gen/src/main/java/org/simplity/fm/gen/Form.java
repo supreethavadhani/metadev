@@ -22,28 +22,17 @@
 
 package org.simplity.fm.gen;
 
-import java.time.Instant;
-import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import org.simplity.fm.core.ComponentProvider;
-import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.data.ColumnType;
-import org.simplity.fm.core.data.FormData;
-import org.simplity.fm.core.data.FormDataTable;
 import org.simplity.fm.core.data.IoType;
-import org.simplity.fm.core.data.SchemaData;
-import org.simplity.fm.core.data.SchemaDataTable;
-import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 
 /**
  * @author simplity.org
@@ -55,9 +44,8 @@ public class Form {
 	private static final String C = ", ";
 
 	String name;
-	String schemaName;
-	String[] dbOperations;
-	Field[] localFields;
+	String recordName;
+	String[] operations;
 	Control[] controls;
 	LinkedForm[] linkedForms;
 	// Section[] sections;
@@ -66,40 +54,24 @@ public class Form {
 	 * derived attributes
 	 */
 	Map<String, Field> fields;
-	Schema schema;
+	Record record;
 
 	final Set<String> keyFieldNames = new HashSet<>();
 
 	Field[] keyFields;
 
-	void initialize(final Schema sch) {
+	void initialize(final Record rec) {
 		this.fields = new HashMap<>();
 
-		if (sch != null) {
-			this.schema = sch;
-			for (final Field f : sch.fieldMap.values()) {
-				final ColumnType ct = f.getColumnType();
-				if (ct == ColumnType.PrimaryKey || ct == ColumnType.GeneratedPrimaryKey) {
-					this.keyFieldNames.add(f.name);
-				}
+		this.record = rec;
+		for (final Field f : rec.fieldMap.values()) {
+			final ColumnType ct = f.getColumnType();
+			if (ct == ColumnType.PrimaryKey || ct == ColumnType.GeneratedPrimaryKey) {
+				this.keyFieldNames.add(f.name);
 			}
+		}
 
-			this.fields.putAll(sch.fieldMap);
-		}
-		if (this.localFields != null) {
-			int idx = 0;
-			for (final Field f : this.localFields) {
-				if (this.fields.containsKey(f.name)) {
-					logger.error(
-							"Schema has a field named {} but this is also being defined as a temp field. temp feld ignored",
-							f.name);
-					continue;
-				}
-				f.index = idx;
-				idx++;
-				this.fields.put(f.name, f);
-			}
-		}
+		this.fields.putAll(rec.fieldMap);
 
 		if (this.linkedForms != null) {
 			int idx = 0;
@@ -112,9 +84,9 @@ public class Form {
 
 	void emitJavaForm(final StringBuilder sbf, final String packageName) {
 		/*
-		 * our package name is rootPAckage + any prefix/qualifier in our name
+		 * our package name is rootPackage + any prefix/qualifier in our name
 		 *
-		 * e.g. if name a.b.schema1 then prefix is a.b and className is Schema1
+		 * e.g. if name a.b.record1 then prefix is a.b and className is Record1
 		 */
 		String pck = packageName + ".form";
 		final String qual = Util.getClassQualifier(this.name);
@@ -124,321 +96,65 @@ public class Form {
 		sbf.append("package ").append(pck).append(";\n");
 		Util.emitImport(sbf, ComponentProvider.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.Form.class);
-		Util.emitImport(sbf, org.simplity.fm.core.data.Field.class);
+		Util.emitImport(sbf, org.simplity.fm.core.data.LinkMetaData.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.LinkedForm.class);
-		Util.emitImport(sbf, FormDataTable.class);
-		Util.emitImport(sbf, FormData.class);
-		Util.emitImport(sbf, SchemaData.class);
-		Util.emitImport(sbf, SchemaDataTable.class);
-		Util.emitImport(sbf, JsonObject.class);
-		Util.emitImport(sbf, JsonArray.class);
-		Util.emitImport(sbf, IServiceContext.class);
-		/*
-		 * data types are directly referred to the static declarations
-		 */
-		sbf.append("\nimport ").append(packageName).append('.').append(Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME)
-				.append(';');
+		final String recordClass = Util.toClassName(this.recordName) + "Record";
+		sbf.append("\nimport ").append(packageName).append(".rec.").append(recordClass).append(';');
 
-		String schClass = null;
-		if (this.schema != null) {
-			schClass = Util.toClassName(this.schemaName);
-			final String imp = "\nimport " + packageName + ".schema.";
-			sbf.append(imp).append(schClass).append("Data;");
-			sbf.append(imp).append(schClass).append("DataTable;");
-		}
-
-		final String cls = Util.toClassName(this.name);
+		final String cls = Util.toClassName(this.name) + "Form";
 		/*
 		 * class declaration
 		 */
-		sbf.append("\n/** class for form ").append(this.name).append("  */\npublic class ").append(cls)
-				.append("Form extends Form {");
+		sbf.append("\n/** class for form ").append(this.name).append("  */\npublic class ");
+		sbf.append(cls).append(" extends Form<").append(recordClass).append("> {");
 
-		String p = "\n\tprotected static final ";
-
-		/*
-		 * protected static final Field[] FIELDS = {.....};
-		 */
-		sbf.append(p).append("String NAME = ").append(Util.escape(this.name)).append(';');
-		/*
-		 * protected static final String SCHEMA = "....";
-		 */
-		if (schClass != null) {
-			sbf.append(p).append("String SCHEMA = ").append(Util.escape(this.schemaName)).append(';');
-		}
+		final String p = "\n\tprotected static final ";
 
 		/*
 		 * protected static final Field[] FIELDS = {.....};
 		 */
-		if (this.localFields != null) {
-			sbf.append(p).append(" Field[] FIELDS = {");
-			for (final Field field : this.localFields) {
-				field.emitJavaCode(sbf, Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME);
-				sbf.append(C);
-			}
-			sbf.setLength(sbf.length() - C.length());
-
-			sbf.append("};");
-		}
+		sbf.append(p).append("String NAME = \"").append(this.name).append("\";");
+		/*
+		 * protected static final String RECORD = "....";
+		 */
+		sbf.append(p).append(recordClass).append(" RECORD = (").append(recordClass);
+		sbf.append(") ComponentProvider.getProvider().getRecord(\"").append(this.recordName).append("\");");
 
 		/*
 		 * protected static final boolean[] OPS = {true, false,..};
 		 */
 		sbf.append(p);
-		getOps(this.dbOperations, sbf);
+		getOps(this.operations, sbf);
 
 		/*
-		 * protected static final LinkedForm[] LINKED_FORMS = {......};
+		 * linked forms
 		 */
-		if (this.linkedForms != null) {
-			sbf.append(p).append("LinkedForm[] LINKED_FORMS = {");
+		final String lf = "\n\tprivate static final LinkedForm<?>[] LINKS = ";
+		if (this.linkedForms == null) {
+			sbf.append(lf).append("null;");
+		} else {
+			final StringBuilder bf = new StringBuilder();
 			for (int i = 0; i < this.linkedForms.length; i++) {
+				/*
+				 * declare linkedMeta and Form
+				 */
+				this.linkedForms[i].emitJavaCode(sbf, this.fields, i);
+
 				if (i != 0) {
-					sbf.append(',');
+					bf.append(',');
 				}
-				sbf.append("\n\t\t\t");
-				this.linkedForms[i].emitJavaCode(sbf, this.fields,
-						(this.schemaName != null && this.schemaName.isEmpty() == false));
+				bf.append("new LinkedForm(L").append(i).append(", F").append(i).append(')');
 			}
-			sbf.append("};");
+			sbf.append(lf).append('{').append(bf).append("};");
 		}
-		/*
-		 * public ClassName(){
-		 * this.name = NAME;
-		 * this.schema = ComponentProvider.getProvider().getSchema(schemaName);
-		 * this.fields = FIELDS;
-		 * this.operations = OPS;
-		 * this.linkedForms = LINKED_FORMS;
-		 * initialize();
-		 * }
-		 */
-		p = "\n\t\tthis.";
-		sbf.append("\n/** constructor */\npublic ").append(cls).append("Form() {");
-		sbf.append(p).append("name = NAME;");
-		if (schClass != null) {
-			sbf.append(p).append("schema = ComponentProvider.getProvider().getSchema(SCHEMA);");
-		}
-		sbf.append(p).append("operations = OPS;");
-		if (this.localFields != null) {
-			sbf.append(p).append("localFields = FIELDS;");
-		}
-
-		if (this.linkedForms != null) {
-			sbf.append(p).append("linkedForms = LINKED_FORMS;");
-			sbf.append(p).append("initialize();");
-		}
-
-		sbf.append("\n\t}");
-
-		/*
-		 * methods to be implemented. Schema is cast to specific class if it is
-		 * defined, else null is used
-		 */
-		p = "\n\n\t@Override\n\tpublic " + cls;
-
-		/*
-		 * newFormData();
-		 */
-		sbf.append(p).append("Fd newFormData() {");
-		sbf.append("\n\t\treturn new ").append(cls).append("Fd(this, null, null, null);\n\t}");
-
-		/*
-		 *
-		 * public FormData parse(...)
-		 */
-		sbf.append(p).append("Fd  parse(final JsonObject json, final boolean forInsert, final IServiceContext ctx) {");
-		sbf.append("\n\t\treturn (").append(cls).append("Fd)super.parse(json, forInsert, ctx);\n\t}");
-
-		/*
-		 *
-		 * public FormData parse(...)
-		 */
-		sbf.append(p).append("Fd  parseKeys(final JsonObject json, final IServiceContext ctx) {");
-		sbf.append("\n\t\treturn (").append(cls).append("Fd)super.parseKeys(json, ctx);\n\t}");
-
-		/*
-		 * public formDataTable parseTable(...)
-		 */
-		sbf.append(p).append(
-				"Fdt  parseTable(final JsonArray arr, final boolean forInsert, final IServiceContext ctx, final String tableName) {");
-		sbf.append("\n\t\treturn (").append(cls).append("Fdt)super.parseTable(arr, forInsert, ctx, tableName);\n\t}");
-
-		/*
-		 * newFormDataTable();
-		 */
-		sbf.append(p).append("Fdt newFormDataTable() {");
-		sbf.append("\n\t\treturn new ").append(cls).append("Fdt(this, null, null, null);\n\t}");
-
-		/*
-		 * newFormData(schemaData, values, data)
-		 */
-		sbf.append(p).append(
-				"Fd newFormData(final SchemaData schemaData, final Object[] values, final FormDataTable[] data) {");
-		sbf.append("\n\t\treturn new ").append(cls).append("Fd(this, ");
-		if (schClass != null) {
-			sbf.append("(").append(schClass).append("Data) schemaData");
-		} else {
-			sbf.append("null");
-		}
-		sbf.append(", values, data);\n\t}");
-
-		/*
-		 * newFormDataTable(table, values);
-		 */
-		sbf.append(p).append(
-				"Fdt newFormDataTable(final SchemaDataTable table, final Object[][] values, FormDataTable[][] linkedData) {");
-		sbf.append("\n\t\treturn new ").append(cls).append("Fdt(this, ");
-		if (schClass != null) {
-			sbf.append("(").append(schClass).append("DataTable) table");
-		} else {
-			sbf.append("null");
-		}
-		sbf.append(", values, linkedData);\n\t}");
-
-		sbf.append("\n}\n");
-	}
-
-	void emitJavaFormData(final StringBuilder sbf, final String packageName, final Map<String, DataType> dataTypes) {
-		/*
-		 * our package name is rootPAckage + any prefix/qualifier in our name
-		 *
-		 * e.g. if name a.b.schema1 then prefix is a.b and className is Schema1
-		 */
-		String pck = packageName + ".form";
-		final String qual = Util.getClassQualifier(this.name);
-		if (qual != null) {
-			pck += '.' + qual;
-		}
-
-		sbf.append("package ").append(pck).append(";\n");
-
-		/*
-		 * imports.
-		 */
-		Util.emitImport(sbf, FormData.class);
-		Util.emitImport(sbf, FormDataTable.class);
-		String schClass = null;
-		if (this.schemaName == null) {
-			Util.emitImport(sbf, SchemaData.class);
-		} else {
-			schClass = Util.toClassName(this.schemaName);
-			sbf.append("\nimport ").append(packageName).append(".schema.").append(schClass).append("Data;");
-		}
-
-		if (this.localFields != null) {
-			Util.emitImport(sbf, LocalDate.class);
-			Util.emitImport(sbf, Instant.class);
-		}
-
-		/*
-		 * class declaration
-		 */
-		final String cls = Util.toClassName(this.name);
-		sbf.append("\n/** class for form data ").append(this.name).append("  */");
-		sbf.append("\npublic class ").append(cls).append("Fd extends FormData {");
 
 		/*
 		 * constructor
-		 */
-		sbf.append("\n\tpublic ").append(cls).append("Fd(final ").append(cls).append("Form form, final ");
-		if (schClass == null) {
-			sbf.append("SchemaData");
-		} else {
-			sbf.append(schClass).append("Data");
-		}
-		sbf.append(" dataObject, final Object[] values, final FormDataTable[] data) {");
-		sbf.append("\n\t\tsuper(form, dataObject, values, data);");
-		sbf.append("\n\t}");
-
-		/*
-		 * override getSchemaData() to return concrete class
-		 */
-		if (schClass != null) {
-			sbf.append("\n\n\t@Override\n\tpublic ").append(schClass).append("Data getSchemaData() {");
-			sbf.append("\n\t\treturn (").append(schClass).append("Data) this.dataObject;\n\t}");
-
-			sbf.append(
-					"\n\n\t/**\n\t * replace underlying data\n\t * @param table non-null \n\t */\n\tpublic void replaceSchemaData(")
-					.append(schClass).append("Data data) {");
-			sbf.append("\n\t\tthis.dataObject = data;\n\t}");
-		}
-		/*
-		 * setters and getters in case we have local fields
-		 */
-		if (this.localFields != null) {
-			Generator.emitJavaGettersAndSetters(this.localFields, sbf, dataTypes);
-		}
-
-		/*
-		 * getters for linked table if required
-		 */
-		if (this.linkedForms != null) {
-			for (final LinkedForm lf : this.linkedForms) {
-				lf.emitJavaGetSetter(sbf);
-			}
-		}
-
-		sbf.append("\n}\n");
-	}
-
-	void emitJavaFormDataTable(final StringBuilder sbf, final String packageName) {
-		/*
-		 * our package name is rootPAckage + any prefix/qualifier in our name
 		 *
-		 * e.g. if name a.b.schema1 then prefix is a.b and className is Schema1
 		 */
-		String pck = packageName + ".form";
-		final String qual = Util.getClassQualifier(this.name);
-		if (qual != null) {
-			pck += '.' + qual;
-		}
+		sbf.append("\n/** constructor */\npublic ").append(cls).append("() {");
+		sbf.append("\n\t\tsuper(NAME, RECORD, OPS, LINKS);\n\t}");
 
-		final String cls = Util.toClassName(this.name);
-		sbf.append("package ").append(pck).append(";\n");
-
-		/*
-		 * imports
-		 */
-		Util.emitImport(sbf, FormDataTable.class);
-		String schClass = null;
-		if (this.schemaName == null) {
-			Util.emitImport(sbf, SchemaDataTable.class);
-		} else {
-			schClass = Util.toClassName(this.schemaName);
-			sbf.append("\nimport ").append(packageName).append(".schema.").append(schClass).append("DataTable;");
-		}
-
-		/*
-		 * class declaration
-		 */
-		sbf.append("\n/** class for form data table ").append(this.name).append("  */");
-		sbf.append("\npublic class ").append(cls).append("Fdt extends FormDataTable {");
-
-		/*
-		 * constructor
-		 */
-		sbf.append("\n\tpublic ").append(cls).append("Fdt(final ").append(cls).append("Form form, final ");
-		if (schClass == null) {
-			sbf.append("Schema");
-		} else {
-			sbf.append(schClass);
-		}
-		sbf.append("DataTable dataTable, final Object[][] values, FormDataTable[][] linkedData) {");
-		sbf.append("\n\t\tsuper(form, dataTable, values, linkedData);");
-		sbf.append("\n\t}");
-
-		/*
-		 * getSchemaDataTable()
-		 */
-		if (schClass != null) {
-			sbf.append("\n\n\t@Override\n\tpublic ").append(schClass).append("DataTable getDataTable() {");
-			sbf.append("\n\t\t return (").append(schClass).append("DataTable) this.dataTable;\n\t}");
-
-			sbf.append(
-					"\n\n\t/**\n\t * replace underlying data\n\t * @param table non-null \n\t */\n\tpublic void replaceSchemaDataTable(")
-					.append(schClass).append("DataTable table) {");
-			sbf.append("\n\t\tthis.dataTable = table;\n\t}");
-		}
 		sbf.append("\n}\n");
 	}
 
@@ -585,10 +301,10 @@ public class Form {
 		/*
 		 * auto-service operations?
 		 */
-		if (this.dbOperations != null && this.dbOperations.length > 0) {
+		if (this.operations != null && this.operations.length > 0) {
 			sbf.append("\n\t\tthis.opsAllowed = {");
 			boolean first = true;
-			for (String op : this.dbOperations) {
+			for (String op : this.operations) {
 				op = op.trim().toLowerCase();
 				final Integer obj = OP_INDEXES.get(op);
 				if (obj == null) {
@@ -605,12 +321,7 @@ public class Form {
 			sbf.append("};");
 		}
 
-		/*
-		 * inter field validations
-		 */
-		if (this.schema != null) {
-			this.schema.emitTs(sbf);
-		}
+		this.record.emitTs(sbf);
 		/*
 		 * fields with drop-downs
 		 */
@@ -746,5 +457,4 @@ public class Form {
 			return "string";
 		}
 	}
-
 }

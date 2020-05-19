@@ -22,13 +22,11 @@
 
 package org.simplity.fm.core.rdb;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.function.Function;
 
-import org.simplity.fm.core.data.Schema;
-import org.simplity.fm.core.data.SchemaData;
-import org.simplity.fm.core.data.SchemaDataTable;
+import org.simplity.fm.core.data.DbRecord;
+import org.simplity.fm.core.data.DbTable;
 
 /**
  * A Sql that is designed to filter rows from the RDBMS. That is, result may
@@ -36,11 +34,11 @@ import org.simplity.fm.core.data.SchemaDataTable;
  *
  * @author simplity.org
  * @param <T>
- *            SchemaDataTable returned when more than one rows are filtered
+ *            record that describes the result-set row returned by this sql
  *
  */
-public abstract class FilterWithSchemaSql<T extends SchemaDataTable> extends Sql {
-	protected Schema schema;
+public abstract class FilterWithRecordSql<T extends DbRecord> extends Sql {
+	T record;
 
 	/**
 	 * filter rows into a data table
@@ -50,11 +48,11 @@ public abstract class FilterWithSchemaSql<T extends SchemaDataTable> extends Sql
 	 *         empty
 	 * @throws SQLException
 	 */
-	@SuppressWarnings("unchecked")
-	public T filter(final DbHandle handle) throws SQLException {
-		final T table = (T) this.schema.newSchemaDataTable();
-		table.filter(handle, this.sqlText, this.inputData.getRawData());
+	public DbTable<T> filter(final DbHandle handle) throws SQLException {
+		final DbTable<T> table = new DbTable<>(this.record);
+		table.filter(this.sqlText, this.inputData.getRawData(), handle);
 		return table;
+
 	}
 
 	/**
@@ -62,13 +60,13 @@ public abstract class FilterWithSchemaSql<T extends SchemaDataTable> extends Sql
 	 * hence the caller need not handle the case with no rows
 	 *
 	 * @param handle
-	 * @return non-null non-empty schema data table with all filtered with the
+	 * @return non-null non-empty dbTable with all filtered with the
 	 *         first filtered row
 	 * @throws SQLException
 	 *             thrown when any SQL exception, OR when no rows are filtered
 	 */
-	public T filterOrFail(final DbHandle handle) throws SQLException {
-		final T result = this.filter(handle);
+	public DbTable<T> filterOrFail(final DbHandle handle) throws SQLException {
+		final DbTable<T> result = this.filter(handle);
 
 		if (result.length() == 0) {
 			throw new SQLException("Filter did not return any row. " + this.getState());
@@ -81,33 +79,14 @@ public abstract class FilterWithSchemaSql<T extends SchemaDataTable> extends Sql
 	 * the entire dataTable,
 	 *
 	 * @param handle
-	 * @param fn
-	 *            call back function that takes SchemaData as parameter, and
+	 * @param rowProcessor
+	 *            call back function that takes record as parameter, and
 	 *            returns true to continue to read, and false if it is not
 	 *            interested in getting any more rows
 	 * @throws SQLException
 	 */
-	public void forEach(final DbHandle handle, final RowProcessor fn) throws SQLException {
-		final String sql = this.schema.getDbAssistant().getSelectClause() + ' ' + this.sqlText;
-		handle.read(new IDbReader() {
-
-			@Override
-			public String getPreparedStatement() {
-				return sql;
-			}
-
-			@Override
-			public void setParams(final PreparedStatement ps) throws SQLException {
-				FilterWithSchemaSql.this.inputData.setPsParams(ps);
-			}
-
-			@Override
-			public boolean readARow(final ResultSet rs) throws SQLException {
-				final SchemaData data = FilterWithSchemaSql.this.schema.newSchemaData();
-				data.readFromRs(rs);
-				return fn.process(data);
-			}
-		});
+	public void forEach(final DbHandle handle, final Function<DbRecord, Boolean> rowProcessor) throws SQLException {
+		this.record.forEach(this.sqlText, this.inputData.getRawData(), handle, rowProcessor);
 	}
 
 }

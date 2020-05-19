@@ -22,25 +22,21 @@
 
 package org.simplity.fm.core.service;
 
-import java.io.IOException;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.MessageType;
-import org.simplity.fm.core.data.FormData;
-import org.simplity.fm.core.data.FormDataTable;
-import org.simplity.fm.core.data.SchemaData;
-import org.simplity.fm.core.data.SchemaDataTable;
+import org.simplity.fm.core.data.Field;
+import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.http.LoggedInUser;
+import org.simplity.fm.core.serialize.ISerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.gson.stream.JsonWriter;
 
 /**
  * Simple implementation of service context. Application can use this, extend it
@@ -53,7 +49,7 @@ public class DefaultContext implements IServiceContext {
 	protected static Logger logger = LoggerFactory.getLogger(DefaultContext.class);
 	protected List<Message> messages = new ArrayList<>();
 	protected int nbrErrors = 0;
-	protected Writer responseWriter;
+	protected ISerializer serializer;
 	protected LoggedInUser loggedInUser;
 	protected Object tenantId;
 	protected boolean responseSet;
@@ -65,10 +61,10 @@ public class DefaultContext implements IServiceContext {
 	/**
 	 *
 	 * @param loggedInUser
-	 * @param responseWriter
+	 * @param serializer
 	 */
-	public DefaultContext(final LoggedInUser loggedInUser, final Writer responseWriter) {
-		this.responseWriter = responseWriter;
+	public DefaultContext(final LoggedInUser loggedInUser, final ISerializer serializer) {
+		this.serializer = serializer;
 		this.loggedInUser = loggedInUser;
 	}
 
@@ -89,8 +85,8 @@ public class DefaultContext implements IServiceContext {
 	}
 
 	@Override
-	public Writer getResponseWriter() {
-		return this.responseWriter;
+	public ISerializer getSerializer() {
+		return this.serializer;
 	}
 
 	@Override
@@ -148,58 +144,26 @@ public class DefaultContext implements IServiceContext {
 	}
 
 	@Override
-	public boolean setAsResponse(final SchemaData data) throws IOException {
+	public void setAsResponse(final Record record) {
 		if (this.responseSet) {
-			logger.error("A response is already set. Can not write data from {} again.", data.getClass().getName());
-			return false;
+			throw new ApplicationError("Cannot set " + record.getName()
+					+ " as response-record. A response is already set or the serializer is already in use.");
 		}
-		try (final JsonWriter writer = new JsonWriter(this.responseWriter)) {
-			writer.beginObject();
-			data.serializeFields(writer);
-			writer.endObject();
-		}
+		this.serializer.beginObject();
+		this.serializer.fields(record);
+		this.serializer.endObject();
 		this.responseSet = true;
-		return true;
 	}
 
 	@Override
-	public boolean setAsResponse(final SchemaDataTable data) throws IOException {
+	public void setAsResponse(final Field[] fields, final Object[][] values) {
 		if (this.responseSet) {
-			logger.error("A response is already set. Can not write data from {} again.", data.getClass().getName());
-			return false;
+			throw new ApplicationError(
+					"Cannot set fields  as response. A response is already set or the serializer is already in use.");
 		}
-		try (final JsonWriter writer = new JsonWriter(this.responseWriter)) {
-			data.serializeRows(writer);
-		}
+		this.serializer.beginArray();
+		this.serializer.arrayElements(fields, values);
+		this.serializer.endArray();
 		this.responseSet = true;
-		return true;
-	}
-
-	@Override
-	public boolean setAsResponse(final FormData fd) throws IOException {
-		if (this.responseSet) {
-			logger.error("A response is already set. Can not write data from {} again.", fd.getClass().getName());
-			return false;
-		}
-		try (final JsonWriter writer = new JsonWriter(this.responseWriter)) {
-			writer.beginObject();
-			fd.serializeFields(writer);
-			writer.endObject();
-		}
-		this.responseSet = true;
-		return true;
-	}
-
-	@Override
-	public boolean setAsResponse(final FormDataTable data) throws IOException {
-		if (this.responseSet) {
-			logger.error("A response is already set. Can not write data from {} again.", data.getClass().getName());
-			return false;
-		}
-		try (final JsonWriter writer = new JsonWriter(this.responseWriter)) {
-			data.serializeRows(writer);
-		}
-		this.responseSet = true;
-		return true;
 	}
 }

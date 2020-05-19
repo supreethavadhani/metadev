@@ -37,8 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * assistant to a Form/schema to save-to or extract-from db. Generated classes
- * for form/schema include code to have the right instance of this assistant.
+ * assistant to a record to save-to or extract-from db. Generated classes
+ * for record include code to have the right instance of this assistant.
  * That is, the generator takes care of setting all the attributes of this
  * instance.
  *
@@ -116,7 +116,7 @@ public class DbAssistant {
 	protected final DbField timestampField;
 
 	/**
-	 * number of fields in the schema to which this meta data is attached
+	 * number of fields in the record to which this meta data is attached
 	 */
 	protected final int nbrFieldsInARow;
 
@@ -192,7 +192,7 @@ public class DbAssistant {
 
 	/**
 	 * return the select clause (like select a,b,...) without the where clause
-	 * for this schema
+	 * for this record
 	 *
 	 * @return string that is a valid select-part of a sql that can be used with
 	 *         a were clause to filter rows from the underlying dbtable.view
@@ -318,7 +318,7 @@ public class DbAssistant {
 	 */
 	boolean saveAll(final DbHandle handle, final Object[][] rows) throws SQLException {
 		if (this.generatedKeyIdx == -1) {
-			logger.info("Schema has no generated key. Each rowis first updated, failing which it is inserted.");
+			logger.info("record has no generated key. Each rowis first updated, failing which it is inserted.");
 			return this.updateOrInsert(handle, rows);
 		}
 		final int nbrRows = rows.length;
@@ -372,7 +372,7 @@ public class DbAssistant {
 	 */
 	boolean save(final DbHandle handle, final Object[] fieldValues) throws SQLException {
 		if (this.generatedKeyIdx == -1) {
-			final String msg = "Schema has no generated key. save opertion is not possible.";
+			final String msg = "record has no generated key. save opertion is not possible.";
 			logger.error(msg);
 			throw new SQLException(msg);
 		}
@@ -452,7 +452,7 @@ public class DbAssistant {
 
 		/*
 		 * create a new list of array, based on the params. Note that a row in
-		 * values[] is based on the fields in the schema, but we need the array
+		 * values[] is based on the fields in the record, but we need the array
 		 * based on the columns in the params. Hence we create a new list by
 		 * copying values in te right order
 		 *
@@ -507,7 +507,7 @@ public class DbAssistant {
 
 	/**
 	 * fetch data for this form from a db based on the primary key of this
-	 * schema
+	 * record
 	 *
 	 * @param handle
 	 * @param values
@@ -522,7 +522,7 @@ public class DbAssistant {
 	boolean read(final DbHandle handle, final Object[] values) throws SQLException {
 		if (values == null || values.length < this.nbrFieldsInARow) {
 			logger.error(
-					"This schema has {} fields but an array of length {} is assigned to receive data. Data not extracted.",
+					"This record has {} fields but an array of length {} is assigned to receive data. Data not extracted.",
 					this.nbrFieldsInARow, values == null ? 0 : values.length);
 			return false;
 		}

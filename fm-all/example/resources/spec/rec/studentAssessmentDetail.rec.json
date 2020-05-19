@@ -1,0 +1,77 @@
+    {
+    "name": "studentAssessmentDetail",
+    "nameInDb": "student_assessment_details",
+    "operations": [
+        "filter",
+        "get"
+    ],
+    "fields": [
+        {
+            "name": "studentAssessmentId",
+            "dataType": "id",
+            "dbColumnName": "student_assessment_id",
+            "columnType": "generatedPrimaryKey"
+        },
+        {
+            "name": "instituteId",
+            "dataType": "tenantKey",
+            "dbColumnName": "institute_id",
+            "columnType": "tenantKey"
+        },
+        {
+            "name": "subjectSectionId",
+            "dataType": "id",
+            "dbColumnName": "subject_section_id",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "assessmentSchemeId",
+            "dataType": "id",
+            "dbColumnName": "assessment_scheme_id",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "assessmentSeqNo",
+            "dataType": "integer",
+            "dbColumnName": "assessment_seq_no",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "studentId",
+            "dataType": "id",
+            "dbColumnName": "student_id",
+            "columnType": "requiredData"
+        },
+        {
+            "name": "name",
+            "dataType": "name",
+            "dbColumnName": "name",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "usn",
+            "dataType": "text",
+            "dbColumnName": "usn",
+            "columnType": "optionalData"
+        },
+        {
+            "name": "hasAttended",
+            "dataType": "bool",
+            "dbColumnName": "has_attended",
+            "columnType": "optionalData",
+            "defaultValue": "false"
+        },
+        {
+            "name": "marksScored",
+            "dataType": "integer",
+            "dbColumnName": "marks_scored",
+            "columnType": "optionalData",
+            "defaultValue": "0"
+        },
+        {
+            "name": "marks",
+            "dataType": "text",
+            "defaultValue": ""
+        }
+    ]
+}

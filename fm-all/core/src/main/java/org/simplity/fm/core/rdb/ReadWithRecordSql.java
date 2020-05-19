@@ -24,32 +24,30 @@ package org.simplity.fm.core.rdb;
 
 import java.sql.SQLException;
 
-import org.simplity.fm.core.data.Schema;
-import org.simplity.fm.core.data.SchemaData;
+import org.simplity.fm.core.data.DbRecord;
 
 /**
  * A Sql that is designed to read just one row from the RDBMS.
  *
  * @author simplity.org
  * @param <T>
- *            SchemaData returned when reading
+ *            record returned when reading
  *
  */
-public abstract class ReadWithSchemaSql<T extends SchemaData> extends Sql {
-	protected Schema schema;
+public abstract class ReadWithRecordSql<T extends DbRecord> extends Sql {
+	protected DbRecord record;
 
 	/**
 	 * read a row suing this sql
-	 * 
+	 *
 	 * @param handle
 	 * @return null if read did not succeed.
 	 * @throws SQLException
 	 */
 	@SuppressWarnings("unchecked")
 	public T filterFirst(final DbHandle handle) throws SQLException {
-		final T data = (T) this.schema.newSchemaData();
-		if (data.filterFirstOne(handle, this.sqlText, this.inputData.getRawData())) {
-			return data;
+		if (this.record.filterFirst(this.sqlText, this.inputData.getRawData(), handle)) {
+			return (T) this.record;
 		}
 		return null;
 	}
@@ -59,7 +57,7 @@ public abstract class ReadWithSchemaSql<T extends SchemaData> extends Sql {
 	 * caller need not handle the case with no rows
 	 *
 	 * @param handle
-	 * @return non-null schema data with the first filtered row
+	 * @return non-null record with the first filtered row
 	 * @throws SQLException
 	 *             thrown when any SQL exception, OR when no rows are filtered
 	 */

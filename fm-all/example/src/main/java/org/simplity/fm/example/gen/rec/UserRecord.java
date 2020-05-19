@@ -45,7 +45,7 @@ public class UserRecord extends DbRecord {
 
 	private static final RecordMetaData META = new RecordMetaData("user", FIELDS, VALIDS);
 	/* DB related */
-	private static final  boolean[] OPS = {false, false, false, false, false, false};
+	private static final  boolean[] OPS = {true, true, true, true, true, false};
 	private static final String SELECT = "SELECT user_id, institute_id, trust_id, user_type, login_id, password, login_enabled, previous_login_at, current_login_at, reset_password_count, reset_password_sent_at, current_login_ip, previous_login_ip, login_count, confirmation_token, login_token, created_at, created_by, updated_at, updated_by FROM users";
 	private static final int[] SELECT_IDX = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
 	private static final  String INSERT = "INSERT INTO users(institute_id, trust_id, user_type, login_id, password, login_enabled, previous_login_at, current_login_at, reset_password_count, reset_password_sent_at, current_login_ip, previous_login_ip, login_count, confirmation_token, login_token, created_at, created_by, updated_at, updated_by) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,  CURRENT_TIMESTAMP , ?,  CURRENT_TIMESTAMP , ?)";
@@ -71,7 +71,7 @@ public class UserRecord extends DbRecord {
 	}
 
 	@Override
-	protected UserRecord newInstance(final Object[] values) {
+	public UserRecord newInstance(final Object[] values) {
 		return new UserRecord(values);
 	}
 }

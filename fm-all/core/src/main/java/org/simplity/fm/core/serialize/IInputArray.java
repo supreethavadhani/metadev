@@ -20,12 +20,30 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core;
+package org.simplity.fm.core.serialize;
+
+import java.util.function.Function;
 
 /**
+ * represents an array. In our usage, array ALWAYS contains objects as elements.
+ * We DO NOT use array of primitives or array of arrays
+ *
  * @author simplity.org
  *
  */
-public interface ISerializer {
+public interface IInputArray extends Iterable<IInputObject> {
+
+	/**
+	 *
+	 * @return size/length. could be zero
+	 */
+	int length();
+
+	/**
+	 * iterator over member objects, with an option to break out of the loop
+	 *
+	 * @param fn
+	 */
+	void forEach(Function<IInputObject, Boolean> fn);
 
 }

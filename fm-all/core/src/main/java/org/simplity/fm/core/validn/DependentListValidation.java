@@ -24,7 +24,7 @@ package org.simplity.fm.core.validn;
 
 import org.simplity.fm.core.ComponentProvider;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.data.SchemaData;
+import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
@@ -60,12 +60,12 @@ public class DependentListValidation implements IValidation {
 	}
 
 	@Override
-	public boolean isValid(final SchemaData dataRow, final IServiceContext ctx) {
-		final Object fieldValue = dataRow.getValue(this.fieldIndex);
+	public boolean isValid(final Record record, final IServiceContext ctx) {
+		final Object fieldValue = record.getValue(this.fieldIndex);
 		if (fieldValue == null) {
 			return true;
 		}
-		final Object keyValue = dataRow.getValue(this.parentFieldIndex);
+		final Object keyValue = record.getValue(this.parentFieldIndex);
 		if (keyValue == null) {
 			return true;
 		}

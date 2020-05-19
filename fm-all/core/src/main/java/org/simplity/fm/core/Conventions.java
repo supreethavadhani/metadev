@@ -216,9 +216,9 @@ public class Conventions {
 		public static final String FOLDER_NAME_FORM = "form";
 
 		/**
-		 * folder name under which schema classes are generated
+		 * folder name under which record classes are generated
 		 */
-		public static final String FOLDER_NAME_SCHEMA = "schema";
+		public static final String FOLDER_NAME_RECORD = "rec";
 		/**
 		 * generated form classes are named with this suffix. e.g. instituteForm
 		 */
@@ -228,10 +228,10 @@ public class Conventions {
 		 */
 		public static final String SQL_CLASS_SUFIX = "Sql";
 		/**
-		 * generated schema classes are named with this suffix. e.g.
-		 * instituteSchema
+		 * generated record classes are named with this suffix. e.g.
+		 * instituteRecord
 		 */
-		public static final String SCHEMA_CLASS_SUFIX = "Schema";
+		public static final String RECORD_CLASS_SUFIX = "Record";
 		/**
 		 * predefined name for list service
 		 */
@@ -252,9 +252,9 @@ public class Conventions {
 		 */
 		public static final String USER_IN_CTX = "_user";
 		/**
-		 * name of schema to be used to get user details for creating context
+		 * name of record to be used to get user details for creating context
 		 */
-		public static final String USER_SCHEMA_NAME = "user";
+		public static final String USER_RECORD_NAME = "user";
 
 	}
 
