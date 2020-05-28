@@ -24,12 +24,12 @@ package org.simplity.fm.core.data;
 
 import java.sql.SQLException;
 import java.util.List;
-import java.util.function.Function;
 
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.RdbDriver;
+import org.simplity.fm.core.rdb.RecordProcessor;
 import org.simplity.fm.core.serialize.IInputObject;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.IServiceContext;
@@ -107,7 +107,7 @@ public abstract class DbRecord extends Record {
 	 */
 	public void readOrFail(final DbHandle handle) throws SQLException {
 		if (!this.dba.read(handle, this.fieldValues)) {
-			throw new SQLException("Read failed for " + this.getName() + this.dba.emitKeys(this.fieldValues));
+			throw new SQLException("Read failed for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
 	}
 
@@ -213,7 +213,7 @@ public abstract class DbRecord extends Record {
 	public void insertOrFail(final DbHandle handle) throws SQLException {
 		if (!this.dba.insert(handle, this.fieldValues)) {
 			throw new SQLException(
-					"Insert failed silently for " + this.getName() + this.dba.emitKeys(this.fieldValues));
+					"Insert failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
 	}
 
@@ -241,7 +241,7 @@ public abstract class DbRecord extends Record {
 	public void updateOrFail(final DbHandle handle) throws SQLException {
 		if (!this.dba.update(handle, this.fieldValues)) {
 			throw new SQLException(
-					"Update failed silently for " + this.getName() + this.dba.emitKeys(this.fieldValues));
+					"Update failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
 	}
 
@@ -263,7 +263,8 @@ public abstract class DbRecord extends Record {
 	 */
 	public void saveOrFail(final DbHandle handle) throws SQLException {
 		if (!this.dba.save(handle, this.fieldValues)) {
-			throw new SQLException("Save failed silently for " + this.getName() + this.dba.emitKeys(this.fieldValues));
+			throw new SQLException(
+					"Save failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
 
 	}
@@ -291,7 +292,7 @@ public abstract class DbRecord extends Record {
 	public void deleteOrFail(final DbHandle handle) throws SQLException {
 		if (!this.dba.delete(handle, this.fieldValues)) {
 			throw new SQLException(
-					"Delete failed silently for " + this.getName() + this.dba.emitKeys(this.fieldValues));
+					"Delete failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
 	}
 
@@ -320,14 +321,14 @@ public abstract class DbRecord extends Record {
 	 */
 	public IService getService(final IoType operation, final String serviceName) {
 		if (!this.dba.operationAllowed(operation)) {
-			logger.info("{} operation is not allowed on record {}", operation, this.getName());
+			logger.info("{} operation is not allowed on record {}", operation, this.fetchName());
 			return null;
 		}
 
 		String sn = serviceName;
 		if (sn == null || sn.isEmpty()) {
 			sn = operation.name();
-			sn = serviceName.substring(0, 1).toLowerCase() + serviceName.substring(1) + '_' + this.getName();
+			sn = serviceName.substring(0, 1).toLowerCase() + serviceName.substring(1) + '_' + this.fetchName();
 		}
 		switch (operation) {
 		case Get:
@@ -488,25 +489,30 @@ public abstract class DbRecord extends Record {
 				result[0] = list.toArray(new Object[0][]);
 			});
 
-			ctx.setAsResponse(rec.getFields(), result[0]);
+			ctx.setAsResponse(rec.fetchFields(), result[0]);
 		}
 
 	}
 
 	/**
+	 * fetch is used instead of get to avoid clash with getters in generated
+	 * classes
+	 * 
 	 * @param fieldName
 	 * @return db field specified by this name, or null if there is no such name
 	 */
-	public DbField getField(final String fieldName) {
+	public DbField fetchField(final String fieldName) {
 		return this.dba.getField(fieldName);
 	}
 
 	/**
+	 * fetch is used instead of get to avoid clash with getters in generated
+	 * classes
 	 *
 	 * @return index of the generated key, or -1 if this record has no generated
 	 *         key
 	 */
-	public int getGeneratedKeyIndex() {
+	public int fetchGeneratedKeyIndex() {
 		return this.dba.getGeneratedKeyIndex();
 	}
 
@@ -521,11 +527,11 @@ public abstract class DbRecord extends Record {
 	 * @throws SQLException
 	 */
 	public void forEach(final String whereClause, final Object[] values, final DbHandle handle,
-			final Function<DbRecord, Boolean> rowProcessor) throws SQLException {
+			final RecordProcessor rowProcessor) throws SQLException {
 
 		this.dba.forEach(handle, whereClause, values, row -> {
 			final DbRecord rec = DbRecord.this.newInstance(row);
-			return rowProcessor.apply(rec);
+			return rowProcessor.process(rec);
 		});
 	}
 }

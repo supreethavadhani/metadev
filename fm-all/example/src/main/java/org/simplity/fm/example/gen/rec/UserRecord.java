@@ -5,7 +5,7 @@ import org.simplity.fm.core.data.RecordMetaData;
 import org.simplity.fm.core.data.Dba;
 import org.simplity.fm.core.data.DbField;
 import org.simplity.fm.core.data.DbRecord;
-import org.simplity.fm.core.data.ColumnType;
+import org.simplity.fm.core.data.FieldType;
 import org.simplity.fm.core.validn.IValidation;
 import org.simplity.fm.core.service.IServiceContext;
 import com.google.gson.JsonObject;
@@ -19,26 +19,26 @@ import org.simplity.fm.example.gen.DefinedDataTypes;
  */ 
 public class UserRecord extends DbRecord {
 	private static final Field[] FIELDS = {
-			new DbField("userId", 0, DefinedDataTypes.flexibleId, null, null, null, "user_id", ColumnType.GeneratedPrimaryKey), 
-			new DbField("instituteId", 1, DefinedDataTypes.tenantKey, null, null, null, "institute_id", ColumnType.TenantKey), 
-			new DbField("trustId", 2, DefinedDataTypes.id, null, null, null, "trust_id", ColumnType.OptionalData), 
-			new DbField("userType", 3, DefinedDataTypes.userType, "Student", null, "userType", "user_type", ColumnType.RequiredData), 
-			new DbField("loginId", 4, DefinedDataTypes.loginId, null, null, null, "login_id", ColumnType.RequiredData), 
-			new DbField("password", 5, DefinedDataTypes.text, null, null, null, "password", ColumnType.OptionalData), 
-			new DbField("loginEnabled", 6, DefinedDataTypes.bool, "false", null, null, "login_enabled", ColumnType.RequiredData), 
-			new DbField("previousLoginAt", 7, DefinedDataTypes.timestamp, null, null, null, "previous_login_at", ColumnType.OptionalData), 
-			new DbField("currentLoginAt", 8, DefinedDataTypes.timestamp, null, null, null, "current_login_at", ColumnType.OptionalData), 
-			new DbField("resetPasswordCount", 9, DefinedDataTypes.integer, null, null, null, "reset_password_count", ColumnType.OptionalData), 
-			new DbField("resetPasswordSentAt", 10, DefinedDataTypes.timestamp, null, null, null, "reset_password_sent_at", ColumnType.OptionalData), 
-			new DbField("currentLoginIp", 11, DefinedDataTypes.ip, null, null, null, "current_login_ip", ColumnType.OptionalData), 
-			new DbField("previousLoginIp", 12, DefinedDataTypes.ip, null, null, null, "previous_login_ip", ColumnType.OptionalData), 
-			new DbField("loginCount", 13, DefinedDataTypes.integer, null, null, null, "login_count", ColumnType.OptionalData), 
-			new DbField("confirmationToken", 14, DefinedDataTypes.text, null, null, null, "confirmation_token", ColumnType.OptionalData), 
-			new DbField("loginToken", 15, DefinedDataTypes.text, null, null, null, "login_token", ColumnType.OptionalData), 
-			new DbField("createdAt", 16, DefinedDataTypes.timestamp, null, null, null, "created_at", ColumnType.CreatedAt), 
-			new DbField("createdBy", 17, DefinedDataTypes.id, null, null, null, "created_by", ColumnType.CreatedBy), 
-			new DbField("updatedAt", 18, DefinedDataTypes.timestamp, null, null, null, "updated_at", ColumnType.ModifiedAt), 
-			new DbField("updatedBy", 19, DefinedDataTypes.id, null, null, null, "updated_by", ColumnType.ModifiedBy)
+			new DbField("userId", 0, DefinedDataTypes.flexibleId, null, null, null, "user_id", FieldType.GeneratedPrimaryKey), 
+			new DbField("instituteId", 1, DefinedDataTypes.tenantKey, null, null, null, "institute_id", FieldType.TenantKey), 
+			new DbField("trustId", 2, DefinedDataTypes.id, null, null, null, "trust_id", FieldType.OptionalData), 
+			new DbField("userType", 3, DefinedDataTypes.userType, "Student", null, "userType", "user_type", FieldType.RequiredData), 
+			new DbField("loginId", 4, DefinedDataTypes.loginId, null, null, null, "login_id", FieldType.RequiredData), 
+			new DbField("password", 5, DefinedDataTypes.text, null, null, null, "password", FieldType.OptionalData), 
+			new DbField("loginEnabled", 6, DefinedDataTypes.bool, "false", null, null, "login_enabled", FieldType.RequiredData), 
+			new DbField("previousLoginAt", 7, DefinedDataTypes.timestamp, null, null, null, "previous_login_at", FieldType.OptionalData), 
+			new DbField("currentLoginAt", 8, DefinedDataTypes.timestamp, null, null, null, "current_login_at", FieldType.OptionalData), 
+			new DbField("resetPasswordCount", 9, DefinedDataTypes.integer, null, null, null, "reset_password_count", FieldType.OptionalData), 
+			new DbField("resetPasswordSentAt", 10, DefinedDataTypes.timestamp, null, null, null, "reset_password_sent_at", FieldType.OptionalData), 
+			new DbField("currentLoginIp", 11, DefinedDataTypes.ip, null, null, null, "current_login_ip", FieldType.OptionalData), 
+			new DbField("previousLoginIp", 12, DefinedDataTypes.ip, null, null, null, "previous_login_ip", FieldType.OptionalData), 
+			new DbField("loginCount", 13, DefinedDataTypes.integer, null, null, null, "login_count", FieldType.OptionalData), 
+			new DbField("confirmationToken", 14, DefinedDataTypes.text, null, null, null, "confirmation_token", FieldType.OptionalData), 
+			new DbField("loginToken", 15, DefinedDataTypes.text, null, null, null, "login_token", FieldType.OptionalData), 
+			new DbField("createdAt", 16, DefinedDataTypes.timestamp, null, null, null, "created_at", FieldType.CreatedAt), 
+			new DbField("createdBy", 17, DefinedDataTypes.id, null, null, null, "created_by", FieldType.CreatedBy), 
+			new DbField("updatedAt", 18, DefinedDataTypes.timestamp, null, null, null, "updated_at", FieldType.ModifiedAt), 
+			new DbField("updatedBy", 19, DefinedDataTypes.id, null, null, null, "updated_by", FieldType.ModifiedBy)
 	};
 	private static final IValidation[] VALIDS = {
 	};

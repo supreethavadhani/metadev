@@ -24,7 +24,7 @@ package org.simplity.fm.core.rdb;
 
 import java.sql.SQLException;
 
-import org.simplity.fm.core.data.ValueObject;
+import org.simplity.fm.core.data.Record;
 
 /**
  * A Sql that is designed to read just one row from the RDBMS
@@ -35,7 +35,7 @@ import org.simplity.fm.core.data.ValueObject;
  *            the out data elements
  *
  */
-public abstract class ReadSql<T extends ValueObject> extends Sql {
+public abstract class ReadSql<T extends Record> extends Sql {
 
 	protected abstract T newOutputData();
 
@@ -70,7 +70,7 @@ public abstract class ReadSql<T extends ValueObject> extends Sql {
 		if (ok) {
 			return result;
 		}
-		logger.error(this.getState());
+		logger.error(this.showDetails());
 		throw new SQLException("Sql is expected to return one row, but it didn't.");
 	}
 }

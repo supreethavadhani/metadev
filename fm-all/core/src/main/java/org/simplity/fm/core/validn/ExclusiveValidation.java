@@ -65,8 +65,8 @@ public class ExclusiveValidation implements IValidation {
 
 	@Override
 	public boolean isValid(final Record record, final IServiceContext ctx) {
-		final Object val1 = record.getValue(this.index1);
-		final Object val2 = record.getValue(this.index2);
+		final Object val1 = record.fetchValue(this.index1);
+		final Object val2 = record.fetchValue(this.index2);
 
 		if (val1 == null) {
 			if (val2 == null && this.oneOfThemIsRequired) {

@@ -23,8 +23,10 @@
 package org.simplity.fm.core.service;
 
 import java.util.Collection;
+import java.util.List;
 
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.data.DbTable;
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.http.LoggedInUser;
@@ -126,7 +128,7 @@ public interface IServiceContext {
 	void setAsResponse(Record record);
 
 	/**
-	 * /**
+	 *
 	 * serialize this data as response. Note that this can be called only once
 	 * with success. any subsequent call will result an ApplicationError()
 	 * exception. Also, this cannot be called after a call to getSerializer() is
@@ -137,4 +139,28 @@ public interface IServiceContext {
 	 */
 	void setAsResponse(Field[] fields, Object[][] objects);
 
+	/**
+	 * serialize this dbTAble as the response
+	 *
+	 * @param table
+	 */
+	void setAsResponse(final DbTable<?> table);
+
+	/**
+	 * set a header-lines data structure as response
+	 *
+	 * @param header
+	 * @param childName
+	 * @param lines
+	 */
+	void setAsResponse(Record header, String childName, DbTable<?> lines);
+
+	/**
+	 * set a header-lines data structure as response
+	 *
+	 * @param header
+	 * @param childName
+	 * @param lines
+	 */
+	void setAsResponse(Record header, String childName, List<? extends Record> lines);
 }

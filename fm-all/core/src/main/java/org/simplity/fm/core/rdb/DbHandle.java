@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.simplity.fm.core.data.PreparedStatementParam;
-import org.simplity.fm.core.data.ValueObject;
+import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,8 +69,7 @@ public class DbHandle {
 	 * @return true if a row was indeed read. false otherwise
 	 * @throws SQLException
 	 */
-	public boolean read(final String sql, final ValueObject inputData, final ValueObject outputData)
-			throws SQLException {
+	public boolean read(final String sql, final Record inputData, final Record outputData) throws SQLException {
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
 			if (inputData != null) {
 				inputData.setPsParams(ps);
@@ -191,7 +190,7 @@ public class DbHandle {
 	 * @return list of output Vos. could be empty, but not null
 	 * @throws SQLException
 	 */
-	public <T extends ValueObject> List<T> filter(final String sql, final ValueObject inputData, final T outputInstance)
+	public <T extends Record> List<T> filter(final String sql, final Record inputData, final T outputInstance)
 			throws SQLException {
 
 		logger.info("Filter called with T = {} ", outputInstance.getClass().getName());
@@ -204,7 +203,7 @@ public class DbHandle {
 			try (ResultSet rs = ps.executeQuery()) {
 				while (rs.next()) {
 					@SuppressWarnings("unchecked")
-					final T vo = (T) outputInstance.makeEmptyCopy();
+					final T vo = (T) outputInstance.newInstance();
 					logger.info("New instance of {} created for filtering", vo.getClass().getName());
 					vo.readFromRs(rs);
 					list.add(vo);
@@ -343,7 +342,7 @@ public class DbHandle {
 	 *         determine it
 	 * @throws SQLException
 	 */
-	public int write(final String sql, final ValueObject values) throws SQLException {
+	public int write(final String sql, final Record values) throws SQLException {
 		logger.info("Generic Write SQL:{}", sql);
 
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
@@ -472,10 +471,10 @@ public class DbHandle {
 	 *         assume it to be 1
 	 * @throws SQLException
 	 */
-	public int writeMany(final String sql, final ValueObject[] paramValues) throws SQLException {
+	public int writeMany(final String sql, final Record[] paramValues) throws SQLException {
 		logger.info("Generic Batch SQL:{}", sql);
 		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
-			for (final ValueObject row : paramValues) {
+			for (final Record row : paramValues) {
 				row.setPsParams(ps);
 				ps.addBatch();
 			}

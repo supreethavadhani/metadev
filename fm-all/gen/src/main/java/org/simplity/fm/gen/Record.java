@@ -22,6 +22,8 @@
 
 package org.simplity.fm.gen;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,8 +32,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.data.ColumnType;
 import org.simplity.fm.core.data.DbTable;
+import org.simplity.fm.core.data.FieldType;
+import org.simplity.fm.core.serialize.IInputObject;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.DependentListValidation;
 import org.simplity.fm.core.validn.ExclusiveValidation;
@@ -125,7 +128,7 @@ class Record {
 				list.add(field);
 			}
 
-			ColumnType ct = field.getColumnType();
+			FieldType ct = field.getFieldType();
 			if (ct == null) {
 				if (field.dbColumnName == null) {
 					logger.warn("{} is not linked to a db-column. No I/O happens on this field.", fieldName);
@@ -134,7 +137,7 @@ class Record {
 				logger.error(
 						"{} is linked to a db-column {} but does not specify a db-column-type. it is treated as an optionl field.",
 						fieldName, field.dbColumnName);
-				ct = ColumnType.OptionalData;
+				ct = FieldType.OptionalData;
 			}
 
 			field.isRequired = ct.isRequired();
@@ -246,7 +249,7 @@ class Record {
 		return new HashSet<>();
 	}
 
-	void emitJavaClass(final StringBuilder sbf, final String generatedPackage) {
+	void emitJavaClass(final StringBuilder sbf, final String generatedPackage, final DataTypes dataTypes) {
 		final String typesName = Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME;
 		/*
 		 * our package name is rootPackage + any prefix/qualifier in our name
@@ -264,13 +267,16 @@ class Record {
 		/*
 		 * imports
 		 */
+		Util.emitImport(sbf, LocalDate.class);
+		Util.emitImport(sbf, Instant.class);
+		Util.emitImport(sbf, IInputObject.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.Field.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.RecordMetaData.class);
 		if (isDb) {
 			Util.emitImport(sbf, org.simplity.fm.core.data.Dba.class);
 			Util.emitImport(sbf, org.simplity.fm.core.data.DbField.class);
 			Util.emitImport(sbf, org.simplity.fm.core.data.DbRecord.class);
-			Util.emitImport(sbf, ColumnType.class);
+			Util.emitImport(sbf, FieldType.class);
 		} else {
 			Util.emitImport(sbf, org.simplity.fm.core.data.Record.class);
 		}
@@ -328,6 +334,19 @@ class Record {
 		sbf.append("\n\n\t@Override\n\tpublic ").append(cls).append(" newInstance(final Object[] values) {");
 		sbf.append("\n\t\treturn new ").append(cls).append("(values);\n\t}");
 
+		/*
+		 * parseTable() override for better type-safety
+		 */
+		sbf.append("\n\n\t@Override\n\t@SuppressWarnings(\"unchecked\")\n\tpublic List<").append(cls);
+		sbf.append(
+				"> parseTable(final IInputObject inputObject, String memberName, final boolean forInsert, final IServiceContext ctx) {");
+		sbf.append("\n\t\treturn (List<").append(cls)
+				.append(">) super.parseTable(inputObject, memberName, forInsert, ctx);\n\t}");
+
+		/*
+		 * getters and setters
+		 */
+		Generator.emitJavaGettersAndSetters(this.fields, sbf, dataTypes.dataTypes);
 		sbf.append("\n}\n");
 	}
 
@@ -371,7 +390,13 @@ class Record {
 		}
 
 		sbf.append("\n\n\tprivate static final Dba DBA = new Dba(FIELDS, \"").append(this.nameInDb).append("\", OPS, ");
-		sbf.append("SELECT, SELECT_IDX, INSERT, INSERT_IDX, UPDATE, UPDATE_IDX, DELETE, WHERE, WHERE_IDX);");
+		sbf.append("SELECT, SELECT_IDX,");
+		if (this.keyFields == null) {
+			sbf.append("null, null, null, null, null, null, null");
+		} else {
+			sbf.append("INSERT, INSERT_IDX, UPDATE, UPDATE_IDX, DELETE, WHERE, WHERE_IDX");
+		}
+		sbf.append(");");
 		/*
 		 * constructor
 		 */
@@ -489,7 +514,7 @@ class Record {
 
 		boolean firstOne = true;
 		for (final Field field : this.fields) {
-			final ColumnType ct = field.getColumnType();
+			final FieldType ct = field.getFieldType();
 			if (ct == null) {
 				continue;
 			}
@@ -517,7 +542,7 @@ class Record {
 		boolean firstOne = true;
 		boolean firstField = true;
 		for (final Field field : this.fields) {
-			final ColumnType ct = field.getColumnType();
+			final FieldType ct = field.getFieldType();
 			if (ct == null || ct.isInserted() == false) {
 				continue;
 			}
@@ -528,7 +553,7 @@ class Record {
 				vbf.append(C);
 			}
 			sbf.append(field.dbColumnName);
-			if (ct == ColumnType.ModifiedAt || ct == ColumnType.CreatedAt) {
+			if (ct == FieldType.ModifiedAt || ct == FieldType.CreatedAt) {
 				vbf.append(" CURRENT_TIMESTAMP ");
 			} else {
 				vbf.append('?');
@@ -555,7 +580,7 @@ class Record {
 		boolean firstOne = true;
 		boolean firstField = true;
 		for (final Field field : this.fields) {
-			final ColumnType ct = field.getColumnType();
+			final FieldType ct = field.getFieldType();
 			if (ct == null || ct.isUpdated() == false) {
 				continue;
 			}
@@ -567,7 +592,7 @@ class Record {
 			}
 
 			updateBuf.append(field.dbColumnName).append("=");
-			if (ct == ColumnType.ModifiedAt) {
+			if (ct == FieldType.ModifiedAt) {
 				updateBuf.append(" CURRENT_TIMESTAMP ");
 			} else {
 				updateBuf.append(" ? ");
@@ -637,6 +662,12 @@ class Record {
 	}
 
 	void emitJavaTableClass(final StringBuilder sbf, final String generatedPackage) {
+		/*
+		 * table is defined only if this record is a DbRecord
+		 */
+		if (this.nameInDb == null || this.nameInDb.isEmpty()) {
+			return;
+		}
 		/*
 		 * our package name is rootPAckage + any prefix/qualifier in our name
 		 *

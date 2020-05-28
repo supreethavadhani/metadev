@@ -198,6 +198,26 @@ public class JsonSerializer implements ISerializer {
 	}
 
 	@Override
+	public void fields(final Record record) {
+		this.fields(record.fetchFields(), record.fetchRawData());
+
+	}
+
+	@Override
+	public void array(final String memberName, final Field[] fields, final Object[][] rows) {
+		try {
+			this.writer.name(memberName);
+			this.writer.beginArray();
+			if (rows != null && rows.length > 0) {
+				this.arrayElements(fields, rows);
+			}
+			this.writer.endArray();
+		} catch (final IOException e) {
+			throw new ApplicationError("", e);
+		}
+	}
+
+	@Override
 	public void arrayElements(final Field[] fields, final Object[][] rows) {
 		try {
 			for (final Object[] row : rows) {
@@ -214,9 +234,17 @@ public class JsonSerializer implements ISerializer {
 	}
 
 	@Override
-	public void fields(final Record record) {
-		this.fields(record.getFields(), record.getRawData());
-
+	public void array(final String memberName, final DbTable<?> table) {
+		try {
+			this.writer.name(memberName);
+			this.writer.beginArray();
+			if (table != null && table.length() > 0) {
+				this.arrayElements(table);
+			}
+			this.writer.endArray();
+		} catch (final IOException e) {
+			throw new ApplicationError("", e);
+		}
 	}
 
 	@Override

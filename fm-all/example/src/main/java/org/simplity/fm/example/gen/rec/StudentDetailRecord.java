@@ -5,7 +5,7 @@ import org.simplity.fm.core.data.RecordMetaData;
 import org.simplity.fm.core.data.Dba;
 import org.simplity.fm.core.data.DbField;
 import org.simplity.fm.core.data.DbRecord;
-import org.simplity.fm.core.data.ColumnType;
+import org.simplity.fm.core.data.FieldType;
 import org.simplity.fm.core.validn.IValidation;
 import org.simplity.fm.core.service.IServiceContext;
 import com.google.gson.JsonObject;
@@ -19,13 +19,13 @@ import org.simplity.fm.example.gen.DefinedDataTypes;
  */ 
 public class StudentDetailRecord extends DbRecord {
 	private static final Field[] FIELDS = {
-			new DbField("studentId", 0, DefinedDataTypes.flexibleId, "-1", null, null, "student_id", ColumnType.PrimaryKey), 
-			new DbField("instituteId", 1, DefinedDataTypes.tenantKey, null, null, null, "institute_id", ColumnType.TenantKey), 
-			new DbField("departmentId", 2, DefinedDataTypes.id, null, null, "departmentList", "department_id", ColumnType.RequiredData), 
-			new DbField("departmentName", 3, DefinedDataTypes.text, null, null, null, "department_name", ColumnType.RequiredData), 
-			new DbField("usn", 4, DefinedDataTypes.text, null, null, null, "usn", ColumnType.OptionalData), 
-			new DbField("name", 5, DefinedDataTypes.name, null, null, null, "name", ColumnType.RequiredData), 
-			new DbField("phoneNumber", 6, DefinedDataTypes.phone, null, null, null, "phone_number", ColumnType.RequiredData)
+			new DbField("studentId", 0, DefinedDataTypes.flexibleId, "-1", null, null, "student_id", FieldType.PrimaryKey), 
+			new DbField("instituteId", 1, DefinedDataTypes.tenantKey, null, null, null, "institute_id", FieldType.TenantKey), 
+			new DbField("departmentId", 2, DefinedDataTypes.id, null, null, "departmentList", "department_id", FieldType.RequiredData), 
+			new DbField("departmentName", 3, DefinedDataTypes.text, null, null, null, "department_name", FieldType.RequiredData), 
+			new DbField("usn", 4, DefinedDataTypes.text, null, null, null, "usn", FieldType.OptionalData), 
+			new DbField("name", 5, DefinedDataTypes.name, null, null, null, "name", FieldType.RequiredData), 
+			new DbField("phoneNumber", 6, DefinedDataTypes.phone, null, null, null, "phone_number", FieldType.RequiredData)
 	};
 	private static final IValidation[] VALIDS = {
 	};

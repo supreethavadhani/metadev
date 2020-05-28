@@ -23,7 +23,6 @@
 package org.simplity.fm.core.rdb;
 
 import java.sql.SQLException;
-import java.util.function.Function;
 
 import org.simplity.fm.core.data.DbRecord;
 import org.simplity.fm.core.data.DbTable;
@@ -38,7 +37,7 @@ import org.simplity.fm.core.data.DbTable;
  *
  */
 public abstract class FilterWithRecordSql<T extends DbRecord> extends Sql {
-	T record;
+	protected T record;
 
 	/**
 	 * filter rows into a data table
@@ -50,7 +49,7 @@ public abstract class FilterWithRecordSql<T extends DbRecord> extends Sql {
 	 */
 	public DbTable<T> filter(final DbHandle handle) throws SQLException {
 		final DbTable<T> table = new DbTable<>(this.record);
-		table.filter(this.sqlText, this.inputData.getRawData(), handle);
+		table.filter(this.sqlText, this.inputData.fetchRawData(), handle);
 		return table;
 
 	}
@@ -69,7 +68,7 @@ public abstract class FilterWithRecordSql<T extends DbRecord> extends Sql {
 		final DbTable<T> result = this.filter(handle);
 
 		if (result.length() == 0) {
-			throw new SQLException("Filter did not return any row. " + this.getState());
+			throw new SQLException("Filter did not return any row. " + this.showDetails());
 		}
 		return result;
 	}
@@ -79,14 +78,14 @@ public abstract class FilterWithRecordSql<T extends DbRecord> extends Sql {
 	 * the entire dataTable,
 	 *
 	 * @param handle
-	 * @param rowProcessor
+	 * @param recordProcessor
 	 *            call back function that takes record as parameter, and
 	 *            returns true to continue to read, and false if it is not
 	 *            interested in getting any more rows
 	 * @throws SQLException
 	 */
-	public void forEach(final DbHandle handle, final Function<DbRecord, Boolean> rowProcessor) throws SQLException {
-		this.record.forEach(this.sqlText, this.inputData.getRawData(), handle, rowProcessor);
+	public void forEach(final DbHandle handle, final RecordProcessor recordProcessor) throws SQLException {
+		this.record.forEach(this.sqlText, this.inputData.fetchRawData(), handle, recordProcessor);
 	}
 
 }

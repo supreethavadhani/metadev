@@ -262,7 +262,7 @@ public class Generator {
 		 * Record.java
 		 */
 		final StringBuilder sbf = new StringBuilder();
-		record.emitJavaClass(sbf, packageName);
+		record.emitJavaClass(sbf, packageName, dataTypes);
 		String outName = outNamePrefix + "Record.java";
 		Util.writeOut(outName, sbf);
 
@@ -271,8 +271,10 @@ public class Generator {
 		 */
 		sbf.setLength(0);
 		record.emitJavaTableClass(sbf, packageName);
-		outName = outNamePrefix + "Table.java";
-		Util.writeOut(outName, sbf);
+		if (sbf.length() > 0) {
+			outName = outNamePrefix + "Table.java";
+			Util.writeOut(outName, sbf);
+		}
 		return record;
 	}
 
@@ -360,7 +362,7 @@ public class Generator {
 
 			sbf.append("\n\n\t/**\n\t * @return value of ").append(nam).append("\n\t */");
 			sbf.append("\n\tpublic ").append(typ).append(" get").append(cls).append("(){");
-			sbf.append("\n\t\treturn super.get").append(get).append("Value(").append(f.index).append(");");
+			sbf.append("\n\t\treturn super.fetch").append(get).append("Value(").append(f.index).append(");");
 			sbf.append("\n\t}");
 		}
 

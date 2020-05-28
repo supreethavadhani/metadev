@@ -28,13 +28,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Function;
 
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.IDbReader;
 import org.simplity.fm.core.rdb.IDbWriter;
+import org.simplity.fm.core.rdb.RowProcessor;
 import org.simplity.fm.core.serialize.IInputObject;
 import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
@@ -188,7 +188,7 @@ public class Dba {
 		for (int i = 0; i < allFields.length; i++) {
 			final DbField fld = (DbField) allFields[i];
 			this.dbFields[i] = fld;
-			final ColumnType ct = fld.getColumnType();
+			final FieldType ct = fld.getFieldType();
 			if (ct == null) {
 				/*
 				 * not a true db field
@@ -741,8 +741,8 @@ public class Dba {
 		return result[0];
 	}
 
-	void forEach(final DbHandle handle, final String where, final Object[] inputValues,
-			final Function<Object[], Boolean> rowProcessor) throws SQLException {
+	void forEach(final DbHandle handle, final String where, final Object[] inputValues, final RowProcessor rowProcessor)
+			throws SQLException {
 
 		final String sql = where == null ? this.selectClause : (this.selectClause + ' ' + where);
 		final int nbrFields = this.dbFields.length;
@@ -772,7 +772,7 @@ public class Dba {
 				/*
 				 * return false if we are to read just one row
 				 */
-				return rowProcessor.apply(row);
+				return rowProcessor.process(row);
 			}
 		});
 	}

@@ -55,6 +55,19 @@ public class RecordMetaData {
 	}
 
 	/**
+	 * construct a record that is used locally, and is not part of components to
+	 * be discovered by others. In such a case, there is no need to provide a
+	 * unique name, and no need for validations
+	 *
+	 * @param fields
+	 */
+	public RecordMetaData(final Field[] fields) {
+		this.name = this.getClass().getName().toString();
+		this.fields = fields;
+		this.validations = null;
+	}
+
+	/**
 	 * @return the name
 	 */
 	public String getName() {

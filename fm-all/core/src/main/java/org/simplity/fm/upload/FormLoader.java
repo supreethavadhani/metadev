@@ -68,7 +68,7 @@ class FormLoader {
 		if (this.generatedKeyOutputName == null) {
 			this.keyIdx = -1;
 		} else {
-			this.keyIdx = this.record.getGeneratedKeyIndex();
+			this.keyIdx = this.record.fetchGeneratedKeyIndex();
 		}
 	}
 
@@ -92,7 +92,7 @@ class FormLoader {
 		for (final IValueProvider vp : this.valueProviders) {
 			idx++;
 			if (vp != null) {
-				this.record.setValue(idx, vp.getValue(values, ctx));
+				this.record.assignValue(idx, vp.getValue(values, ctx));
 			}
 		}
 
@@ -122,7 +122,7 @@ class FormLoader {
 		}
 
 		if (this.generatedKeyOutputName != null) {
-			final Object key = this.record.getValue(this.keyIdx);
+			final Object key = this.record.fetchValue(this.keyIdx);
 			if (key != null) {
 				values.put(this.generatedKeyOutputName, key.toString());
 			}

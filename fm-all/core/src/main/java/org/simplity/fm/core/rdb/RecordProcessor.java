@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 simplity.org
+ * Copyright (c) 2020 simplity.org
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,49 +24,21 @@ package org.simplity.fm.core.rdb;
 
 import java.sql.SQLException;
 
-import org.simplity.fm.core.data.DbRecord;
+import org.simplity.fm.core.data.Record;
 
 /**
- * A Sql that is designed to read just one row from the RDBMS.
- *
  * @author simplity.org
- * @param <T>
- *            record returned when reading
  *
  */
-public abstract class ReadWithRecordSql<T extends DbRecord> extends Sql {
-	protected DbRecord record;
-
+@FunctionalInterface
+public interface RecordProcessor {
 	/**
-	 * read a row suing this sql
+	 * lambda function to process a record
 	 *
-	 * @param handle
-	 * @return null if read did not succeed.
+	 * @param record
+	 *            non-null record that is coming from the db
+	 * @return true to continue with the next. false to stop retrieving records
 	 * @throws SQLException
 	 */
-	@SuppressWarnings("unchecked")
-	public T filterFirst(final DbHandle handle) throws SQLException {
-		if (this.record.filterFirst(this.sqlText, this.inputData.fetchRawData(), handle)) {
-			return (T) this.record;
-		}
-		return null;
-	}
-
-	/**
-	 * to be used when a row is expected as per our db design, and hence the
-	 * caller need not handle the case with no rows
-	 *
-	 * @param handle
-	 * @return non-null record with the first filtered row
-	 * @throws SQLException
-	 *             thrown when any SQL exception, OR when no rows are filtered
-	 */
-	public T filterFirstOrFail(final DbHandle handle) throws SQLException {
-		final T result = this.filterFirst(handle);
-
-		if (result == null) {
-			throw new SQLException("Filter First did not return any row. " + this.showDetails());
-		}
-		return result;
-	}
+	boolean process(Record record) throws SQLException;
 }

@@ -26,7 +26,7 @@ package org.simplity.fm.core.data;
  * @author simplity.org
  *
  */
-public enum ColumnType {
+public enum FieldType {
 	/**
 	 * primary key as per RDBMS, that is not internally generated
 	 */

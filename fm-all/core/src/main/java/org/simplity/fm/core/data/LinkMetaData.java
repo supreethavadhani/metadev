@@ -151,12 +151,12 @@ public class LinkMetaData {
 		this.linkWhereParams = new FieldMetaData[nbr];
 
 		for (int i = 0; i < nbr; i++) {
-			final DbField parentField = parentRecord.getField(this.parentLinkNames[i]);
+			final DbField parentField = parentRecord.fetchField(this.parentLinkNames[i]);
 			/*
 			 * child field name is not verified during generation... we may get
 			 * run-time exception
 			 */
-			final DbField childField = childRecord.getField(this.childLinkNames[i]);
+			final DbField childField = childRecord.fetchField(this.childLinkNames[i]);
 			if (childField == null) {
 				throw new RuntimeException("Field " + this.childLinkNames[i]
 						+ " is defined as childLinkName, but is not defined as a field in the linked form "
@@ -191,7 +191,7 @@ public class LinkMetaData {
 
 		final DbRecord thisRecord = (DbRecord) form.record;
 		writer.name(this.linkName);
-		final Field[] fields = thisRecord.getFields();
+		final Field[] fields = thisRecord.fetchFields();
 		if (this.isTabular) {
 			writer.beginArray();
 			for (final Object[] row : thisRecord.filter(this.linkWhereClause, values, handle)) {
@@ -216,14 +216,14 @@ public class LinkMetaData {
 		final int nbr = this.parentIndexes.length;
 		final Object[] values = new Object[nbr];
 		for (int i = 0; i < nbr; i++) {
-			values[i] = parentRec.getValue(this.parentIndexes[i]);
+			values[i] = parentRec.fetchValue(this.parentIndexes[i]);
 		}
 		return values;
 	}
 
 	private void copyParentKeys(final Record parentRec, final Record thisRecord) {
 		for (int i = 0; i < this.childIndexes.length; i++) {
-			thisRecord.setValue(this.childIndexes[i], parentRec.getValue(this.parentIndexes[i]));
+			thisRecord.assignValue(this.childIndexes[i], parentRec.fetchValue(this.parentIndexes[i]));
 		}
 	}
 

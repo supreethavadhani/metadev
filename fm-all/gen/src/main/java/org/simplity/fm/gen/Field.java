@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.simplity.fm.core.data.ColumnType;
+import org.simplity.fm.core.data.FieldType;
 import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 class Field implements Util.INamedMember {
-	private static final Map<String, ColumnType> columnTypes = createMap();
+	private static final Map<String, FieldType> fieldTypes = createMap();
 	protected static final Logger logger = LoggerFactory.getLogger(Field.class);
 	protected static final String C = ", ";
 
@@ -52,7 +52,7 @@ class Field implements Util.INamedMember {
 	String listKey;
 	int index;
 	String dbColumnName;
-	private String columnType;
+	private String fieldType;
 
 	@Override
 	public void setNameAndIdx(final String name, final int idx) {
@@ -81,11 +81,11 @@ class Field implements Util.INamedMember {
 		if (isDb) {
 			sbf.append(C).append(Util.escape(this.dbColumnName));
 			sbf.append(C);
-			final ColumnType ct = this.getColumnType();
+			final FieldType ct = this.getFieldType();
 			if (ct == null) {
 				sbf.append("null");
 			} else {
-				sbf.append("ColumnType.").append(ct.name());
+				sbf.append("FieldType.").append(ct.name());
 			}
 
 		} else {
@@ -153,24 +153,24 @@ class Field implements Util.INamedMember {
 	/**
 	 * @return column type, or null.
 	 */
-	public ColumnType getColumnType() {
-		if (this.columnType == null) {
-			return ColumnType.OptionalData;
+	public FieldType getFieldType() {
+		if (this.fieldType == null) {
+			return FieldType.OptionalData;
 		}
-		final ColumnType ct = columnTypes.get(this.columnType.toLowerCase());
+		final FieldType ct = fieldTypes.get(this.fieldType.toLowerCase());
 		if (ct != null) {
 			return ct;
 		}
-		logger.error("{} is an invalid columnType for field {}. optional data is  assumed", this.columnType, this.name);
-		return ColumnType.OptionalData;
+		logger.error("{} is an invalid fieldType for field {}. optional data is  assumed", this.fieldType, this.name);
+		return FieldType.OptionalData;
 	}
 
 	/**
 	 * @return
 	 */
-	private static Map<String, ColumnType> createMap() {
-		final Map<String, ColumnType> map = new HashMap<>();
-		for (final ColumnType vt : ColumnType.values()) {
+	private static Map<String, FieldType> createMap() {
+		final Map<String, FieldType> map = new HashMap<>();
+		for (final FieldType vt : FieldType.values()) {
 			map.put(vt.name().toLowerCase(), vt);
 		}
 		return map;

@@ -22,9 +22,10 @@
 
 package org.simplity.fm.gen;
 
+import java.sql.SQLException;
 import java.util.Map;
 
-import org.simplity.fm.core.data.ValueObject;
+import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.FilterSql;
 import org.simplity.fm.core.rdb.FilterWithRecordSql;
 import org.simplity.fm.core.rdb.ReadSql;
@@ -141,7 +142,7 @@ public class Sql {
 		 */
 		sbf.append("\n\n\t/** default constructor */\n\tpublic ").append(className).append("() {");
 		sbf.append("\n\t\tthis.sqlText = SQL;");
-		sbf.append("\n\t\tthis.inputData = new ValueObject(IN, null);");
+		sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
 		sbf.append("\n\t}");
 
 		this.emitSetters(sbf, dataTypes);
@@ -152,8 +153,12 @@ public class Sql {
 			final String dataTypesName, final Map<String, DataType> dataTypes) {
 
 		Util.emitImport(sbf, FilterWithRecordSql.class);
+		Util.emitImport(sbf, DbHandle.class);
+		Util.emitImport(sbf, SQLException.class);
 		final String recordCls = Util.toClassName(this.recordName) + "Record";
+		final String tableCls = Util.toClassName(this.recordName) + "Table";
 		sbf.append("\nimport ").append(packageName).append(".rec.").append(recordCls).append(";");
+		sbf.append("\nimport ").append(packageName).append(".rec.").append(tableCls).append(";");
 
 		/*
 		 * class
@@ -178,10 +183,21 @@ public class Sql {
 		sbf.append("\n\n\t/** default constructor */\n\tpublic ").append(className).append("() {");
 		sbf.append("\n\t\tthis.sqlText = SQL;");
 		if (this.sqlParams != null) {
-			sbf.append("\n\t\tthis.inputData = new ValueObject(IN, null);");
+			sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
 		}
 		sbf.append("\n\t\tthis.record = new ").append(recordCls).append("();");
 		sbf.append("\n\t}");
+
+		/*
+		 * over-ride for concrete return type
+		 */
+		sbf.append("\n\n\t@Override\n\tpublic ").append(tableCls);
+		sbf.append(" filter(final DbHandle handle) throws SQLException {");
+		sbf.append("\n\t\treturn (").append(tableCls).append(") super.filter(handle);\n\t}");
+
+		sbf.append("\n\n\t@Override\n\tpublic ").append(tableCls);
+		sbf.append(" filterOrFail(final DbHandle handle) throws SQLException {");
+		sbf.append("\n\t\treturn (").append(tableCls).append(") super.filterOrFail(handle);\n\t}");
 
 		if (this.sqlParams != null) {
 			this.emitSetters(sbf, dataTypes);
@@ -194,7 +210,7 @@ public class Sql {
 
 		Util.emitImport(sbf, ReadWithRecordSql.class);
 		final String recordCls = Util.toClassName(this.recordName) + "Record";
-		sbf.append("\nimport ").append(packageName).append(".rec.").append(recordCls);
+		sbf.append("\nimport ").append(packageName).append(".rec.").append(recordCls).append(';');
 
 		/*
 		 * class
@@ -219,9 +235,9 @@ public class Sql {
 		sbf.append("\n\n\t/** default constructor */\n\tpublic ").append(className).append("() {");
 		sbf.append("\n\t\tthis.sqlText = SQL;");
 		if (this.sqlParams != null) {
-			sbf.append("\n\t\tthis.inputData = new ValueObject(IN, null);");
+			sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
 		}
-		sbf.append("\n\t\tthis.record = new ").append(Util.toClassName(this.recordName)).append("();");
+		sbf.append("\n\t\tthis.record = new ").append(recordCls).append("();");
 		sbf.append("\n\t}");
 
 		if (this.sqlParams != null) {
@@ -238,7 +254,7 @@ public class Sql {
 		 */
 		sbf.append("\n\n/** generated class for ").append(className).append(" */");
 		sbf.append("\npublic class ").append(className).append(" extends ReadSql<").append(className)
-				.append(".OutputVo> {");
+				.append(".OutputRecord> {");
 
 		/*
 		 * static declarations
@@ -260,7 +276,7 @@ public class Sql {
 		sbf.append("\n\n\t/** default constructor */\n\tpublic ").append(className).append("() {");
 		sbf.append("\n\t\tthis.sqlText = SQL;");
 		if (this.sqlParams != null) {
-			sbf.append("\n\t\tthis.inputData = new ValueObject(IN, null);");
+			sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
 		}
 		sbf.append("\n\t}");
 
@@ -280,7 +296,7 @@ public class Sql {
 		 */
 		sbf.append("\n\n/** generated class for ").append(className).append(" */");
 		sbf.append("\npublic class ").append(className).append(" extends FilterSql<").append(className)
-				.append(".OutputVo> {");
+				.append(".OutputRecord> {");
 
 		/*
 		 * static declarations
@@ -302,7 +318,7 @@ public class Sql {
 		sbf.append("\n\n\t/** default constructor */\n\tpublic ").append(className).append("() {");
 		sbf.append("\n\t\tthis.sqlText = SQL;");
 		if (this.sqlParams != null) {
-			sbf.append("\n\t\tthis.inputData = new ValueObject(IN, null);");
+			sbf.append("\n\t\tthis.inputData = new Record(IN, null);");
 		}
 		sbf.append("\n\t}");
 
@@ -317,7 +333,7 @@ public class Sql {
 		sbf.append("package ").append(packageName).append(".sql;\n");
 
 		Util.emitImport(sbf, org.simplity.fm.core.data.Field.class);
-		Util.emitImport(sbf, ValueObject.class);
+		Util.emitImport(sbf, org.simplity.fm.core.data.Record.class);
 		sbf.append("\nimport ").append(packageName).append('.').append(dataTypesName).append(';');
 
 	}
@@ -327,17 +343,17 @@ public class Sql {
 		 * abstract method to be implemented
 		 */
 		sbf.append("\n\n\t@Override\n\tprotected ");
-		sbf.append("OutputVo newOutputData() {");
-		sbf.append("\n\t\treturn new OutputVo(OUT);\n\t}");
+		sbf.append("OutputRecord newOutputData() {");
+		sbf.append("\n\t\treturn new OutputRecord(OUT);\n\t}");
 		/*
 		 * inner class for custom Vo
 		 */
 
-		sbf.append("\n\n\t/** VO with output fields from this Sql */");
-		sbf.append("\n\tpublic static class OutputVo extends ValueObject {");
+		sbf.append("\n\n\t/** Record with output fields from this Sql */");
+		sbf.append("\n\tpublic static class OutputRecord extends Record {");
 
 		sbf.append("\n\n\t\t/**\n\t\t * @param fields\n\t\t */");
-		sbf.append("\n\t\tpublic OutputVo(final Field[] fields) {");
+		sbf.append("\n\t\tpublic OutputRecord(final Field[] fields) {");
 		sbf.append("\n\t\t\tsuper(fields, null);\n\t\t}");
 
 		this.emitGetters(sbf, dataTypes);
@@ -345,8 +361,8 @@ public class Sql {
 		/*
 		 * over-ride new instance
 		 */
-		sbf.append("\n\n\t@Override\n\tpublic OutputVo newInstance(Object[] arr) {");
-		sbf.append("\n\t\treturn new OutputVo(OUT);\n\t}");
+		sbf.append("\n\n\t@Override\n\tpublic OutputRecord newInstance(Object[] arr) {");
+		sbf.append("\n\t\treturn new OutputRecord(OUT);\n\t}");
 		sbf.append("\n\t}");
 
 	}
@@ -367,7 +383,7 @@ public class Sql {
 			sbf.append("\n\t * @param value to be assigned to ").append(nam);
 			sbf.append("\n\t */");
 			sbf.append("\n\tpublic void set").append(cls).append('(').append(typ).append(" value){");
-			sbf.append("\n\t\tthis.inputData.setValue(").append(f.index).append(", value);");
+			sbf.append("\n\t\tthis.inputData.assignValue(").append(f.index).append(", value);");
 			sbf.append("\n\t}");
 		}
 	}
@@ -392,7 +408,7 @@ public class Sql {
 
 			sbf.append("\n\n\t\t/**\n\t * @return value of ").append(nam).append("\n\t */");
 			sbf.append("\n\t\tpublic ").append(typ).append(" get").append(cls).append("(){");
-			sbf.append("\n\t\t\treturn super.get").append(get).append("Value(").append(f.index).append(");");
+			sbf.append("\n\t\t\treturn super.fetch").append(get).append("Value(").append(f.index).append(");");
 			sbf.append("\n\t\t}");
 		}
 	}

@@ -135,20 +135,20 @@ class FormParser {
 	}
 
 	private boolean parseFields(final JsonObject json) {
-		this.valueProviders = new IValueProvider[this.record.getNbrFields()];
+		this.valueProviders = new IValueProvider[this.record.length()];
 		for (final Map.Entry<String, JsonElement> entry : json.entrySet()) {
 
 			final String fieldName = entry.getKey();
-			final Field field = this.record.getField(fieldName);
+			final Field field = this.record.fetchField(fieldName);
 
 			if (field == null) {
-				logger.error("{} is not a valid field name in the form {}", fieldName, this.record.getName());
+				logger.error("{} is not a valid field name in the form {}", fieldName, this.record.fetchName());
 				return false;
 			}
 
 			final JsonElement ele = entry.getValue();
 			if (!ele.isJsonPrimitive()) {
-				logger.error("Field {} in the form {} has an invalid value", fieldName, this.record.getName());
+				logger.error("Field {} in the form {} has an invalid value", fieldName, this.record.fetchName());
 				return false;
 			}
 

@@ -79,7 +79,8 @@
                             "income",
                             "marks",
                             "marksOrAb",
-                            "valuationType"
+                            "valuationType",
+                            "internal_marks"
                         ]
                     },
                     "defaultValue": {
@@ -88,7 +89,7 @@
                     "dbColumnName": {
                         "type": "string"
                     },
-                    "columnType": {
+                    "fieldType": {
                         "type": "string",
                         "enum": [
                             "generatedPrimaryKey",

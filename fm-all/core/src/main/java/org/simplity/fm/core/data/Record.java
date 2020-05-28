@@ -23,21 +23,22 @@
 package org.simplity.fm.core.data;
 
 import java.io.IOException;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.simplity.fm.core.JsonUtil;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.serialize.IInputArray;
 import org.simplity.fm.core.serialize.IInputObject;
+import org.simplity.fm.core.serialize.ISerializer;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.IValidation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.gson.stream.JsonWriter;
 
 /**
  * <p>
@@ -59,15 +60,19 @@ import com.google.gson.stream.JsonWriter;
  * <p>
  * It is expected that this class is used only by utility classes. We provide
  * code-generation utilities for a project to generate extended classes based on
- * meta-data provided for the fields
+ * meta-data provided for the fields.
  * </p>
+ * Programmers may hand-code extended classes on a need basis
+ *
+ * NOTE: methods use fetch/assign instead of familiar get/set. This is to allow
+ * generated extended class to use getters/setters for all their fields
  *
  * @author simplity.org
  *
  *
  *
  */
-public abstract class Record {
+public class Record {
 	private static final Logger logger = LoggerFactory.getLogger(Record.class);
 
 	private final RecordMetaData metaData;
@@ -79,6 +84,20 @@ public abstract class Record {
 	protected final Object[] fieldValues;
 
 	/**
+	 * simplest way to create a record for local use: with no unique name or
+	 * validations
+	 *
+	 * @param fields
+	 *            non-null non-empty
+	 * @param values
+	 *            can be null
+	 */
+	public Record(final Field[] fields, final Object[] values) {
+		this.metaData = new RecordMetaData(fields);
+		this.fieldValues = values == null ? this.metaData.getDefaultValues() : values;
+	}
+
+	/**
 	 * construct this record with a set of fields and values
 	 */
 	protected Record(final RecordMetaData recordMeta, final Object[] values) {
@@ -87,33 +106,36 @@ public abstract class Record {
 	}
 
 	/**
+	 * fetch used to avoid getters clashing with this method name
 	 *
 	 * @return unique name assigned to this record. concrete classes are
 	 *         generally generated from meta data files, and this name is based
 	 *         on the conventions used in the app
 	 */
-	public String getName() {
+	public String fetchName() {
 		return this.metaData.getName();
 	}
 
 	/**
+	 * fetch used to avoid getters clashing with this method name
+	 *
 	 * @return the validations
 	 */
-	public IValidation[] getValidations() {
+	public IValidation[] fetchValidaitons() {
 		return this.metaData.getValidations();
 	}
 
 	/**
 	 * @return number of columns in this table
 	 */
-	public int getNbrFields() {
+	public int length() {
 		return this.metaData.getValidations().length;
 	}
 
 	/**
 	 * @return the fields
 	 */
-	public Field[] getFields() {
+	public Field[] fetchFields() {
 		return this.metaData.getFields();
 	}
 
@@ -127,7 +149,7 @@ public abstract class Record {
 	 *            MUST be one of the standard instances viz: String, Long,
 	 *            Double, Boolean, LocalData, Instant
 	 */
-	public void setValue(final int idx, final Object value) {
+	public void assignValue(final int idx, final Object value) {
 		try {
 			this.fieldValues[idx] = value;
 		} catch (final Exception e) {
@@ -146,7 +168,7 @@ public abstract class Record {
 	 *         of the standard instances viz: String, Long,
 	 *         Double, Boolean, LocalData, Instant
 	 */
-	public Object getValue(final int idx) {
+	public Object fetchValue(final int idx) {
 		try {
 			return this.fieldValues[idx];
 		} catch (final Exception e) {
@@ -158,7 +180,7 @@ public abstract class Record {
 	/**
 	 * @return field values
 	 */
-	public Object[] getRawData() {
+	public Object[] fetchRawData() {
 		return this.fieldValues;
 	}
 
@@ -168,8 +190,8 @@ public abstract class Record {
 	 * @return get value at this index as long. 0 if the index is not valid, or
 	 *         the value is not long
 	 */
-	protected long getLongValue(final int idx) {
-		final Object obj = this.getValue(idx);
+	protected long fetchLongValue(final int idx) {
+		final Object obj = this.fetchValue(idx);
 		if (obj == null) {
 			return 0;
 		}
@@ -194,7 +216,7 @@ public abstract class Record {
 	 * @return true if field exists, and is of integer type. false otherwise,
 	 *         and the value is not set
 	 */
-	protected boolean setLongValue(final int idx, final long value) {
+	protected boolean assignLongValue(final int idx, final long value) {
 		final Field field = this.metaData.getField(idx);
 		if (field == null) {
 			return false;
@@ -225,8 +247,8 @@ public abstract class Record {
 	 * @return value of the field as text. null if no such field, or the field
 	 *         has null value. toString() of object if it is non-string
 	 */
-	protected String getStringValue(final int idx) {
-		final Object obj = this.getValue(idx);
+	protected String fetchStringValue(final int idx) {
+		final Object obj = this.fetchValue(idx);
 		if (obj == null) {
 			return null;
 		}
@@ -243,7 +265,7 @@ public abstract class Record {
 	 * @return true if field exists, and is of String type. false otherwise, and
 	 *         the value is not set
 	 */
-	protected boolean setStringValue(final int idx, final String value) {
+	protected boolean assignStringValue(final int idx, final String value) {
 		final Field field = this.metaData.getField(idx);
 		if (field == null) {
 			return false;
@@ -271,8 +293,8 @@ public abstract class Record {
 	 * @return value of the field as Date. null if the field is not a date
 	 *         field, or it has null value
 	 */
-	protected LocalDate getDateValue(final int idx) {
-		final Object obj = this.getValue(idx);
+	protected LocalDate fetchDateValue(final int idx) {
+		final Object obj = this.fetchValue(idx);
 		if (obj == null) {
 			return null;
 		}
@@ -297,7 +319,7 @@ public abstract class Record {
 	 * @return true if field exists, and is of Date type. false otherwise, and
 	 *         the value is not set
 	 */
-	protected boolean setDateValue(final int idx, final LocalDate value) {
+	protected boolean assignDateValue(final int idx, final LocalDate value) {
 		final Field field = this.metaData.getField(idx);
 		if (field == null) {
 			return false;
@@ -324,8 +346,8 @@ public abstract class Record {
 	 * @param idx
 	 *            field is null,or the field is not boolean.
 	 */
-	protected boolean getBoolValue(final int idx) {
-		Object obj = this.getValue(idx);
+	protected boolean fetchBoolValue(final int idx) {
+		Object obj = this.fetchValue(idx);
 		if (obj == null) {
 			return false;
 		}
@@ -349,7 +371,7 @@ public abstract class Record {
 	 * @return true if field exists, and is of boolean type. false otherwise,
 	 *         and the value is not set
 	 */
-	protected boolean setBoolValue(final int idx, final boolean value) {
+	protected boolean assignBoolValue(final int idx, final boolean value) {
 		final Field field = this.metaData.getField(idx);
 		if (field == null) {
 			return false;
@@ -376,8 +398,8 @@ public abstract class Record {
 	 * @return value of the field if it decimal. 0 index is invalid or the value
 	 *         is not double/decimal.
 	 */
-	protected double getDecimalValue(final int idx) {
-		final Object obj = this.getValue(idx);
+	protected double fetchDecimalValue(final int idx) {
+		final Object obj = this.fetchValue(idx);
 
 		if (obj == null) {
 			return 0;
@@ -405,7 +427,7 @@ public abstract class Record {
 	 * @return true if field exists, and is of double type. false otherwise,
 	 *         and the value is not set
 	 */
-	protected boolean setDecimlValue(final int idx, final double value) {
+	protected boolean assignDecimlValue(final int idx, final double value) {
 		final Field field = this.metaData.getField(idx);
 		if (field == null) {
 			return false;
@@ -440,8 +462,8 @@ public abstract class Record {
 	 *         an instant.
 	 *         field, or it has null value
 	 */
-	protected Instant getTimestampValue(final int idx) {
-		final Object obj = this.getValue(idx);
+	protected Instant fetchTimestampValue(final int idx) {
+		final Object obj = this.fetchValue(idx);
 		if (obj == null) {
 			return null;
 		}
@@ -469,7 +491,7 @@ public abstract class Record {
 	 * @return true if field exists, and is of Instant type. false otherwise,
 	 *         and the value is not set
 	 */
-	protected boolean setTimestampValue(final int idx, final Instant value) {
+	protected boolean assignTimestampValue(final int idx, final Instant value) {
 		final Field field = this.metaData.getField(idx);
 		if (field == null) {
 			return false;
@@ -538,25 +560,28 @@ public abstract class Record {
 	/**
 	 * parse this record from a serialized input
 	 *
-	 * @param arr
-	 *            input data. non-null, non-empty.
+	 * @param inputObject
+	 *            input object that has a member for this table
+	 * @param memberName
+	 *            name of the array-member in the object
 	 * @param forInsert
 	 *            true if the data is being parsed for an insert operation,
 	 *            false if it is meant for an update instead
 	 * @param ctx
-	 * @param tableName
-	 *            if the input data is for a table.collection if this record,
-	 *            then this is the name of the attribute with which the table is
-	 *            received. null if the data is at the root level, else n
 	 * @return list of parsed data rows. null in case of any error.
 	 */
-	public List<Record> parseTable(final IInputArray arr, final boolean forInsert, final IServiceContext ctx,
-			final String tableName) {
+	public List<? extends Record> parseTable(final IInputObject inputObject, final String memberName,
+			final boolean forInsert, final IServiceContext ctx) {
 		final List<Record> list = new ArrayList<>();
+		final IInputArray arr = inputObject.getArray(memberName);
+		if (arr == null) {
+			logger.info("No data received for table named ", memberName);
+			return list;
+		}
 
 		arr.forEach(ele -> {
 			final Record rec = this.newInstance();
-			if (rec.parse(ele, forInsert, ctx, tableName, 0)) {
+			if (rec.parse(ele, forInsert, ctx, memberName, 0)) {
 				list.add(rec);
 			} else {
 				list.clear(); // indicate error condition
@@ -576,16 +601,15 @@ public abstract class Record {
 	 * @param writer
 	 * @throws IOException
 	 */
-	public void serializeFields(final JsonWriter writer) throws IOException {
-		JsonUtil.writeFields(this.metaData.getFields(), this.fieldValues, writer);
-	}
-
-	/**
-	 * @param writer
-	 * @throws IOException
-	 */
-	protected void serializeRows(final JsonWriter writer, final Object[][] rows) throws IOException {
-		JsonUtil.writeRows(this.metaData.getFields(), rows, writer);
+	protected void serializeRows(final ISerializer writer, final Object[][] rows) throws IOException {
+		if (rows == null || rows.length == 0) {
+			return;
+		}
+		for (final Object[] row : rows) {
+			writer.beginObject();
+			writer.fields(this.fetchFields(), row);
+			writer.endObject();
+		}
 	}
 
 	/**
@@ -607,6 +631,37 @@ public abstract class Record {
 	}
 
 	/**
+	 * set parameter values to a prepared statement that uses this Vo as input
+	 * source.
+	 *
+	 * @param ps
+	 * @throws SQLException
+	 */
+	public void setPsParams(final PreparedStatement ps) throws SQLException {
+		int idx = 0;
+		for (final Field field : this.fetchFields()) {
+			final Object value = this.fieldValues[idx];
+			idx++;
+			field.getValueType().setPsParam(ps, idx, value);
+		}
+	}
+
+	/**
+	 * read values from a result set for which this VO is designed as output
+	 * data structure
+	 *
+	 * @param rs
+	 * @throws SQLException
+	 */
+	public void readFromRs(final ResultSet rs) throws SQLException {
+		int idx = 0;
+		for (final Field field : this.fetchFields()) {
+			this.fieldValues[idx] = field.getValueType().getFromRs(rs, idx + 1);
+			idx++;
+		}
+	}
+
+	/**
 	 * make a copy of this record. to be used by utilities and frame-work
 	 * components.
 	 *
@@ -614,5 +669,7 @@ public abstract class Record {
 	 *
 	 * @return a copy of this that can be mutilated without affecting this
 	 */
-	public abstract Record newInstance(Object[] values);
+	public Record newInstance(final Object[] values) {
+		return new Record(this.fetchFields(), values);
+	}
 }

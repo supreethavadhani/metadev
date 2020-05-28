@@ -40,7 +40,7 @@ public class DbField extends Field {
 	/**
 	 * type of column
 	 */
-	private final ColumnType columnType;
+	private final FieldType fieldType;
 
 	/**
 	 * this is generally invoked by the generated code for a Data Structure
@@ -66,14 +66,14 @@ public class DbField extends Field {
 	 *            not part of this field.
 	 * @param columnName
 	 *            db column name. non-null
-	 * @param columnType
-	 *            db column type. non-null
+	 * @param fieldType
+	 *            db field type. non-null
 	 */
 	public DbField(final String fieldName, final int index, final DataType dataType, final String defaultValue,
-			final String messageId, final String valueListName, final String columnName, final ColumnType columnType) {
-		super(fieldName, index, dataType, defaultValue, messageId, valueListName, columnType.isRequired());
+			final String messageId, final String valueListName, final String columnName, final FieldType fieldType) {
+		super(fieldName, index, dataType, defaultValue, messageId, valueListName, fieldType.isRequired());
 		this.columnName = columnName;
-		this.columnType = columnType;
+		this.fieldType = fieldType;
 	}
 
 	/**
@@ -85,31 +85,31 @@ public class DbField extends Field {
 	}
 
 	/**
-	 * @return the column type
+	 * @return the field type
 	 */
-	public ColumnType getColumnType() {
-		return this.columnType;
+	public FieldType getFieldType() {
+		return this.fieldType;
 	}
 
 	/**
 	 * @return true if this column is part of the primary key
 	 */
 	public boolean isPrimaryKey() {
-		return this.columnType == ColumnType.PrimaryKey || this.columnType == ColumnType.GeneratedPrimaryKey;
+		return this.fieldType == FieldType.PrimaryKey || this.fieldType == FieldType.GeneratedPrimaryKey;
 	}
 
 	/**
 	 * @return true if this field is the tenant key.
 	 */
 	public boolean isTenantKey() {
-		return this.columnType == ColumnType.TenantKey;
+		return this.fieldType == FieldType.TenantKey;
 	}
 
 	/**
 	 * @return true if this field is user id, like createdBy and modifiedBy.
 	 */
 	public boolean isUserId() {
-		return this.columnType == ColumnType.ModifiedBy || this.columnType == ColumnType.CreatedBy;
+		return this.fieldType == FieldType.ModifiedBy || this.fieldType == FieldType.CreatedBy;
 	}
 
 	/**
@@ -129,7 +129,7 @@ public class DbField extends Field {
 		final int idx = this.getIndex();
 		final Object val = data[idx];
 
-		switch (this.columnType) {
+		switch (this.fieldType) {
 		/*
 		 * tenant key is ignored from the client, and populated from the context
 		 */

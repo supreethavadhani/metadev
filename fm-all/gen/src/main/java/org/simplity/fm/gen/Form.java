@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.simplity.fm.core.ComponentProvider;
-import org.simplity.fm.core.data.ColumnType;
+import org.simplity.fm.core.data.FieldType;
 import org.simplity.fm.core.data.IoType;
 import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
@@ -65,8 +65,8 @@ public class Form {
 
 		this.record = rec;
 		for (final Field f : rec.fieldMap.values()) {
-			final ColumnType ct = f.getColumnType();
-			if (ct == ColumnType.PrimaryKey || ct == ColumnType.GeneratedPrimaryKey) {
+			final FieldType ct = f.getFieldType();
+			if (ct == FieldType.PrimaryKey || ct == FieldType.GeneratedPrimaryKey) {
 				this.keyFieldNames.add(f.name);
 			}
 		}

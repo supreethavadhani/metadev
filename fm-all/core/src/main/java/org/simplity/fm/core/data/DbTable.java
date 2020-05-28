@@ -29,8 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.simplity.fm.core.rdb.DbHandle;
-
-import com.google.gson.stream.JsonWriter;
+import org.simplity.fm.core.serialize.ISerializer;
 
 /**
  * Represents an array of <code>DbRecord</code>. This wrapper class is created
@@ -87,12 +86,11 @@ public class DbTable<T extends DbRecord> implements Iterable<T> {
 	 * @param writer
 	 * @throws IOException
 	 */
-	@SuppressWarnings("resource")
-	public void serializeRows(final JsonWriter writer) throws IOException {
+	public void serializeRows(final ISerializer writer) throws IOException {
 		writer.beginArray();
 		for (final T rec : this) {
 			writer.beginObject();
-			rec.serializeFields(writer);
+			writer.fields(rec);
 			writer.endObject();
 		}
 		writer.endArray();
@@ -154,8 +152,15 @@ public class DbTable<T extends DbRecord> implements Iterable<T> {
 		return this.record.dba.saveAll(handle, this.rows.toArray(new Object[0][]));
 	}
 
+	/**
+	 * fetch is used instead of get to avoid clash with getters in generated
+	 * classes
+	 * 
+	 * @param idx
+	 * @return record at 0-based index. null if the index is not valid
+	 */
 	@SuppressWarnings("unchecked")
-	protected T getRecord(final int idx) {
+	public T fetchRecord(final int idx) {
 		final Object[] row = this.rows.get(idx);
 		if (row == null) {
 			return null;
@@ -176,7 +181,7 @@ public class DbTable<T extends DbRecord> implements Iterable<T> {
 
 			@Override
 			public T next() {
-				return DbTable.this.getRecord(this.idx++);
+				return DbTable.this.fetchRecord(this.idx++);
 			}
 		};
 	}

@@ -130,13 +130,27 @@ public interface ISerializer {
 	void fields(Field[] fields, Object[] values);
 
 	/**
+	 * to be called inside an object. A member is added as an array of objects
+	 * for the rows.
+	 *
+	 * @param memberName
+	 *
+	 * @param fields
+	 * @param rows
+	 *            rows of data, each row being an array of objects for the
+	 *            specified fields
+	 */
+
+	void array(String memberName, Field[] fields, Object[][] rows);
+
+	/**
 	 * to be called inside an array(). Each row is added as an object-member of
 	 * the array. Each object has all the fields as its members.
 	 *
 	 * @param fields
 	 * @param values
 	 *            rows of data, each row being an array of objects for the
-	 *            specified fields
+	 *            specified fields. could be null or empty
 	 */
 
 	void arrayElements(Field[] fields, Object[][] values);
@@ -150,8 +164,23 @@ public interface ISerializer {
 	void fields(Record record);
 
 	/**
+	 * to be called inside an array, (Not directly inside an object) Each record
+	 * in the table is serialized as members of the enclosing array
 	 *
 	 * @param table
 	 */
 	void arrayElements(DbTable<?> table);
+
+	/**
+	 * to be called inside an array, (Not directly inside an object) Each record
+	 * in the table is serialized as members of the enclosing array
+	 *
+	 * @param memberName
+	 *            name with which this array is added to the current object
+	 *
+	 * @param table
+	 *            records from which the array elements are to be added. Ccould
+	 *            be null or empty
+	 */
+	void array(String memberName, DbTable<?> table);
 }

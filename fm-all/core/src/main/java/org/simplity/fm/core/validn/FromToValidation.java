@@ -61,8 +61,8 @@ public class FromToValidation implements IValidation {
 
 	@Override
 	public boolean isValid(final Record record, final IServiceContext ctx) {
-		final Object fm = record.getValue(this.fromIndex);
-		final Object to = record.getValue(this.toIndex);
+		final Object fm = record.fetchValue(this.fromIndex);
+		final Object to = record.fetchValue(this.toIndex);
 		if (fm == null || to == null) {
 			return true;
 		}

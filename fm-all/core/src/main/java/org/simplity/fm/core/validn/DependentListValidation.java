@@ -61,11 +61,11 @@ public class DependentListValidation implements IValidation {
 
 	@Override
 	public boolean isValid(final Record record, final IServiceContext ctx) {
-		final Object fieldValue = record.getValue(this.fieldIndex);
+		final Object fieldValue = record.fetchValue(this.fieldIndex);
 		if (fieldValue == null) {
 			return true;
 		}
-		final Object keyValue = record.getValue(this.parentFieldIndex);
+		final Object keyValue = record.fetchValue(this.parentFieldIndex);
 		if (keyValue == null) {
 			return true;
 		}

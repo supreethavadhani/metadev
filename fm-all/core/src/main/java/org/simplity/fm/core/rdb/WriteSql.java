@@ -26,14 +26,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.simplity.fm.core.data.ValueObject;
+import org.simplity.fm.core.data.Record;
 
 /**
  * @author simplity.org
  *
  */
 public abstract class WriteSql extends Sql {
-	private List<ValueObject> batchData;
+	private List<Record> batchData;
 
 	/**
 	 *
@@ -65,7 +65,7 @@ public abstract class WriteSql extends Sql {
 		if (n > 0) {
 			return n;
 		}
-		logger.error(this.getState());
+		logger.error(this.showDetails());
 		throw new SQLException("Sql is expected to affect at least one row, but no rows are affected.");
 	}
 
@@ -79,7 +79,7 @@ public abstract class WriteSql extends Sql {
 		if (this.batchData == null) {
 			throw new SQLException("Sql is not prepared for batch, but writeBatch is issued.");
 		}
-		final int n = handle.writeMany(this.sqlText, this.batchData.toArray(new ValueObject[0]));
+		final int n = handle.writeMany(this.sqlText, this.batchData.toArray(new Record[0]));
 		this.batchData = null;
 		return n;
 	}
@@ -98,6 +98,6 @@ public abstract class WriteSql extends Sql {
 		/*
 		 * important to add a copy, and the value itself
 		 */
-		this.batchData.add(this.inputData.makeCopy());
+		this.batchData.add(this.inputData.newInstance());
 	}
 }

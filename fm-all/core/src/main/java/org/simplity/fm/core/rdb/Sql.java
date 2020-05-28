@@ -23,13 +23,12 @@
 package org.simplity.fm.core.rdb;
 
 import java.io.StringWriter;
-import java.sql.SQLException;
 
-import org.simplity.fm.core.data.ValueObject;
+import org.simplity.fm.core.data.Record;
+import org.simplity.fm.core.serialize.ISerializer;
+import org.simplity.fm.core.serialize.gson.JsonSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.gson.stream.JsonWriter;
 
 /**
  * @author simplity.org
@@ -38,39 +37,21 @@ import com.google.gson.stream.JsonWriter;
 public abstract class Sql {
 	protected static final Logger logger = LoggerFactory.getLogger(Sql.class);
 	protected String sqlText;
-	protected ValueObject inputData;
+	protected Record inputData;
 
 	protected void setInputValue(final int idx, final Object value) {
-		this.inputData.setValue(idx, value);
+		this.inputData.assignValue(idx, value);
 	}
 
 	/**
 	 * @return string that describe set the current state of this sql
 	 */
-	public String getState() {
-		try (StringWriter writer = new StringWriter(); JsonWriter jw = new JsonWriter(writer)) {
-			this.inputData.serializeFields(jw);
-			return "SQL= " + this.sqlText + "\n" + writer.toString();
-		} catch (final Exception e) {
-			return "";
-		}
+	public String showDetails() {
+		final StringWriter sw = new StringWriter();
+		final ISerializer writer = new JsonSerializer(sw);
+		writer.beginArray();
+		writer.fields(this.inputData);
+		writer.endArray();
+		return "SQL= " + this.sqlText + "\n" + writer.toString();
 	}
-
-	/**
-	 * function that consumes accepts row as a valueObject
-	 *
-	 * @author simplity.org
-	 *
-	 */
-	public interface RowProcessor {
-		/**
-		 *
-		 * @param vo
-		 * @return true if the iteration should continue. false if it should
-		 *         stop
-		 * @throws SQLException
-		 */
-		<T extends ValueObject> boolean process(T vo) throws SQLException;
-	}
-
 }

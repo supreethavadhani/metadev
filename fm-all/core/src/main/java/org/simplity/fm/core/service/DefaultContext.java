@@ -31,6 +31,7 @@ import java.util.Map;
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.MessageType;
+import org.simplity.fm.core.data.DbTable;
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.http.LoggedInUser;
@@ -146,7 +147,7 @@ public class DefaultContext implements IServiceContext {
 	@Override
 	public void setAsResponse(final Record record) {
 		if (this.responseSet) {
-			throw new ApplicationError("Cannot set " + record.getName()
+			throw new ApplicationError("Cannot set " + record.fetchName()
 					+ " as response-record. A response is already set or the serializer is already in use.");
 		}
 		this.serializer.beginObject();
@@ -166,4 +167,71 @@ public class DefaultContext implements IServiceContext {
 		this.serializer.endArray();
 		this.responseSet = true;
 	}
+
+	/**
+	 * set this data table as the response. Note that the response would be like
+	 * {"list":[{}...]} that is the standard response for a list/filter request
+	 *
+	 * @param table
+	 */
+	@Override
+	public void setAsResponse(final DbTable<?> table) {
+		if (this.responseSet) {
+			throw new ApplicationError(
+					"Cannot set a dbTable as response-record. A response is already set or the serializer is already in use.");
+		}
+		this.serializer.beginArray();
+		table.forEach(record -> {
+			this.serializer.beginObject();
+			this.serializer.fields(record);
+			this.serializer.endObject();
+		});
+		this.serializer.endArray();
+		this.responseSet = true;
+	}
+
+	@Override
+	public void setAsResponse(final Record header, final String childName, final DbTable<?> lines) {
+		if (this.responseSet) {
+			throw new ApplicationError(
+					"Cannot set a dbTable as response-record. A response is already set or the serializer is already in use.");
+		}
+		this.serializer.beginObject();
+		this.serializer.fields(header);
+		this.serializer.name(childName);
+		this.serializer.beginArray();
+		if (lines != null) {
+			lines.forEach(record -> {
+				this.serializer.beginObject();
+				this.serializer.fields(record);
+				this.serializer.endObject();
+			});
+		}
+		this.serializer.endArray();
+		this.serializer.endObject();
+		this.responseSet = true;
+	}
+
+	@Override
+	public void setAsResponse(final Record header, final String childName, final List<? extends Record> lines) {
+		if (this.responseSet) {
+			throw new ApplicationError(
+					"Cannot set a dbTable as response-record. A response is already set or the serializer is already in use.");
+		}
+		this.serializer.beginObject();
+		this.serializer.fields(header);
+		this.serializer.name(childName);
+		this.serializer.beginArray();
+		if (lines != null) {
+			lines.forEach(record -> {
+				this.serializer.beginObject();
+				this.serializer.fields(record);
+				this.serializer.endObject();
+			});
+		}
+		this.serializer.endArray();
+		this.serializer.endObject();
+		this.responseSet = true;
+	}
+
 }
