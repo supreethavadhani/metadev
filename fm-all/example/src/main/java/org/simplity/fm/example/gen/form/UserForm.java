@@ -9,7 +9,7 @@ import org.simplity.fm.example.gen.rec.UserRecord;
 public class UserForm extends Form<UserRecord> {
 	protected static final String NAME = "user";
 	protected static final UserRecord RECORD = (UserRecord) ComponentProvider.getProvider().getRecord("user");
-	protected static final  boolean[] OPS = {true, false, false, false, true, false};
+	protected static final  boolean[] OPS = {true, false, false, false, true};
 	private static final LinkedForm<?>[] LINKS = null;
 /** constructor */
 public UserForm() {

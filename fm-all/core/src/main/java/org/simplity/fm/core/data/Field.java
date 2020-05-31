@@ -106,12 +106,12 @@ public class Field {
 		this.index = index;
 		this.isRequired = isRequired;
 		this.messageId = messageId;
+		this.dataType = dataType;
 		if (defaultValue == null) {
 			this.defaultValue = null;
 		} else {
 			this.defaultValue = dataType.parse(defaultValue);
 		}
-		this.dataType = dataType;
 		if (valueListName == null) {
 			this.valueList = null;
 		} else {
@@ -226,11 +226,25 @@ public class Field {
 			return null;
 		}
 
-		if (this.valueList != null && this.valueList.isValid(obj, null, ctx) == false) {
-			logger.error("{} is not found in the list of valid values for  for field {}", inputValue, this.name);
-			ctx.addMessage(Message.newValidationError(this, tableName, idx));
-			return null;
+		if (this.valueList == null) {
+			return obj;
 		}
-		return obj;
+		/*
+		 * numeric 0 is generally considered as "not entered". This is handled
+		 * by allowing 0 as part of dataType definition. One issue is when this
+		 * is a valueList. Let us handle that specifically
+		 */
+		if (this.getValueType().equals(ValueType.Integer) && this.isRequired == false && ((Long) obj) == 0) {
+			return obj;
+		}
+
+		if (this.valueList.isValid(obj, null, ctx)) {
+			return obj;
+		}
+
+		logger.error("{} is not found in the list of valid values for  for field {}", inputValue, this.name);
+		ctx.addMessage(Message.newValidationError(this, tableName, idx));
+		return null;
+
 	}
 }

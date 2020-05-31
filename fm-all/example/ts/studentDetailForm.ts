@@ -11,7 +11,6 @@ export class StudentDetailForm extends Form {
 		name:'studentId'
 		,controlType: 'Hidden'
 		,label: 'studentId'
-		,isRequired: true
 		,valueType: 1
 		,defaultValue: -1
 		,errorId: 'invalidFlexibleId'
@@ -30,7 +29,6 @@ export class StudentDetailForm extends Form {
 		name:'departmentId'
 		,controlType: 'Dropdown'
 		,label: 'Department'
-		,isRequired: true
 		,listName: 'departmentList'
 		,valueType: 1
 		,errorId: 'invalidId'
@@ -40,7 +38,6 @@ export class StudentDetailForm extends Form {
 		name:'departmentName'
 		,controlType: 'Input'
 		,label: 'Department Name'
-		,isRequired: true
 		,valueType: 0
 		,errorId: 'invalidText'
 		,maxLength: 1000
@@ -49,7 +46,6 @@ export class StudentDetailForm extends Form {
 		name:'name'
 		,controlType: 'Input'
 		,label: 'Level'
-		,isRequired: true
 		,valueType: 0
 		,errorId: 'invalidName'
 		,maxLength: 50
@@ -66,7 +62,6 @@ export class StudentDetailForm extends Form {
 		name:'phoneNumber'
 		,controlType: 'Input'
 		,label: 'Phone'
-		,isRequired: true
 		,valueType: 0
 		,errorId: 'invalidPhone'
 		,minLength: 10
@@ -81,23 +76,22 @@ export class StudentDetailForm extends Form {
 		super();
 		this.fields = new Map();
 		this.controls = new Map();
-		this.controls.set('studentId', [Validators.required, Validators.min(-1), Validators.max(9999999999999)]);
+		this.controls.set('studentId', [Validators.min(-1), Validators.max(9999999999999)]);
 		this.fields.set('studentId', this.studentId);
 		this.controls.set('instituteId', [Validators.max(9999999999999)]);
 		this.fields.set('instituteId', this.instituteId);
-		this.controls.set('departmentId', [Validators.required, Validators.max(9999999999999)]);
+		this.controls.set('departmentId', [Validators.max(9999999999999)]);
 		this.fields.set('departmentId', this.departmentId);
-		this.controls.set('departmentName', [Validators.required, Validators.maxLength(1000)]);
+		this.controls.set('departmentName', [Validators.maxLength(1000)]);
 		this.fields.set('departmentName', this.departmentName);
-		this.controls.set('name', [Validators.required, Validators.maxLength(50)]);
+		this.controls.set('name', [Validators.maxLength(50)]);
 		this.fields.set('name', this.name);
 		this.controls.set('usn', [Validators.maxLength(1000)]);
 		this.fields.set('usn', this.usn);
-		this.controls.set('phoneNumber', [Validators.required, Validators.minLength(10), Validators.maxLength(12), Validators.pattern('[1-9][0-9]*')]);
+		this.controls.set('phoneNumber', [Validators.minLength(10), Validators.maxLength(12), Validators.pattern('[1-9][0-9]*')]);
 		this.fields.set('phoneNumber', this.phoneNumber);
 		this.opsAllowed = {get: true, create: true, update: true, filter: true};
 		this.listFields = ['departmentId'];
-		this.keyFields = ["studentId"];
 	}
 
 	public getName(): string {

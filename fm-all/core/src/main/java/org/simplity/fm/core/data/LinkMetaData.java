@@ -24,6 +24,7 @@ package org.simplity.fm.core.data;
 
 import java.sql.SQLException;
 
+import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.serialize.IInputArray;
@@ -141,9 +142,23 @@ public class LinkMetaData {
 	 * called by parent form/record if link-fields are specified. Note that the
 	 * forms must be based on DbRecord for linking them
 	 *
-	 * @param parentRecord
+	 * @param parentRec
+	 *
+	 * @param childREc
 	 */
-	void init(final DbRecord parentRecord, final DbRecord childRecord) {
+	void init(final Record parentRec, final Record childRec) {
+		if (this.parentLinkNames == null || this.childLinkNames == null) {
+			logger.info("Linked form has no deign-tim elink parameters. No auto operations possible..");
+			return;
+		}
+		if (parentRec instanceof DbRecord == false || childRec instanceof DbRecord == false) {
+			logger.warn("Linked form defined for non-db record. No auto operations possible..");
+			return;
+		}
+
+		final DbRecord parentRecord = (DbRecord) parentRec;
+		final DbRecord childRecord = (DbRecord) childRec;
+
 		final StringBuilder sbf = new StringBuilder(" WHERE ");
 		final int nbr = this.parentLinkNames.length;
 		this.parentIndexes = new int[nbr];
@@ -187,6 +202,10 @@ public class LinkMetaData {
 	 */
 	public boolean read(final DbRecord parentRec, final Form<?> form, final ISerializer writer, final DbHandle handle)
 			throws SQLException {
+		if (this.parentLinkNames == null) {
+			throw new ApplicationError(
+					"Form linkage has no design-time link names. read operation is not possible on the linked from");
+		}
 		final Object[] values = this.getWhereValues(parentRec);
 
 		final DbRecord thisRecord = (DbRecord) form.record;
@@ -239,6 +258,10 @@ public class LinkMetaData {
 	 */
 	public boolean save(final DbRecord parentRec, final Form<?> form, final IInputObject inputObject,
 			final DbHandle handle, final IServiceContext ctx) throws SQLException {
+		if (this.parentLinkNames == null) {
+			throw new ApplicationError(
+					"Form linkage has no design-time link names. save operation not possible on the linked form");
+		}
 		final DbRecord thisRecord = (DbRecord) form.record;
 		if (this.isTabular) {
 			final IInputArray arr = inputObject.getArray(this.linkName);
@@ -298,6 +321,11 @@ public class LinkMetaData {
 	 * @throws SQLException
 	 */
 	public boolean delete(final DbRecord parentRec, final Form<?> form, final DbHandle handle) throws SQLException {
+		if (this.parentLinkNames == null) {
+			throw new ApplicationError(
+					"Form linkage has no design-time link names. delete on linked form not possible");
+		}
+
 		handle.write(this.deleteSql, this.getWhereValues(parentRec));
 		/*
 		 * 0 delete also is okay

@@ -9,7 +9,7 @@ import org.simplity.fm.example.gen.rec.StudentCieDetailRecord;
 public class StudentCieDetailForm extends Form<StudentCieDetailRecord> {
 	protected static final String NAME = "studentCieDetail";
 	protected static final StudentCieDetailRecord RECORD = (StudentCieDetailRecord) ComponentProvider.getProvider().getRecord("studentCieDetail");
-	protected static final  boolean[] OPS = {true, true, true, false, true, false};
+	protected static final  boolean[] OPS = {true, true, true, false, true};
 	private static final LinkedForm<?>[] LINKS = null;
 /** constructor */
 public StudentCieDetailForm() {

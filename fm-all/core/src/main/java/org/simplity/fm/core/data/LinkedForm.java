@@ -117,4 +117,14 @@ public class LinkedForm<T extends DbRecord> {
 					"Auto delete operation not allowed on a form with hrand-links. It can have only one level of linked forms.");
 		}
 	}
+
+	/**
+	 * must be called by parent form before it is used
+	 *
+	 * @param parentRecord
+	 */
+	public void init(final Record parentRecord) {
+		this.linkMeta.init(parentRecord, this.form.getRecord());
+
+	}
 }

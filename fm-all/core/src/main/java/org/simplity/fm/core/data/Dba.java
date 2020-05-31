@@ -50,11 +50,6 @@ public class Dba {
 
 	protected static final Logger logger = LoggerFactory.getLogger(Dba.class);
 	/**
-	 * db operations that are to be exposed thru this form. array corresponds to
-	 * the ordinal of IoType
-	 */
-	private final boolean[] operations;
-	/**
 	 * table/view name in the database
 	 */
 	private final String nameInDb;
@@ -144,7 +139,6 @@ public class Dba {
 	 *
 	 * @param allFields
 	 * @param nameInDb
-	 * @param ops
 	 * @param selectClause
 	 * @param selectIndexes
 	 * @param insertClause
@@ -155,16 +149,14 @@ public class Dba {
 	 * @param whereClause
 	 * @param whereIndexes
 	 */
-	public Dba(final Field[] allFields, final String nameInDb, final boolean[] ops, final String selectClause,
-			final int[] selectIndexes, final String insertClause, final int[] insertIndexes, final String updateClause,
-			final int[] updateIndexes, final String deleteClause, final String whereClause, final int[] whereIndexes) {
+	public Dba(final Field[] allFields, final String nameInDb, final String selectClause, final int[] selectIndexes,
+			final String insertClause, final int[] insertIndexes, final String updateClause, final int[] updateIndexes,
+			final String deleteClause, final String whereClause, final int[] whereIndexes) {
 
 		this.dbFields = new DbField[allFields.length];
 		this.prepareFields(allFields);
 
 		this.nameInDb = nameInDb;
-		this.operations = ops;
-
 		this.selectClause = selectClause;
 		this.selectParams = this.prepareParams(selectIndexes);
 
@@ -272,7 +264,7 @@ public class Dba {
 	 * @throws SQLException
 	 */
 	boolean insert(final DbHandle handle, final Object[] values) throws SQLException {
-		if (!this.operations[IoType.Create.ordinal()]) {
+		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Create);
 		}
 
@@ -312,7 +304,7 @@ public class Dba {
 	 * @throws SQLException
 	 */
 	boolean update(final DbHandle handle, final Object[] values) throws SQLException {
-		if (!this.operations[IoType.Update.ordinal()]) {
+		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Update);
 		}
 
@@ -330,7 +322,7 @@ public class Dba {
 	 * @throws SQLException
 	 */
 	boolean delete(final DbHandle handle, final Object[] values) throws SQLException {
-		if (!this.operations[IoType.Delete.ordinal()]) {
+		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Delete);
 		}
 
@@ -389,7 +381,7 @@ public class Dba {
 	 * @throws SQLException
 	 */
 	boolean saveAll(final DbHandle handle, final Object[][] rows) throws SQLException {
-		if (!this.operations[IoType.Update.ordinal()]) {
+		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Update);
 		}
 
@@ -447,7 +439,7 @@ public class Dba {
 	 * @throws SQLException
 	 */
 	boolean save(final DbHandle handle, final Object[] fieldValues) throws SQLException {
-		if (!this.operations[IoType.Update.ordinal()]) {
+		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Update);
 		}
 		if (this.generatedKeyIdx == -1) {
@@ -492,7 +484,7 @@ public class Dba {
 	 * @throws SQLException
 	 */
 	boolean insertAll(final DbHandle handle, final Object[][] rows) throws SQLException {
-		if (!this.operations[IoType.Create.ordinal()]) {
+		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Create);
 		}
 
@@ -512,7 +504,7 @@ public class Dba {
 	 * @throws SQLException
 	 */
 	boolean updateAll(final DbHandle handle, final Object[][] rows) throws SQLException {
-		if (!this.operations[IoType.Update.ordinal()]) {
+		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Update);
 		}
 
@@ -605,7 +597,7 @@ public class Dba {
 	 * @throws SQLException
 	 */
 	boolean read(final DbHandle handle, final Object[] values) throws SQLException {
-		if (!this.operations[IoType.Get.ordinal()]) {
+		if (this.keyIndexes == null) {
 			return notAllowed(IoType.Get);
 		}
 
@@ -677,22 +669,14 @@ public class Dba {
 	List<Object[]> filter(final String whereClauseStartingWithWhere, final Object[] values, final DbHandle handle)
 			throws SQLException {
 		final List<Object[]> result = new ArrayList<>();
-		if (this.operations[IoType.Filter.ordinal()]) {
-			this.filterWorker(handle, whereClauseStartingWithWhere, values, null, result);
-		} else {
-			notAllowed(IoType.Filter);
-		}
+		this.filterWorker(handle, whereClauseStartingWithWhere, values, null, result);
 
 		return result;
 	}
 
 	boolean filterFirst(final String whereClauseStartingWithWhere, final Object[] inputValues,
 			final Object[] outputValues, final DbHandle handle) throws SQLException {
-		if (this.operations[IoType.Filter.ordinal()]) {
-			return this.filterWorker(handle, whereClauseStartingWithWhere, inputValues, outputValues, null);
-		}
-
-		return notAllowed(IoType.Filter);
+		return this.filterWorker(handle, whereClauseStartingWithWhere, inputValues, outputValues, null);
 	}
 
 	boolean filterWorker(final DbHandle handle, final String where, final Object[] inputValues,
@@ -824,15 +808,6 @@ public class Dba {
 	}
 
 	/**
-	 *
-	 * @param operation
-	 * @return true if this operation is allowed. false otherwise
-	 */
-	boolean operationAllowed(final IoType operation) {
-		return this.operations[operation.ordinal()];
-	}
-
-	/**
 	 * @param fieldValues
 	 * @param ctx
 	 * @return
@@ -889,5 +864,16 @@ public class Dba {
 	 */
 	public ParsedFilter parseFilter(final IInputObject json, final IServiceContext ctx) {
 		return ParsedFilter.parse(json, this.dbFields, this.tenantField, ctx);
+	}
+
+	/**
+	 * @param operation
+	 * @return true if this operation is allowed
+	 */
+	boolean operationAllowed(final IoType operation) {
+		if (operation == IoType.Filter) {
+			return true;
+		}
+		return this.keyIndexes != null;
 	}
 }

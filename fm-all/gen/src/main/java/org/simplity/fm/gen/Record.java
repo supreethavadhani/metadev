@@ -70,7 +70,6 @@ class Record {
 	String nameInDb;
 	boolean useTimestampCheck;
 	String customValidation;
-	String[] operations;
 	/*
 	 * reason we have it as an array rather than a MAP is that the sequence,
 	 * though not recommended, could be hard-coded by some coders
@@ -362,8 +361,7 @@ class Record {
 	}
 
 	private void emitDbSpecific(final StringBuilder sbf, final String cls) {
-		sbf.append("\n\t/* DB related */\n\tprivate static final ");
-		Form.getOps(this.operations, sbf);
+		sbf.append("\n\t/* DB related */");
 
 		this.emitSelect(sbf);
 		if (this.keyFields == null) {
@@ -389,7 +387,7 @@ class Record {
 			sbf.append(P).append("String DELETE = \"DELETE FROM ").append(this.nameInDb).append("\";");
 		}
 
-		sbf.append("\n\n\tprivate static final Dba DBA = new Dba(FIELDS, \"").append(this.nameInDb).append("\", OPS, ");
+		sbf.append("\n\n\tprivate static final Dba DBA = new Dba(FIELDS, \"").append(this.nameInDb).append("\", ");
 		sbf.append("SELECT, SELECT_IDX,");
 		if (this.keyFields == null) {
 			sbf.append("null, null, null, null, null, null, null");

@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.simplity.fm.core.ApplicationError;
+import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.MessageType;
 import org.simplity.fm.core.data.DbTable;
@@ -162,9 +163,12 @@ public class DefaultContext implements IServiceContext {
 			throw new ApplicationError(
 					"Cannot set fields  as response. A response is already set or the serializer is already in use.");
 		}
+		this.serializer.beginObject();
+		this.serializer.name(Conventions.Http.TAG_LIST);
 		this.serializer.beginArray();
 		this.serializer.arrayElements(fields, values);
 		this.serializer.endArray();
+		this.serializer.endObject();
 		this.responseSet = true;
 	}
 
@@ -180,6 +184,9 @@ public class DefaultContext implements IServiceContext {
 			throw new ApplicationError(
 					"Cannot set a dbTable as response-record. A response is already set or the serializer is already in use.");
 		}
+		logger.info("Setting table as list inside the response object");
+		this.serializer.beginObject();
+		this.serializer.name(Conventions.Http.TAG_LIST);
 		this.serializer.beginArray();
 		table.forEach(record -> {
 			this.serializer.beginObject();
@@ -187,6 +194,7 @@ public class DefaultContext implements IServiceContext {
 			this.serializer.endObject();
 		});
 		this.serializer.endArray();
+		this.serializer.endObject();
 		this.responseSet = true;
 	}
 

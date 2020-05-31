@@ -12,7 +12,6 @@ export class MarksEntryForm extends Form {
 		name:'subjectSectionId'
 		,controlType: 'Hidden'
 		,label: 'subjectSectionId'
-		,isRequired: true
 		,valueType: 1
 		,errorId: 'invalidId'
 		,maxValue: 9999999999999
@@ -55,7 +54,7 @@ export class MarksEntryForm extends Form {
 		super();
 		this.fields = new Map();
 		this.controls = new Map();
-		this.controls.set('subjectSectionId', [Validators.required, Validators.max(9999999999999)]);
+		this.controls.set('subjectSectionId', [Validators.max(9999999999999)]);
 		this.fields.set('subjectSectionId', this.subjectSectionId);
 		this.controls.set('subjectName', [Validators.maxLength(50)]);
 		this.fields.set('subjectName', this.subjectName);
@@ -65,7 +64,6 @@ export class MarksEntryForm extends Form {
 		this.childForms = new Map();
 		this.childForms.set('students', this.students);
 		this.opsAllowed = {get: true, update: true};
-		this.keyFields = ["subjectSectionId"];
 	}
 
 	public getName(): string {

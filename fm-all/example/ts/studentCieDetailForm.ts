@@ -11,7 +11,6 @@ export class StudentCieDetailForm extends Form {
 		name:'studentId'
 		,controlType: 'Hidden'
 		,label: 'studentId'
-		,isRequired: true
 		,valueType: 1
 		,defaultValue: -1
 		,errorId: 'invalidFlexibleId'
@@ -22,7 +21,6 @@ export class StudentCieDetailForm extends Form {
 		name:'subjectSectionId'
 		,controlType: 'Hidden'
 		,label: 'subjectSectionId'
-		,isRequired: true
 		,valueType: 1
 		,errorId: 'invalidId'
 		,maxValue: 9999999999999
@@ -31,7 +29,6 @@ export class StudentCieDetailForm extends Form {
 		name:'departmentName'
 		,controlType: 'Output'
 		,label: 'Department Name'
-		,isRequired: true
 		,valueType: 0
 		,errorId: 'invalidText'
 		,maxLength: 1000
@@ -40,7 +37,6 @@ export class StudentCieDetailForm extends Form {
 		name:'name'
 		,controlType: 'Output'
 		,label: 'Student Name'
-		,isRequired: true
 		,valueType: 0
 		,errorId: 'invalidName'
 		,maxLength: 50
@@ -214,13 +210,13 @@ export class StudentCieDetailForm extends Form {
 		super();
 		this.fields = new Map();
 		this.controls = new Map();
-		this.controls.set('studentId', [Validators.required, Validators.min(-1), Validators.max(9999999999999)]);
+		this.controls.set('studentId', [Validators.min(-1), Validators.max(9999999999999)]);
 		this.fields.set('studentId', this.studentId);
-		this.controls.set('subjectSectionId', [Validators.required, Validators.max(9999999999999)]);
+		this.controls.set('subjectSectionId', [Validators.max(9999999999999)]);
 		this.fields.set('subjectSectionId', this.subjectSectionId);
-		this.controls.set('departmentName', [Validators.required, Validators.maxLength(1000)]);
+		this.controls.set('departmentName', [Validators.maxLength(1000)]);
 		this.fields.set('departmentName', this.departmentName);
-		this.controls.set('name', [Validators.required, Validators.maxLength(50)]);
+		this.controls.set('name', [Validators.maxLength(50)]);
 		this.fields.set('name', this.name);
 		this.controls.set('usn', [Validators.maxLength(1000)]);
 		this.fields.set('usn', this.usn);
@@ -259,7 +255,6 @@ export class StudentCieDetailForm extends Form {
 		this.controls.set('totalCie', [Validators.maxLength(1000)]);
 		this.fields.set('totalCie', this.totalCie);
 		this.opsAllowed = {get: true, create: true, update: true, filter: true};
-		this.keyFields = ["studentId"];
 	}
 
 	public getName(): string {

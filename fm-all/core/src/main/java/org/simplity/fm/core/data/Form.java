@@ -75,6 +75,11 @@ public abstract class Form<T extends Record> {
 		this.operations = operations;
 		this.isDb = record instanceof DbRecord;
 		this.linkedForms = linkedForms;
+		if (linkedForms != null && linkedForms.length > 0) {
+			for (final LinkedForm<?> lf : linkedForms) {
+				lf.init(record);
+			}
+		}
 	}
 
 	/**
@@ -354,6 +359,7 @@ public abstract class Form<T extends Record> {
 
 		@Override
 		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
+			logger.info("Form service invoked for filter for {}", this.getId());
 			final DbRecord rec = (DbRecord) Form.this.record;
 			final ParsedFilter filter = rec.dba.parseFilter(payload, ctx);
 
@@ -372,6 +378,7 @@ public abstract class Form<T extends Record> {
 				final ISerializer writer = ctx.getSerializer();
 				writer.beginObject();
 				writer.name(Conventions.Http.TAG_LIST);
+				logger.info("List tag added to the response..");
 				writer.beginArray();
 
 				if (list.size() == 0) {
@@ -391,5 +398,12 @@ public abstract class Form<T extends Record> {
 				writer.endObject();
 			});
 		}
+	}
+
+	/**
+	 * @return underlying record for this form
+	 */
+	public T getRecord() {
+		return this.record;
 	}
 }

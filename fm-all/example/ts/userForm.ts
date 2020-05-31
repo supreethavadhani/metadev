@@ -36,7 +36,6 @@ export class UserForm extends Form {
 		name:'userType'
 		,controlType: 'Dropdown'
 		,label: 'User Type'
-		,isRequired: true
 		,listName: 'userType'
 		,valueList: [
 			{value:'student',text:'student'},
@@ -54,7 +53,6 @@ export class UserForm extends Form {
 		name:'loginId'
 		,controlType: 'Input'
 		,label: 'Login Id'
-		,isRequired: true
 		,valueType: 0
 		,errorId: 'invalidLoginId'
 		,maxLength: 50
@@ -71,7 +69,6 @@ export class UserForm extends Form {
 		name:'loginEnabled'
 		,controlType: 'Checkbox'
 		,label: 'Login Enabled'
-		,isRequired: true
 		,valueType: 3
 		,defaultValue: false
 		,errorId: 'invalidBool'
@@ -166,13 +163,13 @@ export class UserForm extends Form {
 		this.fields.set('instituteId', this.instituteId);
 		this.controls.set('trustId', [Validators.max(9999999999999)]);
 		this.fields.set('trustId', this.trustId);
-		this.controls.set('userType', [Validators.required, Validators.maxLength(20)]);
+		this.controls.set('userType', [Validators.maxLength(20)]);
 		this.fields.set('userType', this.userType);
-		this.controls.set('loginId', [Validators.required, Validators.maxLength(50)]);
+		this.controls.set('loginId', [Validators.maxLength(50)]);
 		this.fields.set('loginId', this.loginId);
 		this.controls.set('loginToken', [Validators.maxLength(1000)]);
 		this.fields.set('loginToken', this.loginToken);
-		this.controls.set('loginEnabled', [Validators.required]);
+		this.controls.set('loginEnabled', []);
 		this.fields.set('loginEnabled', this.loginEnabled);
 		this.controls.set('resetPasswordCount', [Validators.max(9999999999999)]);
 		this.fields.set('resetPasswordCount', this.resetPasswordCount);
@@ -196,7 +193,6 @@ export class UserForm extends Form {
 		this.fields.set('updatedAt', this.updatedAt);
 		this.opsAllowed = {get: true, filter: true};
 		this.listFields = ['userType'];
-		this.keyFields = ["userId"];
 	}
 
 	public getName(): string {

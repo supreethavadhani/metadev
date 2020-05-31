@@ -28,7 +28,7 @@ import org.simplity.fm.gen.Generator;
  * @author simplity.org
  *
  */
-public class Gen {
+public class Generate {
 	private static final String SPEC_ROOT = "c:/repos/forms/fm-all/example/resources/spec/";
 	private static final String JAVA_ROOT = "c:/repos/forms/fm-all/example/src/main/java/";
 	private static final String JAVA_PACKAGE = "org.simplity.fm.example.gen";

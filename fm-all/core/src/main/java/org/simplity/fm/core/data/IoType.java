@@ -24,13 +24,13 @@ package org.simplity.fm.core.data;
 
 /**
  * db operation
- * 
+ *
  * @author simplity.org
  *
  */
 public enum IoType {
 	/**
-	 * read/fetch/get  one row for the primary key 
+	 * read/fetch/get one row for the primary key
 	 */
 	Get,
 	/**
@@ -48,9 +48,5 @@ public enum IoType {
 	/**
 	 * filter rows based on filter criterion
 	 */
-	Filter,
-	/**
-	 * process an array of rows and add/modify them depending on the primry key
-	 */
-	Bulk
+	Filter
 }
