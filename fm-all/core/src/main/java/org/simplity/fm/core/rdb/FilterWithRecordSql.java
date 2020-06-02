@@ -23,9 +23,10 @@
 package org.simplity.fm.core.rdb;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.simplity.fm.core.data.DbRecord;
-import org.simplity.fm.core.data.DbTable;
 
 /**
  * A Sql that is designed to filter rows from the RDBMS. That is, result may
@@ -47,11 +48,14 @@ public abstract class FilterWithRecordSql<T extends DbRecord> extends Sql {
 	 *         empty
 	 * @throws SQLException
 	 */
-	public DbTable<T> filter(final DbHandle handle) throws SQLException {
-		final DbTable<T> table = new DbTable<>(this.record);
-		table.filter(this.sqlText, this.inputData.fetchRawData(), handle);
-		return table;
-
+	@SuppressWarnings("unchecked")
+	public List<T> filter(final DbHandle handle) throws SQLException {
+		final List<Object[]> rows = this.record.filter(this.sqlText, this.inputData.fetchRawData(), handle);
+		final List<T> result = new ArrayList<>(rows.size());
+		for (final Object[] row : rows) {
+			result.add((T) this.record.newInstance(row));
+		}
+		return result;
 	}
 
 	/**
@@ -64,11 +68,16 @@ public abstract class FilterWithRecordSql<T extends DbRecord> extends Sql {
 	 * @throws SQLException
 	 *             thrown when any SQL exception, OR when no rows are filtered
 	 */
-	public DbTable<T> filterOrFail(final DbHandle handle) throws SQLException {
-		final DbTable<T> result = this.filter(handle);
+	@SuppressWarnings("unchecked")
+	public List<T> filterOrFail(final DbHandle handle) throws SQLException {
 
-		if (result.length() == 0) {
+		final List<Object[]> rows = this.record.filter(this.sqlText, this.inputData.fetchRawData(), handle);
+		if (rows.size() == 0) {
 			throw new SQLException("Filter did not return any row. " + this.showDetails());
+		}
+		final List<T> result = new ArrayList<>(rows.size());
+		for (final Object[] row : rows) {
+			result.add((T) this.record.newInstance(row));
 		}
 		return result;
 	}

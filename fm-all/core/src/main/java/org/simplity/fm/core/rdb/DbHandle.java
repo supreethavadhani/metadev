@@ -483,6 +483,30 @@ public class DbHandle {
 	}
 
 	/**
+	 * use a prepared statement, and values for the parameters to run it
+	 *
+	 * @param sql
+	 *            a prepared statement that manipulates data.
+	 * @param paramValues
+	 *            Each element is a non-null array that contains non-null values
+	 *            for each parameter in the prepared statement. to be set to the
+	 *            prepared statement.
+	 * @return number of affected rows. Not reliable. If driver returns -1, we
+	 *         assume it to be 1
+	 * @throws SQLException
+	 */
+	public int writeMany(final String sql, final List<Record> paramValues) throws SQLException {
+		logger.info("Generic Batch SQL:{}", sql);
+		try (PreparedStatement ps = this.con.prepareStatement(sql)) {
+			for (final Record row : paramValues) {
+				row.setPsParams(ps);
+				ps.addBatch();
+			}
+			return accumulate(ps.executeBatch());
+		}
+	}
+
+	/**
 	 * API that is close to the JDBC API for updating/inserting/deleting
 	 *
 	 * @param sql

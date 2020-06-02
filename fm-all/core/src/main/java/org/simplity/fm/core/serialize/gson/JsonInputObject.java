@@ -63,7 +63,7 @@ public class JsonInputObject implements IInputObject {
 	@Override
 	public IInputObject getObject(final String name) {
 		final JsonElement ele = this.json.get(name);
-		if (ele.isJsonObject()) {
+		if (ele != null && ele.isJsonObject()) {
 			return (new JsonInputObject((JsonObject) ele));
 		}
 		return null;
@@ -72,7 +72,7 @@ public class JsonInputObject implements IInputObject {
 	@Override
 	public IInputArray getArray(final String name) {
 		final JsonElement ele = this.json.get(name);
-		if (ele.isJsonArray()) {
+		if (ele != null && ele.isJsonArray()) {
 			return (new JsonInputArray((JsonArray) ele));
 		}
 		return null;

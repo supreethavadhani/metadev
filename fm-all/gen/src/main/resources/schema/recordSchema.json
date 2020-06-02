@@ -80,7 +80,7 @@
                             "marks",
                             "marksOrAb",
                             "valuationType",
-                            "internal_marks"
+                            "internalMarks"
                         ]
                     },
                     "defaultValue": {

@@ -24,6 +24,7 @@ package org.simplity.fm.core.serialize;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 import org.simplity.fm.core.data.DbTable;
 import org.simplity.fm.core.data.Field;
@@ -183,4 +184,26 @@ public interface ISerializer {
 	 *            be null or empty
 	 */
 	void array(String memberName, DbTable<?> table);
+
+	/**
+	 * to be called inside an array, (Not directly inside an object) Each record
+	 * in the table is serialized as members of the enclosing array
+	 *
+	 * @param memberName
+	 *            name with which this array is added to the current object
+	 *
+	 * @param records
+	 *            records from which the array elements are to be added. Could
+	 *            be null or empty
+	 */
+	void array(String memberName, List<? extends Record> records);
+
+	/**
+	 * to be called inside an array, (Not directly inside an object) Each record
+	 * in the table is serialized as members of the enclosing array
+	 *
+	 * @param records
+	 */
+	void arrayElements(List<? extends Record> records);
+
 }

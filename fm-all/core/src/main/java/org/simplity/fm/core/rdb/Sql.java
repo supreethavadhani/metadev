@@ -49,9 +49,9 @@ public abstract class Sql {
 	public String showDetails() {
 		final StringWriter sw = new StringWriter();
 		final ISerializer writer = new JsonSerializer(sw);
-		writer.beginArray();
+		writer.beginObject();
 		writer.fields(this.inputData);
-		writer.endArray();
+		writer.endObject();
 		return "SQL= " + this.sqlText + "\n" + writer.toString();
 	}
 }

@@ -163,10 +163,15 @@ public class DefaultContext implements IServiceContext {
 			throw new ApplicationError(
 					"Cannot set fields  as response. A response is already set or the serializer is already in use.");
 		}
+
 		this.serializer.beginObject();
 		this.serializer.name(Conventions.Http.TAG_LIST);
 		this.serializer.beginArray();
-		this.serializer.arrayElements(fields, values);
+
+		if (values != null && values.length > 0) {
+			this.serializer.arrayElements(fields, values);
+		}
+
 		this.serializer.endArray();
 		this.serializer.endObject();
 		this.responseSet = true;
@@ -188,11 +193,15 @@ public class DefaultContext implements IServiceContext {
 		this.serializer.beginObject();
 		this.serializer.name(Conventions.Http.TAG_LIST);
 		this.serializer.beginArray();
-		table.forEach(record -> {
-			this.serializer.beginObject();
-			this.serializer.fields(record);
-			this.serializer.endObject();
-		});
+
+		if (table != null) {
+			table.forEach(record -> {
+				this.serializer.beginObject();
+				this.serializer.fields(record);
+				this.serializer.endObject();
+			});
+		}
+
 		this.serializer.endArray();
 		this.serializer.endObject();
 		this.responseSet = true;
@@ -208,13 +217,15 @@ public class DefaultContext implements IServiceContext {
 		this.serializer.fields(header);
 		this.serializer.name(childName);
 		this.serializer.beginArray();
-		if (lines != null) {
+
+		if (lines != null && lines.length() > 0) {
 			lines.forEach(record -> {
 				this.serializer.beginObject();
 				this.serializer.fields(record);
 				this.serializer.endObject();
 			});
 		}
+
 		this.serializer.endArray();
 		this.serializer.endObject();
 		this.responseSet = true;
@@ -230,7 +241,8 @@ public class DefaultContext implements IServiceContext {
 		this.serializer.fields(header);
 		this.serializer.name(childName);
 		this.serializer.beginArray();
-		if (lines != null) {
+
+		if (lines != null && lines.size() > 0) {
 			lines.forEach(record -> {
 				this.serializer.beginObject();
 				this.serializer.fields(record);

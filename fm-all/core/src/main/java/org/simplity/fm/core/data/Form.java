@@ -364,7 +364,7 @@ public abstract class Form<T extends Record> {
 			final ParsedFilter filter = rec.dba.parseFilter(payload, ctx);
 
 			if (filter == null) {
-				logger.error("Error while parsing filter conditions from th einput payload");
+				logger.error("Error while parsing filter conditions from the input payload");
 				return;
 			}
 
@@ -378,7 +378,6 @@ public abstract class Form<T extends Record> {
 				final ISerializer writer = ctx.getSerializer();
 				writer.beginObject();
 				writer.name(Conventions.Http.TAG_LIST);
-				logger.info("List tag added to the response..");
 				writer.beginArray();
 
 				if (list.size() == 0) {
@@ -394,6 +393,7 @@ public abstract class Form<T extends Record> {
 						writer.endObject();
 					}
 				}
+
 				writer.endArray();
 				writer.endObject();
 			});

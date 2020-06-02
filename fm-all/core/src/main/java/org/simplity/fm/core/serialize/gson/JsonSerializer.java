@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.data.DbTable;
@@ -259,4 +260,35 @@ public class JsonSerializer implements ISerializer {
 			}
 		});
 	}
+
+	@Override
+	public void array(final String memberName, final List<? extends Record> records) {
+		try {
+			this.writer.name(memberName);
+			this.writer.beginArray();
+			if (records != null && records.size() > 0) {
+				this.arrayElements(records);
+			}
+			this.writer.endArray();
+		} catch (final IOException e) {
+			throw new ApplicationError("", e);
+		}
+	}
+
+	@Override
+	public void arrayElements(final List<? extends Record> records) {
+		if (records == null) {
+			return;
+		}
+		try {
+			for (final Record rec : records) {
+				this.writer.beginObject();
+				this.fields(rec);
+				this.writer.endObject();
+			}
+		} catch (final IOException e) {
+			throw new ApplicationError("", e);
+		}
+	}
+
 }

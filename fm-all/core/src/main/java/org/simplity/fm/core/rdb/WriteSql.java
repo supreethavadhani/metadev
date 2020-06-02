@@ -79,7 +79,7 @@ public abstract class WriteSql extends Sql {
 		if (this.batchData == null) {
 			throw new SQLException("Sql is not prepared for batch, but writeBatch is issued.");
 		}
-		final int n = handle.writeMany(this.sqlText, this.batchData.toArray(new Record[0]));
+		final int n = handle.writeMany(this.sqlText, this.batchData);
 		this.batchData = null;
 		return n;
 	}
@@ -98,6 +98,6 @@ public abstract class WriteSql extends Sql {
 		/*
 		 * important to add a copy, and the value itself
 		 */
-		this.batchData.add(this.inputData.newInstance());
+		this.batchData.add(this.inputData.newInstance(this.inputData.fetchRawData()));
 	}
 }

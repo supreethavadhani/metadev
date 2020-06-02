@@ -22,10 +22,8 @@
 
 package org.simplity.fm.gen;
 
-import java.sql.SQLException;
 import java.util.Map;
 
-import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.FilterSql;
 import org.simplity.fm.core.rdb.FilterWithRecordSql;
 import org.simplity.fm.core.rdb.ReadSql;
@@ -153,12 +151,8 @@ public class Sql {
 			final String dataTypesName, final Map<String, DataType> dataTypes) {
 
 		Util.emitImport(sbf, FilterWithRecordSql.class);
-		Util.emitImport(sbf, DbHandle.class);
-		Util.emitImport(sbf, SQLException.class);
 		final String recordCls = Util.toClassName(this.recordName) + "Record";
-		final String tableCls = Util.toClassName(this.recordName) + "Table";
 		sbf.append("\nimport ").append(packageName).append(".rec.").append(recordCls).append(";");
-		sbf.append("\nimport ").append(packageName).append(".rec.").append(tableCls).append(";");
 
 		/*
 		 * class
@@ -187,17 +181,6 @@ public class Sql {
 		}
 		sbf.append("\n\t\tthis.record = new ").append(recordCls).append("();");
 		sbf.append("\n\t}");
-
-		/*
-		 * over-ride for concrete return type
-		 */
-		sbf.append("\n\n\t@Override\n\tpublic ").append(tableCls);
-		sbf.append(" filter(final DbHandle handle) throws SQLException {");
-		sbf.append("\n\t\treturn (").append(tableCls).append(") super.filter(handle);\n\t}");
-
-		sbf.append("\n\n\t@Override\n\tpublic ").append(tableCls);
-		sbf.append(" filterOrFail(final DbHandle handle) throws SQLException {");
-		sbf.append("\n\t\treturn (").append(tableCls).append(") super.filterOrFail(handle);\n\t}");
 
 		if (this.sqlParams != null) {
 			this.emitSetters(sbf, dataTypes);

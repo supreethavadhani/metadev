@@ -281,16 +281,17 @@ public class LinkMetaData {
 				return false;
 			}
 
-			final int[] idx = { 0 };
+			int idx = -1;
 			for (final IInputObject obj : arr) {
-				if (!thisRecord.parse(obj, true, ctx, this.linkFormName, idx[0]++)) {
+				idx++;
+				if (!thisRecord.parse(obj, true, ctx, this.linkFormName, idx)) {
 					return false;
 				}
 				this.copyParentKeys(parentRec, thisRecord);
 				thisRecord.saveOrFail(handle);
-
-				return true;
 			}
+
+			return true;
 		}
 
 		final IInputObject obj = inputObject.getObject(this.linkName);
