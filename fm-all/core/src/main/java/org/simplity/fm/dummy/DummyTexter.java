@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 simplity.org
+ * Copyright (c) 2020 simplity.org
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,20 +20,22 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core;
+package org.simplity.fm.dummy;
+
+import org.simplity.fm.core.ITexter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * this interface is used to plant an implementation class in the root package
- * where classes are generated. It is then used by the ComponentProvider to get
- * this class name.
- * 
  * @author simplity.org
  *
  */
-public interface IPackageNameProvider {
-	/**
-	 * 
-	 * @return name of the root package where classes are generated
-	 */
-	public String getCompRootPackageName();
+public class DummyTexter implements ITexter {
+	private static final Logger logger = LoggerFactory.getLogger(DummyTexter.class);
+
+	@Override
+	public void sendText(final String senderId, final String numbers, final String sms) {
+		logger.warn("TExt messages NOT SENT from:{} to:{},  text:{}", senderId, numbers, sms);
+	}
+
 }

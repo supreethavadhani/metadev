@@ -25,8 +25,9 @@ package org.simplity.fm.upload;
 import java.util.Map;
 import java.util.Set;
 
-import org.simplity.fm.core.ComponentProvider;
+import org.simplity.fm.core.App;
 import org.simplity.fm.core.Conventions;
+import org.simplity.fm.core.ICompProvider;
 import org.simplity.fm.core.data.DbRecord;
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.Record;
@@ -66,7 +67,7 @@ import com.google.gson.JsonObject;
 class FormParser {
 	private static final Logger logger = LoggerFactory.getLogger(FormParser.class);
 
-	private final ComponentProvider compProvider = ComponentProvider.getProvider();
+	private final ICompProvider compProvider = App.getApp().getCompProvider();
 	/*
 	 * what is defined in this processor
 	 */

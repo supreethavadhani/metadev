@@ -20,43 +20,27 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.service;
-
-import org.simplity.fm.core.serialize.IInputObject;
+package org.simplity.fm.core;
 
 /**
- * Interface for service. The instance is expected to be re-usable, and
- * thread-safe. (immutable). Singleton pattern is suitable or this.
+ * Interface to launch the user defined App. This is picked-up by the frame-work
+ * using ServiceLoader java utility
+ *
+ * client-app should have folder named "META-INF" in their jar files (generally
+ * put in src/main/resources). THis folder contains a folder named "services". a
+ * file named "org.simplity.fm.app.AppConfigProvider". This file should contain
+ * one
+ * line with the fully qualified class name that implements this interface. for
+ * example <code>"com.myCompany.myApp.app.Bootstrapper"</code>
  *
  *
  * @author simplity.org
  *
  */
-public interface IService {
-	/**
-	 * serve when data is requested in a Map
-	 *
-	 * @param ctx
-	 *            service context provides certain data structures and methods.
-	 * @param inputObject
-	 *            non-null, could be empty if no pay-load was received from the
-	 *            client
-	 * @throws Exception
-	 *             so that the caller can wire exceptions to the right exception
-	 *             handler that is configured for the app
-	 */
-	void serve(IServiceContext ctx, IInputObject inputObject) throws Exception;
-
+public interface AppConfigProvider {
 	/**
 	 *
-	 * @return unique name/id of this service
+	 * @return configuration details required to configure the App
 	 */
-	String getId();
-
-	/**
-	 *
-	 * @return true if user has to be authenticated before serving this. false
-	 *         if this service does not require an authenticated user
-	 */
-	boolean authRequired();
+	App.Config getConfig();
 }

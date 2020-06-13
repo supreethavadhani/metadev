@@ -27,7 +27,7 @@ import java.util.Map;
 
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.data.DbRecord;
-import org.simplity.fm.core.rdb.DbHandle;
+import org.simplity.fm.core.rdb.TransactionHandle;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
@@ -110,7 +110,7 @@ class FormLoader {
 	 *         errors
 	 * @throws SQLException
 	 */
-	boolean loadData(final Map<String, String> values, final DbHandle handle, final IServiceContext ctx)
+	boolean loadData(final Map<String, String> values, final TransactionHandle handle, final IServiceContext ctx)
 			throws SQLException {
 		if (!this.parseInput(values, ctx)) {
 			return false;

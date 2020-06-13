@@ -22,7 +22,7 @@
 
 package org.simplity.fm.core.service;
 
-import org.simplity.fm.core.ComponentProvider;
+import org.simplity.fm.core.App;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.serialize.IInputObject;
@@ -65,7 +65,7 @@ public class ListService implements IService {
 			ctx.addMessage(Message.newError("list is required for listService"));
 			return;
 		}
-		final IValueList list = ComponentProvider.getProvider().getValueList(listName);
+		final IValueList list = App.getApp().getCompProvider().getValueList(listName);
 		if (list == null) {
 			ctx.addMessage(Message.newError("list " + listName + " is not configured"));
 			return;
@@ -106,5 +106,10 @@ public class ListService implements IService {
 		}
 		writer.endArray();
 		writer.endObject();
+	}
+
+	@Override
+	public boolean authRequired() {
+		return true;
 	}
 }

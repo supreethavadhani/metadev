@@ -22,28 +22,52 @@
 
 package org.simplity.fm.core.rdb;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
- * interface/lambda to carry out read-write operation under a transaction
- * control.
- *
+ * db handle that allows multiple transactions.
  *
  * @author simplity.org
  *
  */
-public interface IReadWriteClient {
+public class TransactionHandle extends ReadWriteHandle {
 
 	/**
-	 * method that is called-back with a handler. this method can use the
-	 * handler to any number of read/write operations. Transaction is also
-	 * rolled-back if you return false;
+	 * @param con
+	 */
+	TransactionHandle(final Connection con) {
+		super(con);
+	}
+
+	/**
+	 * turn on/off auto commit mode. If it is on, commit/roll-backs are not
+	 * valid
 	 *
-	 * @param handle
-	 * @return true if all OK. false in case you detect some condition because
-	 *         of which the transaction is to be cancelled.
+	 * @param mode
 	 * @throws SQLException
 	 */
-	boolean readWrite(DbHandle handle) throws SQLException;
+	public void setAutoCommitMode(final boolean mode) throws SQLException {
+		this.con.setAutoCommit(mode);
+	}
+
+	/**
+	 * commit all write operations after the last commit/roll-back
+	 *
+	 * @throws SQLException
+	 */
+	public void commit() throws SQLException {
+		this.con.commit();
+	}
+
+	/**
+	 * roll back any writes. This is to be used only to handle any exception. We
+	 * strongly suggest that this should never be called by design.
+	 *
+	 * @throws SQLException
+	 */
+	public void rollback() throws SQLException {
+		this.con.rollback();
+	}
 
 }

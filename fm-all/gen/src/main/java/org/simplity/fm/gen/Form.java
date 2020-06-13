@@ -27,7 +27,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.simplity.fm.core.ComponentProvider;
+import org.simplity.fm.core.App;
 import org.simplity.fm.core.data.FieldType;
 import org.simplity.fm.core.data.IoType;
 import org.simplity.fm.gen.DataTypes.DataType;
@@ -94,7 +94,7 @@ public class Form {
 			pck += '.' + qual;
 		}
 		sbf.append("package ").append(pck).append(";\n");
-		Util.emitImport(sbf, ComponentProvider.class);
+		Util.emitImport(sbf, App.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.Form.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.LinkMetaData.class);
 		Util.emitImport(sbf, org.simplity.fm.core.data.LinkedForm.class);
@@ -118,7 +118,7 @@ public class Form {
 		 * protected static final String RECORD = "....";
 		 */
 		sbf.append(p).append(recordClass).append(" RECORD = (").append(recordClass);
-		sbf.append(") ComponentProvider.getProvider().getRecord(\"").append(this.recordName).append("\");");
+		sbf.append(") App.getApp().getCompProvider().getRecord(\"").append(this.recordName).append("\");");
 
 		/*
 		 * protected static final boolean[] OPS = {true, false,..};

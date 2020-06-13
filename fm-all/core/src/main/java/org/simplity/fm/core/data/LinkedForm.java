@@ -25,7 +25,8 @@ package org.simplity.fm.core.data;
 import java.sql.SQLException;
 
 import org.simplity.fm.core.ApplicationError;
-import org.simplity.fm.core.rdb.DbHandle;
+import org.simplity.fm.core.rdb.ReadWriteHandle;
+import org.simplity.fm.core.rdb.ReadonlyHandle;
 import org.simplity.fm.core.serialize.IInputObject;
 import org.simplity.fm.core.serialize.ISerializer;
 import org.simplity.fm.core.service.IServiceContext;
@@ -66,7 +67,8 @@ public class LinkedForm<T extends DbRecord> {
 	 * @param handle
 	 * @throws SQLException
 	 */
-	public void read(final DbRecord parentRec, final ISerializer writer, final DbHandle handle) throws SQLException {
+	public void read(final DbRecord parentRec, final ISerializer writer, final ReadonlyHandle handle)
+			throws SQLException {
 		this.linkMeta.read(parentRec, this.form, writer, handle);
 	}
 
@@ -78,7 +80,7 @@ public class LinkedForm<T extends DbRecord> {
 	 * @return true if all OK. false in case any error is added to the ctx
 	 * @throws SQLException
 	 */
-	public boolean insert(final DbRecord parentRec, final IInputObject inputObject, final DbHandle handle,
+	public boolean insert(final DbRecord parentRec, final IInputObject inputObject, final ReadWriteHandle handle,
 			final IServiceContext ctx) throws SQLException {
 		this.checkUpdatability();
 		return this.linkMeta.save(parentRec, this.form, inputObject, handle, ctx);
@@ -92,7 +94,7 @@ public class LinkedForm<T extends DbRecord> {
 	 * @return true if all OK. false in case any error is added to the ctx
 	 * @throws SQLException
 	 */
-	public boolean update(final DbRecord parentRec, final IInputObject inputObject, final DbHandle handle,
+	public boolean update(final DbRecord parentRec, final IInputObject inputObject, final ReadWriteHandle handle,
 			final IServiceContext ctx) throws SQLException {
 		this.checkUpdatability();
 		return this.linkMeta.save(parentRec, this.form, inputObject, handle, ctx);
@@ -105,7 +107,7 @@ public class LinkedForm<T extends DbRecord> {
 	 * @return true if all OK. false in case any error is added to the ctx
 	 * @throws SQLException
 	 */
-	public boolean delete(final DbRecord parentRec, final DbHandle handle, final IServiceContext ctx)
+	public boolean delete(final DbRecord parentRec, final ReadWriteHandle handle, final IServiceContext ctx)
 			throws SQLException {
 		this.checkUpdatability();
 		return this.linkMeta.delete(parentRec, this.form, handle);

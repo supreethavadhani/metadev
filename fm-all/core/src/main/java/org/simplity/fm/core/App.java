@@ -22,18 +22,18 @@
 
 package org.simplity.fm.core;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Iterator;
+import java.util.ServiceLoader;
 
-import org.simplity.fm.core.data.Form;
-import org.simplity.fm.core.data.IoType;
-import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.datatypes.DataType;
-import org.simplity.fm.core.fn.IFunction;
-import org.simplity.fm.core.rdb.Sql;
-import org.simplity.fm.core.service.IService;
-import org.simplity.fm.core.service.ListService;
-import org.simplity.fm.core.validn.IValueList;
+import org.simplity.fm.core.rdb.RdbDriver;
+import org.simplity.fm.dummy.DefaultContextFactory;
+import org.simplity.fm.dummy.DummyAccessController;
+import org.simplity.fm.dummy.DummyCompProvider;
+import org.simplity.fm.dummy.DummyDbConFactory;
+import org.simplity.fm.dummy.DummyExceptionListener;
+import org.simplity.fm.dummy.DummyRequestLogger;
+import org.simplity.fm.dummy.DummySessionCacher;
+import org.simplity.fm.dummy.DummyTexter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,418 +43,256 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-public class App {
+public class App implements IApp {
 
 	protected static final Logger logger = LoggerFactory.getLogger(App.class);
+	private static final String UNKNOWN = "_unknown_";
+	private static App app = new App();
 
-	private static IApp emptyApp;
-	private static IApp defaultApp;
-
-	private static final Map<String, IApp> namedApps = new HashMap<>();
+	/*
+	 * initialized as a full-scale dummy!!
+	 */
+	private String appName = UNKNOWN;
+	private ICompProvider compProvider = new DummyCompProvider();
+	private IAccessController guard = new DummyAccessController();
+	private RdbDriver rdbDriver = new RdbDriver(new DummyDbConFactory());
+	private IExceptionListener listener = new DummyExceptionListener();
+	private ISessionCache cache = new DummySessionCacher();
+	private IRequestLogger reqLogger = new DummyRequestLogger();
+	private ITexter texter = new DummyTexter();
+	private IServiceContextFactory contextFactory = new DefaultContextFactory();
 
 	/**
-	 * @return default app.
+	 * @return the app. A dummy app if no App is configured, or if a
+	 *         configuration has failed,
 	 */
 	public static IApp getApp() {
-		if (defaultApp != null) {
-			return defaultApp;
-		}
-
-		logger.warn(
-				"No app is instantiated. An empty app is returned. This app has no components, and has teh default valaues for all configuration parameters");
-		return getEmptyApp();
+		return app;
 	}
 
 	/**
-	 *
-	 * @param app
-	 *            non-null App to be used as the default app. Note that this app
-	 *            is also added as a named app.
+	 * bootstrap based on any IBootstrapper that is configured using the
+	 * ServiceLoader java utility
 	 */
-	public void setDefaultApp(final IApp app) {
-		if (defaultApp != null) {
-			logger.info("Current default app is {}. This is being replaced with {}", defaultApp.getName(),
-					app.getName());
+	public static void bootstrap() {
+		final Iterator<AppConfigProvider> iter = ServiceLoader.load(AppConfigProvider.class).iterator();
+		if (iter.hasNext()) {
+			final AppConfigProvider bs = iter.next();
+			configureApp(bs.getConfig());
+			if (iter.hasNext()) {
+				logger.warn(
+						"Found {} as an additional IBootstrapper. Ignoring this as well as any more possible Apps that are available on our path",
+						iter.next().getClass().getName());
+			}
+		} else {
+			app.listener.listen(null,
+					new ApplicationError("No bootrsappers available on our path. Will continue with a dummy APP"));
 		}
 
-		defaultApp = app;
-		namedApps.put(app.getName(), app);
 	}
 
 	/**
+	 * configure the app
 	 *
-	 * @param app
-	 *            non-null App to be made available in this execution context.
-	 *            It is indexed by its name.
+	 * @param config
 	 */
-	public void setNamedApp(final IApp app) {
-		final String appName = app.getName();
-		final IApp oldApp = namedApps.get(appName);
-		if (oldApp != null) {
-			logger.info("App {} is replaced with another one with the same name. Possibly a duplicate/redundant call");
+	public static void configureApp(final Config config) {
+		String name = config.appName;
+
+		if (name == null || name.isEmpty()) {
+			logger.error("App name must be a unique name. Moving with name {} ", UNKNOWN);
+			app.appName = UNKNOWN;
+		} else {
+			app.appName = name;
 		}
-		namedApps.put(appName, app);
+
+		name = config.appRootPackage;
+
+		if (name == null || name.isEmpty()) {
+			logger.error(
+					"root package name is required to locate app components. This app will throw exception if any component is requested");
+			app.compProvider = new DummyCompProvider();
+		} else {
+			app.compProvider = CompProvider.getPrivider(name);
+			if (app.compProvider == null) {
+				logger.error("Error while initializing comp provider using root package {}", name);
+				app.compProvider = new DummyCompProvider();
+			}
+		}
+
+		if (config.accessController == null) {
+			logger.warn("No access controller configured. All services granted for all users");
+			app.guard = new DummyAccessController();
+		} else {
+			app.guard = config.accessController;
+		}
+
+		if (config.dbConnectionFactory == null) {
+			logger.warn("No DB connection configured. No db access");
+			app.rdbDriver = new RdbDriver(new DummyDbConFactory());
+		} else {
+			app.rdbDriver = new RdbDriver(config.dbConnectionFactory);
+		}
+
+		if (config.exceptionListener == null) {
+			logger.warn(
+					"No exception listener configured. All exceptions will just be logged before responding to the client");
+			app.listener = new DummyExceptionListener();
+		} else {
+			app.listener = config.exceptionListener;
+		}
+
+		if (config.sessionCache == null) {
+			logger.warn("No Session Cacher controller configured. local caching arranged instead..");
+			app.cache = new DummySessionCacher();
+		} else {
+			app.cache = config.sessionCache;
+		}
+
+		if (config.requestLogger == null) {
+			logger.warn("No Request logger configured. requests will be merged with general logging..");
+			app.reqLogger = new DummyRequestLogger();
+		} else {
+			app.reqLogger = config.requestLogger;
+		}
+
+		if (config.accessController == null) {
+			logger.warn(
+					"SMS texts can not be sent as the facility is not configured. SMS text will insted be just logged");
+			app.texter = new DummyTexter();
+		} else {
+			app.texter = config.texter;
+		}
+
+		if (config.contextFactory == null) {
+			logger.warn("No custom factory is defined to create service context. A default one is used");
+			app.contextFactory = new DefaultContextFactory();
+		} else {
+			app.contextFactory = config.contextFactory;
+		}
 	}
 
-	private static IApp getEmptyApp() {
-		if (emptyApp == null) {
-			emptyApp = new EmptyApp();
-		}
-		return emptyApp;
+	@Override
+	public int getMaxRowsToExtractFromDb() {
+		return 0;
 	}
 
-	/**
-	 *
-	 * @param appName
-	 *            unique id/name associated with the desired app.
-	 * @param getEmptyAppInsteadOfError
-	 *            if false, a run time error is thrown if the app is not set for
-	 *            this execution context. if set to true, a non-null app is
-	 *            guaranteed.
-	 * @return named app instance set in the context. If such an app is not set,
-	 *         and the second parameter is set to true, an emptyApp is returned.
-	 */
-	public static IApp getNamedApp(final String appName, final boolean getEmptyAppInsteadOfError) {
-		final IApp app = namedApps.get(appName);
-		if (app != null) {
-			return app;
-		}
-
-		logger.error("No App named {}", appName);
-		if (getEmptyAppInsteadOfError) {
-			logger.info("An empty app is returned");
-			return getEmptyApp();
-
-		}
-
-		final String msg = "No app named " + appName + ". Throwing error.";
-		logger.error(msg);
-		throw new RuntimeException(msg);
-
-	}
-
-	protected static class EmptyApp implements IApp {
-
-		private static void logError() {
-			logger.error("An empty app is set as default. No component is avaiable in the context.");
-		}
-
-		@Override
-		public String getName() {
-			return "emptyApp";
-		}
-
-		@Override
-		public Form<?> getForm(final String formId) {
-			logError();
-			return null;
-		}
-
-		@Override
-		public Record getRecord(final String recordName) {
-			logError();
-			return null;
-		}
-
-		@Override
-		public DataType getDataType(final String dataTypeId) {
-			logError();
-			return null;
-		}
-
-		@Override
-		public IValueList getValueList(final String listId) {
-			logError();
-			return null;
-		}
-
-		@Override
-		public IService getService(final String serviceName) {
-			logError();
-			return null;
-		}
-
-		@Override
-		public IFunction getFunction(final String functionName) {
-			logError();
-			return null;
-		}
-
-		@Override
-		public Message getMessage(final String messageId) {
-			logError();
-			return null;
-		}
-
-		@Override
-		public int getMaxRowsToExtractFromDb() {
-			return 1000;
-		}
-
-		@Override
-		public boolean treatNullAsEmptyString() {
-			return true;
-		}
-
-		@Override
-		public Sql getSql(final String sqlName) {
-			logError();
-			return null;
-		}
-
-	}
-
-	private static final String RECORD = Conventions.App.RECORD_CLASS_SUFIX;
-	private static final String FORM = Conventions.App.FORM_CLASS_SUFIX;
-	private static final String SQL = Conventions.App.SQL_CLASS_SUFIX;
-	private static final char DOT = '.';
-
-	static boolean isPackage(final String name) {
-		if (Package.getPackage(name) != null) {
-			return true;
-		}
-		logger.error("{} is not a package.", name);
+	@Override
+	public boolean treatNullAsEmptyString() {
 		return false;
 	}
 
-	protected static String toClassName(final String name) {
-		int idx = name.lastIndexOf('.');
-		if (idx == -1) {
-			return name.substring(0, 1).toUpperCase() + name.substring(1);
-		}
-		idx++;
-		return name.substring(0, idx) + name.substring(idx, idx + 1).toUpperCase() + name.substring(idx + 1);
+	@Override
+	public String getName() {
+		return this.appName;
 	}
 
-	protected static class DefaultApp implements IApp {
+	@Override
+	public ICompProvider getCompProvider() {
+		return this.compProvider;
+	}
+
+	@Override
+	public RdbDriver getDbDriver() {
+		return this.rdbDriver;
+	}
+
+	@Override
+	public IAccessController getAccessController() {
+		return this.guard;
+	}
+
+	@Override
+	public IExceptionListener getExceptionListener() {
+		return this.listener;
+	}
+
+	@Override
+	public ISessionCache getSessionCache() {
+		return this.cache;
+	}
+
+	@Override
+	public IRequestLogger getRequestLogger() {
+		return this.reqLogger;
+	}
+
+	@Override
+	public ITexter getTexter() {
+		return this.texter;
+	}
+
+	@Override
+	public IServiceContextFactory getContextFactory() {
+		return this.contextFactory;
+	}
+
+	/**
+	 * This is a data structure to be used to pass parameter values for App
+	 * configuration. We prefer to keep this as a simple data-structure than
+	 * adding
+	 * setters/getters or making it immutable with builder-pattern etc..
+	 *
+	 * @author simplity.org
+	 *
+	 */
+	public static class Config {
 		/**
-		 * attributes loaded from config json
+		 * must be set to a unique name
 		 */
-		private String appName;
-		private int maxRowsToExtractFromDb;
-		private boolean treatNullAsEmptyString;
+		public String appName;
 
-		private final IDataTypes dataTypes;
-		private final String formRoot;
-		private final String recordRoot;
-		private final String listRoot;
-		private final String serviceRoot;
-		private final String customListRoot;
-		private final String fnRoot;
-		private final String sqlRoot;
-		private final IMessages messages;
-		private final Map<String, Form<?>> forms = new HashMap<>();
-		private final Map<String, Record> records = new HashMap<>();
-		private final Map<String, IValueList> lists = new HashMap<>();
-		private final Map<String, IService> services = new HashMap<>();
-		private final Map<String, IFunction> functions = new HashMap<>();
-		private final Map<String, Sql> sqls = new HashMap<>();
+		/**
+		 * root package inside which the generated components are expected. This
+		 * is
+		 * generally the root package of the app, like "com.myCompany.myApp". In
+		 * this case records are found with package name
+		 * "com.myCompany.myApp.gen.rec"
+		 *
+		 * If this is not specified, then any request for component will result
+		 * in
+		 * an exception
+		 */
+		public String appRootPackage;
 
-		protected DefaultApp(final IDataTypes dataTypes, final IMessages messages, final String rootPackage) {
-			this.dataTypes = dataTypes;
-			this.messages = messages;
-			final String genRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_GEN + DOT;
-			this.formRoot = genRoot + Conventions.App.FOLDER_NAME_FORM + DOT;
-			this.recordRoot = genRoot + Conventions.App.FOLDER_NAME_RECORD + DOT;
-			this.listRoot = genRoot + Conventions.App.FOLDER_NAME_LIST + DOT;
-			this.customListRoot = rootPackage + Conventions.App.FOLDER_NAME_CUSTOM_LIST + DOT;
-			this.serviceRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_SERVICE + DOT;
-			this.fnRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_FN + DOT;
-			this.sqlRoot = rootPackage + DOT + Conventions.App.FOLDER_NAME_SQL + DOT;
-			/*
-			 * add hard-wired services to the list
-			 */
-			this.services.put(Conventions.App.SERVICE_LIST, ListService.getInstance());
-		}
+		/**
+		 * optional. Instance that is called to check if the logged-in user is
+		 * authorized for the requested service.
+		 */
+		public IAccessController accessController;
 
-		@Override
-		public Form<?> getForm(final String formId) {
-			Form<?> form = this.forms.get(formId);
-			if (form != null) {
-				return form;
-			}
-			final String cls = this.formRoot + toClassName(formId) + FORM;
-			try {
-				form = (Form<?>) Class.forName(cls).newInstance();
-			} catch (final Exception e) {
-				logger.error("No form named {} because we could not locate class {}", formId, cls);
-				return null;
-			}
-			this.forms.put(formId, form);
-			return form;
-		}
+		/**
+		 * optional. if not set, any request for db access will result in an
+		 * exception
+		 */
 
-		@Override
-		public Record getRecord(final String recordName) {
-			Record record = this.records.get(recordName);
-			if (record != null) {
-				return record;
-			}
-			final String cls = this.recordRoot + toClassName(recordName) + RECORD;
-			try {
-				record = (Record) Class.forName(cls).newInstance();
-			} catch (final Exception e) {
-				logger.error("No record named {} because we could not locate class {}", recordName, cls);
-				return null;
-			}
-			this.records.put(recordName, record);
-			return record;
-		}
+		public IDbConnectionFactory dbConnectionFactory;
 
-		@Override
-		public Sql getSql(final String sqlName) {
-			Sql sql = this.sqls.get(sqlName);
-			if (sql != null) {
-				return sql;
-			}
-			final String cls = this.sqlRoot + toClassName(sqlName) + SQL;
-			try {
-				sql = (Sql) Class.forName(cls).newInstance();
-			} catch (final Exception e) {
-				logger.error("No Sql named {} because we could not locate class {}", sqlName, cls);
-				return null;
-			}
-			this.sqls.put(sqlName, sql);
-			return sql;
-		}
+		/**
+		 * optional.
+		 */
+		public IExceptionListener exceptionListener;
 
-		@Override
-		public DataType getDataType(final String dataTypeId) {
-			return this.dataTypes.getDataType(dataTypeId);
-		}
+		/**
+		 * optional. a simple map-based cacher is used. Entries do not expire
+		 */
+		public ISessionCache sessionCache;
 
-		@Override
-		public IValueList getValueList(final String listId) {
-			IValueList list = this.lists.get(listId);
-			if (list != null) {
-				return list;
-			}
-			final String clsName = toClassName(listId);
-			final String cls = this.listRoot + clsName;
-			try {
-				list = (IValueList) Class.forName(cls).newInstance();
-			} catch (final Exception e) {
-				final String cls1 = this.customListRoot + clsName;
-				try {
-					list = (IValueList) Class.forName(cls1).newInstance();
-				} catch (final Exception e1) {
-					logger.error("No list named {} because we could not locate class {} or {}", listId, cls, cls1);
-					return null;
-				}
-			}
-			this.lists.put(listId, list);
-			return list;
-		}
+		/**
+		 * optional. requests are logged using the underlying logger-framework
+		 */
 
-		@Override
-		public Message getMessage(final String messageId) {
-			return this.messages.getMessage(messageId);
-		}
+		public IRequestLogger requestLogger;
 
-		@Override
-		public IService getService(final String serviceId) {
-			IService service = this.services.get(serviceId);
-			if (service != null) {
-				return service;
-			}
-			/*
-			 * we first check for a class. this approach allows us to
-			 * over-ride
-			 * standard formIO services
-			 */
-			final String cls = this.serviceRoot + toClassName(serviceId);
-			try {
-				service = (IService) Class.forName(cls).newInstance();
-			} catch (final Exception e) {
-				/*
-				 * it is not a class. Let us see if we can generate it
-				 */
-				service = this.tryFormIo(serviceId);
-				if (service == null) {
-					logger.error("Service {} is not served by this application", serviceId);
-					return null;
-				}
-			}
-			this.services.put(serviceId, service);
-			return service;
-		}
+		/**
+		 * optional. if not specified, text messages are just logged.
+		 */
+		public ITexter texter;
 
-		private IService tryFormIo(final String serviceName) {
-			final int idx = serviceName.indexOf(Conventions.Http.SERVICE_OPER_SEPARATOR);
-			if (idx <= 0) {
-				logger.info("Service name {} is not of the form operation_name. Service is not generated");
-				return null;
-			}
-
-			final String OperationName = toClassName(serviceName.substring(0, idx));
-			IoType opern = null;
-			try {
-				opern = IoType.valueOf(OperationName);
-			} catch (final Exception e) {
-				logger.warn(
-						"Service name {} is of the form operation_name, but {} is not a valid operation. No service is generated",
-						serviceName, OperationName);
-				return null;
-			}
-
-			final String formName = serviceName.substring(idx + 1);
-			logger.info("Looking to generate a service for operantion {} on {}", opern, formName);
-
-			/*
-			 * we provide flexibility for the service name to have Form suffix
-			 * at the end, failing which we try the name itself as form
-			 */
-			if (formName.endsWith(FORM)) {
-				final String fn = formName.substring(0, formName.length() - FORM.length());
-				final Form<?> form = this.getForm(fn);
-				if (form != null) {
-					final IService service = form.getService(opern);
-					if (service != null) {
-						return service;
-					}
-					logger.info("Found a form named {} but it is not designed for ", fn, opern.name());
-				}
-			}
-
-			final Form<?> form = this.getForm(formName);
-			if (form != null) {
-				return form.getService(opern);
-			}
-
-			logger.info("{} is not a form and hence a service is not genrated for oepration {}", formName, opern);
-			return null;
-		}
-
-		@Override
-		public IFunction getFunction(final String functionName) {
-			IFunction fn = this.functions.get(functionName);
-			if (fn != null) {
-				return fn;
-			}
-			final String cls = this.fnRoot + toClassName(functionName);
-			try {
-				fn = (IFunction) Class.forName(cls).newInstance();
-			} catch (final Exception e) {
-				logger.error("No Function named {} because we could not locate class {}", functionName, cls);
-				return null;
-			}
-			this.functions.put(functionName, fn);
-			return fn;
-		}
-
-		@Override
-		public int getMaxRowsToExtractFromDb() {
-			return this.maxRowsToExtractFromDb;
-		}
-
-		@Override
-		public boolean treatNullAsEmptyString() {
-			return this.treatNullAsEmptyString;
-		}
-
-		@Override
-		public String getName() {
-			return this.appName;
-		}
+		/**
+		 * optional. if not specified, Default context is created
+		 */
+		public IServiceContextFactory contextFactory;
 	}
+
 }

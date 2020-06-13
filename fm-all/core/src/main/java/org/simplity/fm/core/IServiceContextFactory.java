@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 simplity.org
+ * Copyright (c) 2020 simplity.org
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,43 +20,29 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.service;
+package org.simplity.fm.core;
 
-import org.simplity.fm.core.serialize.IInputObject;
+import org.simplity.fm.core.serialize.ISerializer;
+import org.simplity.fm.core.service.IServiceContext;
 
 /**
- * Interface for service. The instance is expected to be re-usable, and
- * thread-safe. (immutable). Singleton pattern is suitable or this.
- *
+ * interface for client-code to create a custom IServiceContext or use the
+ * default one provided by the framework
  *
  * @author simplity.org
  *
  */
-public interface IService {
-	/**
-	 * serve when data is requested in a Map
-	 *
-	 * @param ctx
-	 *            service context provides certain data structures and methods.
-	 * @param inputObject
-	 *            non-null, could be empty if no pay-load was received from the
-	 *            client
-	 * @throws Exception
-	 *             so that the caller can wire exceptions to the right exception
-	 *             handler that is configured for the app
-	 */
-	void serve(IServiceContext ctx, IInputObject inputObject) throws Exception;
+public interface IServiceContextFactory {
 
 	/**
+	 * create a service context for the logged-in user
 	 *
-	 * @return unique name/id of this service
+	 * @param user
+	 * @param session
+	 * @param output
+	 * @return non-null instance of IServiceCOntext that wil be passed to the
+	 *         service execution thread.
 	 */
-	String getId();
+	IServiceContext getContext(AppUser user, UserSession session, ISerializer output);
 
-	/**
-	 *
-	 * @return true if user has to be authenticated before serving this. false
-	 *         if this service does not require an authenticated user
-	 */
-	boolean authRequired();
 }

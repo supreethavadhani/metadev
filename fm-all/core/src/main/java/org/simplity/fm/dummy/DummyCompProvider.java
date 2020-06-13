@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 simplity.org
+ * Copyright (c) 2020 simplity.org
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,19 +20,66 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.example.gen;
+package org.simplity.fm.dummy;
 
-import org.simplity.fm.core.IMessages;
+import org.simplity.fm.core.ApplicationError;
+import org.simplity.fm.core.ICompProvider;
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.data.Form;
+import org.simplity.fm.core.data.Record;
+import org.simplity.fm.core.datatypes.DataType;
+import org.simplity.fm.core.fn.IFunction;
+import org.simplity.fm.core.service.IService;
+import org.simplity.fm.core.validn.IValueList;
 
 /**
  * @author simplity.org
  *
  */
-public class DefinedMessages implements IMessages {
+public class DummyCompProvider implements ICompProvider {
+	private static void error() {
+		throw new ApplicationError("The app is not configured to provide components.");
+	}
 
+	@Override
+	public Form<?> getForm(final String formId) {
+		error();
+		throw null;
+	}
+
+	@Override
+	public Record getRecord(final String recordName) {
+		error();
+		return null;
+	}
+
+	@Override
+	public DataType getDataType(final String dataTypeId) {
+		error();
+		return null;
+	}
+
+	@Override
+	public IValueList getValueList(final String listId) {
+		error();
+		return null;
+	}
+
+	@Override
+	public IService getService(final String serviceName) {
+		error();
+		return null;
+	}
+
+	@Override
+	public IFunction getFunction(final String functionName) {
+		error();
+		return null;
+	}
+
+	@Override
 	public Message getMessage(final String messageId) {
-		// TODO Auto-generated method stub
+		error();
 		return null;
 	}
 }

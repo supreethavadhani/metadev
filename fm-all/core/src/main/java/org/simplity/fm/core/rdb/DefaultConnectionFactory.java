@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
 
+import org.simplity.fm.core.IDbConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +40,7 @@ import org.slf4j.LoggerFactory;
  * @author simplity.org
  *
  */
-public class DefaultConnectionFactory implements IConnectionFactory {
+public class DefaultConnectionFactory implements IDbConnectionFactory {
 	private static final Logger logger = LoggerFactory.getLogger(DefaultConnectionFactory.class);
 	
 	/**
@@ -48,7 +49,7 @@ public class DefaultConnectionFactory implements IConnectionFactory {
 	 * @param driverClassName non-null driver class name
 	 * @return factory that can be used to get connection to a default schema. null in case the credentials could not be used to get a sample connection
 	 */
-	public static IConnectionFactory getFactory(String conString, String driverClassName) {
+	public static IDbConnectionFactory getFactory(String conString, String driverClassName) {
 		IFactory f = getCsFactory(conString, driverClassName);
 		if(f == null) {
 			return null;
@@ -61,7 +62,7 @@ public class DefaultConnectionFactory implements IConnectionFactory {
 	 * @param dataSourceName non-null jndi name for data source
 	 * @return factory that can be used to get connection to a default schema. null in case the credentials could not be used to get a sample connection
 	 */
-	public static IConnectionFactory getFactory(String dataSourceName) {
+	public static IDbConnectionFactory getFactory(String dataSourceName) {
 		IFactory f = getDsFactory(dataSourceName);
 		if(f == null) {
 			return null;

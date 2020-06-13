@@ -28,7 +28,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.simplity.fm.core.rdb.DbHandle;
+import org.simplity.fm.core.rdb.ReadWriteHandle;
+import org.simplity.fm.core.rdb.ReadonlyHandle;
 import org.simplity.fm.core.serialize.ISerializer;
 
 /**
@@ -107,7 +108,7 @@ public class DbTable<T extends DbRecord> implements Iterable<T> {
 	 * @throws SQLException
 	 */
 	public boolean filter(final String whereClauseStartingWithWhere, final Object[] valuesForWhereClause,
-			final DbHandle handle) throws SQLException {
+			final ReadonlyHandle handle) throws SQLException {
 		this.rows = this.record.dba.filter(whereClauseStartingWithWhere, valuesForWhereClause, handle);
 		return this.rows.size() > 0;
 	}
@@ -121,7 +122,7 @@ public class DbTable<T extends DbRecord> implements Iterable<T> {
 	 *         saved
 	 * @throws SQLException
 	 */
-	public boolean insert(final DbHandle handle) throws SQLException {
+	public boolean insert(final ReadWriteHandle handle) throws SQLException {
 		return this.record.dba.insertAll(handle, this.rows.toArray(new Object[0][]));
 	}
 
@@ -134,7 +135,7 @@ public class DbTable<T extends DbRecord> implements Iterable<T> {
 	 *         saved
 	 * @throws SQLException
 	 */
-	public boolean update(final DbHandle handle) throws SQLException {
+	public boolean update(final ReadWriteHandle handle) throws SQLException {
 		return this.record.dba.updateAll(handle, this.rows.toArray(new Object[0][]));
 	}
 
@@ -148,14 +149,14 @@ public class DbTable<T extends DbRecord> implements Iterable<T> {
 	 *         saved
 	 * @throws SQLException
 	 */
-	public boolean save(final DbHandle handle) throws SQLException {
+	public boolean save(final ReadWriteHandle handle) throws SQLException {
 		return this.record.dba.saveAll(handle, this.rows.toArray(new Object[0][]));
 	}
 
 	/**
 	 * fetch is used instead of get to avoid clash with getters in generated
 	 * classes
-	 * 
+	 *
 	 * @param idx
 	 * @return record at 0-based index. null if the index is not valid
 	 */

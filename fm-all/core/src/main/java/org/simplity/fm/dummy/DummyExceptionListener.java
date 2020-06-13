@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 simplity.org
+ * Copyright (c) 2020 simplity.org
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,43 +20,28 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.service;
+package org.simplity.fm.dummy;
 
-import org.simplity.fm.core.serialize.IInputObject;
+import org.simplity.fm.core.ApplicationError;
+import org.simplity.fm.core.IExceptionListener;
+import org.simplity.fm.core.service.IServiceContext;
 
 /**
- * Interface for service. The instance is expected to be re-usable, and
- * thread-safe. (immutable). Singleton pattern is suitable or this.
- *
- *
  * @author simplity.org
  *
  */
-public interface IService {
-	/**
-	 * serve when data is requested in a Map
-	 *
-	 * @param ctx
-	 *            service context provides certain data structures and methods.
-	 * @param inputObject
-	 *            non-null, could be empty if no pay-load was received from the
-	 *            client
-	 * @throws Exception
-	 *             so that the caller can wire exceptions to the right exception
-	 *             handler that is configured for the app
-	 */
-	void serve(IServiceContext ctx, IInputObject inputObject) throws Exception;
+public class DummyExceptionListener implements IExceptionListener {
 
-	/**
-	 *
-	 * @return unique name/id of this service
-	 */
-	String getId();
+	@Override
+	public void listen(final IServiceContext ctx, final Throwable e) {
+		// great listeners just listen :-) :-)
 
-	/**
-	 *
-	 * @return true if user has to be authenticated before serving this. false
-	 *         if this service does not require an authenticated user
-	 */
-	boolean authRequired();
+	}
+
+	@Override
+	public void listen(final IServiceContext ctx, final ApplicationError e) {
+		// great listeners just listen :-) :-)
+
+	}
+
 }

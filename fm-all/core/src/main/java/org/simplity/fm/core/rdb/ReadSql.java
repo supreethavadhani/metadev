@@ -47,7 +47,7 @@ public abstract class ReadSql<T extends Record> extends Sql {
 	 * @return value object with output data. null if data is not read.
 	 * @throws SQLException
 	 */
-	public T read(final DbHandle handle) throws SQLException {
+	public T read(final ReadonlyHandle handle) throws SQLException {
 		final T result = this.newOutputData();
 		final boolean ok = handle.read(this.sqlText, this.inputData, result);
 		if (ok) {
@@ -64,7 +64,7 @@ public abstract class ReadSql<T extends Record> extends Sql {
 	 * @return value object with output data. null if data is not read.
 	 * @throws SQLException
 	 */
-	public T readOrFail(final DbHandle handle) throws SQLException {
+	public T readOrFail(final ReadonlyHandle handle) throws SQLException {
 		final T result = this.newOutputData();
 		final boolean ok = handle.read(this.sqlText, this.inputData, result);
 		if (ok) {

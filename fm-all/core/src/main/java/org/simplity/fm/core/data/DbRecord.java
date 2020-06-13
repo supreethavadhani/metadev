@@ -25,10 +25,11 @@ package org.simplity.fm.core.data;
 import java.sql.SQLException;
 import java.util.List;
 
+import org.simplity.fm.core.App;
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.rdb.DbHandle;
-import org.simplity.fm.core.rdb.RdbDriver;
+import org.simplity.fm.core.rdb.ReadWriteHandle;
+import org.simplity.fm.core.rdb.ReadonlyHandle;
 import org.simplity.fm.core.rdb.RecordProcessor;
 import org.simplity.fm.core.serialize.IInputObject;
 import org.simplity.fm.core.service.IService;
@@ -93,7 +94,7 @@ public abstract class DbRecord extends Record {
 	 *         found...)
 	 * @throws SQLException
 	 */
-	public boolean read(final DbHandle handle) throws SQLException {
+	public boolean read(final ReadonlyHandle handle) throws SQLException {
 		return this.dba.read(handle, this.fieldValues);
 	}
 
@@ -105,7 +106,7 @@ public abstract class DbRecord extends Record {
 	 *
 	 * @throws SQLException
 	 */
-	public void readOrFail(final DbHandle handle) throws SQLException {
+	public void readOrFail(final ReadonlyHandle handle) throws SQLException {
 		if (!this.dba.read(handle, this.fieldValues)) {
 			throw new SQLException("Read failed for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
 		}
@@ -131,7 +132,7 @@ public abstract class DbRecord extends Record {
 	 * @throws SQLException
 	 */
 	public List<Object[]> filter(final String whereClauseStartingWithWhere, final Object[] values,
-			final DbHandle handle) throws SQLException {
+			final ReadonlyHandle handle) throws SQLException {
 		return this.dba.filter(whereClauseStartingWithWhere, values, handle);
 	}
 
@@ -155,8 +156,8 @@ public abstract class DbRecord extends Record {
 	 * @return true if the first row is read. false otherwise
 	 * @throws SQLException
 	 */
-	public boolean filterFirst(final String whereClauseStartingWithWhere, final Object[] values, final DbHandle handle)
-			throws SQLException {
+	public boolean filterFirst(final String whereClauseStartingWithWhere, final Object[] values,
+			final ReadonlyHandle handle) throws SQLException {
 		return this.dba.filterFirst(whereClauseStartingWithWhere, values, this.fieldValues, handle);
 	}
 
@@ -181,7 +182,7 @@ public abstract class DbRecord extends Record {
 	 * @throws SQLException
 	 */
 	public void filterFirstOrFail(final String whereClauseStartingWithWhere, final Object[] values,
-			final DbHandle handle) throws SQLException {
+			final ReadonlyHandle handle) throws SQLException {
 		if (this.dba.filterFirst(whereClauseStartingWithWhere, values, this.fieldValues, handle)) {
 			return;
 		}
@@ -198,7 +199,7 @@ public abstract class DbRecord extends Record {
 	 *         existing form with the same id/key
 	 * @throws SQLException
 	 */
-	public boolean insert(final DbHandle handle) throws SQLException {
+	public boolean insert(final ReadWriteHandle handle) throws SQLException {
 		return this.dba.insert(handle, this.fieldValues);
 	}
 
@@ -210,7 +211,7 @@ public abstract class DbRecord extends Record {
 	 *
 	 * @throws SQLException
 	 */
-	public void insertOrFail(final DbHandle handle) throws SQLException {
+	public void insertOrFail(final ReadWriteHandle handle) throws SQLException {
 		if (!this.dba.insert(handle, this.fieldValues)) {
 			throw new SQLException(
 					"Insert failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
@@ -226,7 +227,7 @@ public abstract class DbRecord extends Record {
 	 *         update
 	 * @throws SQLException
 	 */
-	public boolean update(final DbHandle handle) throws SQLException {
+	public boolean update(final ReadWriteHandle handle) throws SQLException {
 		return this.dba.update(handle, this.fieldValues);
 	}
 
@@ -238,7 +239,7 @@ public abstract class DbRecord extends Record {
 	 *
 	 * @throws SQLException
 	 */
-	public void updateOrFail(final DbHandle handle) throws SQLException {
+	public void updateOrFail(final ReadWriteHandle handle) throws SQLException {
 		if (!this.dba.update(handle, this.fieldValues)) {
 			throw new SQLException(
 					"Update failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
@@ -253,7 +254,7 @@ public abstract class DbRecord extends Record {
 	 * @return true if it was indeed saved
 	 * @throws SQLException
 	 */
-	public boolean save(final DbHandle handle) throws SQLException {
+	public boolean save(final ReadWriteHandle handle) throws SQLException {
 		return this.dba.save(handle, this.fieldValues);
 	}
 
@@ -261,7 +262,7 @@ public abstract class DbRecord extends Record {
 	 * @param handle
 	 * @throws SQLException
 	 */
-	public void saveOrFail(final DbHandle handle) throws SQLException {
+	public void saveOrFail(final ReadWriteHandle handle) throws SQLException {
 		if (!this.dba.save(handle, this.fieldValues)) {
 			throw new SQLException(
 					"Save failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
@@ -277,7 +278,7 @@ public abstract class DbRecord extends Record {
 	 * @return true if it is indeed deleted happened. false otherwise
 	 * @throws SQLException
 	 */
-	public boolean delete(final DbHandle handle) throws SQLException {
+	public boolean delete(final ReadWriteHandle handle) throws SQLException {
 		return this.dba.delete(handle, this.fieldValues);
 	}
 
@@ -289,7 +290,7 @@ public abstract class DbRecord extends Record {
 	 *
 	 * @throws SQLException
 	 */
-	public void deleteOrFail(final DbHandle handle) throws SQLException {
+	public void deleteOrFail(final ReadWriteHandle handle) throws SQLException {
 		if (!this.dba.delete(handle, this.fieldValues)) {
 			throw new SQLException(
 					"Delete failed silently for " + this.fetchName() + this.dba.emitKeys(this.fieldValues));
@@ -373,7 +374,7 @@ public abstract class DbRecord extends Record {
 				return;
 			}
 
-			RdbDriver.getDriver().read(handle -> {
+			App.getApp().getDbDriver().read(handle -> {
 				if (!rec.read(handle)) {
 					logger.error("No data found for the requested keys");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -384,12 +385,22 @@ public abstract class DbRecord extends Record {
 				ctx.setAsResponse(rec);
 			}
 		}
+
+		@Override
+		public boolean authRequired() {
+			return true;
+		}
 	}
 
 	protected class Creater extends Service {
 
 		protected Creater(final String name) {
 			super(name);
+		}
+
+		@Override
+		public boolean authRequired() {
+			return true;
 		}
 
 		@Override
@@ -400,7 +411,7 @@ public abstract class DbRecord extends Record {
 				return;
 			}
 
-			RdbDriver.getDriver().readWrite(handle -> {
+			App.getApp().getDbDriver().readWrite(handle -> {
 				if (rec.insert(handle)) {
 					return true;
 				}
@@ -419,6 +430,11 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
+		public boolean authRequired() {
+			return true;
+		}
+
+		@Override
 		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			if (!rec.parse(payload, false, ctx, null, 0)) {
@@ -426,7 +442,7 @@ public abstract class DbRecord extends Record {
 				return;
 			}
 
-			RdbDriver.getDriver().readWrite(handle -> {
+			App.getApp().getDbDriver().readWrite(handle -> {
 				if (rec.update(handle)) {
 					return true;
 				}
@@ -445,6 +461,11 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
+		public boolean authRequired() {
+			return true;
+		}
+
+		@Override
 		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			if (!rec.parseKeys(payload, ctx)) {
@@ -452,7 +473,7 @@ public abstract class DbRecord extends Record {
 				return;
 			}
 
-			RdbDriver.getDriver().readWrite(handle -> {
+			App.getApp().getDbDriver().readWrite(handle -> {
 				if (rec.delete(handle)) {
 					return true;
 				}
@@ -472,6 +493,11 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
+		public boolean authRequired() {
+			return true;
+		}
+
+		@Override
 		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
 			final DbRecord rec = DbRecord.this.newInstance();
 			final ParsedFilter filter = rec.dba.parseFilter(payload, ctx);
@@ -480,7 +506,7 @@ public abstract class DbRecord extends Record {
 				return;
 			}
 			final Object[][][] result = new Object[1][][];
-			RdbDriver.getDriver().read(handle -> {
+			App.getApp().getDbDriver().read(handle -> {
 				final List<Object[]> list = rec.dba.filter(filter.getWhereClause(), filter.getWhereParamValues(),
 						handle);
 				if (list.size() == 0) {
@@ -497,7 +523,7 @@ public abstract class DbRecord extends Record {
 	/**
 	 * fetch is used instead of get to avoid clash with getters in generated
 	 * classes
-	 * 
+	 *
 	 * @param fieldName
 	 * @return db field specified by this name, or null if there is no such name
 	 */
@@ -526,7 +552,7 @@ public abstract class DbRecord extends Record {
 	 * @param rowProcessor
 	 * @throws SQLException
 	 */
-	public void forEach(final String whereClause, final Object[] values, final DbHandle handle,
+	public <T extends ReadonlyHandle> void forEach(final String whereClause, final Object[] values, final T handle,
 			final RecordProcessor rowProcessor) throws SQLException {
 
 		this.dba.forEach(handle, whereClause, values, row -> {

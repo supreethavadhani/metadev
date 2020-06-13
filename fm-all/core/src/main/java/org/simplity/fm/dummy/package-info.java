@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 simplity.org
+ * Copyright (c) 2020 simplity.org
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,25 +20,10 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
-
-import java.sql.SQLException;
-
 /**
- * interface for a class that wants to do db operations in batch. That is, more than one transaction.
- * In this case, the client manages transactions (begin-trans, commit and roll-back)
+ * dummy/stubs for plugins
  * 
  * @author simplity.org
  *
  */
-public interface IDbBatchClient {
-
-	/**
-	 * method that is called-back with a handler. this method can use the
-	 * handle to do all db operations;
-	 * 
-	 * @param handle
-	 * @throws SQLException 
-	 */
-	public void doBatch(DbBatchHandle handle) throws SQLException;
-}
+package org.simplity.fm.dummy;

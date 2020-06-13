@@ -30,12 +30,13 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
+import org.simplity.fm.core.App;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * serves as the main class as well as the handler
- * 
+ *
  * @author simplity.org
  *
  */
@@ -44,23 +45,23 @@ public class JettyHandler extends AbstractHandler {
 	private static final int STATUS_METHOD_NOT_ALLOWED = 405;
 
 	@Override
-	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
-			throws IOException, ServletException {
-		String method = baseRequest.getMethod().toUpperCase();
-		logger.info("Request path:{} and method {}", baseRequest.getPathInfo(), method);
-		long start = System.currentTimeMillis();
-		Agent agent = Agent.getAgent();
+	public void handle(final String target, final Request baseRequest, final HttpServletRequest request,
+			final HttpServletResponse response) throws IOException, ServletException {
+		final String method = baseRequest.getMethod().toUpperCase();
+		logger.info("Received request path:{} and method {}", baseRequest.getPathInfo(), method);
+		final long start = System.currentTimeMillis();
+		final Agent agent = Agent.getAgent();
 		agent.setOptions(baseRequest, response);
-		
+
 		if (method.equals("POST") || method.equals("GET")) {
-			agent.serve(baseRequest, response, true);
+			agent.serve(baseRequest, response);
 		} else if (method.equals("OPTIONS")) {
 			logger.info("Got a pre-flight request. responding generously.. ");
 		} else {
 			logger.error("Rejected a request with method {}", baseRequest.getMethod());
 			response.setStatus(STATUS_METHOD_NOT_ALLOWED);
 		}
-		
+
 		logger.info("Responded in {}ms", System.currentTimeMillis() - start);
 		baseRequest.setHandled(true);
 	}
@@ -71,12 +72,14 @@ public class JettyHandler extends AbstractHandler {
 	 * <br/>
 	 * Simply invoke this as java app to run the server (of course the class
 	 * path etc.. are to be taken care of)
-	 * 
+	 *
 	 * @param args
 	 * @throws Exception
 	 */
-	public static void main(String[] args) throws Exception {
-		Server server = new Server(8080);
+	public static void main(final String[] args) throws Exception {
+		App.bootstrap();
+
+		final Server server = new Server(8080);
 		server.setHandler(new JettyHandler());
 
 		server.start();

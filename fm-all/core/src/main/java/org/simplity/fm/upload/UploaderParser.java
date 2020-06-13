@@ -27,8 +27,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.simplity.fm.core.ComponentProvider;
+import org.simplity.fm.core.App;
 import org.simplity.fm.core.Conventions;
+import org.simplity.fm.core.ICompProvider;
 import org.simplity.fm.core.fn.IFunction;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.IValueList;
@@ -46,7 +47,7 @@ import com.google.gson.JsonObject;
 public class UploaderParser {
 	protected static final Logger logger = LoggerFactory.getLogger(UploaderParser.class);
 
-	private final ComponentProvider compProvider = ComponentProvider.getProvider();
+	private final ICompProvider compProvider = App.getApp().getCompProvider();
 	private final Map<String, String> params = new HashMap<>();
 	private final Map<String, Map<String, String>> valueLists = new HashMap<>();
 	private final Set<String> listsRequiringKey = new HashSet<>();
@@ -56,13 +57,13 @@ public class UploaderParser {
 
 	/**
 	 * parse a json of meta-data into an instance of uploader
-	 * 
+	 *
 	 * @param json
 	 * @param ctx
 	 * @return null in case of any error. Error messages, if any are logged and
 	 *         not returned in any form to the caller
 	 */
-	public Uploader parse(JsonObject json, IServiceContext ctx) {
+	public Uploader parse(final JsonObject json, final IServiceContext ctx) {
 
 		JsonElement ele = json.get(Conventions.Upload.TAG_PARAMS);
 		if (ele != null) {
@@ -93,7 +94,7 @@ public class UploaderParser {
 				missingTag(Conventions.Upload.TAG_FUNCTIONS);
 				return null;
 			}
-			if (!parseFunctions((JsonObject) ele)) {
+			if (!this.parseFunctions((JsonObject) ele)) {
 				return null;
 			}
 		}
@@ -111,10 +112,10 @@ public class UploaderParser {
 		return new Uploader(this.inserts);
 	}
 
-	private boolean parseParams(JsonObject json) {
-		for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
-			String name = entry.getKey();
-			JsonElement ele = entry.getValue();
+	private boolean parseParams(final JsonObject json) {
+		for (final Map.Entry<String, JsonElement> entry : json.entrySet()) {
+			final String name = entry.getKey();
+			final JsonElement ele = entry.getValue();
 			if (!ele.isJsonPrimitive()) {
 				logger.error("parameter {} has an invalid value", name);
 			}
@@ -123,16 +124,16 @@ public class UploaderParser {
 		return true;
 	}
 
-	private boolean parseFunctions(JsonObject json) {
-		for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
-			String attr = entry.getKey().trim();
-			JsonElement ele = entry.getValue();
+	private boolean parseFunctions(final JsonObject json) {
+		for (final Map.Entry<String, JsonElement> entry : json.entrySet()) {
+			final String attr = entry.getKey().trim();
+			final JsonElement ele = entry.getValue();
 			if (!ele.isJsonPrimitive()) {
 				logger.error("function name {} should have a string value", attr);
 				return false;
 			}
-			String nam = ele.getAsString().trim();
-			IFunction fn = this.compProvider.getFunction(nam);
+			final String nam = ele.getAsString().trim();
+			final IFunction fn = this.compProvider.getFunction(nam);
 			if (fn == null) {
 				logger.error("{} not defiined as a function in this application", nam);
 				return false;
@@ -142,10 +143,10 @@ public class UploaderParser {
 		return true;
 	}
 
-	private boolean parseLookups(JsonObject json, IServiceContext ctx) {
-		for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
-			String attr = entry.getKey().trim();
-			JsonElement ele = entry.getValue();
+	private boolean parseLookups(final JsonObject json, final IServiceContext ctx) {
+		for (final Map.Entry<String, JsonElement> entry : json.entrySet()) {
+			final String attr = entry.getKey().trim();
+			final JsonElement ele = entry.getValue();
 			boolean ok = true;
 			if (ele.isJsonPrimitive()) {
 				ok = this.parseSystemList(attr, ele.getAsString().trim(), ctx);
@@ -162,11 +163,11 @@ public class UploaderParser {
 		return true;
 	}
 
-	private boolean parseLocalList(String attr, JsonObject json) {
-		Map<String, String> map = new HashMap<>();
+	private boolean parseLocalList(final String attr, final JsonObject json) {
+		final Map<String, String> map = new HashMap<>();
 		this.valueLists.put(attr, map);
 
-		for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+		for (final Map.Entry<String, JsonElement> entry : json.entrySet()) {
 			if (entry.getValue().isJsonObject()) {
 				this.listsRequiringKey.add(attr);
 				return parseKeyedList(map, json);
@@ -176,9 +177,9 @@ public class UploaderParser {
 		return true;
 	}
 
-	private static boolean parseLocalSimpleList(Map<String, String> map, JsonObject json) {
-		for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
-			JsonElement ele = entry.getValue();
+	private static boolean parseLocalSimpleList(final Map<String, String> map, final JsonObject json) {
+		for (final Map.Entry<String, JsonElement> entry : json.entrySet()) {
+			final JsonElement ele = entry.getValue();
 			if (ele.isJsonPrimitive()) {
 				map.put(entry.getKey(), ele.getAsString());
 			} else {
@@ -189,19 +190,20 @@ public class UploaderParser {
 		return true;
 	}
 
-	private static boolean parseKeyedList(Map<String, String> map, JsonObject json) {
-		for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
-			JsonElement ele = entry.getValue();
-			String key = entry.getKey();
+	private static boolean parseKeyedList(final Map<String, String> map, final JsonObject json) {
+		for (final Map.Entry<String, JsonElement> entry : json.entrySet()) {
+			final JsonElement ele = entry.getValue();
+			final String key = entry.getKey();
 			if (!ele.isJsonObject()) {
 				logger.error("key {} in the keyed list shoudl have a json object value", key);
 				return false;
 			}
-			for (Map.Entry<String, JsonElement> keyedEntry : ((JsonObject)ele).entrySet()) {
-				JsonElement keyedEle = keyedEntry.getValue();
-				String text = keyedEntry.getKey();
+			for (final Map.Entry<String, JsonElement> keyedEntry : ((JsonObject) ele).entrySet()) {
+				final JsonElement keyedEle = keyedEntry.getValue();
+				final String text = keyedEntry.getKey();
 				if (!keyedEle.isJsonPrimitive()) {
-					logger.error("attribute {} which is inside a list of a keyed list should have a primitive value.", text);
+					logger.error("attribute {} which is inside a list of a keyed list should have a primitive value.",
+							text);
 					return false;
 				}
 				// use parentKey + this key as index
@@ -211,14 +213,14 @@ public class UploaderParser {
 		return true;
 	}
 
-	private boolean parseSystemList(String lukupName, String sysName, IServiceContext ctx) {
-		IValueList vl = this.compProvider.getValueList(sysName);
+	private boolean parseSystemList(final String lukupName, final String sysName, final IServiceContext ctx) {
+		final IValueList vl = this.compProvider.getValueList(sysName);
 		if (vl == null) {
 			logger.error("{} is not defined as ValueList in this app. Verify your application config file.", sysName);
 			return false;
 		}
-		Map<String, String> map  = vl.getAll(ctx);
-		if(map == null) {
+		Map<String, String> map = vl.getAll(ctx);
+		if (map == null) {
 			logger.error("SYstem list {} has no valid values. lookup on this list will always fail");
 			map = new HashMap<>();
 		}
@@ -229,22 +231,22 @@ public class UploaderParser {
 		return true;
 	}
 
-	private static void missingTag(String tagName) {
+	private static void missingTag(final String tagName) {
 		logger.error("Tag/attribute {} is missing or is not valid", tagName);
 	}
 
-	private boolean parseInsert(JsonArray arr) {
-		int nbr = arr.size();
+	private boolean parseInsert(final JsonArray arr) {
+		final int nbr = arr.size();
 		this.inserts = new FormLoader[nbr];
 		int idx = -1;
-		FormParser fp = new FormParser(this.params, this.valueLists, this.listsRequiringKey, this.functions);
-		for (JsonElement t : arr) {
+		final FormParser fp = new FormParser(this.params, this.valueLists, this.listsRequiringKey, this.functions);
+		for (final JsonElement t : arr) {
 			idx++;
 			if (t == null || t.isJsonObject() == false) {
 				logger.error("{} has an invalid or missing form element", Conventions.Upload.TAG_INSERTS);
 				return false;
 			}
-			FormLoader insert = fp.parse((JsonObject) t);
+			final FormLoader insert = fp.parse((JsonObject) t);
 			if (insert == null) {
 				logger.error("insert specification has errors.");
 				return false;

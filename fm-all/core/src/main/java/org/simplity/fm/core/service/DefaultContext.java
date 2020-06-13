@@ -28,14 +28,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.simplity.fm.core.AppUser;
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.MessageType;
+import org.simplity.fm.core.UserSession;
 import org.simplity.fm.core.data.DbTable;
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.http.LoggedInUser;
 import org.simplity.fm.core.serialize.ISerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,25 +50,31 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultContext implements IServiceContext {
 	protected static Logger logger = LoggerFactory.getLogger(DefaultContext.class);
-	protected List<Message> messages = new ArrayList<>();
+
+	protected final ISerializer serializer;
+	protected final UserSession currentSession;
+	protected final AppUser appUser;
+	protected final List<Message> messages = new ArrayList<>();
+
 	protected int nbrErrors = 0;
-	protected ISerializer serializer;
-	protected LoggedInUser loggedInUser;
+	protected UserSession newSession;
 	protected Object tenantId;
 	protected boolean responseSet;
 	/*
-	 * created on need-basis because we expect this to be sued sparingly..
+	 * created on need-basis because we expect this to be used sparingly..
 	 */
 	protected Map<String, Object> objects;
 
 	/**
 	 *
-	 * @param loggedInUser
+	 * @param appUser
+	 * @param session
 	 * @param serializer
 	 */
-	public DefaultContext(final LoggedInUser loggedInUser, final ISerializer serializer) {
+	public DefaultContext(final AppUser appUser, final UserSession session, final ISerializer serializer) {
 		this.serializer = serializer;
-		this.loggedInUser = loggedInUser;
+		this.appUser = appUser;
+		this.currentSession = session;
 	}
 
 	/**
@@ -82,8 +89,8 @@ public class DefaultContext implements IServiceContext {
 	}
 
 	@Override
-	public LoggedInUser getUser() {
-		return this.loggedInUser;
+	public AppUser getUser() {
+		return this.appUser;
 	}
 
 	@Override
@@ -252,6 +259,22 @@ public class DefaultContext implements IServiceContext {
 		this.serializer.endArray();
 		this.serializer.endObject();
 		this.responseSet = true;
+	}
+
+	@Override
+	public UserSession getCurrentSession() {
+		return this.currentSession;
+	}
+
+	@Override
+	public UserSession getNewSession() {
+		return this.newSession;
+	}
+
+	@Override
+	public void setNewSession(final UserSession session) {
+		this.newSession = session;
+
 	}
 
 }

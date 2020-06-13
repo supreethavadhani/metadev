@@ -26,7 +26,8 @@ import java.sql.SQLException;
 
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.rdb.DbHandle;
+import org.simplity.fm.core.rdb.ReadWriteHandle;
+import org.simplity.fm.core.rdb.ReadonlyHandle;
 import org.simplity.fm.core.serialize.IInputArray;
 import org.simplity.fm.core.serialize.IInputObject;
 import org.simplity.fm.core.serialize.ISerializer;
@@ -200,8 +201,8 @@ public class LinkMetaData {
 	 * @return true if read was ok. false in in case of any validation error
 	 * @throws SQLException
 	 */
-	public boolean read(final DbRecord parentRec, final Form<?> form, final ISerializer writer, final DbHandle handle)
-			throws SQLException {
+	public boolean read(final DbRecord parentRec, final Form<?> form, final ISerializer writer,
+			final ReadonlyHandle handle) throws SQLException {
 		if (this.parentLinkNames == null) {
 			throw new ApplicationError(
 					"Form linkage has no design-time link names. read operation is not possible on the linked from");
@@ -257,7 +258,7 @@ public class LinkMetaData {
 	 * @throws SQLException
 	 */
 	public boolean save(final DbRecord parentRec, final Form<?> form, final IInputObject inputObject,
-			final DbHandle handle, final IServiceContext ctx) throws SQLException {
+			final ReadWriteHandle handle, final IServiceContext ctx) throws SQLException {
 		if (this.parentLinkNames == null) {
 			throw new ApplicationError(
 					"Form linkage has no design-time link names. save operation not possible on the linked form");
@@ -321,7 +322,8 @@ public class LinkMetaData {
 	 * @return true if all OK.
 	 * @throws SQLException
 	 */
-	public boolean delete(final DbRecord parentRec, final Form<?> form, final DbHandle handle) throws SQLException {
+	public boolean delete(final DbRecord parentRec, final Form<?> form, final ReadWriteHandle handle)
+			throws SQLException {
 		if (this.parentLinkNames == null) {
 			throw new ApplicationError(
 					"Form linkage has no design-time link names. delete on linked form not possible");

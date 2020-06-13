@@ -22,7 +22,7 @@
 
 package org.simplity.fm.core.data;
 
-import org.simplity.fm.core.ComponentProvider;
+import org.simplity.fm.core.App;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.datatypes.DataType;
 import org.simplity.fm.core.datatypes.ValueType;
@@ -115,7 +115,7 @@ public class Field {
 		if (valueListName == null) {
 			this.valueList = null;
 		} else {
-			this.valueList = ComponentProvider.getProvider().getValueList(valueListName);
+			this.valueList = App.getApp().getCompProvider().getValueList(valueListName);
 		}
 	}
 

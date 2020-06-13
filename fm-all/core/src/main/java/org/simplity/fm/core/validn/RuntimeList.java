@@ -30,8 +30,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.simplity.fm.core.App;
 import org.simplity.fm.core.rdb.IDbReader;
-import org.simplity.fm.core.rdb.RdbDriver;
 import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +84,8 @@ public class RuntimeList implements IValueList {
 		final List<Object[]> result = new ArrayList<>();
 		final RuntimeList that = this;
 		try {
-			RdbDriver.getDriver().transact(handle -> {
+			App.getApp().getDbDriver().read(handle -> {
+
 				handle.read(new IDbReader() {
 					@Override
 					public String getPreparedStatement() {
@@ -122,8 +123,8 @@ public class RuntimeList implements IValueList {
 					}
 
 				});
-				return true;
-			}, true);
+				return;
+			});
 		} catch (final SQLException e) {
 			final String msg = e.getMessage();
 			logger.error("Error while getting values for list {}. ERROR: {} ", this.name, msg);
@@ -148,7 +149,7 @@ public class RuntimeList implements IValueList {
 		final boolean[] result = new boolean[1];
 
 		try {
-			RdbDriver.getDriver().transact(handle -> {
+			App.getApp().getDbDriver().read(handle -> {
 				handle.read(new IDbReader() {
 					@Override
 					public String getPreparedStatement() {
@@ -178,8 +179,7 @@ public class RuntimeList implements IValueList {
 					}
 
 				});
-				return true;
-			}, true);
+			});
 		} catch (final SQLException e) {
 			final String msg = e.getMessage();
 			logger.error("Error while getting values for list {}. ERROR: {} ", this.name, msg);
@@ -200,7 +200,7 @@ public class RuntimeList implements IValueList {
 		final Map<String, String> result = new HashMap<>();
 
 		try {
-			RdbDriver.getDriver().transact(handle -> {
+			App.getApp().getDbDriver().read(handle -> {
 				handle.read(new IDbReader() {
 
 					@Override
@@ -224,8 +224,7 @@ public class RuntimeList implements IValueList {
 						return true;
 					}
 				});
-				return true;
-			}, true);
+			});
 		} catch (final SQLException e) {
 			final String msg = e.getMessage();
 			logger.error("Error while getting values for list {}. ERROR: {} ", this.name, msg);

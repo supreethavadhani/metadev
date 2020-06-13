@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 simplity.org
+ * Copyright (c) 2020 simplity.org
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,25 +20,49 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
-
-import java.sql.SQLException;
+package org.simplity.fm.core;
 
 /**
- * interface/lambda for carrying out read-only operations on RDBMS
- *
  * @author simplity.org
  *
  */
-public interface IReadOnlyClient {
+public interface ISessionCache {
 
 	/**
-	 * method that is called-back with a handler. this method can use the
-	 * handler to any number of read operations.
 	 *
-	 * @param handle
-	 * @throws SQLException
+	 * @param id
+	 *            non-null unique id/token to the user-session
+	 * @param session
+	 *            non-null session
 	 */
-	void read(DbHandle handle) throws SQLException;
+	void put(String id, UserSession session);
 
+	/**
+	 * get a copy of the session that is associated with this session. The
+	 * session object may be mutable. However, the cached object is not altered
+	 * when the returned object is mutated.
+	 *
+	 * If the modified session is to be used instead of the old tone, then it
+	 * must be cached explicitly with a all to put() method;
+	 *
+	 * @param id
+	 *            unique id/token assigned to this session.
+	 * @return user-session for this id. null if the id is not valid, or the
+	 *         session has expired and it is
+	 *         removed from the cache.
+	 */
+	UserSession get(String id);
+
+	/**
+	 *
+	 * @param id
+	 *            unique id/token assigned to this session.
+	 * @return user-session that
+	 */
+	UserSession remove(String id);
+
+	/**
+	 * clear all entries
+	 */
+	void clear();
 }

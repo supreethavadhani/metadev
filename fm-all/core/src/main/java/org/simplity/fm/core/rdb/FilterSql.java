@@ -51,7 +51,7 @@ public abstract class FilterSql<T extends Record> extends Sql {
 	 *         there are no rows.
 	 * @throws SQLException
 	 */
-	public List<T> filter(final DbHandle handle) throws SQLException {
+	public List<T> filter(final ReadonlyHandle handle) throws SQLException {
 		final T instance = this.newOutputData();
 		return handle.filter(this.sqlText, this.inputData, instance);
 	}
@@ -65,7 +65,7 @@ public abstract class FilterSql<T extends Record> extends Sql {
 	 *         there are no rows.
 	 * @throws SQLException
 	 */
-	public List<T> filterOrFail(final DbHandle handle) throws SQLException {
+	public List<T> filterOrFail(final ReadonlyHandle handle) throws SQLException {
 		final T instance = this.newOutputData();
 		final List<T> list = handle.filter(this.sqlText, this.inputData, instance);
 		if (list.size() > 0) {
@@ -86,7 +86,7 @@ public abstract class FilterSql<T extends Record> extends Sql {
 	 *            interested in getting any more rows
 	 * @throws SQLException
 	 */
-	public void forEach(final DbHandle handle, final RecordProcessor fn) throws SQLException {
+	public void forEach(final ReadonlyHandle handle, final RecordProcessor fn) throws SQLException {
 		handle.read(new IDbReader() {
 
 			@Override

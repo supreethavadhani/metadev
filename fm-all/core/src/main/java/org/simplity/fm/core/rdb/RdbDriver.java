@@ -25,6 +25,7 @@ package org.simplity.fm.core.rdb;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import org.simplity.fm.core.IDbConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,160 +35,170 @@ import org.slf4j.LoggerFactory;
  * very basic feature : read/write. That is the whole idea of this class -
  * provide simple API to do the most common operation
  *
+ * This is an immutable class, and hence can be used as a singleton. This is
+ * designed to be accessed through App
+ *
  * @author simplity.org
  *
  */
 public class RdbDriver {
 	protected static final Logger logger = LoggerFactory.getLogger(RdbDriver.class);
-	/*
-	 * factory..
-	 */
-	private static IConnectionFactory factory = null;
+
+	private final IDbConnectionFactory factory;
 
 	/**
+	 * to be used by APP, and no one else..
 	 *
-	 * @return db driver
-	 * @throws SQLException
-	 *             in case of any exception while dealing with the rdbms
+	 * @param factory
 	 */
-	public static RdbDriver getDriver() throws SQLException {
-		return new RdbDriver();
-	}
-
-	/**
-	 * is a driver set up?
-	 * 
-	 * @return true if a driver is set up. false otherwise
-	 */
-	public static boolean isDriverSetup() {
-		return factory != null;
-	}
-
-	private RdbDriver() {
+	public RdbDriver(final IDbConnectionFactory factory) {
+		this.factory = factory;
 		//
-	}
-
-	/**
-	 * @param batchClient
-	 * @throws SQLException
-	 *             if update is attempted after setting readOnly=true, or any
-	 *             other SqlException
-	 *
-	 */
-	public void transactBatch(final IDbBatchClient batchClient) throws SQLException {
-		if (factory == null) {
-			final String msg = "A dummy handle is returned as RDBMS is not set up";
-			logger.error(msg);
-			throw new SQLException(msg);
-		}
-		try (Connection con = factory.getConnection()) {
-			doBatch(con, batchClient);
-		}
-	}
-
-	/**
-	 * @param transactor
-	 * @param readOnly
-	 *            true if the caller is not going to modify any data.
-	 * @throws SQLException
-	 *             if update is attempted after setting readOnly=true, or any
-	 *             other SqlException
-	 *
-	 */
-	public void transact(final IDbClient transactor, final boolean readOnly) throws SQLException {
-		if (factory == null) {
-			final String msg = "A dummy handle is returned as RDBMS is not set up";
-			logger.error(msg);
-			throw new SQLException(msg);
-		}
-		try (Connection con = factory.getConnection()) {
-			doTransact(con, transactor, readOnly);
-		}
 	}
 
 	/**
 	 * do read-only operation on the rdbms
 	 *
-	 * @param client
+	 * @param reader
+	 *            function that reds from the db
 	 * @throws SQLException
 	 *
 	 */
-	public void read(final IReadOnlyClient client) throws SQLException {
-		if (factory == null) {
-			final String msg = "A dummy handle is returned as RDBMS is not set up";
-			logger.error(msg);
-			throw new SQLException(msg);
-		}
-		try (Connection con = factory.getConnection()) {
-			doReadOnly(con, client);
+	public void read(final DbReader reader) throws SQLException {
+		this.checkFactory();
+		try (Connection con = this.factory.getConnection()) {
+			doReadOnly(con, reader);
 		}
 	}
 
 	/**
-	 * do read-write operations on the rdbms
+	 * do read-only operations using a specific schema name
 	 *
-	 * @param client
+	 * @param reader
+	 *            function that reds from the db
+	 * @param schemaName
+	 *            non-null schema name that is different from the default schema
+	 * @throws SQLException
+	 *
+	 */
+	public void read(final String schemaName, final DbReader reader) throws SQLException {
+		this.checkFactory();
+		try (Connection con = this.factory.getConnection(schemaName)) {
+			doReadOnly(con, reader);
+		}
+	}
+
+	/**
+	 * do read-write operations on the rdbms within a transaction boundary. The
+	 * transaction is managed by the driver.
+	 *
+	 * @param updater
+	 *            function that reads from db and writes to it within a
+	 *            transaction boundary. returns true to commit the transaction,
+	 *            or false to signal a roll-back. The transaction is rolled back
+	 *            on exceptions as well.
 	 * @throws SQLException
 	 */
-	public void readWrite(final IReadWriteClient client) throws SQLException {
-		if (factory == null) {
-			final String msg = "A dummy handle is returned as RDBMS is not set up";
+	public void readWrite(final DbWriter updater) throws SQLException {
+		this.checkFactory();
+		try (Connection con = this.factory.getConnection()) {
+			doReadWrite(con, updater);
+		}
+	}
+
+	/**
+	 * do read-write-operations in a transaction using a specific schema name
+	 *
+	 * @param schemaName
+	 *            non-null schema name that is different from the default schema
+	 *            do read-write operations on the rdbms within a transaction
+	 *            boundary. The
+	 *            transaction is managed by the driver.
+	 *
+	 * @param updater
+	 *            function that reads from db and writes to it within a
+	 *            transaction boundary. returns true to commit the transaction,
+	 *            or false to signal a roll-back. The transaction is rolled back
+	 *            on exceptions as well.
+	 * @throws SQLException
+	 *
+	 */
+	public void readWrite(final String schemaName, final DbWriter updater) throws SQLException {
+		this.checkFactory();
+		try (Connection con = this.factory.getConnection(schemaName)) {
+			doReadWrite(con, updater);
+		}
+	}
+
+	/**
+	 * Meant for db operations that are to be committed/rolled-back possibly
+	 * more than once. Of course, it is rolled-back if the caller throws any
+	 * exception
+	 *
+	 * @param transacter
+	 *            function that accesses the db with transactions managed with
+	 *            commit/roll-back or with auto-commit mode. Driver does not do
+	 *            any transaction management.
+	 * @throws SQLException
+	 *             if update is attempted after setting readOnly=true, or any
+	 *             other SqlException
+	 *
+	 */
+	public void transact(final DbTransacter transacter) throws SQLException {
+		this.checkFactory();
+		try (Connection con = this.factory.getConnection()) {
+			doBatch(con, transacter);
+		}
+	}
+
+	/**
+	 * Meant for db operations that are to be committed/rolled-back possibly
+	 * more than once. Of course, it is rolled-back if the caller throws any
+	 * exception
+	 *
+	 * @param schemaName
+	 *            name of the non-default schema to be used in the db
+	 * @param transacter
+	 *            function that accesses the db with transactions managed with
+	 *            commit/roll-back or with auto-commit mode. Driver does not do
+	 *            any transaction management.
+	 * @throws SQLException
+	 *             if update is attempted after setting readOnly=true, or any
+	 *             other SqlException
+	 *
+	 */
+	public void transact(final String schemaName, final DbTransacter transacter) throws SQLException {
+		this.checkFactory();
+		try (Connection con = this.factory.getConnection(schemaName)) {
+			doBatch(con, transacter);
+		}
+	}
+
+	private void checkFactory() throws SQLException {
+		if (this.factory == null) {
+			final String msg = "Db driver is not set up for this application. No db operations are possible";
 			logger.error(msg);
 			throw new SQLException(msg);
 		}
-		try (Connection con = factory.getConnection()) {
-			doReadWrite(con, client);
-		}
 	}
 
-	private static void doTransact(final Connection con, final IDbClient transactor, final boolean readOnly)
-			throws SQLException {
-		final DbHandle handle = new DbHandle(con);
-		try {
-			if (readOnly) {
-				con.setReadOnly(true);
-				transactor.transact(handle);
-			} else {
-				con.setAutoCommit(false);
-				if (transactor.transact(handle)) {
-					con.commit();
-				} else {
-					con.rollback();
-				}
-			}
-		} catch (final Exception e) {
-			e.printStackTrace();
-			logger.error("Exception occurred in the middle of a transaction: {}, {}", e, e.getMessage());
-			if (!readOnly) {
-				try {
-					con.rollback();
-				} catch (final Exception ignore) {
-					//
-				}
-			}
-			throw new SQLException(e.getMessage());
-		}
-
-	}
-
-	private static void doReadOnly(final Connection con, final IReadOnlyClient client) throws SQLException {
-		final DbHandle handle = new DbHandle(con);
+	private static void doReadOnly(final Connection con, final DbReader reader) throws SQLException {
+		final ReadonlyHandle handle = new ReadonlyHandle(con);
 		try {
 			con.setReadOnly(true);
-			client.read(handle);
+			reader.read(handle);
 		} catch (final Exception e) {
 			e.printStackTrace();
 			logger.error("Exception occurred in the middle of a transaction: {}, {}", e, e.getMessage());
 			throw new SQLException(e.getMessage());
 		}
-
 	}
 
-	private static void doReadWrite(final Connection con, final IReadWriteClient client) throws SQLException {
-		final DbHandle handle = new DbHandle(con);
+	private static void doReadWrite(final Connection con, final DbWriter updater) throws SQLException {
+		final ReadWriteHandle handle = new ReadWriteHandle(con);
 		try {
 			con.setAutoCommit(false);
-			if (client.readWrite(handle)) {
+			if (updater.readWrite(handle)) {
 				con.commit();
 			} else {
 				con.rollback();
@@ -205,10 +216,10 @@ public class RdbDriver {
 		}
 	}
 
-	private static void doBatch(final Connection con, final IDbBatchClient batchClient) throws SQLException {
-		final DbBatchHandle handle = new DbBatchHandle(con);
+	private static void doBatch(final Connection con, final DbTransacter transacter) throws SQLException {
+		final TransactionHandle handle = new TransactionHandle(con);
 		try {
-			batchClient.doBatch(handle);
+			transacter.transact(handle);
 		} catch (final Exception e) {
 			e.printStackTrace();
 			logger.error("Exception thrown by a batch processor. {}, {}", e, e.getMessage());
@@ -221,81 +232,5 @@ public class RdbDriver {
 			throw se;
 		}
 
-	}
-
-	/**
-	 * do transaction on a schema that is not the default schema used by this
-	 * application. Use this ONLY id the schema is different from the default
-	 *
-	 * @param transactor
-	 * @param readOnly
-	 *            true if the caller is not going to modify any data.
-	 * @param schemaName
-	 *            non-null schema name that is different from the default schema
-	 * @throws SQLException
-	 *             if update is attempted after setting readOnly=true, or any
-	 *             other SqlException
-	 *
-	 */
-	public void transactUsingSchema(final IDbClient transactor, final boolean readOnly, final String schemaName)
-			throws SQLException {
-		if (factory == null) {
-			final String msg = "A dummy handle is returned as RDBMS is not set up";
-			logger.error(msg);
-			throw new SQLException(msg);
-		}
-		try (Connection con = factory.getConnection(schemaName)) {
-			doTransact(con, transactor, readOnly);
-		}
-	}
-
-	/**
-	 * do read-only operations using a specific schema name
-	 *
-	 * @param client
-	 * @param schemaName
-	 *            non-null schema name that is different from the default schema
-	 * @throws SQLException
-	 *
-	 */
-	public static void readWithSpecificSchema(final IReadOnlyClient client, final String schemaName)
-			throws SQLException {
-		if (factory == null) {
-			final String msg = "A dummy handle is returned as RDBMS is not set up";
-			logger.error(msg);
-			throw new SQLException(msg);
-		}
-		try (Connection con = factory.getConnection(schemaName)) {
-			doReadOnly(con, client);
-		}
-	}
-
-	/**
-	 * do read-write-operations in a transaction using a specific schema name
-	 *
-	 * @param client
-	 * @param schemaName
-	 *            non-null schema name that is different from the default schema
-	 * @throws SQLException
-	 *
-	 */
-	public static void readWriteWithSpecificSchema(final IReadWriteClient client, final String schemaName)
-			throws SQLException {
-		if (factory == null) {
-			final String msg = "A dummy handle is returned as RDBMS is not set up";
-			logger.error(msg);
-			throw new SQLException(msg);
-		}
-		try (Connection con = factory.getConnection(schemaName)) {
-			doReadWrite(con, client);
-		}
-	}
-
-	/**
-	 * @param conFactory
-	 *            non-null factory to be used to get db-connection
-	 */
-	public static void setFactory(final IConnectionFactory conFactory) {
-		factory = conFactory;
 	}
 }

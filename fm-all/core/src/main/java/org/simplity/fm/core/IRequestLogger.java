@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 simplity.org
+ * Copyright (c) 2020 simplity.org
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,54 +20,24 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.rdb;
-
-import java.sql.Connection;
-import java.sql.SQLException;
+package org.simplity.fm.core;
 
 /**
- * db handle that allows multiple transactions.
- * 
+ * utility to log each request that is served by this app. Responses are not
+ * logged at this time.
+ *
  * @author simplity.org
  *
  */
-public class DbBatchHandle extends DbHandle {
-
+public interface IRequestLogger {
 	/**
-	 * @param con
+	 *
+	 * @param loginId
+	 * @param serviceName
+	 * @param input
+	 *            payload as received
+	 * @param output
+	 *            response
 	 */
-	DbBatchHandle(Connection con) {
-		super(con);
-	}
-
-	/**
-	 * turn on/off auto commit mode. If it is on, commit/roll-backs are not
-	 * valid
-	 * 
-	 * @param mode
-	 * @throws SQLException
-	 */
-	public void setAutoCommitMode(boolean mode) throws SQLException {
-		this.con.setAutoCommit(mode);
-	}
-
-	/**
-	 * commit all write operations after the last commit/roll-back
-	 * 
-	 * @throws SQLException
-	 */
-	public void commit() throws SQLException {
-		this.con.commit();
-	}
-
-	/**
-	 * roll back any writes. This is to be used only to handle any exception. We
-	 * strongly suggest that this should never be called by design.
-	 * 
-	 * @throws SQLException
-	 */
-	public void rollback() throws SQLException {
-		this.con.rollback();
-	}
-
+	void log(String loginId, String serviceName, String input);
 }

@@ -45,7 +45,7 @@ public abstract class ReadWithRecordSql<T extends DbRecord> extends Sql {
 	 * @throws SQLException
 	 */
 	@SuppressWarnings("unchecked")
-	public T filterFirst(final DbHandle handle) throws SQLException {
+	public T filterFirst(final ReadonlyHandle handle) throws SQLException {
 		if (this.record.filterFirst(this.sqlText, this.inputData.fetchRawData(), handle)) {
 			return (T) this.record;
 		}
@@ -61,7 +61,7 @@ public abstract class ReadWithRecordSql<T extends DbRecord> extends Sql {
 	 * @throws SQLException
 	 *             thrown when any SQL exception, OR when no rows are filtered
 	 */
-	public T filterFirstOrFail(final DbHandle handle) throws SQLException {
+	public T filterFirstOrFail(final ReadonlyHandle handle) throws SQLException {
 		final T result = this.filterFirst(handle);
 
 		if (result == null) {

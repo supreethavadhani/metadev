@@ -25,11 +25,12 @@ package org.simplity.fm.core.service;
 import java.util.Collection;
 import java.util.List;
 
+import org.simplity.fm.core.AppUser;
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.UserSession;
 import org.simplity.fm.core.data.DbTable;
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.http.LoggedInUser;
 import org.simplity.fm.core.serialize.ISerializer;
 
 /**
@@ -63,7 +64,7 @@ public interface IServiceContext {
 	/**
 	 * @return non-null user on whose behalf this service is requested
 	 */
-	LoggedInUser getUser();
+	AppUser getUser();
 
 	/**
 	 *
@@ -163,4 +164,25 @@ public interface IServiceContext {
 	 * @param lines
 	 */
 	void setAsResponse(Record header, String childName, List<? extends Record> lines);
+
+	/**
+	 *
+	 * @return null if no user session is set before this service. non-null user
+	 *         session that is set for this user before servicing this service.
+	 */
+	UserSession getCurrentSession();
+
+	/**
+	 *
+	 * @return null if this service is not setting/resetting user session.
+	 *         non-null to set/reset user session after the service is executed
+	 */
+	UserSession getNewSession();
+
+	/**
+	 *
+	 * @param session
+	 *            non-null user session to be set after the service completes.
+	 */
+	void setNewSession(UserSession session);
 }

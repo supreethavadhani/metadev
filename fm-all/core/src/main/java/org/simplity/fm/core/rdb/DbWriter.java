@@ -20,43 +20,31 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.service;
+package org.simplity.fm.core.rdb;
 
-import org.simplity.fm.core.serialize.IInputObject;
+import java.sql.SQLException;
 
 /**
- * Interface for service. The instance is expected to be re-usable, and
- * thread-safe. (immutable). Singleton pattern is suitable or this.
+ * interface/lambda to carry out read-write operation under a transaction that
+ * is managed by the driver.
+ * This interface is created instead of using standard functions in java.util
+ * because the function needs to throw an exception
  *
  *
  * @author simplity.org
  *
  */
-public interface IService {
-	/**
-	 * serve when data is requested in a Map
-	 *
-	 * @param ctx
-	 *            service context provides certain data structures and methods.
-	 * @param inputObject
-	 *            non-null, could be empty if no pay-load was received from the
-	 *            client
-	 * @throws Exception
-	 *             so that the caller can wire exceptions to the right exception
-	 *             handler that is configured for the app
-	 */
-	void serve(IServiceContext ctx, IInputObject inputObject) throws Exception;
+public interface DbWriter {
 
 	/**
+	 * function that accesses the db within a transaction boundary. The
+	 * transaction is managed by the called driver, and not this function.
 	 *
-	 * @return unique name/id of this service
+	 * @param handle
+	 * @return true if all OK. false in case you detect some condition because
+	 *         of which the transaction is to be cancelled.
+	 * @throws SQLException
 	 */
-	String getId();
+	boolean readWrite(ReadWriteHandle handle) throws SQLException;
 
-	/**
-	 *
-	 * @return true if user has to be authenticated before serving this. false
-	 *         if this service does not require an authenticated user
-	 */
-	boolean authRequired();
 }

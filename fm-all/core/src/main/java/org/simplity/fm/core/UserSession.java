@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 simplity.org
+ * Copyright (c) 2020 simplity.org
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,43 +20,32 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.service;
-
-import org.simplity.fm.core.serialize.IInputObject;
+package org.simplity.fm.core;
 
 /**
- * Interface for service. The instance is expected to be re-usable, and
- * thread-safe. (immutable). Singleton pattern is suitable or this.
- *
+ * data that is to be cached for a logged-in user that is used across service
+ * requests. This is a base class that the actual Apps extend to make this
+ * useful
  *
  * @author simplity.org
  *
  */
-public interface IService {
-	/**
-	 * serve when data is requested in a Map
-	 *
-	 * @param ctx
-	 *            service context provides certain data structures and methods.
-	 * @param inputObject
-	 *            non-null, could be empty if no pay-load was received from the
-	 *            client
-	 * @throws Exception
-	 *             so that the caller can wire exceptions to the right exception
-	 *             handler that is configured for the app
-	 */
-	void serve(IServiceContext ctx, IInputObject inputObject) throws Exception;
+public class UserSession {
+	protected final AppUser appUser;
 
 	/**
 	 *
-	 * @return unique name/id of this service
+	 * @param appUser
 	 */
-	String getId();
+	public UserSession(final AppUser appUser) {
+		this.appUser = appUser;
+	}
 
 	/**
 	 *
-	 * @return true if user has to be authenticated before serving this. false
-	 *         if this service does not require an authenticated user
+	 * @return the app user of this session
 	 */
-	boolean authRequired();
+	public AppUser getUser() {
+		return this.appUser;
+	}
 }

@@ -22,13 +22,12 @@
 
 package org.simplity.fm.upload;
 
-import java.time.Instant;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.Map;
 
-import org.simplity.fm.core.rdb.DbBatchHandle;
-import org.simplity.fm.core.rdb.IDbBatchClient;
-import org.simplity.fm.core.rdb.RdbDriver;
+import org.simplity.fm.core.App;
+import org.simplity.fm.core.rdb.TransactionHandle;
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
@@ -38,7 +37,7 @@ import org.simplity.fm.core.service.IServiceContext;
 public class Uploader {
 	protected final FormLoader[] inserts;
 
-	Uploader(FormLoader[] inserts) {
+	Uploader(final FormLoader[] inserts) {
 		this.inserts = inserts;
 	}
 
@@ -49,9 +48,11 @@ public class Uploader {
 	 * @return info about what happened
 	 * @throws SQLException
 	 */
-	public UploadResult upload(IUploadClient client, IServiceContext ctx) throws SQLException {
-		Worker worker = new Worker(client, ctx);
-		RdbDriver.getDriver().transactBatch(worker);
+	public UploadResult upload(final IUploadClient client, final IServiceContext ctx) throws SQLException {
+		final Worker worker = new Worker(client, ctx);
+		App.getApp().getDbDriver().transact(handle -> {
+			worker.transact(handle);
+		});
 		return worker.getResult();
 	}
 
@@ -61,14 +62,14 @@ public class Uploader {
 	 * @param ctx
 	 *
 	 * @return info about what happened
-	 */ 
-	public UploadResult validate(IUploadClient client, IServiceContext ctx) {
-		Worker worker = new Worker(client, ctx);
+	 */
+	public UploadResult validate(final IUploadClient client, final IServiceContext ctx) {
+		final Worker worker = new Worker(client, ctx);
 		worker.validate();
 		return worker.getResult();
 	}
 
-	protected class Worker implements IDbBatchClient {
+	protected class Worker {
 		private Instant startedAt;
 		private final IUploadClient client;
 		private final IServiceContext ctx;
@@ -76,7 +77,7 @@ public class Uploader {
 		private int nbrRows = 0;
 		private int nbrErrors = 0;
 
-		protected Worker(IUploadClient client, IServiceContext ctx) {
+		protected Worker(final IUploadClient client, final IServiceContext ctx) {
 			this.client = client;
 			this.ctx = ctx;
 		}
@@ -85,11 +86,10 @@ public class Uploader {
 			return new UploadResult(this.startedAt, this.doneAt, this.nbrRows, this.nbrErrors, this.ctx.getMessages());
 		}
 
-		@Override
-		public void doBatch(DbBatchHandle handle) throws SQLException {
+		protected void transact(final TransactionHandle handle) throws SQLException {
 			this.startedAt = Instant.now();
 			while (true) {
-				Map<String, String> input = this.client.nextRow(this.ctx);
+				final Map<String, String> input = this.client.nextRow(this.ctx);
 				if (input == null) {
 					this.doneAt = Instant.now();
 					return;
@@ -97,7 +97,7 @@ public class Uploader {
 
 				this.nbrRows++;
 				boolean ok = true;
-				for (FormLoader loader : Uploader.this.inserts) {
+				for (final FormLoader loader : Uploader.this.inserts) {
 					if (!loader.loadData(input, handle, this.ctx)) {
 						ok = false;
 						break;
@@ -111,11 +111,11 @@ public class Uploader {
 				}
 			}
 		}
-		
+
 		protected void validate() {
 			this.startedAt = Instant.now();
 			while (true) {
-				Map<String, String> input = this.client.nextRow(this.ctx);
+				final Map<String, String> input = this.client.nextRow(this.ctx);
 				if (input == null) {
 					this.doneAt = Instant.now();
 					return;
@@ -123,12 +123,12 @@ public class Uploader {
 
 				this.nbrRows++;
 				boolean ok = true;
-				for (FormLoader loader : Uploader.this.inserts) {
+				for (final FormLoader loader : Uploader.this.inserts) {
 					if (!loader.validate(input, this.ctx)) {
 						ok = false;
 					}
 				}
-				
+
 				if (!ok) {
 					this.nbrErrors++;
 				}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 simplity.org
+ * Copyright (c) 2020 simplity.org
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -15,37 +15,25 @@
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+package org.simplity.fm.core;
 
-package org.simplity.fm.core.rdb;
-
-import java.sql.SQLException;
+import org.simplity.fm.core.service.IService;
 
 /**
- * interface for a class that wants to do db operations under a transaction
- * processing, so that any exception before the successful completion of all
- * updates must result in a roll-back.
- * 
- * @author simplity.org
+ * decide whether the user has access to the requested service
  *
+ * @author simplity.org
  */
-public interface IDbClient {
+public interface IAccessController {
 
 	/**
-	 * method that is called-back with a handler. this method can use the
-	 * handler to any number of read/write operations. Any exception is caught
-	 * by the caller and the transaction is rolled back in case auto-commit is not used.
-	 * Transaction is also rolled-back if you return false;
-	 * 
-	 * @param handle
-	 * @return true if all OK. false in case you detect some condition because
-	 *         of which the transaction is to be cancelled. ignored if
-	 *         auto-commit is used
-	 * @throws SQLException 
+	 * @param service
+	 * @param appUser
+	 * @return true if the user has access, false if prohibited
 	 */
-	public boolean transact(DbHandle handle) throws SQLException;
-
+	boolean okToServe(IService service, AppUser appUser);
 }

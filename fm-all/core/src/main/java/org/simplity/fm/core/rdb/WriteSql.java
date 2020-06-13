@@ -41,7 +41,7 @@ public abstract class WriteSql extends Sql {
 	 * @return number of affected rows. could be 0.
 	 * @throws SQLException
 	 */
-	public int write(final DbHandle handle) throws SQLException {
+	public int write(final ReadWriteHandle handle) throws SQLException {
 		if (this.batchData != null) {
 			throw new SQLException("Sql is prepared for batch, but write is issued.");
 		}
@@ -57,7 +57,7 @@ public abstract class WriteSql extends Sql {
 	 * @throws SQLException
 	 *             if number of affected rows 0, or on any sql exception
 	 */
-	public int writeOrFail(final DbHandle handle) throws SQLException {
+	public int writeOrFail(final ReadWriteHandle handle) throws SQLException {
 		if (this.batchData != null) {
 			throw new SQLException("Sql is prepared for batch, but write is issued.");
 		}
@@ -75,7 +75,7 @@ public abstract class WriteSql extends Sql {
 	 * @return number of affected rows. could be 0.
 	 * @throws SQLException
 	 */
-	public int writeBatch(final DbHandle handle) throws SQLException {
+	public int writeBatch(final ReadWriteHandle handle) throws SQLException {
 		if (this.batchData == null) {
 			throw new SQLException("Sql is not prepared for batch, but writeBatch is issued.");
 		}

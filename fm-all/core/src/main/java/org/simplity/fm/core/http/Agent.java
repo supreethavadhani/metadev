@@ -24,27 +24,26 @@ package org.simplity.fm.core.http;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.net.URLDecoder;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.simplity.fm.core.ComponentProvider;
+import org.simplity.fm.core.App;
+import org.simplity.fm.core.AppUser;
 import org.simplity.fm.core.Conventions;
+import org.simplity.fm.core.IApp;
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.UserSession;
+import org.simplity.fm.core.serialize.ISerializer;
 import org.simplity.fm.core.serialize.gson.JsonInputObject;
 import org.simplity.fm.core.serialize.gson.JsonSerializer;
-import org.simplity.fm.core.service.DefaultContext;
 import org.simplity.fm.core.service.IService;
 import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -60,21 +59,36 @@ import com.google.gson.JsonParser;
  */
 public class Agent {
 	private static final Logger logger = LoggerFactory.getLogger(Agent.class);
-	private static Agent singleInstance = new Agent();
+	/**
+	 * various headers that we respond back with
+	 */
+	public static final String[] HDR_NAMES = { "Access-Control-Allow-Methods", "Access-Control-Allow-Headers",
+			"Access-Control-Max-Age", "Connection", "Cache-Control", "Accept" };
+	/**
+	 * values for the headers
+	 */
+	public static final String[] HDR_TEXTS = { "POST, GET, OPTIONS",
+			"content-type, authorization, " + Conventions.Http.HEADER_SERVICE, "1728000", "Keep-Alive",
+			"no-cache, no-store, must-revalidate", "application/json" };
 
 	/**
 	 *
 	 * @return an instance of the agent
 	 */
 	public static Agent getAgent() {
-		return singleInstance;
+		return new Agent();
 	}
 
-	/**
-	 * TODO: cache manager to be used for session cache. Using a local map for
-	 * the time being
-	 */
-	private final Map<String, LoggedInUser> activeUsers = new HashMap<>();
+	private HttpServletRequest req;
+	private HttpServletResponse resp;
+	private final IApp app = App.getApp();
+
+	private String token;
+	private UserSession session;
+	private AppUser user;
+	private IService service;
+	private JsonObject inputData;
+	private IServiceContext ctx;
 
 	/**
 	 * response for a pre-flight request
@@ -98,90 +112,110 @@ public class Agent {
 	/**
 	 * serve an in-bound request.
 	 *
-	 * @param req
-	 *            http request
-	 * @param resp
-	 *            http response
-	 * @param inputDataIsInPayload
+	 * @param request
+	 * @param response
 	 * @throws IOException
 	 *             IO exception
 	 *
 	 */
-	public void serve(final HttpServletRequest req, final HttpServletResponse resp, final boolean inputDataIsInPayload)
-			throws IOException {
-		logger.info("Started serving request {}", req.getPathInfo());
-		final LoggedInUser user = this.getUser(req);
-		if (user == null) {
-			logger.info("No User. Responding with auth required status");
-			resp.setStatus(Conventions.Http.STATUS_AUTH_REQUIRED);
+	public void serve(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
+		this.req = request;
+		this.resp = response;
+		/*
+		 * process the request header to get service, session and user
+		 */
+		this.processHeader();
+
+		if (this.service == null) {
+			logger.error("No service. Responding with 404");
+			this.resp.setStatus(Conventions.Http.STATUS_INVALID_SERVICE);
 			return;
 		}
-
-		final IService service = getService(req);
-		if (service == null) {
-			logger.info("No/invalid Service");
-			resp.setStatus(Conventions.Http.STATUS_INVALID_SERVICE);
-			return;
+		if (this.user == null) {
+			if (this.service.authRequired()) {
+				logger.info("No user. Service {} requires an authenticated user.");
+				this.resp.setStatus(Conventions.Http.STATUS_AUTH_REQUIRED);
+				return;
+			}
+		} else {
+			if (this.app.getAccessController().okToServe(this.service, this.user) == false) {
+				logger.error("User {} does not have the preveleges for service {}. Responding with 404",
+						this.user.getUserId(), this.service.getId());
+				this.resp.setStatus(Conventions.Http.STATUS_INVALID_SERVICE);
+				return;
+			}
 		}
 
-		final JsonObject json = readContent(req);
-		if (json == null) {
+		this.readContent();
+		if (this.inputData == null) {
 			logger.info("Invalid JSON recd from client ");
-			resp.setStatus(Conventions.Http.STATUS_INVALID_DATA);
+			this.resp.setStatus(Conventions.Http.STATUS_INVALID_DATA);
 			return;
 		}
-		readQueryString(req, json);
 
 		/*
-		 * We allow the service to use output stream, but not input stream. This
-		 * is a safety mechanism against possible measures to be taken when
-		 * receiving payload from an external source
+		 * we are ready to execute this service.
 		 */
+		this.app.getRequestLogger().log(this.user.getUserId(), this.service.getId(), this.inputData.toString());
+
 		final StringWriter writer = new StringWriter();
-		final IServiceContext ctx = new DefaultContext(user, new JsonSerializer(writer));
-		logger.info("Requesting App engine for service:{} with input data:{}", service.getId(),
-				new Gson().toJson(json));
+		final ISerializer outputObject = new JsonSerializer(writer);
+		this.ctx = this.app.getContextFactory().getContext(this.user, this.session, outputObject);
+
 		try {
-			service.serve(ctx, new JsonInputObject(json));
-			if (ctx.allOk()) {
+			this.service.serve(this.ctx, new JsonInputObject(this.inputData));
+			if (this.ctx.allOk()) {
 				logger.info("Service returned with All Ok");
 			} else {
 				logger.error("Service returned with error messages");
 			}
 		} catch (final Throwable e) {
-			e.printStackTrace();
-			final String msg = e.getMessage();
-			logger.error("Internal Error : {}", msg);
-			ctx.addMessage(Message.newError(Message.MSG_INTERNAL_ERROR));
+			logger.error("internal Error", e);
+			this.app.getExceptionListener().listen(this.ctx, e);
+			this.ctx.addMessage(Message.newError(Message.MSG_INTERNAL_ERROR));
 		}
-		respond(resp, ctx, writer.toString());
+		this.respond(writer.toString());
 	}
 
-	private static JsonObject readContent(final HttpServletRequest req) {
-		if (req.getContentLength() == 0) {
-			return new JsonObject();
+	private void readContent() {
+		if (this.req.getContentLength() == 0) {
+			this.inputData = new JsonObject();
+			return;
 		}
-		try (Reader reader = req.getReader()) {
+		try (Reader reader = this.req.getReader()) {
 			/*
 			 * read it as json
 			 */
 			final JsonElement node = new JsonParser().parse(reader);
 			if (!node.isJsonObject()) {
-				return null;
+				return;
 			}
-			return (JsonObject) node;
+			this.inputData = (JsonObject) node;
 		} catch (final Exception e) {
 			logger.error("Invalid data recd from client {}", e.getMessage());
-			return null;
 		}
 	}
 
-	private static void respond(final HttpServletResponse resp, final IServiceContext ctx, final String payload) {
-		try (Writer writer = resp.getWriter()) {
+	private void respond(final String payload) {
+		/*
+		 * are we to set a user session?
+		 */
+		final UserSession seshan = this.ctx.getNewSession();
+		if (seshan != null) {
+			if (this.token == null) {
+				/*
+				 * this is a new session. We have to create a token and send
+				 * that to the client in the header as well
+				 */
+				this.token = UUID.randomUUID().toString();
+				this.resp.setHeader(Conventions.Http.HEADER_SERVICE, this.token);
+			}
+		}
+		try (Writer writer = this.resp.getWriter()) {
 			writer.write("{\"");
 			writer.write(Conventions.Http.TAG_ALL_OK);
 			writer.write("\":");
-			if (ctx.allOk()) {
+			if (this.ctx.allOk()) {
 				writer.write("true");
 				if (payload != null && payload.isEmpty() == false) {
 					writer.write(",\"");
@@ -192,12 +226,12 @@ public class Agent {
 			} else {
 				writer.write("false");
 			}
-			writeMessage(writer, ctx.getMessages());
+			this.writeMessage(writer, this.ctx.getMessages());
 			writer.write("}");
 		} catch (final Exception e) {
 			e.printStackTrace();
 			try {
-				resp.sendError(500);
+				this.resp.sendError(500);
 			} catch (final IOException e1) {
 				//
 			}
@@ -209,7 +243,7 @@ public class Agent {
 	 * @param messages
 	 * @throws IOException
 	 */
-	private static void writeMessage(final Writer writer, final Message[] msgs) throws IOException {
+	private void writeMessage(final Writer writer, final Message[] msgs) throws IOException {
 		if (msgs == null || msgs.length == 0) {
 			return;
 		}
@@ -231,74 +265,31 @@ public class Agent {
 		writer.write("]");
 	}
 
-	private static void readQueryString(final HttpServletRequest req, final JsonObject json) {
-		final String qry = req.getQueryString();
-		if (qry == null) {
+	private void processHeader() {
+		final String serviceName = this.req.getHeader(Conventions.Http.HEADER_SERVICE);
+		if (serviceName == null) {
+			logger.error("header {} not received. No service", Conventions.Http.HEADER_SERVICE);
 			return;
 		}
 
-		for (final String part : qry.split("&")) {
-			final String[] pair = part.split("=");
-			String val;
-			if (pair.length == 1) {
-				val = "";
+		logger.info("Requested service = {}", serviceName);
+		this.service = this.app.getCompProvider().getService(serviceName);
+		if (this.service == null) {
+			logger.error("requested service {} is not served on this app.", serviceName);
+			return;
+		}
+
+		this.token = this.req.getHeader(Conventions.Http.HEADER_AUTH);
+		if (this.token == null) {
+			logger.info("Request received with  no token. Assumed guest request");
+		} else {
+			this.session = this.app.getSessionCache().get(this.token);
+			if (this.session == null) {
+				logger.info("Token is not valid. possibly timed out. Treating this as guest request");
 			} else {
-				val = decode(pair[1]);
+				this.user = this.session.getUser();
+				logger.info("Request from authuenticated user {} ", this.user.getUserId());
 			}
-			json.addProperty(pair[0].trim(), val);
-		}
-	}
-
-	private static IService getService(final HttpServletRequest req) {
-		final String serviceName = req.getHeader(Conventions.Http.HEADER_SERVICE);
-		if (serviceName == null) {
-			logger.info("header {} not received", Conventions.Http.HEADER_SERVICE);
-
-			return null;
-		}
-		final IService service = ComponentProvider.getProvider().getService(serviceName);
-		if (service == null) {
-			logger.info("{} is not a service", serviceName);
-		}
-		return service;
-	}
-
-	/**
-	 * temp method in the absence of real authentication and session. We use
-	 * AUthorization token as userId as well
-	 *
-	 * @param req
-	 * @return
-	 */
-	private LoggedInUser getUser(final HttpServletRequest req) {
-		final String token = req.getHeader(Conventions.Http.HEADER_AUTH);
-		if (token == null) {
-			return null;
-		}
-
-		LoggedInUser user = this.activeUsers.get(token);
-		if (user == null) {
-			/*
-			 * we assume that the token is valid when we get called. Hence we
-			 * have to create a user. token is used as userId, there by allowing
-			 * testing with different users
-			 */
-			final LoggedInUser cu = new LoggedInUser(token, token);
-			logger.info("USer {} successfully logged-in", token);
-			this.activeUsers.put(token, cu);
-			user = cu;
-		}
-		return user;
-	}
-
-	private static String decode(final String text) {
-		try {
-			return URLDecoder.decode(text, "UTF-8");
-		} catch (final UnsupportedEncodingException e) {
-			/*
-			 * we do know that this is supported. so, this is unreachable code.
-			 */
-			return text;
 		}
 	}
 }

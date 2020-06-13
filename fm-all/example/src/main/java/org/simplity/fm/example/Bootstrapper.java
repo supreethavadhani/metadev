@@ -22,73 +22,81 @@
 
 package org.simplity.fm.example;
 
+import org.simplity.fm.core.App;
+import org.simplity.fm.core.App.Config;
+import org.simplity.fm.core.AppConfigProvider;
+import org.simplity.fm.core.IDbConnectionFactory;
 import org.simplity.fm.core.rdb.DefaultConnectionFactory;
-import org.simplity.fm.core.rdb.IConnectionFactory;
-import org.simplity.fm.core.rdb.RdbDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * examples of providing
+ *
  * @author simplity.org
  *
  */
-public class Bootstrapper {
+public class Bootstrapper implements AppConfigProvider {
 	private static final Logger logger = LoggerFactory.getLogger(Bootstrapper.class);
-	/*
-	 * these have to be taken from a config file in production..
-	 */
-	//private static final String CON_STRING = "";
-	//private static final String DRIVER_NAME = "";
-	//private static final String DB_FACTORY = "dbFactoryClassName";
-	//private static final String DB_DATA_SOURCE = "dataSourceJndiName";
-	
-	/**
-	 * MUST be called before running the APP, even for testing
-	 */
-	public static void bootstrap() {
+
+	@Override
+	public Config getConfig() {
+		final App.Config config = new Config();
+		config.appName = "simplityExample";
 		/*
-		 * db setup
+		 * so long as you keep this class in the rot package, it is safe to use
+		 * the following..
 		 */
-		noDbSetup();
-		
+		config.appRootPackage = this.getClass().getPackage().getName();
+		/*
+		 * set all other classes here...
+		 */
+		// config.dbConnectionFactory = dbSetupWithConString();
+		return config;
 	}
+
 	/**
-	 * method to be used if this app wants to use connection string for db connection
+	 * method to be used if this app wants to use connection string for db
+	 * connection
+	 *
 	 * @param conString
 	 * @param driverName
 	 */
 	@SuppressWarnings("unused")
-	private static void dbSetupWithConString(String conString, String driverName) {
+	private static IDbConnectionFactory dbSetupWithConString() {
+		final String conString = "Get it from wherever you are to get it, but never hard code in the code here";
+		final String driverName = "driver name for the vendor/provider of JDBC you are using";
 		logger.info("Setting up db with driver name = {} and connectionString=****", driverName);
-		IConnectionFactory factory = DefaultConnectionFactory.getFactory(conString, driverName);
-		RdbDriver.setFactory(factory);
+		return DefaultConnectionFactory.getFactory(conString, driverName);
 	}
 
 	/**
 	 * method to be used to set up rdbms using data source JNDI
+	 *
 	 * @param dataSourceName
 	 */
 	@SuppressWarnings("unused")
-	private static void dbSetupWithDataSource(String dataSourceName) {
+	private static IDbConnectionFactory dbSetupWithDataSource() {
+		final String dataSourceName = "the designated JNDI name as per the documentation of the container/framework that provides this service";
 		logger.info("Setting up db with dataSource name = {}", dataSourceName);
-		IConnectionFactory factory = DefaultConnectionFactory.getFactory(dataSourceName);
-		RdbDriver.setFactory(factory);
+		return DefaultConnectionFactory.getFactory(dataSourceName);
 	}
 
 	/**
 	 * method to be used if the app has a custom connection factory
+	 *
 	 * @param factory
 	 */
 	@SuppressWarnings("unused")
-	private static void dbSetupWithCustomFctory(IConnectionFactory factory) {
-		logger.info("Setting up db with a custom connection factory class {}", factory.getClass().getName());
-		RdbDriver.setFactory(factory);
+	private static IDbConnectionFactory dbSetupWithCustomFctory() {
+		/*
+		 * write the code to get the factory, whichever you are supposed to get
+		 * it..
+		 */
+		final IDbConnectionFactory factory = null;
+		// logger.info("Setting up db with a custom connection factory class
+		// {}", factory.getClass().getName());
+		return factory;
 	}
-	
-	/**
-	 * if the app does not need any db connection - typically for some testing purposes
-	 */
-	private static void noDbSetup() {
-		logger.info("App has decided to live with no access to any rdbms. Any call to RdbDriver() will result in SqlException being thrown"); 
-	}
+
 }

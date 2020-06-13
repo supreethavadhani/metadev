@@ -22,13 +22,7 @@
 
 package org.simplity.fm.core;
 
-import org.simplity.fm.core.data.Form;
-import org.simplity.fm.core.data.Record;
-import org.simplity.fm.core.datatypes.DataType;
-import org.simplity.fm.core.fn.IFunction;
-import org.simplity.fm.core.rdb.Sql;
-import org.simplity.fm.core.service.IService;
-import org.simplity.fm.core.validn.IValueList;
+import org.simplity.fm.core.rdb.RdbDriver;
 
 /**
  * Represents an application. Configuration details are loaded at boot time.
@@ -52,63 +46,59 @@ public interface IApp {
 
 	/**
 	 *
-	 * @return unique name assigned to this app.
+	 * @return non-null unique name assigned to this app.
 	 */
 	String getName();
 
 	/**
+	 * get component provider
 	 *
-	 * @param formId
-	 * @return form instance, or null if such a form is not located
+	 * @return non-null component provider. throws ApplicationError if component
+	 *         provider is not set-up for this app.
 	 */
-	Form<?> getForm(String formId);
+	ICompProvider getCompProvider();
 
 	/**
 	 *
-	 * @param recordName
-	 * @return record instance, or null if such a record is not located
+	 * @return non-null driver. throws ApplicationError if DBDriver is not set
+	 *         for this app.
 	 */
-	Record getRecord(String recordName);
+	RdbDriver getDbDriver();
 
 	/**
 	 *
-	 * @param dataTypeId
-	 * @return a data type instance, or null if it is not located.
+	 * @return the access controllers
 	 */
-	DataType getDataType(String dataTypeId);
+	IAccessController getAccessController();
 
 	/**
 	 *
-	 * @param listId
-	 * @return an instance for this id, or null if is not located
+	 * @return the exception listener
 	 */
-	IValueList getValueList(String listId);
+	IExceptionListener getExceptionListener();
 
 	/**
 	 *
-	 * @param serviceName
-	 * @return an instance for this id, or null if is not located
+	 * @return the session cache
 	 */
-	IService getService(String serviceName);
+	ISessionCache getSessionCache();
 
 	/**
 	 *
-	 * @param functionName
-	 * @return an instance for this id, or null if is not located
+	 * @return the request logger
 	 */
-	IFunction getFunction(String functionName);
+	IRequestLogger getRequestLogger();
 
 	/**
 	 *
-	 * @param messageId
-	 * @return message or null if no such message is located.
+	 * @return the utility to send text messages to mobile phones
 	 */
-	Message getMessage(String messageId);
+	ITexter getTexter();
 
 	/**
 	 *
-	 * @param sqlName
-	 * @return sql, or null if no such sql
+	 * @return the factory that creates a service context for the service to be
+	 *         called based on the inputs available
 	 */
-	Sql getSql(String sqlName);
+	IServiceContextFactory getContextFactory();
 }

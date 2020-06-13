@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 simplity.org
+ * Copyright (c) 2020 simplity.org
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,18 +20,21 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.example.gen;
+package org.simplity.fm.dummy;
 
-import org.simplity.fm.core.IPackageNameProvider;
+import org.simplity.fm.core.AppUser;
+import org.simplity.fm.core.IAccessController;
+import org.simplity.fm.core.service.IService;
 
 /**
- * Is auto-generated and added
  * @author simplity.org
  *
  */
-public class PackageNameProvider implements IPackageNameProvider{
+public class DummyAccessController implements IAccessController {
 
-	public String getCompRootPackageName() {
-		return this.getClass().getPackage().getName();
+	@Override
+	public boolean okToServe(final IService service, final AppUser appUser) {
+		return true;
 	}
+
 }

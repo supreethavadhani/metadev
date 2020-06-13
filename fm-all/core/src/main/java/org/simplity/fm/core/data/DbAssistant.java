@@ -30,9 +30,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.simplity.fm.core.datatypes.ValueType;
-import org.simplity.fm.core.rdb.DbHandle;
 import org.simplity.fm.core.rdb.IDbReader;
 import org.simplity.fm.core.rdb.IDbWriter;
+import org.simplity.fm.core.rdb.ReadWriteHandle;
+import org.simplity.fm.core.rdb.ReadonlyHandle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -211,7 +212,7 @@ public class DbAssistant {
 	 *         existing form with the same id/key
 	 * @throws SQLException
 	 */
-	boolean insert(final DbHandle handle, final Object[] values) throws SQLException {
+	boolean insert(final ReadWriteHandle handle, final Object[] values) throws SQLException {
 		int n = 0;
 		if (this.generatedColumnName == null) {
 			n = writeWorker(handle, this.insertClause, this.insertParams, values);
@@ -247,7 +248,7 @@ public class DbAssistant {
 	 *         update
 	 * @throws SQLException
 	 */
-	boolean update(final DbHandle handle, final Object[] values) throws SQLException {
+	boolean update(final ReadWriteHandle handle, final Object[] values) throws SQLException {
 		final int nbr = writeWorker(handle, this.updateClause, this.updateParams, values);
 		return nbr > 0;
 	}
@@ -261,13 +262,13 @@ public class DbAssistant {
 	 * @return true if it is indeed deleted happened. false otherwise
 	 * @throws SQLException
 	 */
-	boolean delete(final DbHandle handle, final Object[] values) throws SQLException {
+	boolean delete(final ReadWriteHandle handle, final Object[] values) throws SQLException {
 		final String sql = this.deleteClause + this.whereClause;
 		final int nbr = writeWorker(handle, sql, this.whereParams, values);
 		return nbr > 0;
 	}
 
-	private static int writeWorker(final DbHandle handle, final String sql, final FieldMetaData[] params,
+	private static int writeWorker(final ReadWriteHandle handle, final String sql, final FieldMetaData[] params,
 			final Object[] values) throws SQLException {
 		try {
 			return handle.write(getWriter(sql, params, values));
@@ -316,7 +317,7 @@ public class DbAssistant {
 	 *         roll-back if this is false
 	 * @throws SQLException
 	 */
-	boolean saveAll(final DbHandle handle, final Object[][] rows) throws SQLException {
+	boolean saveAll(final ReadWriteHandle handle, final Object[][] rows) throws SQLException {
 		if (this.generatedKeyIdx == -1) {
 			logger.info("record has no generated key. Each rowis first updated, failing which it is inserted.");
 			return this.updateOrInsert(handle, rows);
@@ -370,7 +371,7 @@ public class DbAssistant {
 	 * @return true if it was indeed inserted or updated
 	 * @throws SQLException
 	 */
-	boolean save(final DbHandle handle, final Object[] fieldValues) throws SQLException {
+	boolean save(final ReadWriteHandle handle, final Object[] fieldValues) throws SQLException {
 		if (this.generatedKeyIdx == -1) {
 			final String msg = "record has no generated key. save opertion is not possible.";
 			logger.error(msg);
@@ -383,7 +384,7 @@ public class DbAssistant {
 		return this.update(handle, fieldValues);
 	}
 
-	private boolean updateOrInsert(final DbHandle handle, final Object[][] rows) throws SQLException {
+	private boolean updateOrInsert(final ReadWriteHandle handle, final Object[][] rows) throws SQLException {
 		for (final Object[] row : rows) {
 			final boolean updated = this.update(handle, row);
 			if (updated) {
@@ -412,7 +413,7 @@ public class DbAssistant {
 	 *         to insert.
 	 * @throws SQLException
 	 */
-	boolean insertAll(final DbHandle handle, final Object[][] rows) throws SQLException {
+	boolean insertAll(final ReadWriteHandle handle, final Object[][] rows) throws SQLException {
 
 		return writeMany(handle, this.insertClause, this.insertParams, rows);
 	}
@@ -429,12 +430,12 @@ public class DbAssistant {
 	 *         row failed to update
 	 * @throws SQLException
 	 */
-	boolean updateAll(final DbHandle handle, final Object[][] rows) throws SQLException {
+	boolean updateAll(final ReadWriteHandle handle, final Object[][] rows) throws SQLException {
 
 		return writeMany(handle, this.updateClause, this.updateParams, rows);
 	}
 
-	private static boolean writeMany(final DbHandle handle, final String sql, final FieldMetaData[] params,
+	private static boolean writeMany(final ReadWriteHandle handle, final String sql, final FieldMetaData[] params,
 			final Object[][] values) throws SQLException {
 
 		final int nbrParams = params.length;
@@ -519,7 +520,7 @@ public class DbAssistant {
 	 *         found...)
 	 * @throws SQLException
 	 */
-	boolean read(final DbHandle handle, final Object[] values) throws SQLException {
+	boolean read(final ReadonlyHandle handle, final Object[] values) throws SQLException {
 		if (values == null || values.length < this.nbrFieldsInARow) {
 			logger.error(
 					"This record has {} fields but an array of length {} is assigned to receive data. Data not extracted.",
@@ -591,7 +592,7 @@ public class DbAssistant {
 	 * @throws SQLException
 	 */
 	Object[][] filter(final String whereClauseStartingWithWhere, final Object[] values, final boolean readOnlyOne,
-			final DbHandle handle) throws SQLException {
+			final ReadonlyHandle handle) throws SQLException {
 		final List<Object[]> result = new ArrayList<>();
 		this.filterWorker(handle, whereClauseStartingWithWhere, values, null, result);
 
@@ -599,11 +600,11 @@ public class DbAssistant {
 	}
 
 	boolean filterFirst(final String whereClauseStartingWithWhere, final Object[] inputValues,
-			final Object[] outputValues, final DbHandle handle) throws SQLException {
+			final Object[] outputValues, final ReadonlyHandle handle) throws SQLException {
 		return this.filterWorker(handle, whereClauseStartingWithWhere, inputValues, outputValues, null);
 	}
 
-	boolean filterWorker(final DbHandle handle, final String where, final Object[] inputValues,
+	boolean filterWorker(final ReadonlyHandle handle, final String where, final Object[] inputValues,
 			final Object[] outputValues, final List<Object[]> outputRows) throws SQLException {
 
 		final boolean result[] = new boolean[1];

@@ -49,7 +49,7 @@ public abstract class FilterWithRecordSql<T extends DbRecord> extends Sql {
 	 * @throws SQLException
 	 */
 	@SuppressWarnings("unchecked")
-	public List<T> filter(final DbHandle handle) throws SQLException {
+	public List<T> filter(final ReadonlyHandle handle) throws SQLException {
 		final List<Object[]> rows = this.record.filter(this.sqlText, this.inputData.fetchRawData(), handle);
 		final List<T> result = new ArrayList<>(rows.size());
 		for (final Object[] row : rows) {
@@ -69,7 +69,7 @@ public abstract class FilterWithRecordSql<T extends DbRecord> extends Sql {
 	 *             thrown when any SQL exception, OR when no rows are filtered
 	 */
 	@SuppressWarnings("unchecked")
-	public List<T> filterOrFail(final DbHandle handle) throws SQLException {
+	public List<T> filterOrFail(final ReadonlyHandle handle) throws SQLException {
 
 		final List<Object[]> rows = this.record.filter(this.sqlText, this.inputData.fetchRawData(), handle);
 		if (rows.size() == 0) {
@@ -93,7 +93,7 @@ public abstract class FilterWithRecordSql<T extends DbRecord> extends Sql {
 	 *            interested in getting any more rows
 	 * @throws SQLException
 	 */
-	public void forEach(final DbHandle handle, final RecordProcessor recordProcessor) throws SQLException {
+	public void forEach(final ReadonlyHandle handle, final RecordProcessor recordProcessor) throws SQLException {
 		this.record.forEach(this.sqlText, this.inputData.fetchRawData(), handle, recordProcessor);
 	}
 

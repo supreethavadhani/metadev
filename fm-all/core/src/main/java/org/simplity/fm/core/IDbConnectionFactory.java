@@ -20,57 +20,37 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.http;
+package org.simplity.fm.core;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
- * Data Structure that has attributes that are required for services-request to
- * be completed. This class is to be extended and used to have all the relevant
- * fields regarding logged in user in a session cache
- *
+ * Provide a SQL connection for the RDBMS service used by this app
+ * 
  * @author simplity.org
  *
  */
-public class LoggedInUser {
-
-	/**
-	 * get user instance for pan
-	 *
-	 * @param id
-	 *            unique key for the user
-	 * @param token
-	 *            authentication/security token issued by the login service.
-	 *            this is
-	 * @return user for a pan. null if this is not a valid pan
-	 */
-	public static LoggedInUser newUser(final String id, final String token) {
-		return new LoggedInUser(id, token);
-	}
-
-	private final String userId;
-	private final String userToken;
-
+public interface IDbConnectionFactory {
 	/**
 	 *
-	 * @param id
-	 * @param token
+	 * @return non-null sql connection for default schema or this application.
+	 * @throws SQLException
+	 *             if no driver is set-up, or there is some problem in getting a
+	 *             connection
 	 */
-	public LoggedInUser(final String id, final String token) {
-		this.userId = id;
-		this.userToken = token;
-	}
+	Connection getConnection() throws SQLException;
 
 	/**
-	 * @return unique key for this user
+	 * to be used to get a connection to a schema that is not the default for
+	 * the application
+	 *
+	 * @param schema
+	 *            non-null schema name.
+	 * @return non-null sql connection for default schema or this application.
+	 * @throws SQLException
+	 *             if no driver is set-up, or there is some problem in getting a
+	 *             connection
 	 */
-	public String getUserId() {
-		return this.userId;
-	}
-
-	/**
-	 * @return security/authentication token associated with this user
-	 */
-	public String getUserToken() {
-		return this.userToken;
-
-	}
+	Connection getConnection(String schema) throws SQLException;
 }

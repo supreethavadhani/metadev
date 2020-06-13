@@ -25,11 +25,11 @@ package org.simplity.fm.core.data;
 import java.sql.SQLException;
 import java.util.List;
 
+import org.simplity.fm.core.App;
 import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.rdb.DbHandle;
-import org.simplity.fm.core.rdb.RdbDriver;
+import org.simplity.fm.core.rdb.ReadonlyHandle;
 import org.simplity.fm.core.serialize.IInputObject;
 import org.simplity.fm.core.serialize.ISerializer;
 import org.simplity.fm.core.service.IService;
@@ -107,7 +107,7 @@ public abstract class Form<T extends Record> {
 	 * @param handle
 	 * @throws SQLException
 	 */
-	public void readLinkedForms(final Object[] rawData, final ISerializer writer, final DbHandle handle)
+	public void readLinkedForms(final Object[] rawData, final ISerializer writer, final ReadonlyHandle handle)
 			throws SQLException {
 		if (this.linkedForms != null) {
 			for (final LinkedForm<?> link : Form.this.linkedForms) {
@@ -188,6 +188,11 @@ public abstract class Form<T extends Record> {
 		return new IService() {
 
 			@Override
+			public boolean authRequired() {
+				return true;
+			}
+
+			@Override
 			public void serve(final IServiceContext ctx, final IInputObject inputPayload) throws Exception {
 				rec.parse(inputPayload, forInsert, ctx, null, 0);
 				if (ctx.allOk()) {
@@ -225,6 +230,11 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
+		public boolean authRequired() {
+			return true;
+		}
+
+		@Override
 		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
 			if (!Form.this.parseKeys(payload, ctx)) {
 				logger.error("Error while reading keys from the input payload");
@@ -232,7 +242,7 @@ public abstract class Form<T extends Record> {
 			}
 
 			final DbRecord rec = (DbRecord) Form.this.record;
-			RdbDriver.getDriver().read(handle -> {
+			App.getApp().getDbDriver().read(handle -> {
 				if (!rec.read(handle)) {
 					logger.error("No data found for the requested keys");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -256,6 +266,11 @@ public abstract class Form<T extends Record> {
 
 	protected class Creater extends Service {
 
+		@Override
+		public boolean authRequired() {
+			return true;
+		}
+
 		protected Creater(final String name) {
 			super(name);
 		}
@@ -267,7 +282,7 @@ public abstract class Form<T extends Record> {
 				logger.error("Error while validating the input payload");
 				return;
 			}
-			RdbDriver.getDriver().readWrite(handle -> {
+			App.getApp().getDbDriver().readWrite(handle -> {
 				if (!rec.insert(handle)) {
 					logger.error("Insert operation failed silently");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -292,6 +307,11 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
+		public boolean authRequired() {
+			return true;
+		}
+
+		@Override
 		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
 			final DbRecord rec = (DbRecord) Form.this.record;
 			if (!rec.parse(payload, false, ctx, null, 0)) {
@@ -299,7 +319,7 @@ public abstract class Form<T extends Record> {
 				return;
 			}
 
-			RdbDriver.getDriver().readWrite(handle -> {
+			App.getApp().getDbDriver().readWrite(handle -> {
 				if (!rec.update(handle)) {
 					logger.error("update operation failed silently");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -325,6 +345,11 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
+		public boolean authRequired() {
+			return true;
+		}
+
+		@Override
 		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
 			final DbRecord rec = (DbRecord) Form.this.record;
 			if (!rec.parseKeys(payload, ctx)) {
@@ -332,7 +357,7 @@ public abstract class Form<T extends Record> {
 				return;
 			}
 
-			RdbDriver.getDriver().readWrite(handle -> {
+			App.getApp().getDbDriver().readWrite(handle -> {
 				if (!rec.delete(handle)) {
 					logger.error("Delete operation failed silently");
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
@@ -358,6 +383,11 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
+		public boolean authRequired() {
+			return true;
+		}
+
+		@Override
 		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
 			logger.info("Form service invoked for filter for {}", this.getId());
 			final DbRecord rec = (DbRecord) Form.this.record;
@@ -368,7 +398,7 @@ public abstract class Form<T extends Record> {
 				return;
 			}
 
-			RdbDriver.getDriver().read(handle -> {
+			App.getApp().getDbDriver().read(handle -> {
 				final List<Object[]> list = rec.dba.filter(filter.getWhereClause(), filter.getWhereParamValues(),
 						handle);
 				/*

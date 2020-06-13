@@ -22,26 +22,29 @@
 
 package org.simplity.fm.core.rdb;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
+ * interface for a class that wants to do db operations in batch. That is, more
+ * than one transaction.
+ * In this case, the client manages transactions (begin-trans, commit and
+ * roll-back)
+ *
+ * NOTE: This interface is created because the java.util.functions can not
+ * declare exceptions. Our function needs to declare a throws clause
+ *
  * @author simplity.org
  *
  */
-public interface IConnectionFactory {
+@FunctionalInterface
+public interface DbTransacter {
+
 	/**
-	 * 
-	 * @return non-sql connection for default schema or this application. 
-	 * @throws SQLException if no driver is set-up, or there is some problem in getting a connection
+	 * function that manages its own transactions, like commit and roll-back. It
+	 * is also possible to do the read-writes with auto-commits
+	 *
+	 * @param handle
+	 * @throws SQLException
 	 */
-	Connection getConnection() throws SQLException;
-	
-	/**
-	 * to be used to get a connection to a schema that is not the default for the application 
-	 * @param schema non-null schema name.
-	 * @return non-sql connection for default schema or this application. 
-	 * @throws SQLException if no driver is set-up, or there is some problem in getting a connection
-	 */
-	Connection getConnection(String schema) throws SQLException;
+	void transact(TransactionHandle handle) throws SQLException;
 }

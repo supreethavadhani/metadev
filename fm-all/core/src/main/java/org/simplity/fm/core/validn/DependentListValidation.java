@@ -22,7 +22,7 @@
 
 package org.simplity.fm.core.validn;
 
-import org.simplity.fm.core.ComponentProvider;
+import org.simplity.fm.core.App;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.service.IServiceContext;
@@ -70,7 +70,7 @@ public class DependentListValidation implements IValidation {
 			return true;
 		}
 
-		final IValueList vl = ComponentProvider.getProvider().getValueList(this.listName);
+		final IValueList vl = App.getApp().getCompProvider().getValueList(this.listName);
 		if (vl == null) {
 			return true;
 		}

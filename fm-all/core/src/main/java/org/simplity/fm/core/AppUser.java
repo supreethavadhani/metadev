@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 simplity.org
+ * Copyright (c) 2020 simplity.org
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,43 +20,37 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.service;
-
-import org.simplity.fm.core.serialize.IInputObject;
+package org.simplity.fm.core;
 
 /**
- * Interface for service. The instance is expected to be re-usable, and
- * thread-safe. (immutable). Singleton pattern is suitable or this.
+ * Data structure that holds User information. Simplity uses userId. App should
+ * extend this class to include all the data about the logged in user that are
+ * used across services. Typically this set of data is saved in session
  *
- *
+ * We have used an immutable data structure design.
+ * 
  * @author simplity.org
  *
  */
-public interface IService {
-	/**
-	 * serve when data is requested in a Map
-	 *
-	 * @param ctx
-	 *            service context provides certain data structures and methods.
-	 * @param inputObject
-	 *            non-null, could be empty if no pay-load was received from the
-	 *            client
-	 * @throws Exception
-	 *             so that the caller can wire exceptions to the right exception
-	 *             handler that is configured for the app
-	 */
-	void serve(IServiceContext ctx, IInputObject inputObject) throws Exception;
+public class AppUser {
 
 	/**
-	 *
-	 * @return unique name/id of this service
+	 * logged-in user id
 	 */
-	String getId();
+	protected final String userId;
 
 	/**
+	 * @param userId
 	 *
-	 * @return true if user has to be authenticated before serving this. false
-	 *         if this service does not require an authenticated user
 	 */
-	boolean authRequired();
+	public AppUser(final String userId) {
+		this.userId = userId;
+	}
+
+	/**
+	 * @return the userId
+	 */
+	public String getUserId() {
+		return this.userId;
+	}
 }
