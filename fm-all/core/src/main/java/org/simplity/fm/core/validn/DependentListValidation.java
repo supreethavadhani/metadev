@@ -22,8 +22,8 @@
 
 package org.simplity.fm.core.validn;
 
-import org.simplity.fm.core.App;
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.app.App;
 import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.service.IServiceContext;
 

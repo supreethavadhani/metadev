@@ -55,8 +55,9 @@ public interface IService {
 
 	/**
 	 *
-	 * @return true if user has to be authenticated before serving this. false
-	 *         if this service does not require an authenticated user
+	 * @return true if this service is allowed for non-authenticated users.
+	 *         false implies that the service is offered only to authenticated
+	 *         users
 	 */
-	boolean authRequired();
+	boolean serveGuests();
 }

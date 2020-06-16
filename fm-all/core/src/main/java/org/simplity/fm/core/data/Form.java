@@ -25,10 +25,10 @@ package org.simplity.fm.core.data;
 import java.sql.SQLException;
 import java.util.List;
 
-import org.simplity.fm.core.App;
-import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.app.App;
+import org.simplity.fm.core.app.ApplicationError;
 import org.simplity.fm.core.rdb.ReadonlyHandle;
 import org.simplity.fm.core.serialize.IInputObject;
 import org.simplity.fm.core.serialize.ISerializer;
@@ -53,6 +53,7 @@ public abstract class Form<T extends Record> {
 	 * name of this form. unique within an app
 	 */
 	private final String name;
+
 	/*
 	 * record that this form is based on
 	 */
@@ -188,8 +189,8 @@ public abstract class Form<T extends Record> {
 		return new IService() {
 
 			@Override
-			public boolean authRequired() {
-				return true;
+			public boolean serveGuests() {
+				return false;
 			}
 
 			@Override
@@ -230,8 +231,8 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public boolean authRequired() {
-			return true;
+		public boolean serveGuests() {
+			return false;
 		}
 
 		@Override
@@ -267,8 +268,8 @@ public abstract class Form<T extends Record> {
 	protected class Creater extends Service {
 
 		@Override
-		public boolean authRequired() {
-			return true;
+		public boolean serveGuests() {
+			return false;
 		}
 
 		protected Creater(final String name) {
@@ -307,8 +308,8 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public boolean authRequired() {
-			return true;
+		public boolean serveGuests() {
+			return false;
 		}
 
 		@Override
@@ -345,8 +346,8 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public boolean authRequired() {
-			return true;
+		public boolean serveGuests() {
+			return false;
 		}
 
 		@Override
@@ -383,8 +384,8 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public boolean authRequired() {
-			return true;
+		public boolean serveGuests() {
+			return false;
 		}
 
 		@Override

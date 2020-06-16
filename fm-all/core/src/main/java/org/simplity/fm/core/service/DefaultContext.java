@@ -28,12 +28,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.simplity.fm.core.AppUser;
-import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.MessageType;
-import org.simplity.fm.core.UserSession;
+import org.simplity.fm.core.UserContext;
+import org.simplity.fm.core.app.ApplicationError;
 import org.simplity.fm.core.data.DbTable;
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.Record;
@@ -52,12 +51,12 @@ public class DefaultContext implements IServiceContext {
 	protected static Logger logger = LoggerFactory.getLogger(DefaultContext.class);
 
 	protected final ISerializer serializer;
-	protected final UserSession currentSession;
-	protected final AppUser appUser;
+	protected final UserContext currentUtx;
+	protected final Object userId;
 	protected final List<Message> messages = new ArrayList<>();
 
 	protected int nbrErrors = 0;
-	protected UserSession newSession;
+	protected UserContext newUtx;
 	protected Object tenantId;
 	protected boolean responseSet;
 	/*
@@ -67,14 +66,17 @@ public class DefaultContext implements IServiceContext {
 
 	/**
 	 *
-	 * @param appUser
 	 * @param session
 	 * @param serializer
 	 */
-	public DefaultContext(final AppUser appUser, final UserSession session, final ISerializer serializer) {
+	public DefaultContext(final UserContext session, final ISerializer serializer) {
 		this.serializer = serializer;
-		this.appUser = appUser;
-		this.currentSession = session;
+		this.currentUtx = session;
+		/*
+		 * apps may use an internal id instead. And that id can be part of the
+		 * session
+		 */
+		this.userId = session.getUserId();
 	}
 
 	/**
@@ -84,13 +86,13 @@ public class DefaultContext implements IServiceContext {
 	 * @param tenantId
 	 *            the tenantId to set
 	 */
-	public void setTenantId(final Object tenantId) {
+	protected void setTenantId(final Object tenantId) {
 		this.tenantId = tenantId;
 	}
 
 	@Override
-	public AppUser getUser() {
-		return this.appUser;
+	public Object getUserId() {
+		return this.userId;
 	}
 
 	@Override
@@ -262,18 +264,18 @@ public class DefaultContext implements IServiceContext {
 	}
 
 	@Override
-	public UserSession getCurrentSession() {
-		return this.currentSession;
+	public UserContext getCurrentUserContext() {
+		return this.currentUtx;
 	}
 
 	@Override
-	public UserSession getNewSession() {
-		return this.newSession;
+	public UserContext getNewUserContext() {
+		return this.newUtx;
 	}
 
 	@Override
-	public void setNewSession(final UserSession session) {
-		this.newSession = session;
+	public void setNewUserContext(final UserContext utx) {
+		this.newUtx = utx;
 
 	}
 

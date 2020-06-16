@@ -22,10 +22,10 @@
 
 package org.simplity.fm.example;
 
-import org.simplity.fm.core.App;
-import org.simplity.fm.core.App.Config;
-import org.simplity.fm.core.AppConfigProvider;
-import org.simplity.fm.core.IDbConnectionFactory;
+import org.simplity.fm.core.app.App;
+import org.simplity.fm.core.app.AppConfigProvider;
+import org.simplity.fm.core.app.App.Config;
+import org.simplity.fm.core.conf.IDbConnectionFactory;
 import org.simplity.fm.core.rdb.DefaultConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

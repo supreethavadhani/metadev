@@ -22,9 +22,9 @@
 
 package org.simplity.fm.core.service;
 
-import org.simplity.fm.core.App;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.app.App;
 import org.simplity.fm.core.serialize.IInputObject;
 import org.simplity.fm.core.serialize.ISerializer;
 import org.simplity.fm.core.validn.IValueList;
@@ -109,7 +109,7 @@ public class ListService implements IService {
 	}
 
 	@Override
-	public boolean authRequired() {
+	public boolean serveGuests() {
 		return true;
 	}
 }

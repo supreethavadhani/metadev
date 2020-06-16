@@ -27,7 +27,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.simplity.fm.core.App;
+import org.simplity.fm.core.app.App;
 import org.simplity.fm.core.data.FieldType;
 import org.simplity.fm.core.data.IoType;
 import org.simplity.fm.gen.DataTypes.DataType;

@@ -142,7 +142,7 @@ public class DbField extends Field {
 		 */
 		case CreatedBy:
 		case ModifiedBy:
-			data[idx] = ctx.getUser();
+			data[idx] = ctx.getUserId();
 			return true;
 
 		/*

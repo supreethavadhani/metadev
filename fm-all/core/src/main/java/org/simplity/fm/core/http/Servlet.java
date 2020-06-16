@@ -29,7 +29,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.simplity.fm.core.App;
+import org.simplity.fm.core.app.App;
 
 /**
  * This is the entry point for <code>Agent</code> from a web-server (http-server

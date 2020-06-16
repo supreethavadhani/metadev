@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
-import org.simplity.fm.core.App;
+import org.simplity.fm.core.app.App;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,6 +1,5 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "description": "Schema for form. file type *.frm.json",
+    "description": "Schema for data base form.json",
     "required": [
         "name",
         "recordName"
@@ -15,6 +14,9 @@
         "recordName": {
             "type": "string"
         },
+        "serveGuests":{
+            "type": "boolean"
+        },
         "operations": {
             "type": "array",
             "items": {
@@ -24,9 +26,43 @@
                     "create",
                     "update",
                     "filter",
-                    "bulk",
+
                     "delete"
                 ]
+            }
+        },
+        "localFields": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "dataType"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "dataType": {
+                        "type": "string"
+                    },
+                    "defaultValue": {
+                        "type": "string"
+                    },
+                    "isRequired": {
+                        "type": "boolean"
+                    },
+                    "listName": {
+                        "type": "string"
+                    },
+                    "listKey": {
+                        "type": "string"
+                    },
+                    "errorId": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
             }
         },
         "controls": {

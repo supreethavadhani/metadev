@@ -28,7 +28,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.simplity.fm.core.ApplicationError;
+import org.simplity.fm.core.app.ApplicationError;
 import org.simplity.fm.core.data.DbTable;
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.Record;

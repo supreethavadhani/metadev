@@ -25,9 +25,9 @@ package org.simplity.fm.core.data;
 import java.sql.SQLException;
 import java.util.List;
 
-import org.simplity.fm.core.App;
-import org.simplity.fm.core.ApplicationError;
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.app.App;
+import org.simplity.fm.core.app.ApplicationError;
 import org.simplity.fm.core.rdb.ReadWriteHandle;
 import org.simplity.fm.core.rdb.ReadonlyHandle;
 import org.simplity.fm.core.rdb.RecordProcessor;
@@ -387,7 +387,7 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public boolean authRequired() {
+		public boolean serveGuests() {
 			return true;
 		}
 	}
@@ -399,7 +399,7 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public boolean authRequired() {
+		public boolean serveGuests() {
 			return true;
 		}
 
@@ -430,7 +430,7 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public boolean authRequired() {
+		public boolean serveGuests() {
 			return true;
 		}
 
@@ -461,7 +461,7 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public boolean authRequired() {
+		public boolean serveGuests() {
 			return true;
 		}
 
@@ -493,7 +493,7 @@ public abstract class DbRecord extends Record {
 		}
 
 		@Override
-		public boolean authRequired() {
+		public boolean serveGuests() {
 			return true;
 		}
 

@@ -25,7 +25,7 @@ package org.simplity.fm.core.rdb;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-import org.simplity.fm.core.IDbConnectionFactory;
+import org.simplity.fm.core.conf.IDbConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

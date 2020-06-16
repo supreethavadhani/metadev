@@ -94,7 +94,7 @@ class LinkedForm {
 		 * for child-form
 		 */
 		sbf.append(P).append("Form<?> F").append(idx);
-		sbf.append(" = ComponentProvider.getProvider().getForm(\"");
+		sbf.append(" = App.getApp().getCompProvider().getForm(\"");
 		sbf.append(this.formName).append("\");");
 	}
 

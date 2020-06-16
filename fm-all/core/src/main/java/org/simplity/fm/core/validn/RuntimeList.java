@@ -30,7 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.simplity.fm.core.App;
+import org.simplity.fm.core.app.App;
 import org.simplity.fm.core.rdb.IDbReader;
 import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;

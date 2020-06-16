@@ -22,7 +22,7 @@
 
 package org.simplity.fm.core.serialize.gson;
 
-import org.simplity.fm.core.ApplicationError;
+import org.simplity.fm.core.app.ApplicationError;
 import org.simplity.fm.core.serialize.IInputArray;
 import org.simplity.fm.core.serialize.IInputObject;
 

@@ -24,7 +24,7 @@ package org.simplity.fm.core.data;
 
 import java.sql.SQLException;
 
-import org.simplity.fm.core.ApplicationError;
+import org.simplity.fm.core.app.ApplicationError;
 import org.simplity.fm.core.rdb.ReadWriteHandle;
 import org.simplity.fm.core.rdb.ReadonlyHandle;
 import org.simplity.fm.core.serialize.IInputObject;

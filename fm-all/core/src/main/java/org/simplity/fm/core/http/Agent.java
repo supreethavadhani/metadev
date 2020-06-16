@@ -30,12 +30,11 @@ import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.simplity.fm.core.App;
-import org.simplity.fm.core.AppUser;
 import org.simplity.fm.core.Conventions;
-import org.simplity.fm.core.IApp;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.UserSession;
+import org.simplity.fm.core.UserContext;
+import org.simplity.fm.core.app.App;
+import org.simplity.fm.core.app.IApp;
 import org.simplity.fm.core.serialize.ISerializer;
 import org.simplity.fm.core.serialize.gson.JsonInputObject;
 import org.simplity.fm.core.serialize.gson.JsonSerializer;
@@ -84,8 +83,8 @@ public class Agent {
 	private final IApp app = App.getApp();
 
 	private String token;
-	private UserSession session;
-	private AppUser user;
+	private UserContext session;
+	private String userId;
 	private IService service;
 	private JsonObject inputData;
 	private IServiceContext ctx;
@@ -97,7 +96,6 @@ public class Agent {
 	 *
 	 * @param resp
 	 */
-	@SuppressWarnings("static-method")
 	public void setOptions(final HttpServletRequest req, final HttpServletResponse resp) {
 		for (int i = 0; i < Conventions.Http.HDR_NAMES.length; i++) {
 			resp.setHeader(Conventions.Http.HDR_NAMES[i], Conventions.Http.HDR_TEXTS[i]);
@@ -131,16 +129,16 @@ public class Agent {
 			this.resp.setStatus(Conventions.Http.STATUS_INVALID_SERVICE);
 			return;
 		}
-		if (this.user == null) {
-			if (this.service.authRequired()) {
+		if (this.userId == null) {
+			if (this.service.serveGuests()) {
 				logger.info("No user. Service {} requires an authenticated user.");
 				this.resp.setStatus(Conventions.Http.STATUS_AUTH_REQUIRED);
 				return;
 			}
 		} else {
-			if (this.app.getAccessController().okToServe(this.service, this.user) == false) {
-				logger.error("User {} does not have the preveleges for service {}. Responding with 404",
-						this.user.getUserId(), this.service.getId());
+			if (this.app.getAccessController().okToServe(this.service, this.session) == false) {
+				logger.error("User {} does not have the preveleges for service {}. Responding with 404", this.userId,
+						this.service.getId());
 				this.resp.setStatus(Conventions.Http.STATUS_INVALID_SERVICE);
 				return;
 			}
@@ -156,11 +154,11 @@ public class Agent {
 		/*
 		 * we are ready to execute this service.
 		 */
-		this.app.getRequestLogger().log(this.user.getUserId(), this.service.getId(), this.inputData.toString());
+		this.app.getRequestLogger().log(this.userId, this.service.getId(), this.inputData.toString());
 
 		final StringWriter writer = new StringWriter();
 		final ISerializer outputObject = new JsonSerializer(writer);
-		this.ctx = this.app.getContextFactory().getContext(this.user, this.session, outputObject);
+		this.ctx = this.app.getContextFactory().newContext(this.session, outputObject);
 
 		try {
 			this.service.serve(this.ctx, new JsonInputObject(this.inputData));
@@ -200,7 +198,7 @@ public class Agent {
 		/*
 		 * are we to set a user session?
 		 */
-		final UserSession seshan = this.ctx.getNewSession();
+		final UserContext seshan = this.ctx.getNewUserContext();
 		if (seshan != null) {
 			if (this.token == null) {
 				/*
@@ -226,7 +224,7 @@ public class Agent {
 			} else {
 				writer.write("false");
 			}
-			this.writeMessage(writer, this.ctx.getMessages());
+			writeMessage(writer, this.ctx.getMessages());
 			writer.write("}");
 		} catch (final Exception e) {
 			e.printStackTrace();
@@ -243,7 +241,7 @@ public class Agent {
 	 * @param messages
 	 * @throws IOException
 	 */
-	private void writeMessage(final Writer writer, final Message[] msgs) throws IOException {
+	private static void writeMessage(final Writer writer, final Message[] msgs) throws IOException {
 		if (msgs == null || msgs.length == 0) {
 			return;
 		}
@@ -287,8 +285,8 @@ public class Agent {
 			if (this.session == null) {
 				logger.info("Token is not valid. possibly timed out. Treating this as guest request");
 			} else {
-				this.user = this.session.getUser();
-				logger.info("Request from authuenticated user {} ", this.user.getUserId());
+				this.userId = this.session.getUserId();
+				logger.info("Request from authuenticated user {} ", this.userId);
 			}
 		}
 	}

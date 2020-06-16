@@ -25,9 +25,8 @@ package org.simplity.fm.core.service;
 import java.util.Collection;
 import java.util.List;
 
-import org.simplity.fm.core.AppUser;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.UserSession;
+import org.simplity.fm.core.UserContext;
 import org.simplity.fm.core.data.DbTable;
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.Record;
@@ -62,9 +61,15 @@ public interface IServiceContext {
 	void setValue(String key, Object value);
 
 	/**
-	 * @return non-null user on whose behalf this service is requested
+	 * @return non-null user on whose behalf this service is requested. Note
+	 *         that this id COULD be different from the userId used by the
+	 *         client-facing UserContext. For example, the app may use a mail-id
+	 *         as userId for logging in, but may use a numeric userId internally
+	 *         as the unique userId. In this case UserContext uses mail-id
+	 *         (string) as userId while ServiceCOntext uses internalId (long) as
+	 *         userId.
 	 */
-	AppUser getUser();
+	Object getUserId();
 
 	/**
 	 *
@@ -170,19 +175,19 @@ public interface IServiceContext {
 	 * @return null if no user session is set before this service. non-null user
 	 *         session that is set for this user before servicing this service.
 	 */
-	UserSession getCurrentSession();
+	UserContext getCurrentUserContext();
 
 	/**
 	 *
 	 * @return null if this service is not setting/resetting user session.
 	 *         non-null to set/reset user session after the service is executed
 	 */
-	UserSession getNewSession();
+	UserContext getNewUserContext();
 
 	/**
 	 *
-	 * @param session
-	 *            non-null user session to be set after the service completes.
+	 * @param sessicieActivitieson
+	 *            non-null user context to be set after the service completes.
 	 */
-	void setNewSession(UserSession session);
+	void setNewUserContext(UserContext utx);
 }

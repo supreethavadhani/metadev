@@ -29,7 +29,7 @@ import java.sql.SQLException;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
 
-import org.simplity.fm.core.IDbConnectionFactory;
+import org.simplity.fm.core.conf.IDbConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

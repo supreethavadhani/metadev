@@ -22,8 +22,8 @@
 
 package org.simplity.fm.core.data;
 
-import org.simplity.fm.core.App;
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.app.App;
 import org.simplity.fm.core.datatypes.DataType;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.service.IServiceContext;

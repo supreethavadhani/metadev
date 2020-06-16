@@ -44,9 +44,6 @@ import org.simplity.fm.core.validn.InclusiveValidation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-
 /**
  * represents the contents of a spread sheet for a form
  *
@@ -281,8 +278,6 @@ class Record {
 		}
 		Util.emitImport(sbf, IValidation.class);
 		Util.emitImport(sbf, IServiceContext.class);
-		Util.emitImport(sbf, JsonObject.class);
-		Util.emitImport(sbf, JsonArray.class);
 		Util.emitImport(sbf, List.class);
 
 		/*

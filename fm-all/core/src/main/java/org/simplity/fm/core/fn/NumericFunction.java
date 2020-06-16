@@ -22,7 +22,7 @@
 
 package org.simplity.fm.core.fn;
 
-import org.simplity.fm.core.ApplicationError;
+import org.simplity.fm.core.app.ApplicationError;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.service.IServiceContext;
 
