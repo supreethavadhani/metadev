@@ -27,21 +27,13 @@ import java.time.Instant;
 import org.simplity.fm.core.Message;
 
 /**
-<<<<<<< HEAD:fm-all/core/src/main/java/org/simplity/fm/core/upload/UploadResult.java
  * result of an upload process
  * 
-=======
- * Data Structure that has attributes that are required for services-request to
- * be completed. This class is to be extended and used to have all the relevant
- * fields regarding logged in user in a session cache
- *
->>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c:fm-all/core/src/main/java/org/simplity/fm/core/http/LoggedInUser.java
  * @author simplity.org
  *
  */
 public class UploadResult {
 	/**
-<<<<<<< HEAD:fm-all/core/src/main/java/org/simplity/fm/core/upload/UploadResult.java
 	 * instance a which first row was started(after any set-up)
 	 */
 	public final Instant startedAt;
@@ -49,34 +41,6 @@ public class UploadResult {
 	 * instance at which last row is processed
 	 */
 	public final Instant doneAt;
-=======
-	 * get user instance for pan
-	 *
-	 * @param id
-	 *            unique key for the user
-	 * @param token
-	 *            authentication/security token issued by the login service.
-	 *            this is
-	 * @return user for a pan. null if this is not a valid pan
-	 */
-	public static LoggedInUser newUser(final String id, final String token) {
-		return new LoggedInUser(id, token);
-	}
-
-	private final String userId;
-	private final String userToken;
-
-	/**
-	 *
-	 * @param id
-	 * @param token
-	 */
-	public LoggedInUser(final String id, final String token) {
-		this.userId = id;
-		this.userToken = token;
-	}
-
->>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c:fm-all/core/src/main/java/org/simplity/fm/core/http/LoggedInUser.java
 	/**
 	 * total rows processed
 	 */

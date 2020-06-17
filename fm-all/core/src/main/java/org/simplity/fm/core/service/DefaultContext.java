@@ -48,7 +48,6 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class DefaultContext implements IServiceContext {
-<<<<<<< HEAD
 	protected static Logger logger = LoggerFactory.getLogger(DefaultContext.class);
 
 	protected final ISerializer serializer;
@@ -58,12 +57,6 @@ public class DefaultContext implements IServiceContext {
 
 	protected int nbrErrors = 0;
 	protected UserContext newUtx;
-=======
-	protected List<Message> messages = new ArrayList<>();
-	protected int nbrErrors = 0;
-	protected Writer responseWriter;
-	protected LoggedInUser loggedInUser;
->>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 	protected Object tenantId;
 	protected boolean responseSet;
 	/*
@@ -163,7 +156,6 @@ public class DefaultContext implements IServiceContext {
 	@Override
 	public int getNbrErrors() {
 		return this.nbrErrors;
-<<<<<<< HEAD
 	}
 
 	@Override
@@ -226,8 +218,6 @@ public class DefaultContext implements IServiceContext {
 		this.serializer.endArray();
 		this.serializer.endObject();
 		this.responseSet = true;
-=======
->>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 	}
 
 	@Override

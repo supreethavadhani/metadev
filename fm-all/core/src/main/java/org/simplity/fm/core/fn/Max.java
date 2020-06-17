@@ -20,11 +20,7 @@
  * SOFTWARE.
  */
 
-<<<<<<< HEAD:fm-all/core/src/main/java/org/simplity/fm/core/fn/Max.java
 package org.simplity.fm.core.fn;
-=======
-package org.simplity.fm.example;
->>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c:fm-all/example/src/main/java/org/simplity/fm/example/Gen.java
 
 /**
  * Concatenate strings
@@ -32,21 +28,10 @@ package org.simplity.fm.example;
  */
 public class Max extends NumericFunction {
 	/**
-<<<<<<< HEAD:fm-all/core/src/main/java/org/simplity/fm/core/fn/Max.java
 	 * default constructor
 	 */
 	public Max() {
 		this.setNbrArgs(-1);
-=======
-	 *
-	 * @param args
-	 */
-	public static void main(final String[] args) {
-		final String root = "C:/Users/raghu/eclipse-workspace/fm-example/src/main/";
-		// Generator.generate(root+"spec/",root+"java/"
-		// ,"org.simplity.fm.example.gen", "./",
-		// "c:/C:/Users/raghu/eclipse-workspace/fm-example/src/ts/");
->>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c:fm-all/example/src/main/java/org/simplity/fm/example/Gen.java
 	}
 
 	@Override

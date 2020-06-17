@@ -27,10 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-<<<<<<< HEAD
 import org.simplity.fm.core.data.FieldType;
-=======
->>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,10 +39,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 class Field implements Util.INamedMember {
-<<<<<<< HEAD
 	private static final Map<String, FieldType> fieldTypes = createMap();
-=======
->>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 	protected static final Logger logger = LoggerFactory.getLogger(Field.class);
 	protected static final String C = ", ";
 
@@ -66,18 +60,12 @@ class Field implements Util.INamedMember {
 		this.index = idx;
 	}
 
-<<<<<<< HEAD
 	void emitJavaCode(final StringBuilder sbf, final String dataTypesName, final boolean isDb) {
 		sbf.append("\n\t\t\tnew ");
 		if (isDb) {
 			sbf.append("Db");
 		}
 		sbf.append("Field(\"").append(this.name).append('"');
-=======
-	void emitJavaCode(final StringBuilder sbf, final String dataTypesName) {
-		sbf.append("\n\t\t\tnew ").append(this.getClass().getSimpleName()).append("(\"");
-		sbf.append(this.name).append('"');
->>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 		sbf.append(C).append(this.index);
 		sbf.append(C).append(dataTypesName).append('.').append(this.dataType);
 		sbf.append(C).append(Util.escape(this.defaultValue));
@@ -90,7 +78,6 @@ class Field implements Util.INamedMember {
 		} else {
 			sbf.append(C).append("null");
 		}
-<<<<<<< HEAD
 		if (isDb) {
 			sbf.append(C).append(Util.escape(this.dbColumnName));
 			sbf.append(C);
@@ -105,20 +92,11 @@ class Field implements Util.INamedMember {
 			sbf.append(C).append(this.isRequired);
 		}
 		sbf.append(')');
-=======
-		this.emitJavaSpecific(sbf);
-		sbf.append(')');
-	}
-
-	protected void emitJavaSpecific(final StringBuilder sbf) {
-		sbf.append(C).append(this.isRequired);
->>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 	}
 
 	protected void emitTs(final StringBuilder def, final StringBuilder controls, final Map<String, DataType> dataTypes,
 			final String prefix, final Map<String, ValueList> lists, final Map<String, KeyedList> keyedLists) {
 		final List<String> validations = new ArrayList<>();
-<<<<<<< HEAD
 
 		if (this.isRequired) {
 			def.append(prefix).append("isRequired: true");
@@ -164,39 +142,9 @@ class Field implements Util.INamedMember {
 				firstOne = false;
 			} else {
 				controls.append(", ");
-=======
-
-		if (this.isRequired) {
-			def.append(prefix).append("isRequired: true");
-			validations.add("required");
-		}
-
-		if (this.listName != null) {
-			def.append(prefix).append("listName: ").append(Util.escapeTs(this.listName));
-
-			if (this.listKey != null) {
-				def.append(prefix).append("listKey: ").append(Util.escapeTs(this.listKey));
-				final KeyedList kl = keyedLists.get(this.listName);
-				if (kl != null) {
-					def.append(prefix).append("keyedList: {");
-					final String indent = "\n\t\t\t";
-					kl.emitTs(def, indent);
-					def.append(indent).append("}");
-				}
-			} else {
-				final ValueList list = lists.get(this.listName);
-				if (list != null) {
-					final String indent = "\n\t\t\t";
-					def.append(prefix).append("valueList: [");
-					list.emitTs(def, indent);
-					def.append(indent).append("]");
-
-				}
->>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 			}
 			controls.append("Validators.").append(s);
 		}
-<<<<<<< HEAD
 
 		controls.append("]);");
 		controls.append("\n\t\tthis.fields.set('").append(this.name).append("', this.").append(this.name).append(");");
@@ -226,28 +174,5 @@ class Field implements Util.INamedMember {
 			map.put(vt.name().toLowerCase(), vt);
 		}
 		return map;
-=======
-
-		final DataType dt = dataTypes.get(this.dataType);
-		if (dt == null) {
-			def.append(prefix).append("valueType: 0");
-			logger.error("Field {} has an invalid data type of {}", this.name, this.dataType);
-		} else {
-			dt.emitTs(def, this.defaultValue, validations, prefix);
-		}
-
-		controls.append("\n\t\tthis.controls.set('").append(this.name).append("', [");
-		boolean firstOne = true;
-		for (final String s : validations) {
-			if (firstOne) {
-				firstOne = false;
-			} else {
-				controls.append(", ");
-			}
-			controls.append("Validators.").append(s);
-		}
-
-		controls.append("]);");
->>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 	}
 }
