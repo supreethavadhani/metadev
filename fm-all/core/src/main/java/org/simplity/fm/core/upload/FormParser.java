@@ -26,12 +26,18 @@ import java.util.Map;
 import java.util.Set;
 
 import org.simplity.fm.core.Conventions;
+<<<<<<< HEAD:fm-all/core/src/main/java/org/simplity/fm/core/upload/FormParser.java
 import org.simplity.fm.core.app.App;
 import org.simplity.fm.core.conf.ICompProvider;
 import org.simplity.fm.core.data.DbRecord;
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.fn.IFunction;
+=======
+import org.simplity.fm.core.IFunction;
+import org.simplity.fm.core.data.Field;
+import org.simplity.fm.core.data.Schema;
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c:fm-all/core/src/main/java/org/simplity/fm/upload/FormParser.java
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +73,11 @@ import com.google.gson.JsonObject;
 class FormParser {
 	private static final Logger logger = LoggerFactory.getLogger(FormParser.class);
 
+<<<<<<< HEAD:fm-all/core/src/main/java/org/simplity/fm/core/upload/FormParser.java
 	private final ICompProvider compProvider = App.getApp().getCompProvider();
+=======
+	private final ComponentProvider compProvider = ComponentProvider.getProvider();
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c:fm-all/core/src/main/java/org/simplity/fm/upload/FormParser.java
 	/*
 	 * what is defined in this processor
 	 */
@@ -79,7 +89,11 @@ class FormParser {
 	/*
 	 * we are going to parse these
 	 */
+<<<<<<< HEAD:fm-all/core/src/main/java/org/simplity/fm/core/upload/FormParser.java
 	private DbRecord record;
+=======
+	private Schema schema;
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c:fm-all/core/src/main/java/org/simplity/fm/upload/FormParser.java
 	private String generatedKeyOutputName;
 	private IValueProvider[] valueProviders;
 
@@ -100,6 +114,7 @@ class FormParser {
 		}
 
 		final String text = ele.getAsString().trim();
+<<<<<<< HEAD:fm-all/core/src/main/java/org/simplity/fm/core/upload/FormParser.java
 		final Record rec = this.compProvider.getRecord(text);
 		if (rec == null) {
 			logger.error("{} is not a valid record name", text);
@@ -108,6 +123,11 @@ class FormParser {
 
 		if (rec instanceof DbRecord == false) {
 			logger.error("{} is a Record, but not a DbRecord", text);
+=======
+		this.schema = this.compProvider.getSchema(text);
+		if (this.schema == null) {
+			logger.error("{} is not a valid form name", text);
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c:fm-all/core/src/main/java/org/simplity/fm/upload/FormParser.java
 			return null;
 		}
 
@@ -132,6 +152,7 @@ class FormParser {
 			return null;
 		}
 
+<<<<<<< HEAD:fm-all/core/src/main/java/org/simplity/fm/core/upload/FormParser.java
 		return new FormLoader(this.record, this.generatedKeyOutputName, this.valueProviders);
 	}
 
@@ -144,12 +165,30 @@ class FormParser {
 
 			if (field == null) {
 				logger.error("{} is not a valid field name in the form {}", fieldName, this.record.fetchName());
+=======
+		return new FormLoader(this.schema, this.generatedKeyOutputName, this.valueProviders);
+	}
+
+	private boolean parseFields(final JsonObject json) {
+		this.valueProviders = new IValueProvider[this.schema.getNbrFields()];
+		for (final Map.Entry<String, JsonElement> entry : json.entrySet()) {
+
+			final String fieldName = entry.getKey();
+			final Field field = this.schema.getField(fieldName);
+
+			if (field == null) {
+				logger.error("{} is not a valid field name in the form {}", fieldName, this.schema.getName());
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c:fm-all/core/src/main/java/org/simplity/fm/upload/FormParser.java
 				return false;
 			}
 
 			final JsonElement ele = entry.getValue();
 			if (!ele.isJsonPrimitive()) {
+<<<<<<< HEAD:fm-all/core/src/main/java/org/simplity/fm/core/upload/FormParser.java
 				logger.error("Field {} in the form {} has an invalid value", fieldName, this.record.fetchName());
+=======
+				logger.error("Field {} in the form {} has an invalid value", fieldName, this.schema.getName());
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c:fm-all/core/src/main/java/org/simplity/fm/upload/FormParser.java
 				return false;
 			}
 

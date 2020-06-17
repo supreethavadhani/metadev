@@ -67,6 +67,7 @@ class RuntimeList implements INamedMember {
 		sbf.append("\n\t private static final String LIST_SQL = \"SELECT ");
 		sbf.append(this.dbColumn1).append(C).append(this.dbColumn2).append(" FROM ").append(this.dbTableName);
 
+<<<<<<< HEAD
 		boolean whereAdded = false;
 		if (this.activeColumnName != null) {
 			sbf.append(WHERE).append(this.activeColumnName).append("=true");
@@ -84,6 +85,14 @@ class RuntimeList implements INamedMember {
 		if (this.tenantColumnName != null) {
 			if (whereAdded) {
 				sbf.append(AND);
+=======
+		if (this.keyColumn != null) {
+			sbf.append(" WHERE ").append(this.keyColumn).append("=?");
+		}
+		if (this.tenantColumnName != null) {
+			if (this.keyColumn == null) {
+				sbf.append(" WHERE ");
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 			} else {
 				sbf.append(WHERE);
 				whereAdded = true;
@@ -94,12 +103,18 @@ class RuntimeList implements INamedMember {
 
 		sbf.append("\n\t private static final String CHECK_SQL = \"SELECT ").append(this.dbColumn1).append(" FROM ")
 				.append(this.dbTableName);
+<<<<<<< HEAD
 		sbf.append(WHERE).append(this.dbColumn1).append("=?");
 		if (this.activeColumnName != null) {
 			sbf.append(AND).append(this.activeColumnName).append("=true");
 		}
 		if (this.keyColumn != null) {
 			sbf.append(AND).append(this.keyColumn).append("=?");
+=======
+		sbf.append(" WHERE ").append(this.dbColumn1).append("=?");
+		if (this.keyColumn != null) {
+			sbf.append(" and ").append(this.keyColumn).append("=?");
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 		}
 		sbf.append("\";");
 
@@ -107,7 +122,11 @@ class RuntimeList implements INamedMember {
 			sbf.append("\n\t private static final String ALL_SQL = \"SELECT a.").append(this.dbColumn1);
 			sbf.append(", a.").append(this.dbColumn2).append(", b.").append(this.parentNameColumnName).append(" FROM ");
 			sbf.append(this.dbTableName).append(" a, ").append(this.parentTable).append(" b ");
+<<<<<<< HEAD
 			sbf.append(WHERE).append("a.").append(this.keyColumn).append("=b.").append(this.parentIdColumnName);
+=======
+			sbf.append(" WHERE a.").append(this.keyColumn).append("=b.").append(this.parentIdColumnName);
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 			if (this.tenantColumnName != null) {
 				sbf.append(AND).append(this.tenantColumnName).append("=?");
 			}

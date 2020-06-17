@@ -22,9 +22,15 @@
 
 package org.simplity.fm.core.validn;
 
+<<<<<<< HEAD
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.app.App;
 import org.simplity.fm.core.data.Record;
+=======
+import org.simplity.fm.core.ComponentProvider;
+import org.simplity.fm.core.Message;
+import org.simplity.fm.core.data.SchemaData;
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 import org.simplity.fm.core.service.IServiceContext;
 
 /**
@@ -60,21 +66,38 @@ public class DependentListValidation implements IValidation {
 	}
 
 	@Override
+<<<<<<< HEAD
 	public boolean isValid(final Record record, final IServiceContext ctx) {
 		final Object fieldValue = record.fetchValue(this.fieldIndex);
 		if (fieldValue == null) {
 			return true;
 		}
 		final Object keyValue = record.fetchValue(this.parentFieldIndex);
+=======
+	public boolean isValid(final SchemaData dataRow, final IServiceContext ctx) {
+		final Object fieldValue = dataRow.getObject(this.fieldIndex);
+		if (fieldValue == null) {
+			return true;
+		}
+		final Object keyValue = dataRow.getObject(this.parentFieldIndex);
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 		if (keyValue == null) {
 			return true;
 		}
 
+<<<<<<< HEAD
 		final IValueList vl = App.getApp().getCompProvider().getValueList(this.listName);
 		if (vl == null) {
 			return true;
 		}
 		if (vl.isValid(fieldValue, keyValue, ctx)) {
+=======
+		final IValueList vl = ComponentProvider.getProvider().getValueList(this.listName);
+		if (vl == null) {
+			return true;
+		}
+		if (vl.isValid(fieldValue, keyValue)) {
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 			return true;
 		}
 		ctx.addMessage(Message.newFieldError(this.fieldName, this.messaageId));

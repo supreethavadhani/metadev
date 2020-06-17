@@ -78,6 +78,7 @@ public enum ValueType {
 	Integer {
 		@Override
 		public Long doParse(final String value) {
+<<<<<<< HEAD
 			try {
 				return (Long.parseLong(value));
 			} catch (final Exception e) {
@@ -108,6 +109,15 @@ public enum ValueType {
 				} catch (final Exception e1) {
 					return null;
 				}
+=======
+			/*
+			 * we are okay with decimals but we take the long value of that
+			 */
+			try {
+				return ((Number) Double.parseDouble(value)).longValue();
+			} catch (final Exception e) {
+				return null;
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 			}
 		}
 
@@ -274,7 +284,11 @@ public enum ValueType {
 			try {
 				return Instant.parse(value);
 			} catch (final Exception e) {
+<<<<<<< HEAD
 				System.err.println(value + " is not a vlid instant");
+=======
+				//
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 			}
 			return null;
 		}
@@ -348,43 +362,72 @@ public enum ValueType {
 	 *            Double, Boolean, LocalDate or Instant
 	 * @param ps
 	 *            non-null prepared statement
+<<<<<<< HEAD
 	 * @param oneBasedPosition
+=======
+	 * @param oneBaedPosition
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 	 *            position of the parameter. note that the first position starts
 	 *            at 1 and not 0
 	 * @throws SQLException
 	 */
+<<<<<<< HEAD
 	public static void setObjectAsPsParam(final Object value, final PreparedStatement ps, final int oneBasedPosition)
+=======
+	public static void setObjectAsPsParam(final Object value, final PreparedStatement ps, final int oneBaedPosition)
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 			throws SQLException {
 		if (value == null) {
 			throw new SQLException("Null value can not be set to a psparameter using this method");
 		}
 
 		if (value instanceof String) {
+<<<<<<< HEAD
 			ps.setString(oneBasedPosition, (String) value);
+=======
+			ps.setString(oneBaedPosition, (String) value);
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 			return;
 		}
 
 		if (value instanceof Long) {
+<<<<<<< HEAD
 			ps.setLong(oneBasedPosition, (Long) value);
+=======
+			ps.setLong(oneBaedPosition, (Long) value);
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 			return;
 		}
 
 		if (value instanceof Double) {
+<<<<<<< HEAD
 			ps.setDouble(oneBasedPosition, (Double) value);
+=======
+			ps.setDouble(oneBaedPosition, (Double) value);
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 			return;
 		}
 
 		if (value instanceof Boolean) {
+<<<<<<< HEAD
 			ps.setBoolean(oneBasedPosition, (Boolean) value);
+=======
+			ps.setBoolean(oneBaedPosition, (Boolean) value);
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 			return;
 		}
 
 		if (value instanceof LocalDate) {
+<<<<<<< HEAD
 			ps.setDate(oneBasedPosition, java.sql.Date.valueOf((LocalDate) value));
+=======
+			ps.setDate(oneBaedPosition, java.sql.Date.valueOf((LocalDate) value));
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 			return;
 		}
 
 		if (value instanceof Instant) {
+<<<<<<< HEAD
 			ps.setTimestamp(oneBasedPosition, java.sql.Timestamp.from((Instant) value));
 			return;
 		}
@@ -407,4 +450,10 @@ public enum ValueType {
 	}
 
 	protected abstract boolean typeOk(Object value);
+=======
+			ps.setTimestamp(oneBaedPosition, java.sql.Timestamp.from((Instant) value));
+			return;
+		}
+	}
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 }

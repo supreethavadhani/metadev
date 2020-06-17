@@ -47,7 +47,11 @@ public interface IServiceContext {
 	 * @return object associated with this key, null if no such key, or teh
 	 *         value is null
 	 */
+<<<<<<< HEAD
 	Object getValue(String key);
+=======
+	public Object getValue(String key);
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 
 	/**
 	 * put an name-value pair in the context
@@ -58,7 +62,11 @@ public interface IServiceContext {
 	 *            null has same effect as removing it. hence remove not
 	 *            provided.
 	 */
+<<<<<<< HEAD
 	void setValue(String key, Object value);
+=======
+	public void setValue(String key, Object value);
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 
 	/**
 	 * @return non-null user on whose behalf this service is requested. Note
@@ -69,6 +77,7 @@ public interface IServiceContext {
 	 *         (string) as userId while ServiceCOntext uses internalId (long) as
 	 *         userId.
 	 */
+<<<<<<< HEAD
 	Object getUserId();
 
 	/**
@@ -174,20 +183,70 @@ public interface IServiceContext {
 	 *
 	 * @return null if no user session is set before this service. non-null user
 	 *         session that is set for this user before servicing this service.
+=======
+	public LoggedInUser getUser();
+
+	/**
+	 * 
+	 * @return non-null writer for sending response to the request.
+	 */
+	public Writer getResponseWriter();
+
+	/**
+	 * 
+	 * @return true if all ok. false if at least one error message is added to
+	 *         the context;
+	 */
+	public boolean allOk();
+
+	/**
+	 * 
+	 * @param message
+	 *            non-null message
+	 */
+	public void addMessage(Message message);
+
+	/**
+	 * 
+	 * @param messages
+	 *            non-null messages
+	 */
+	public void addMessages(Collection<Message> messages);
+
+	/**
+	 * 
+	 * @return non-null array all messages added so far. empty if no message
+	 *         added so far;
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 	 */
 	UserContext getCurrentUserContext();
 
 	/**
+<<<<<<< HEAD
 	 *
 	 * @return null if this service is not setting/resetting user session.
 	 *         non-null to set/reset user session after the service is executed
+=======
+	 * @return tenantId, if this APP is designed for multi-tenant deployment.
+	 *         null if it is not.
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 	 */
 	UserContext getNewUserContext();
 
 	/**
+<<<<<<< HEAD
 	 *
 	 * @param sessicieActivitieson
 	 *            non-null user context to be set after the service completes.
 	 */
 	void setNewUserContext(UserContext utx);
+=======
+	 * messages is not necessarily all errors. Some clients may want to track
+	 * errors.
+	 * 
+	 * @return number errors accumulated in the context. Note that the count
+	 *         gets reset if the messages are reset
+	 */
+	public int getNbrErrors();
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 }

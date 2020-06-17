@@ -22,8 +22,6 @@
 
 package org.simplity.fm.gen;
 
-import java.util.Map;
-
 /**
  * represents a Table row in tables sheet of a forms work book
  *
@@ -32,7 +30,6 @@ import java.util.Map;
  */
 class LinkedForm {
 	private static final String C = ", ";
-	private static final String P = "\n\tprivate static final ";
 
 	String name;
 	String formName;
@@ -44,11 +41,19 @@ class LinkedForm {
 
 	String label;
 	boolean isEditable;
-	boolean isTabular;
 	int index;
 
-	void emitJavaCode(final StringBuilder sbf, final Map<String, Field> fields, final int idx) {
-		sbf.append(P).append("LinkMetaData L").append(idx).append(" = new LinkMetaData(");
+	void emitJavaConstant(final StringBuilder sbf, final int idx) {
+		sbf.append("\n\tpublic static final int ").append(this.name).append(" = ").append(idx).append(';');
+	}
+
+	/**
+	 * push this as an element of an array
+	 *
+	 * @param sbf
+	 */
+	void emitJavaCode(final StringBuilder sbf) {
+		sbf.append("new LinkedForm(");
 
 		sbf.append(Util.escape(this.name));
 		sbf.append(C).append(Util.escape(this.formName));
@@ -56,46 +61,13 @@ class LinkedForm {
 		sbf.append(C).append(this.maxRows);
 		sbf.append(C).append(Util.escape(this.errorId));
 
-		boolean linkExists = false;
-		if (this.parentLinkFields == null) {
-			if (this.childLinkFields != null) {
-				Form.logger.error("childLinkFields ignored as parentLinkFields not specified");
-			}
-		} else {
-			if (this.childLinkFields == null) {
-				Form.logger.error("parentLinkFields ignored as childLinkFieldsnot specified");
-			} else {
-				linkExists = true;
-			}
-		}
+		sbf.append(C);
+		Util.emitArray(this.parentLinkFields, sbf);
 
-		if (linkExists) {
-			sbf.append(C);
-			for (final String s : this.parentLinkFields) {
-				if (fields.get(s) == null) {
-					final String msg = "link field " + s
-							+ " is not defined as a field in this form. generating jave code tha will give compilation error";
-					Form.logger.error(msg);
-					sbf.append(msg);
+		sbf.append(C);
+		Util.emitArray(this.childLinkFields, sbf);
 
-				}
-			}
-			Util.emitArray(this.parentLinkFields, sbf);
-
-			sbf.append(C);
-			Util.emitArray(this.childLinkFields, sbf);
-		} else {
-			sbf.append(",null ,null");
-		}
-		sbf.append(C).append(this.isTabular);
-		sbf.append(");");
-
-		/*
-		 * for child-form
-		 */
-		sbf.append(P).append("Form<?> F").append(idx);
-		sbf.append(" = App.getApp().getCompProvider().getForm(\"");
-		sbf.append(this.formName).append("\");");
+		sbf.append(')');
 	}
 
 	String getFormName() {
@@ -103,32 +75,15 @@ class LinkedForm {
 	}
 
 	void emitTs(final StringBuilder sbf) {
-		final String T = ",\n\t\t";
 		sbf.append("\n\t").append(this.name).append(": ChildForm = {");
-		sbf.append("\n\t\tname:").append(Util.escapeTs(this.name));
-		sbf.append(T).append("form:").append(Util.toClassName(this.formName)).append("Form.getInstance()");
-		sbf.append(T).append("isEditable:").append(this.isEditable);
-		sbf.append(T).append("isTabular:").append(this.isTabular);
-		sbf.append(T).append("label:").append(this.label == null ? "''" : Util.escapeTs(this.label));
-		sbf.append(T).append("minRows:").append(this.minRows);
-		sbf.append(T).append("maxRows:").append(this.maxRows);
-		sbf.append(T).append("errorId:").append(Util.escapeTs(this.errorId));
+		sbf.append("name:").append(Util.escapeTs(this.name));
+		sbf.append("\n\t\t,form:").append(Util.toClassName(this.formName)).append(".getInstance()");
+		sbf.append("\n\t\t,isEditable:").append(this.isEditable);
+		sbf.append("\n\t\t,label:").append(this.label == null ? "''" : Util.escapeTs(this.label));
+		sbf.append("\n\t\t,minRows:").append(this.minRows);
+		sbf.append("\n\t\t,maxRows:").append(this.maxRows);
+		sbf.append("\n\t\t,errorId:").append(Util.escapeTs(this.errorId));
 
 		sbf.append("\n\t};");
-	}
-
-	/**
-	 * @param sbf
-	 */
-	void emitJavaGetSetter(final StringBuilder sbf) {
-		final String c = Util.toClassName(this.formName);
-		sbf.append("\n\n\t/** get form table for this linked form ").append(c).append(" **/");
-		sbf.append("\n\tpublic ").append(c).append("Fdt get").append(c).append("Fdt() {");
-		sbf.append("\n\t\treturn (").append(c).append("Fdt)this.linkedData[").append(this.index).append("];\n\t}");
-
-		sbf.append("\n\n\t/** set form table for this linked form ").append(c).append(" **/");
-		sbf.append("\n\tpublic void set").append(c).append("Fdt(").append(c).append("Fdt fdt) {");
-		sbf.append("\n\t\t this.linkedData[").append(this.index).append("] = (").append(c).append("Fdt) fdt;\n\t}");
-
 	}
 }

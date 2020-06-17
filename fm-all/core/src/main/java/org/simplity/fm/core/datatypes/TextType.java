@@ -40,9 +40,13 @@ public class TextType extends DataType {
 	 * @param maxLength
 	 * @param regex
 	 */
+<<<<<<< HEAD
 	public TextType(final String name, final String messageId, final int minLength, final int maxLength,
 			final String regex) {
 		this.name = name;
+=======
+	public TextType(String name, String messageId, int minLength, int maxLength, String regex) {
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 		this.valueType = ValueType.Text;
 		this.minLength = minLength;
 		this.maxLength = maxLength;

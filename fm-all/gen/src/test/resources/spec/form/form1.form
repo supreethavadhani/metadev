@@ -1,0 +1,10 @@
+{
+	"name":"form1",
+	"schemaName":"schema1",
+	"operations":["get","update"
+	],
+	"localFields":[
+		{"name":"f1","dataType":"text"}
+	]
+	
+}

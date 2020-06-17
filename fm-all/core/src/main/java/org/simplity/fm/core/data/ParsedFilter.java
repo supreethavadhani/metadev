@@ -23,26 +23,47 @@
 package org.simplity.fm.core.data;
 
 import java.util.ArrayList;
+<<<<<<< HEAD
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+=======
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.rdb.FilterCondition;
+<<<<<<< HEAD
 import org.simplity.fm.core.serialize.IInputObject;
+=======
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 import org.simplity.fm.core.service.IServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+<<<<<<< HEAD
 /**
  * Utility class used by dbRecord to parse input for a filter service
+=======
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
+/**
+ * just data structure to collect and pass info fromForm to FormData
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
  *
  * @author simplity.org
  *
  */
+<<<<<<< HEAD
 class ParsedFilter {
+=======
+public class ParsedFilter {
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 	private static final Logger logger = LoggerFactory.getLogger(ParsedFilter.class);
 	private static final String IN = " IN (";
 	private static final String LIKE = " LIKE ? escape '\\'";
@@ -52,6 +73,7 @@ class ParsedFilter {
 	private static final String WILD_CHAR = "_";
 	private static final String ESCAPED_WILD_CHAR = "\\_";
 
+<<<<<<< HEAD
 	final private String whereClause;
 	final private Object[] whereParamValues;
 
@@ -87,12 +109,70 @@ class ParsedFilter {
 		}
 		final StringBuilder sql = new StringBuilder();
 		final List<Object> values = new ArrayList<>();
+=======
+	final private String sql;
+	final private PreparedStatementParam[] whereParams;
+
+	/**
+	 * constructor with all attributes
+	 *
+	 * @param sql
+	 *            non-null prepared statement
+	 * @param whereParams
+	 *            non-null array with valueTypes of parameters in the SQL in the
+	 *            right order. Empty array in case the SQL has no parameters.
+	 *
+	 */
+	public ParsedFilter(final String sql, final PreparedStatementParam[] whereParams) {
+		this.sql = sql;
+		this.whereParams = whereParams;
+	}
+
+	/**
+	 * @return the sql
+	 */
+	public String getSql() {
+		return this.sql;
+	}
+
+	/**
+	 * @return the whereParams
+	 */
+	public PreparedStatementParam[] getWhereParams() {
+		return this.whereParams;
+	}
+
+	/**
+	 * parse a filter-sql from the json for a schema
+	 *
+	 * @param conditions
+	 *            json that has the where conditions
+	 * @param sorts
+	 *            json that has the sort fields
+	 * @param fields
+	 *            fields from the schema for which filter conditions are created
+	 * @param tenantField
+	 *            null if the calling schema doe snot use a tenant field. used
+	 *            for forcing a condition for teh tenant field
+	 * @param ctx
+	 * @param maxRows
+	 *            0 if no limits.else limit the output to these many rows
+	 * @return parsed instance. null in case of any error. error is added to the
+	 *         context.
+	 */
+	public static ParsedFilter parse(final JsonObject conditions, final JsonObject sorts,
+			final Map<String, DbField> fields, final DbField tenantField, final IServiceContext ctx,
+			final int maxRows) {
+		final StringBuilder sql = new StringBuilder();
+		final List<PreparedStatementParam> params = new ArrayList<>();
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 
 		/*
 		 * force a condition on tenant id if required
 		 */
 		if (tenantField != null) {
 			sql.append(tenantField.getColumnName()).append("=?");
+<<<<<<< HEAD
 			values.add(ctx.getTenantId());
 		}
 
@@ -165,12 +245,24 @@ class ParsedFilter {
 		 * serial code. Hence left it that way
 		 */
 		for (final String fieldName : object.names()) {
+=======
+			params.add(new PreparedStatementParam(ctx.getTenantId(), tenantField.getValueType()));
+		}
+
+		/*
+		 * fairly long inside the loop for each field. But it is more
+		 * serial code. Hence left it that way
+		 */
+		for (final Map.Entry<String, JsonElement> entry : conditions.entrySet()) {
+			final String fieldName = entry.getKey();
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 			final DbField field = fields.get(fieldName);
 			if (field == null) {
 				logger.warn("Input has value for a field named {} that is not part of this form", fieldName);
 				continue;
 			}
 
+<<<<<<< HEAD
 			final IInputObject node = object.getObject(fieldName);
 			if (node == null) {
 				logger.error("Filter condition for field {} should be an object, but it is {}", fieldName, node);
@@ -183,10 +275,29 @@ class ParsedFilter {
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 				return false;
 			}
+=======
+			final JsonElement node = entry.getValue();
+			if (node == null || !node.isJsonObject()) {
+				logger.error("Filter condition for field {} should be an object, but it is {}", fieldName, node);
+				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+				return null;
+			}
+
+			final JsonObject con = (JsonObject) node;
+
+			JsonElement ele = con.get(Conventions.Http.TAG_FILTER_COMP);
+			if (ele == null || !ele.isJsonPrimitive()) {
+				logger.error("comp is missing for a filter condition");
+				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+				return null;
+			}
+			final String condnText = ele.getAsString();
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 			final FilterCondition condn = FilterCondition.parse(condnText);
 			if (condn == null) {
 				logger.error("{} is not a valid filter condition", condnText);
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+<<<<<<< HEAD
 				return false;
 			}
 
@@ -207,14 +318,44 @@ class ParsedFilter {
 			}
 
 			final int idx = values.size();
+=======
+				return null;
+			}
+
+			ele = con.get(Conventions.Http.TAG_FILTER_VALUE);
+			if (ele == null || !ele.isJsonPrimitive()) {
+				logger.error("value is missing for a filter condition");
+				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+				return null;
+			}
+			String value = ele.getAsString();
+			String value2 = null;
+			if (condn == FilterCondition.Between) {
+				ele = con.get(Conventions.Http.TAG_FILTER_VALUE_TO);
+				if (ele == null || !ele.isJsonPrimitive()) {
+					logger.error("valueTo is missing for a filter condition");
+					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+					return null;
+				}
+				value2 = ele.getAsString();
+			}
+
+			final int idx = params.size();
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 			if (idx > 0) {
 				sql.append(" and ");
 			}
 
 			sql.append(field.getColumnName());
+<<<<<<< HEAD
 
 			final ValueType vt = field.getValueType();
 			Object obj = null;
+=======
+			final ValueType vt = field.getValueType();
+			Object obj = null;
+			logger.info("Found a condition : field {} {} {} . value2={}", field.getName(), condn.name(), value, value2);
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 			/*
 			 * complex ones first.. we have to append ? to sql, and add type and
 			 * value to the lists for each case
@@ -224,6 +365,7 @@ class ParsedFilter {
 					logger.error("Condition {} is not a valid for field {} which is of value type {}", condn, fieldName,
 							vt);
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+<<<<<<< HEAD
 					return false;
 				}
 
@@ -233,6 +375,17 @@ class ParsedFilter {
 					value = WILD_CARD + value;
 				}
 				values.add(value);
+=======
+					return null;
+				}
+
+				sql.append(LIKE);
+				value = WILD_CARD + escapeLike(value);
+				if (condn == FilterCondition.Contains) {
+					value += WILD_CARD;
+				}
+				params.add(new PreparedStatementParam(value, vt));
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 				continue;
 			}
 
@@ -241,10 +394,17 @@ class ParsedFilter {
 				boolean firstOne = true;
 				for (final String part : value.split(",")) {
 					obj = vt.parse(part.trim());
+<<<<<<< HEAD
 					if (obj == null) {
 						logger.error("{} is not a valid value for value type {} for field {}", value, vt, fieldName);
 						ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 						return false;
+=======
+					if (value == null) {
+						logger.error("{} is not a valid value for value type {} for field {}", value, vt, fieldName);
+						ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+						return null;
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 					}
 					if (firstOne) {
 						sql.append('?');
@@ -252,17 +412,28 @@ class ParsedFilter {
 					} else {
 						sql.append(",?");
 					}
+<<<<<<< HEAD
 					values.add(obj);
+=======
+					params.add(new PreparedStatementParam(obj, vt));
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 				}
 				sql.append(')');
 				continue;
 			}
 
 			obj = vt.parse(value);
+<<<<<<< HEAD
 			if (obj == null) {
 				logger.error("{} is not a valid value for value type {} for field {}", value, vt, fieldName);
 				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
 				return false;
+=======
+			if (value == null) {
+				logger.error("{} is not a valid value for value type {} for field {}", value, vt, fieldName);
+				ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+				return null;
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 			}
 
 			if (condn == FilterCondition.Between) {
@@ -273,18 +444,65 @@ class ParsedFilter {
 				if (obj2 == null) {
 					logger.error("{} is not a valid value for value type {} for field {}", value2, vt, fieldName);
 					ctx.addMessage(Message.newError(Message.MSG_INVALID_DATA));
+<<<<<<< HEAD
 					return false;
 				}
 				sql.append(BETWEEN);
 				values.add(obj);
 				values.add(obj2);
+=======
+					return null;
+				}
+				sql.append(BETWEEN);
+				params.add(new PreparedStatementParam(obj, vt));
+				params.add(new PreparedStatementParam(obj2, vt));
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 				continue;
 			}
 
 			sql.append(' ').append(condnText).append(" ?");
+<<<<<<< HEAD
 			values.add(obj);
 		}
 		return true;
+=======
+			params.add(new PreparedStatementParam(obj, vt));
+		}
+
+		if (sorts != null) {
+			boolean isFirst = true;
+			for (final Entry<String, JsonElement> entry : sorts.entrySet()) {
+				final String f = entry.getKey();
+				final Field field = fields.get(f);
+				if (field == null) {
+					logger.error("{} is not a field in teh form. Sort order ignored");
+					continue;
+				}
+				if (isFirst) {
+					sql.append(" ORDER BY ");
+					isFirst = false;
+				} else {
+					sql.append(", ");
+				}
+				sql.append(field.getColumnName());
+				if (entry.getValue().getAsString().toLowerCase().startsWith("d")) {
+					sql.append(" DESC ");
+				}
+			}
+		}
+		/*
+		 * did we get anything at all?
+		 */
+		final String sqlText;
+		if (sql.length() == 0) {
+			logger.info("Filter has no conditions");
+			sqlText = "";
+		} else {
+			logger.info("Filter with {} parameters : {}", params.size(), sql.toString());
+			sqlText = " WHERE " + sql.toString();
+		}
+		return new ParsedFilter(sqlText, params.toArray(new PreparedStatementParam[0]));
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 
 	}
 
@@ -297,4 +515,8 @@ class ParsedFilter {
 	private static String escapeLike(final String string) {
 		return string.replaceAll(WILD_CARD, ESCAPED_WILD_CARD).replaceAll(WILD_CHAR, ESCAPED_WILD_CHAR);
 	}
+<<<<<<< HEAD
+=======
+
+>>>>>>> fbeaf366db5b468d2b6d9478cc8f1c7e697e915c
 }
