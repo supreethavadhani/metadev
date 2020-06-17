@@ -76,7 +76,11 @@ public class DefaultContext implements IServiceContext {
 		 * apps may use an internal id instead. And that id can be part of the
 		 * session
 		 */
-		this.userId = session.getUserId();
+		if (session == null) {
+			this.userId = null;
+		} else {
+			this.userId = session.getUserId();
+		}
 	}
 
 	/**

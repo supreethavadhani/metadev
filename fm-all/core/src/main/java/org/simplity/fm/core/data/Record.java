@@ -518,7 +518,24 @@ public class Record {
 	}
 
 	/**
-	 * parse this record from a serialized input
+	 * parse this record from a serialized input when teh object is the root.
+	 *
+	 * @param inputObject
+	 *            input data
+	 * @param forInsert
+	 *            true if the data is being parsed for an insert operation,
+	 *            false if it is meant for an update instead
+	 * @param ctx
+	 * @return true if all ok. false if any error message is added to the
+	 *         context
+	 */
+	public boolean parse(final IInputObject inputObject, final boolean forInsert, final IServiceContext ctx) {
+		return this.parse(inputObject, forInsert, ctx, null, 0);
+	}
+
+	/**
+	 * parse this record from a serialized input when the record is inside an
+	 * array as a child of a parent object
 	 *
 	 * @param inputObject
 	 *            input data

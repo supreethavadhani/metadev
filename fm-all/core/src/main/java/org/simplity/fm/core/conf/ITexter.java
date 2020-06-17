@@ -39,5 +39,4 @@ public interface ITexter {
 	 * @param sms
 	 */
 	void sendText(final String senderId, final String numbers, final String sms);
-
 }

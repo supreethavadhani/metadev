@@ -45,6 +45,13 @@ public class Form {
 
 	String name;
 	String recordName;
+	/*
+	 * used only for the client as of now. We are worried that careless
+	 * programmers may expose services by mistake. Hence we insist that any
+	 * service that can be served to guests MUST be hand-coded
+	 *
+	 */
+	boolean serveGuests;
 	String[] operations;
 	Control[] controls;
 	LinkedForm[] linkedForms;
@@ -279,6 +286,9 @@ public class Form {
 		 */
 		sbf.append("\n\n\tconstructor() {");
 		sbf.append("\n\t\tsuper();");
+		if (this.serveGuests) {
+			sbf.append("\n\t\tthis.serveGuests = true;");
+		}
 
 		/*
 		 * put fields into a map.

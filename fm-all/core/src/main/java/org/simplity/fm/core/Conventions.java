@@ -88,6 +88,10 @@ public class Conventions {
 		public static final String TAG_ALL_OK = "allOk";
 
 		/**
+		 * tag/field name in response for the auth token
+		 */
+		public static final String TAG_TOKEN = "token";
+		/**
 		 * tag/field name in response payload that has an array of messages.
 		 */
 		public static final String TAG_MESSAGES = "messages";

@@ -24,7 +24,9 @@ package org.simplity.fm.core.http;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.net.URLDecoder;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
@@ -130,7 +132,7 @@ public class Agent {
 			return;
 		}
 		if (this.userId == null) {
-			if (this.service.serveGuests()) {
+			if (!this.service.serveGuests()) {
 				logger.info("No user. Service {} requires an authenticated user.");
 				this.resp.setStatus(Conventions.Http.STATUS_AUTH_REQUIRED);
 				return;
@@ -144,7 +146,7 @@ public class Agent {
 			}
 		}
 
-		this.readContent();
+		this.readInput();
 		if (this.inputData == null) {
 			logger.info("Invalid JSON recd from client ");
 			this.resp.setStatus(Conventions.Http.STATUS_INVALID_DATA);
@@ -175,23 +177,25 @@ public class Agent {
 		this.respond(writer.toString());
 	}
 
-	private void readContent() {
+	private void readInput() {
 		if (this.req.getContentLength() == 0) {
 			this.inputData = new JsonObject();
-			return;
-		}
-		try (Reader reader = this.req.getReader()) {
-			/*
-			 * read it as json
-			 */
-			final JsonElement node = new JsonParser().parse(reader);
-			if (!node.isJsonObject()) {
-				return;
+		} else {
+			try (Reader reader = this.req.getReader()) {
+				/*
+				 * read it as json
+				 */
+				final JsonElement node = new JsonParser().parse(reader);
+				if (!node.isJsonObject()) {
+					return;
+				}
+				this.inputData = (JsonObject) node;
+
+			} catch (final Exception e) {
+				logger.error("Invalid data recd from client {}", e.getMessage());
 			}
-			this.inputData = (JsonObject) node;
-		} catch (final Exception e) {
-			logger.error("Invalid data recd from client {}", e.getMessage());
 		}
+		this.readQueryString();
 	}
 
 	private void respond(final String payload) {
@@ -199,6 +203,7 @@ public class Agent {
 		 * are we to set a user session?
 		 */
 		final UserContext seshan = this.ctx.getNewUserContext();
+		boolean addToken = false;
 		if (seshan != null) {
 			if (this.token == null) {
 				/*
@@ -207,7 +212,10 @@ public class Agent {
 				 */
 				this.token = UUID.randomUUID().toString();
 				this.resp.setHeader(Conventions.Http.HEADER_SERVICE, this.token);
+				logger.info("Auth token set to {} ", this.token);
+				addToken = true;
 			}
+			App.getApp().getSessionCache().put(this.token, seshan);
 		}
 		try (Writer writer = this.resp.getWriter()) {
 			writer.write("{\"");
@@ -215,6 +223,13 @@ public class Agent {
 			writer.write("\":");
 			if (this.ctx.allOk()) {
 				writer.write("true");
+				if (addToken) {
+					writer.write(",\"");
+					writer.write(Conventions.Http.TAG_TOKEN);
+					writer.write("\":\"");
+					writer.write(this.token);
+					writer.write('"');
+				}
 				if (payload != null && payload.isEmpty() == false) {
 					writer.write(",\"");
 					writer.append(Conventions.Http.TAG_DATA);
@@ -283,11 +298,40 @@ public class Agent {
 		} else {
 			this.session = this.app.getSessionCache().get(this.token);
 			if (this.session == null) {
-				logger.info("Token is not valid. possibly timed out. Treating this as guest request");
+				logger.info("Token {} is not valid. possibly timed out. Treating this as a guest request", this.token);
 			} else {
 				this.userId = this.session.getUserId();
 				logger.info("Request from authuenticated user {} ", this.userId);
 			}
+		}
+	}
+
+	private void readQueryString() {
+		final String qry = this.req.getQueryString();
+		if (qry == null) {
+			return;
+		}
+
+		for (final String part : qry.split("&")) {
+			final String[] pair = part.split("=");
+			String val;
+			if (pair.length == 1) {
+				val = "";
+			} else {
+				val = decode(pair[1]);
+			}
+			this.inputData.addProperty(pair[0].trim(), val);
+		}
+	}
+
+	private static String decode(final String text) {
+		try {
+			return URLDecoder.decode(text, "UTF-8");
+		} catch (final UnsupportedEncodingException e) {
+			/*
+			 * we do know that this is supported. so, this is unreachable code.
+			 */
+			return text;
 		}
 	}
 }
