@@ -11,8 +11,6 @@ import org.simplity.fm.core.data.DbRecord;
 import org.simplity.fm.core.data.FieldType;
 import org.simplity.fm.core.validn.IValidation;
 import org.simplity.fm.core.service.IServiceContext;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonArray;
 import java.util.List;
 import org.simplity.fm.core.validn.DependentListValidation;
 import org.simplity.fm.example.gen.DefinedDataTypes;
