@@ -34,9 +34,9 @@ import org.simplity.fm.core.conf.IRequestLogger;
 import org.simplity.fm.core.conf.IServiceContextFactory;
 import org.simplity.fm.core.conf.ISessionCache;
 import org.simplity.fm.core.conf.ITexter;
-import org.simplity.fm.core.conf.defalt.DefaultContextFactory;
 import org.simplity.fm.core.conf.defalt.DefaultAccessController;
 import org.simplity.fm.core.conf.defalt.DefaultCompProvider;
+import org.simplity.fm.core.conf.defalt.DefaultContextFactory;
 import org.simplity.fm.core.conf.defalt.DefaultDbConFactory;
 import org.simplity.fm.core.conf.defalt.DefaultExceptionListener;
 import org.simplity.fm.core.conf.defalt.DefaultRequestLogger;
@@ -106,25 +106,25 @@ public class App implements IApp {
 	 * @param config
 	 */
 	public static void configureApp(final Config config) {
-		String name = config.appName;
+		String text = config.appName;
 
-		if (name == null || name.isEmpty()) {
+		if (text == null || text.isEmpty()) {
 			logger.error("App name must be a unique name. Moving with name {} ", UNKNOWN);
 			app.appName = UNKNOWN;
 		} else {
-			app.appName = name;
+			app.appName = text;
 		}
 
-		name = config.appRootPackage;
+		text = config.appRootPackage;
 
-		if (name == null || name.isEmpty()) {
+		if (text == null || text.isEmpty()) {
 			logger.error(
 					"root package name is required to locate app components. This app will throw exception if any component is requested");
 			app.compProvider = new DefaultCompProvider();
 		} else {
-			app.compProvider = CompProvider.getPrivider(name);
+			app.compProvider = CompProvider.getPrivider(text);
 			if (app.compProvider == null) {
-				logger.error("Error while initializing comp provider using root package {}", name);
+				logger.error("Error while initializing comp provider using root package {}", text);
 				app.compProvider = new DefaultCompProvider();
 			}
 		}
@@ -165,7 +165,7 @@ public class App implements IApp {
 			app.reqLogger = config.requestLogger;
 		}
 
-		if (config.accessController == null) {
+		if (config.texter == null) {
 			logger.warn(
 					"SMS texts can not be sent as the facility is not configured. SMS text will insted be just logged");
 			app.texter = new DefaultTexter();
