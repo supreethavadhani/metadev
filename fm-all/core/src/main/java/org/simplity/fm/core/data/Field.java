@@ -80,7 +80,7 @@ public class Field {
 	 * @param fieldName
 	 *            unique within its data structure
 	 * @param index
-	 *            0-based index of this field in the prent form
+	 *            0-based index of this field in the parent form
 	 * @param dataType
 	 *            pre-defined data type. used for validating data coming from a
 	 *            client

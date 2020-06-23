@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.simplity.fm.core.datatypes.ValueType;
@@ -178,7 +179,8 @@ public class Record {
 	}
 
 	/**
-	 * @return field values
+	 * @return the underlying array of data. Returned array is not a copy, and
+	 *         hence any changes made to that will affect this record
 	 */
 	public Object[] fetchRawData() {
 		return this.fieldValues;
@@ -635,7 +637,7 @@ public class Record {
 	 * @return a copy of this that can be mutilated without affecting this
 	 */
 	public Record makeACopy() {
-		return this.newInstance(this.fieldValues);
+		return this.newInstance(Arrays.copyOf(this.fieldValues, this.fieldValues.length));
 	}
 
 	/**
@@ -679,14 +681,14 @@ public class Record {
 	}
 
 	/**
-	 * make a copy of this record. to be used by utilities and frame-work
-	 * components.
+	 * create a new instance of this object with this array of data. TO BE USED
+	 * BY INTERNAL UTILITY.
 	 *
 	 * @param values
 	 *
 	 * @return a copy of this that can be mutilated without affecting this
 	 */
-	public Record newInstance(final Object[] values) {
+	protected Record newInstance(final Object[] values) {
 		return new Record(this.fetchFields(), values);
 	}
 }
