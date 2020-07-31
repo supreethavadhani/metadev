@@ -30,6 +30,7 @@ import org.simplity.fm.core.UserContext;
 import org.simplity.fm.core.data.DbTable;
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.Record;
+import org.simplity.fm.core.data.RecordOverride;
 import org.simplity.fm.core.serialize.ISerializer;
 
 /**
@@ -186,8 +187,29 @@ public interface IServiceContext {
 
 	/**
 	 *
-	 * @param sessicieActivitieson
+	 * @param utx
 	 *            non-null user context to be set after the service completes.
 	 */
 	void setNewUserContext(UserContext utx);
+
+	/**
+	 * @param recordName
+	 * @return id with which this record is over-ridden. null if it is not
+	 *         overridden
+	 */
+	String getRecordOverrideId(String recordName);
+
+	/**
+	 *
+	 * @param recordName
+	 * @return instance for the current tenant
+	 */
+	RecordOverride getRecordOverride(String recordName);
+
+	/**
+	 * @param formName
+	 * @return id with which this form is over-ridden. null if it is not
+	 *         overridden
+	 */
+	String getFormOverrideId(String formName);
 }

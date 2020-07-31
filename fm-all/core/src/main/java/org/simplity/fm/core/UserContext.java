@@ -22,6 +22,13 @@
 
 package org.simplity.fm.core;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import org.simplity.fm.core.data.OverrideUtil;
+import org.simplity.fm.core.data.OverrideUtil.Overrides;
+import org.simplity.fm.core.data.RecordOverride;
+
 /**
  * data that is to be cached for a logged-in user that is used across service
  * requests. This is a base class that the actual Apps extend to make this
@@ -31,7 +38,20 @@ package org.simplity.fm.core;
  *
  */
 public class UserContext {
+
 	protected final String userId;
+	/**
+	 * if form/records are overridden for this
+	 */
+	protected String overrideId;
+	/**
+	 * name of forms that are overridden in this context
+	 */
+	protected Set<String> formOverrides;
+	/**
+	 * name of records that are overridden in this context
+	 */
+	protected Set<String> recordOverrides;
 
 	/**
 	 *
@@ -47,5 +67,61 @@ public class UserContext {
 	 */
 	public String getUserId() {
 		return this.userId;
+	}
+
+	/**
+	 * to be invoked by the extended class to cache the form/record overrides
+	 */
+	protected void setOverrides(final String id) {
+		final Overrides overs = OverrideUtil.getOverides(id);
+		if (overs == null) {
+			return;
+		}
+
+		this.overrideId = id;
+		this.formOverrides = new HashSet<>();
+		for (final String s : overs.forms) {
+			this.formOverrides.add(s);
+		}
+
+		this.recordOverrides = new HashSet<>();
+		for (final String s : overs.records) {
+			this.recordOverrides.add(s);
+		}
+	}
+
+	/**
+	 *
+	 * @param recordName
+	 * @return true if this form is overridden in this context
+	 */
+	public String getRecordOverrideId(final String recordName) {
+		if (this.recordOverrides != null && this.recordOverrides.contains(recordName)) {
+			return this.overrideId;
+		}
+		return null;
+	}
+
+	/**
+	 *
+	 * @param formName
+	 * @return id with which this form is overridden. null if it is not
+	 *         overridden.
+	 */
+	public String getFormOverrideId(final String formName) {
+		if (this.formOverrides != null && this.formOverrides.contains(formName)) {
+			return this.overrideId;
+		}
+		return null;
+	}
+
+	/**
+	 * get the record override for this record in this context
+	 *
+	 * @param recordName
+	 * @return record override, or null if it is not found
+	 */
+	public RecordOverride getRecordOverride(final String recordName) {
+		return OverrideUtil.getRecord(this.overrideId, recordName);
 	}
 }

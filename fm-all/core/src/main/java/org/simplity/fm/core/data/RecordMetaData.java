@@ -22,6 +22,8 @@
 
 package org.simplity.fm.core.data;
 
+import java.util.Map;
+
 import org.simplity.fm.core.validn.IValidation;
 
 /**
@@ -52,6 +54,21 @@ public class RecordMetaData {
 		this.name = name;
 		this.fields = fields;
 		this.validations = validations;
+	}
+
+	/**
+	 * over ride meta data
+	 *
+	 * @param over
+	 */
+	public void override(final RecordOverride over) {
+		final Map<String, FieldOverride> newFields = over.fields;
+		for (final Field field : this.fields) {
+			final FieldOverride newField = newFields.get(field.getName());
+			if (newField != null) {
+				field.override(newField);
+			}
+		}
 	}
 
 	/**

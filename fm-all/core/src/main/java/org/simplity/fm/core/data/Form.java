@@ -57,7 +57,7 @@ public abstract class Form<T extends Record> {
 	/*
 	 * record that this form is based on
 	 */
-	protected final T record;
+	protected T record;
 
 	/*
 	 * what operations are allowed on this form
@@ -436,5 +436,26 @@ public abstract class Form<T extends Record> {
 	 */
 	public T getRecord() {
 		return this.record;
+	}
+
+	/**
+	 * @param ctx
+	 */
+	@SuppressWarnings("unchecked")
+	public void override(final IServiceContext ctx) {
+		final String recordName = this.record.fetchName();
+		this.record = (T) App.getApp().getCompProvider().getRecord(recordName, ctx);
+		if (this.linkedForms != null) {
+			for (final LinkedForm<?> lf : this.linkedForms) {
+				lf.override(this.record, ctx);
+			}
+		}
+	}
+
+	/**
+	 * @return unique name of this form
+	 */
+	public String getName() {
+		return this.name;
 	}
 }

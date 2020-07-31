@@ -691,4 +691,14 @@ public class Record {
 	protected Record newInstance(final Object[] values) {
 		return new Record(this.fetchFields(), values);
 	}
+
+	/**
+	 * override field definitions for this record
+	 *
+	 * @param ctx
+	 */
+	public void override(final IServiceContext ctx) {
+		final RecordOverride over = ctx.getRecordOverride(this.fetchName());
+		this.metaData.override(over);
+	}
 }

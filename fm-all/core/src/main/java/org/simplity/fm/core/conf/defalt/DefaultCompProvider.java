@@ -30,6 +30,7 @@ import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.datatypes.DataType;
 import org.simplity.fm.core.fn.IFunction;
 import org.simplity.fm.core.service.IService;
+import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.IValueList;
 
 /**
@@ -43,12 +44,6 @@ public class DefaultCompProvider implements ICompProvider {
 
 	@Override
 	public Form<?> getForm(final String formId) {
-		error();
-		throw null;
-	}
-
-	@Override
-	public Record getRecord(final String recordName) {
 		error();
 		return null;
 	}
@@ -66,7 +61,7 @@ public class DefaultCompProvider implements ICompProvider {
 	}
 
 	@Override
-	public IService getService(final String serviceName) {
+	public IService getService(final String serviceName, final IServiceContext ctx) {
 		error();
 		return null;
 	}
@@ -79,6 +74,24 @@ public class DefaultCompProvider implements ICompProvider {
 
 	@Override
 	public Message getMessage(final String messageId) {
+		error();
+		return null;
+	}
+
+	@Override
+	public Record getRecord(final String recordName, final IServiceContext ctx) {
+		error();
+		return null;
+	}
+
+	@Override
+	public Record getRecord(final String recordName) {
+		error();
+		return null;
+	}
+
+	@Override
+	public Form<?> getForm(final String formId, final IServiceContext ctx) {
 		error();
 		return null;
 	}

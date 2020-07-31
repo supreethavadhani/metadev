@@ -1,0 +1,82 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "Schema for record override. file type *.ovr.json",
+    "required": [
+        "name",
+        "tenantId",
+        "fields"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "tenantId": {
+            "type": "string"
+        },
+        "description": {
+            "type": "string"
+        },
+        "fields": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "requiredProperties":[
+                    "name",
+                    "isRequired"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "dataType": {
+                        "type": "string",
+                        "enum": [
+                            "accountStatus",
+                            "bool",
+                            "code",
+                            "country",
+                            "date",
+                            "desc",
+                            "email",
+                            "flexibleId",
+                            "govtCode",
+                            "id",
+                            "ip",
+                            "json",
+                            "loginId",
+                            "money",
+                            "name",
+                            "integer",
+                            "phone",
+                            "pin",
+                            "state",
+                            "tenantKey",
+                            "text",
+                            "timestamp",
+                            "uniqueId",
+                            "url",
+                            "userType",
+                            "gender",
+                            "income",
+                            "marks",
+                            "marksOrAb",
+                            "valuationType",
+                            "internalMarks"
+                        ]
+                    },
+                    "defaultValue": {
+                        "type": "string"
+                    },
+                    "isRequired": {
+                        "type": "boolean"
+                    },
+                    "listName": {
+                        "type": "string"
+                    }
+                },
+                "addtionalProperties":false
+            }
+        }
+    }
+}

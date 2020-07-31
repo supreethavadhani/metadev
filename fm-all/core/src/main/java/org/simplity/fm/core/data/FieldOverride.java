@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 simplity.org
+ * Copyright (c) 2019 simplity.org
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,22 +20,42 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.core.conf.defalt;
-
-import org.simplity.fm.core.conf.ITexter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package org.simplity.fm.core.data;
 
 /**
+ * data structure with field attributes that are to be overridden
+ *
  * @author simplity.org
  *
  */
-public class DefaultTexter implements ITexter {
-	private static final Logger logger = LoggerFactory.getLogger(DefaultTexter.class);
+public class FieldOverride {
+	/**
+	 * name is unique within a record/form
+	 */
+	public String name;
 
-	@Override
-	public void sendText(final String senderId, final String numbers, final String sms) {
-		logger.warn("Text messages NOT SENT from:{} to:{},  text:{}", senderId, numbers, sms);
-	}
+	/**
+	 * data type describes the type of value and restrictions (validations) on
+	 * the value
+	 */
+	public String dataType;
+	/**
+	 * default value is used only if this is optional and the value is missing.
+	 * not used if the field is mandatory
+	 */
+	public String defaultValue;
+	/**
+	 * refers to the message id/code that is used for i18n of messages
+	 */
+	public String messageId;
+	/**
+	 * required/mandatory. If set to true, text value of empty string and 0 for
+	 * integral are assumed to be not valid. Relevant only for editable fields.
+	 */
+	public boolean isRequired;
 
+	/**
+	 * list that provides drop-down values for this field
+	 */
+	public String listName;
 }

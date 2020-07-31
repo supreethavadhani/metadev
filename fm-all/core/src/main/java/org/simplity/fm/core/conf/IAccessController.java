@@ -21,8 +21,8 @@
  */
 package org.simplity.fm.core.conf;
 
-import org.simplity.fm.core.UserContext;
 import org.simplity.fm.core.service.IService;
+import org.simplity.fm.core.service.IServiceContext;
 
 /**
  * decide whether the user has access to the requested service
@@ -33,8 +33,8 @@ public interface IAccessController {
 
 	/**
 	 * @param service
-	 * @param userCtx
+	 * @param ctx
 	 * @return true if the user has access, false if prohibited
 	 */
-	boolean okToServe(IService service, UserContext userCtx);
+	boolean okToServe(IService service, IServiceContext ctx);
 }

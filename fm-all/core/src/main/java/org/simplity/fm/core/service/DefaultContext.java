@@ -36,6 +36,7 @@ import org.simplity.fm.core.app.ApplicationError;
 import org.simplity.fm.core.data.DbTable;
 import org.simplity.fm.core.data.Field;
 import org.simplity.fm.core.data.Record;
+import org.simplity.fm.core.data.RecordOverride;
 import org.simplity.fm.core.serialize.ISerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -281,6 +282,21 @@ public class DefaultContext implements IServiceContext {
 	public void setNewUserContext(final UserContext utx) {
 		this.newUtx = utx;
 
+	}
+
+	@Override
+	public String getRecordOverrideId(final String recordName) {
+		return this.getCurrentUserContext().getRecordOverrideId(recordName);
+	}
+
+	@Override
+	public RecordOverride getRecordOverride(final String recordName) {
+		return this.getCurrentUserContext().getRecordOverride(recordName);
+	}
+
+	@Override
+	public String getFormOverrideId(final String formName) {
+		return this.getCurrentUserContext().getFormOverrideId(formName);
 	}
 
 }

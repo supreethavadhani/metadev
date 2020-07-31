@@ -29,8 +29,6 @@ import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.IDataTypes;
 import org.simplity.fm.core.IMessages;
 import org.simplity.fm.core.Message;
-import org.simplity.fm.core.Conventions.App;
-import org.simplity.fm.core.Conventions.Http;
 import org.simplity.fm.core.data.Form;
 import org.simplity.fm.core.data.IoType;
 import org.simplity.fm.core.data.Record;
@@ -42,6 +40,7 @@ import org.simplity.fm.core.fn.Max;
 import org.simplity.fm.core.fn.Min;
 import org.simplity.fm.core.fn.Sum;
 import org.simplity.fm.core.service.IService;
+import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.service.ListService;
 import org.simplity.fm.core.validn.IValueList;
 import org.slf4j.Logger;
@@ -136,43 +135,13 @@ public class CompProvider implements ICompProvider {
 	@Override
 	public Form<?> getForm(final String formId) {
 		Form<?> form = this.forms.get(formId);
-		if (form != null) {
-			return form;
+		if (form == null) {
+			form = this.loadForm(formId);
+			if (form != null) {
+				this.forms.put(formId, form);
+			}
 		}
-		final String cls = this.formRoot + toClassName(formId) + FORM;
-		try {
-			form = (Form<?>) Class.forName(cls).newInstance();
-		} catch (final ClassNotFoundException e) {
-			logger.error("No form named {} because we could not locate class {}", formId, cls);
-			return null;
-		} catch (final Exception e) {
-			logger.error("Internal Error: Form named " + formId
-					+ " exists but an excption occured while creating an instance. Error :", e);
-			return null;
-		}
-		this.forms.put(formId, form);
 		return form;
-	}
-
-	@Override
-	public Record getRecord(final String recordName) {
-		Record record = this.records.get(recordName);
-		if (record != null) {
-			return record;
-		}
-		final String cls = this.recordRoot + toClassName(recordName) + RECORD;
-		try {
-			record = (Record) Class.forName(cls).newInstance();
-		} catch (final ClassNotFoundException e) {
-			logger.error("No record named {} because we could not locate class {}", recordName, cls);
-			return null;
-		} catch (final Exception e) {
-			logger.error("Internal Error: record named" + recordName
-					+ " exists but an excption occured while while creating an instance. Error :", e);
-			return null;
-		}
-		this.records.put(recordName, record);
-		return record;
 	}
 
 	@Override
@@ -213,7 +182,7 @@ public class CompProvider implements ICompProvider {
 	}
 
 	@Override
-	public IService getService(final String serviceId) {
+	public IService getService(final String serviceId, final IServiceContext ctx) {
 		IService service = this.services.get(serviceId);
 		if (service != null) {
 			return service;
@@ -225,21 +194,25 @@ public class CompProvider implements ICompProvider {
 		final String cls = this.serviceRoot + toClassName(serviceId);
 		try {
 			service = (IService) Class.forName(cls).newInstance();
+			this.services.put(serviceId, service);
 		} catch (final Exception e) {
 			/*
-			 * it is not a class. Let us see if we can generate it
+			 * it is not a class. Let us see if we can generate it.
+			 * Also, form based services are not cached to simplify form
+			 * overrides.
+			 * This is not an issue because the for is anyways cached, and hence
+			 * no disk access f\even if we do not cache the service
 			 */
-			service = this.tryFormIo(serviceId);
+			service = this.tryFormIo(serviceId, ctx);
 			if (service == null) {
 				logger.error("Service {} is not served by this application", serviceId);
 				return null;
 			}
 		}
-		this.services.put(serviceId, service);
 		return service;
 	}
 
-	private IService tryFormIo(final String serviceName) {
+	private IService tryFormIo(final String serviceName, final IServiceContext ctx) {
 		final int idx = serviceName.indexOf(Conventions.Http.SERVICE_OPER_SEPARATOR);
 		if (idx <= 0) {
 			logger.info("Service name {} is not of the form operation_name. Service is not generated");
@@ -272,7 +245,7 @@ public class CompProvider implements ICompProvider {
 			}
 		}
 
-		final Form<?> form = this.getForm(formName);
+		final Form<?> form = this.getForm(formName, ctx);
 		if (form != null) {
 			return form.getService(opern);
 		}
@@ -308,4 +281,97 @@ public class CompProvider implements ICompProvider {
 		return name.substring(0, idx) + name.substring(idx, idx + 1).toUpperCase() + name.substring(idx + 1);
 	}
 
+	@Override
+	public Record getRecord(final String recordName, final IServiceContext ctx) {
+		final String id = ctx.getRecordOverrideId(recordName);
+		if (id == null) {
+			return this.getRecord(recordName);
+		}
+
+		/*
+		 * record is cached with this id as prefix
+		 */
+		final String key = id + recordName;
+
+		Record rec = this.records.get(key);
+		if (rec != null) {
+			return rec;
+		}
+
+		/**
+		 * load and override it
+		 */
+		rec = this.loadRecord(recordName);
+		if (rec != null) {
+			rec.override(ctx);
+			this.records.put(key, rec);
+		}
+
+		return rec;
+	}
+
+	private Record loadRecord(final String recordName) {
+		final String cls = this.recordRoot + toClassName(recordName) + RECORD;
+		try {
+			return (Record) Class.forName(cls).newInstance();
+		} catch (final ClassNotFoundException e) {
+			logger.error("No record named {} because we could not locate class {}", recordName, cls);
+			return null;
+		} catch (final Exception e) {
+			logger.error("Internal Error: record named" + recordName
+					+ " exists but an excption occured while while creating an instance. Error :", e);
+			return null;
+		}
+	}
+
+	@Override
+	public Record getRecord(final String recordName) {
+		Record rec = this.records.get(recordName);
+		if (rec == null) {
+			rec = this.loadRecord(recordName);
+			if (rec != null) {
+				this.records.put(recordName, rec);
+			}
+		}
+		return rec;
+	}
+
+	@Override
+	public Form<?> getForm(final String formId, final IServiceContext ctx) {
+		final String id = ctx.getFormOverrideId(formId);
+		if (id == null) {
+			return this.getForm(formId);
+		}
+
+		final String key = id + formId;
+		Form<?> form = this.forms.get(key);
+		if (form != null) {
+			return form;
+		}
+
+		/**
+		 * load and override it
+		 */
+		form = this.loadForm(formId);
+		if (form != null) {
+			form.override(ctx);
+			this.forms.put(key, form);
+		}
+
+		return form;
+	}
+
+	private Form<?> loadForm(final String formId) {
+		final String cls = this.formRoot + toClassName(formId) + FORM;
+		try {
+			return (Form<?>) Class.forName(cls).newInstance();
+		} catch (final ClassNotFoundException e) {
+			logger.error("No form named {} because we could not locate class {}", formId, cls);
+			return null;
+		} catch (final Exception e) {
+			logger.error("Internal Error: Form named " + formId
+					+ " exists but an excption occured while creating an instance. Error :", e);
+			return null;
+		}
+	}
 }

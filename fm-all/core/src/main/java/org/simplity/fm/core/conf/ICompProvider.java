@@ -28,6 +28,7 @@ import org.simplity.fm.core.data.Record;
 import org.simplity.fm.core.datatypes.DataType;
 import org.simplity.fm.core.fn.IFunction;
 import org.simplity.fm.core.service.IService;
+import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.IValueList;
 
 /**
@@ -47,10 +48,31 @@ public interface ICompProvider {
 
 	/**
 	 *
-	 * @param recordName
+	 * @param formId
+	 * @param ctx
+	 *            service context that may have form-overrides
 	 * @return form instance, or null if such a form is not located
 	 */
+	Form<?> getForm(String formId, IServiceContext ctx);
+
+	/**
+	 * get record when the record may be over-ridden for the current tenant id
+	 *
+	 * @param recordName
+	 * @return record instance, or null if such a record is not located
+	 */
 	Record getRecord(String recordName);
+
+	/**
+	 * get record when the record may be over-ridden for the current tenant id
+	 *
+	 * @param recordName
+	 * @param ctx
+	 *            service context. null if the record if base record is required
+	 *            and no need to check for overrides
+	 * @return record instance, or null if such a record is not located
+	 */
+	Record getRecord(String recordName, IServiceContext ctx);
 
 	/**
 	 *
@@ -69,9 +91,11 @@ public interface ICompProvider {
 	/**
 	 *
 	 * @param serviceName
-	 * @return an instance for this id, or null if is not located
+	 * @param ctx
+	 *            service context where this service is to be executed
+	 * @return an instance for this id, or null if it cannot be located
 	 */
-	IService getService(String serviceName);
+	IService getService(String serviceName, IServiceContext ctx);
 
 	/**
 	 *

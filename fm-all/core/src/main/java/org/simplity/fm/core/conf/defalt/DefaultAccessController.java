@@ -22,9 +22,9 @@
 
 package org.simplity.fm.core.conf.defalt;
 
-import org.simplity.fm.core.UserContext;
 import org.simplity.fm.core.conf.IAccessController;
 import org.simplity.fm.core.service.IService;
+import org.simplity.fm.core.service.IServiceContext;
 
 /**
  * @author simplity.org
@@ -33,7 +33,7 @@ import org.simplity.fm.core.service.IService;
 public class DefaultAccessController implements IAccessController {
 
 	@Override
-	public boolean okToServe(final IService service, final UserContext userCtx) {
+	public boolean okToServe(final IService service, final IServiceContext ctx) {
 		return true;
 	}
 

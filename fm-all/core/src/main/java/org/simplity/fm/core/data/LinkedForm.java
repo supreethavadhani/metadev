@@ -24,6 +24,7 @@ package org.simplity.fm.core.data;
 
 import java.sql.SQLException;
 
+import org.simplity.fm.core.app.App;
 import org.simplity.fm.core.app.ApplicationError;
 import org.simplity.fm.core.rdb.ReadWriteHandle;
 import org.simplity.fm.core.rdb.ReadonlyHandle;
@@ -45,7 +46,7 @@ public class LinkedForm<T extends DbRecord> {
 	 */
 	private final LinkMetaData linkMeta;
 
-	private final Form<T> form;
+	private Form<T> form;
 
 	/**
 	 *
@@ -128,5 +129,15 @@ public class LinkedForm<T extends DbRecord> {
 	public void init(final Record parentRecord) {
 		this.linkMeta.init(parentRecord, this.form.getRecord());
 
+	}
+
+	/**
+	 * @param parent
+	 * @param ctx
+	 */
+	@SuppressWarnings("unchecked")
+	public void override(final Record parent, final IServiceContext ctx) {
+		final String formName = this.form.getName();
+		this.form = (Form<T>) App.getApp().getCompProvider().getForm(formName, ctx);
 	}
 }

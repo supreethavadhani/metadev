@@ -87,6 +87,7 @@ public class Agent {
 	private String token;
 	private UserContext session;
 	private String userId;
+	private String serviceName;
 	private IService service;
 	private JsonObject inputData;
 	private IServiceContext ctx;
@@ -125,20 +126,30 @@ public class Agent {
 		 * process the request header to get service, session and user
 		 */
 		this.processHeader();
+		if (this.serviceName == null) {
+			logger.error("requested service {} is not served on this app.", this.serviceName);
+			return;
+		}
 
+		final StringWriter writer = new StringWriter();
+		final ISerializer outputObject = new JsonSerializer(writer);
+		this.ctx = this.app.getContextFactory().newContext(this.session, outputObject);
+
+		this.service = this.app.getCompProvider().getService(this.serviceName, this.ctx);
 		if (this.service == null) {
 			logger.error("No service. Responding with 404");
 			this.resp.setStatus(Conventions.Http.STATUS_INVALID_SERVICE);
 			return;
 		}
+
 		if (this.userId == null) {
-			if (!this.service.serveGuests()) {
+			if (this.service.serveGuests()) {
 				logger.info("No user. Service {} requires an authenticated user.");
 				this.resp.setStatus(Conventions.Http.STATUS_AUTH_REQUIRED);
 				return;
 			}
 		} else {
-			if (this.app.getAccessController().okToServe(this.service, this.session) == false) {
+			if (this.app.getAccessController().okToServe(this.service, this.ctx) == false) {
 				logger.error("User {} does not have the preveleges for service {}. Responding with 404", this.userId,
 						this.service.getId());
 				this.resp.setStatus(Conventions.Http.STATUS_INVALID_SERVICE);
@@ -157,10 +168,6 @@ public class Agent {
 		 * we are ready to execute this service.
 		 */
 		this.app.getRequestLogger().log(this.userId, this.service.getId(), this.inputData.toString());
-
-		final StringWriter writer = new StringWriter();
-		final ISerializer outputObject = new JsonSerializer(writer);
-		this.ctx = this.app.getContextFactory().newContext(this.session, outputObject);
 
 		try {
 			this.service.serve(this.ctx, new JsonInputObject(this.inputData));
@@ -279,19 +286,13 @@ public class Agent {
 	}
 
 	private void processHeader() {
-		final String serviceName = this.req.getHeader(Conventions.Http.HEADER_SERVICE);
-		if (serviceName == null) {
+		this.serviceName = this.req.getHeader(Conventions.Http.HEADER_SERVICE);
+		if (this.serviceName == null) {
 			logger.error("header {} not received. No service", Conventions.Http.HEADER_SERVICE);
 			return;
 		}
 
-		logger.info("Requested service = {}", serviceName);
-		this.service = this.app.getCompProvider().getService(serviceName);
-		if (this.service == null) {
-			logger.error("requested service {} is not served on this app.", serviceName);
-			return;
-		}
-
+		logger.info("Requested service = {}", this.serviceName);
 		this.token = this.req.getHeader(Conventions.Http.HEADER_AUTH);
 		if (this.token == null) {
 			logger.info("Request received with  no token. Assumed guest request");

@@ -24,6 +24,7 @@ package org.simplity.fm.core.data;
 
 import org.simplity.fm.core.Message;
 import org.simplity.fm.core.app.App;
+import org.simplity.fm.core.app.ApplicationError;
 import org.simplity.fm.core.datatypes.DataType;
 import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.service.IServiceContext;
@@ -53,26 +54,26 @@ public class Field {
 	 * data type describes the type of value and restrictions (validations) on
 	 * the value
 	 */
-	private final DataType dataType;
+	private DataType dataType;
 	/**
 	 * default value is used only if this is optional and the value is missing.
 	 * not used if the field is mandatory
 	 */
-	private final Object defaultValue;
+	private Object defaultValue;
 	/**
 	 * refers to the message id/code that is used for i18n of messages
 	 */
-	private final String messageId;
+	private String messageId;
 	/**
 	 * required/mandatory. If set to true, text value of empty string and 0 for
 	 * integral are assumed to be not valid. Relevant only for editable fields.
 	 */
-	private final boolean isRequired;
+	private boolean isRequired;
 
 	/**
 	 * cached value list for validations
 	 */
-	private final IValueList valueList;
+	private IValueList valueList;
 
 	/**
 	 * this is generally invoked by the generated code for a Data Structure
@@ -246,5 +247,35 @@ public class Field {
 		ctx.addMessage(Message.newValidationError(this, tableName, idx));
 		return null;
 
+	}
+
+	/**
+	 * override attributes of this field
+	 *
+	 * @param over
+	 */
+	public void override(final FieldOverride over) {
+		this.isRequired = over.isRequired;
+
+		if (over.dataType != null && over.dataType.isEmpty() == false) {
+			final DataType dt = App.getApp().getCompProvider().getDataType(over.dataType);
+			if (dt.getValueType() != this.getValueType()) {
+				throw new ApplicationError(
+						"Field {} is of data type {}. It can not be overrideen with data type '{}' because its value type is different");
+			}
+			this.dataType = App.getApp().getCompProvider().getDataType(over.dataType);
+		}
+
+		if (over.defaultValue != null && over.defaultValue.isEmpty() == false) {
+			this.defaultValue = this.dataType.parse(over.defaultValue);
+		}
+
+		if (over.messageId != null && over.messageId.isEmpty() == false) {
+			this.messageId = over.messageId;
+		}
+
+		if (over.listName != null && over.listName.isEmpty() == false) {
+			this.valueList = App.getApp().getCompProvider().getValueList(over.listName);
+		}
 	}
 }
