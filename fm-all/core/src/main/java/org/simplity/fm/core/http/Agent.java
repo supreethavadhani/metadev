@@ -143,7 +143,7 @@ public class Agent {
 		}
 
 		if (this.userId == null) {
-			if (this.service.serveGuests()) {
+			if (this.service.serveGuests() == false) {
 				logger.info("No user. Service {} requires an authenticated user.");
 				this.resp.setStatus(Conventions.Http.STATUS_AUTH_REQUIRED);
 				return;
