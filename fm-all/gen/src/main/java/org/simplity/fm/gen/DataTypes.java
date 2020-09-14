@@ -84,6 +84,47 @@ class DataTypes {
 		}
 	}
 
+	void emitTs(final StringBuilder sbf) {
+		boolean isFirst = true;
+		for (final DataType dt : this.dataTypes.values()) {
+			if (isFirst) {
+				isFirst = false;
+			} else {
+				sbf.append(',');
+			}
+			sbf.append("\n\t").append(dt.name).append(": {");
+
+			sbf.append("\n\t\tname: '").append(dt.name).append("',");
+			sbf.append("\n\t\tvalueType: '").append(Util.toName(dt.valueType.name())).append("'");
+
+			emitOptional(sbf, "errorId", dt.errorId);
+			emitOptional(sbf, "regex", dt.getRegex());
+			emitOptional(sbf, "maxLength", dt.getMaxLength());
+			emitOptional(sbf, "minLength", dt.getMinLength());
+			emitOptional(sbf, "maxValue", dt.getMaxValue());
+			emitOptional(sbf, "minValue", dt.getMinValue());
+			emitOptional(sbf, "nbrDecimalPlaces", dt.getNbrDecimals());
+
+			sbf.append("\n\t}");
+		}
+	}
+
+	private static void emitOptional(final StringBuilder sbf, final String att, final String val) {
+		if (val == null || val.isEmpty()) {
+			return;
+		}
+
+		sbf.append(",\n\t\t").append(att).append(": ").append(Util.escape(val));
+	}
+
+	private static void emitOptional(final StringBuilder sbf, final String att, final long val) {
+		if (val == 0) {
+			return;
+		}
+
+		sbf.append(",\n\t\t").append(att).append(": ").append(val);
+	}
+
 	void emitJava(final String rootFolder, final String packageName, final String dataTypesFileName) {
 		/*
 		 * create DataTypes.java in the root folder.
@@ -166,6 +207,30 @@ class DataTypes {
 			sbf.append(");");
 		}
 
+		protected abstract int getMaxLength();
+
+		/* concrete classes override this if required to be emitted for ts */
+
+		protected int getMinLength() {
+			return 0;
+		}
+
+		protected long getMinValue() {
+			return 0;
+		}
+
+		protected long getMaxValue() {
+			return 0;
+		}
+
+		protected int getNbrDecimals() {
+			return 0;
+		}
+
+		protected String getRegex() {
+			return null;
+		}
+
 		protected abstract void emitIstanceParams(StringBuilder sbf);
 
 		void emitTs(final StringBuilder sbf, final String defaultValue, final List<String> vals, final String prefix) {
@@ -204,6 +269,13 @@ class DataTypes {
 			//
 		}
 
+		@Override
+		protected int getMaxLength() {
+			// boolean is almost always a check-box or drop-down, but our design
+			// requires a max as a safety ALWAYS
+			return 10;
+		}
+
 	}
 
 	protected static class DateType extends DataType {
@@ -224,6 +296,22 @@ class DataTypes {
 		protected void emitTsSpecific(final StringBuilder sbf, final List<String> vals, final String prefix) {
 			sbf.append(prefix).append("minValue: ").append(this.maxPastDays);
 			sbf.append(prefix).append("maxValue: ").append(this.maxFutureDays);
+		}
+
+		@Override
+		protected int getMaxLength() {
+			// 25, just a a safety
+			return 25;
+		}
+
+		@Override
+		protected long getMaxValue() {
+			return this.maxFutureDays;
+		}
+
+		@Override
+		protected long getMinValue() {
+			return this.maxPastDays;
 		}
 	}
 
@@ -251,6 +339,23 @@ class DataTypes {
 				sbf.append(prefix).append("maxValue: ").append(this.maxValue);
 				vals.add("max(" + this.maxValue + ')');
 			}
+		}
+
+		@Override
+		protected int getMaxLength() {
+			final int n1 = ("" + this.minValue).length() + 1;
+			final int n2 = ("" + this.maxValue).length() + 1;
+			return n1 > n2 ? n1 : n2;
+		}
+
+		@Override
+		protected long getMaxValue() {
+			return this.maxValue;
+		}
+
+		@Override
+		protected long getMinValue() {
+			return this.minValue;
 		}
 	}
 
@@ -282,6 +387,28 @@ class DataTypes {
 				vals.add("max(" + this.maxValue + ')');
 			}
 		}
+
+		@Override
+		protected int getMaxLength() {
+			final int n1 = ("" + this.minValue).length();
+			final int n2 = ("" + this.maxValue).length();
+			return (n1 > n2 ? n1 : n2) + this.nbrFractions + 1;
+		}
+
+		@Override
+		protected long getMaxValue() {
+			return this.maxValue;
+		}
+
+		@Override
+		protected long getMinValue() {
+			return this.minValue;
+		}
+
+		@Override
+		protected int getNbrDecimals() {
+			return this.nbrFractions;
+		}
 	}
 
 	protected static class TimestampType extends DataType {
@@ -292,6 +419,11 @@ class DataTypes {
 		@Override
 		protected void emitIstanceParams(final StringBuilder sbf) {
 			//
+		}
+
+		@Override
+		protected int getMaxLength() {
+			return 25;
 		}
 	}
 
@@ -324,6 +456,21 @@ class DataTypes {
 			if (this.regex != null) {
 				vals.add("pattern(" + Util.escapeTs(this.regex) + ")");
 			}
+		}
+
+		@Override
+		protected int getMaxLength() {
+			return this.maxLength;
+		}
+
+		@Override
+		protected int getMinLength() {
+			return this.minLength;
+		}
+
+		@Override
+		protected String getRegex() {
+			return this.regex;
 		}
 	}
 }

@@ -50,6 +50,12 @@ class Field implements Util.INamedMember {
 	boolean isRequired;
 	String listName;
 	String listKey;
+	String label;
+	String icon;
+	String fieldSuffix;
+	String fieldPrefix;
+	String placeHolder;
+	String hint;
 	int index;
 	String dbColumnName;
 	private String fieldType;
@@ -174,5 +180,37 @@ class Field implements Util.INamedMember {
 			map.put(vt.name().toLowerCase(), vt);
 		}
 		return map;
+	}
+
+	static final String BEGIN = "\n\t\t\t";
+	static final String END = "',";
+	static final char COMA = ',';
+
+	/**
+	 * @param sbf
+	 */
+	public void emitFormTs(final StringBuilder sbf) {
+		sbf.append("\n\t\t").append(this.name).append(": {");
+		sbf.append(BEGIN).append("name: '").append(this.name).append(END);
+		sbf.append(BEGIN).append("dataType: '").append(this.dataType).append(END);
+		sbf.append(BEGIN).append("isRequired: ").append(this.isRequired).append(COMA);
+		addAttr(sbf, "defaultValue", this.defaultValue);
+		addAttr(sbf, "label", this.label);
+		addAttr(sbf, "icon", this.icon);
+		addAttr(sbf, "suffix", this.fieldSuffix);
+		addAttr(sbf, "prefix", this.fieldPrefix);
+		addAttr(sbf, "placeHolder", this.placeHolder);
+		addAttr(sbf, "hint", this.hint);
+		addAttr(sbf, "errorId", this.errorId);
+		addAttr(sbf, "listName", this.listName);
+		addAttr(sbf, "listKeyName", this.listKey);
+		sbf.append("\n\t\t}");
+	}
+
+	private static void addAttr(final StringBuilder sbf, final String att, final String val) {
+		if (val != null) {
+			sbf.append(BEGIN).append(att).append(": ").append(Util.escape(val)).append(COMA);
+		}
+
 	}
 }

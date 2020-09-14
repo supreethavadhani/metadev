@@ -93,4 +93,29 @@ class ValueList implements Util.ISelfLoader {
 		}
 	}
 
+	protected void emitNewTs(final StringBuilder sbf) {
+		sbf.append("\n\t").append(this.name).append(": {");
+		sbf.append("\n\t\tname: '").append(this.name).append("',");
+		sbf.append("\n\t\tlist: [");
+
+		for (int i = 0; i < this.pairs.length; i++) {
+			if (i != 0) {
+				sbf.append(',');
+			}
+			sbf.append("\n\t\t\t{");
+			final Pair pair = this.pairs[i];
+			sbf.append("\n\t\t\t\tvalue:");
+			if (pair.value instanceof String) {
+				sbf.append(Util.escapeTs(pair.value));
+			} else {
+				sbf.append(pair.value);
+			}
+			sbf.append(",\n\t\t\t\tlabel:").append(Util.escapeTs(pair.label));
+			sbf.append("\n\t\t\t}");
+		}
+
+		sbf.append("\n\t\t]\n\t}");
+
+	}
+
 }

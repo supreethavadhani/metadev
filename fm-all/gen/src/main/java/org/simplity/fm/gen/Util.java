@@ -145,6 +145,11 @@ class Util {
 		return nam.substring(0, 1).toUpperCase() + nam.substring(1);
 	}
 
+	static String toName(final String name) {
+		final String nam = name;
+		return nam.substring(0, 1).toLowerCase() + nam.substring(1);
+	}
+
 	static String getClassQualifier(final String name) {
 		final int idx = name.lastIndexOf('.');
 		if (idx == -1) {
@@ -301,6 +306,14 @@ class Util {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	static void loadStringMap(final Map<String, String> map, final JsonReader reader) throws IOException {
+		reader.beginObject();
+		while (reader.peek() != JsonToken.END_OBJECT) {
+			map.put(reader.nextName(), reader.nextString());
+		}
+		reader.endObject();
 	}
 
 	/**

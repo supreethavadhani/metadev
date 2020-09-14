@@ -52,12 +52,139 @@ public class Generator {
 	 * @throws Exception
 	 */
 	public static void main(final String[] args) throws Exception {
-		if (args.length != 5) {
-			System.err.println(
-					"Usage : java Generator.class resourceRootFolder generatedSourceRootFolder generatedPackageName tsImportPrefix tsOutputFolder");
+		if (args.length == 2) {
+			generateForms(args[0], args[1]);
 			return;
 		}
-		generate(args[0], args[1], args[2], args[3], args[4]);
+		if (args.length == 5) {
+			generate(args[0], args[1], args[2], args[3], args[4]);
+			return;
+		}
+		System.err.println("Usage : java Generator.class resourceRootFolder tsFormFolder\n or \n"
+				+ "Usage : java Generator.class resourceRootFolder generatedSourceRootFolder generatedPackageName tsImportPrefix tsOutputFolder");
+	}
+
+	/**
+	 * generate *.form.ts files from records
+	 *
+	 * @param inputRootFolder
+	 * @param outputRootFolder
+	 */
+	public static void generateForms(final String inputRootFolder, final String outputRootFolder) {
+		String inFolder = inputRootFolder;
+		if (!inputRootFolder.endsWith(FOLDER)) {
+			inFolder += FOLDER;
+		}
+
+		String outFolder = outputRootFolder;
+		if (!outputRootFolder.endsWith(FOLDER)) {
+			outFolder += FOLDER;
+		}
+
+		final String fileName = inputRootFolder + Conventions.App.APP_FILE;
+		File f = new File(fileName);
+		if (f.exists() == false) {
+			logger.error("project configuration file {} not found. Aborting..", fileName);
+			return;
+		}
+
+		final Application app = new Application();
+		try (JsonReader reader = new JsonReader(new FileReader(f))) {
+			app.fromJson(reader);
+		} catch (final Exception e) {
+			logger.error("Exception while trying to read file {}. Error: {}", f.getPath(), e.getMessage());
+			e.printStackTrace();
+		}
+
+		/*
+		 * generate project level components like data types
+		 */
+		app.emitTsDataTypes(outFolder);
+		app.emitTsLists(outFolder);
+		emitMsgsTs(inFolder, outFolder);
+
+		logger.debug("Going to process records under folder {}", inFolder);
+		f = new File(inFolder + "rec/");
+
+		if (f.exists() == false) {
+			logger.error("Records folder {} not found. No records are processed", f.getPath());
+			return;
+		}
+		outFolder += "forms/";
+		ensureFolder(new File(outFolder));
+		for (final File file : f.listFiles()) {
+			final String fn = file.getName();
+			if (fn.endsWith(EXT_REC) == false) {
+				logger.debug("Skipping non-form file {} ", fn);
+				continue;
+			}
+			logger.info("file: {}", fn);
+			emitFormTs(file, outFolder);
+		}
+	}
+
+	private static void emitMsgsTs(final String inFolder, final String outFolder) {
+		logger.info("Generating Messages..");
+		final String fileName = inFolder + Conventions.App.MESSAGES_FILE;
+		final Map<String, String> msgs = new HashMap<>();
+		final File f = new File(fileName);
+		if (f.exists()) {
+			try (JsonReader reader = new JsonReader(new FileReader(f))) {
+				Util.loadStringMap(msgs, reader);
+				logger.info("{} messages read", msgs.size());
+			} catch (final Exception e) {
+				logger.error("Exception while trying to read file {}. Error: {}", f.getPath(), e.getMessage());
+				e.printStackTrace();
+				return;
+			}
+		} else {
+			logger.error("project has not defined messages mapping in the file {}.", fileName);
+		}
+
+		final StringBuilder sbf = new StringBuilder();
+		sbf.append("import { Messages } from 'simplity';");
+		sbf.append("\n\nexport const allMessages: Messages = {");
+		boolean isFirst = true;
+		for (final Map.Entry<String, String> entry : msgs.entrySet()) {
+			if (isFirst) {
+				isFirst = false;
+			} else {
+				sbf.append(',');
+			}
+			sbf.append("\n\t").append(Util.escape(entry.getKey())).append(": ").append(Util.escape(entry.getValue()));
+		}
+		sbf.append("\n}\n");
+		final String fn = outFolder + "messages.ts";
+		Util.writeOut(fn, sbf);
+		logger.info("Messages file {} generated", fn);
+	}
+
+	private static void emitFormTs(final File file, final String outFolder) {
+		String fn = file.getName();
+		fn = fn.substring(0, fn.length() - EXT_REC.length());
+		logger.debug("Going to generate record " + fn);
+		final Record record;
+		try (final JsonReader reader = new JsonReader(new FileReader(file))) {
+			record = Util.GSON.fromJson(reader, Record.class);
+		} catch (final Exception e) {
+			e.printStackTrace();
+			logger.error("Record {} not generated. Error : {}, {}", fn, e, e.getMessage());
+			return;
+		}
+		if (!fn.equals(record.name)) {
+			logger.error("File {} contains record named {}. It is mandatory to use record name same as the filename",
+					fn, record.name);
+			return;
+		}
+
+		record.init();
+
+		final StringBuilder sbf = new StringBuilder();
+		record.emitFormTs(sbf);
+		if (sbf.length() > 0) {
+			Util.writeOut(outFolder + fn + ".form.ts", sbf);
+		}
+
 	}
 
 	/**

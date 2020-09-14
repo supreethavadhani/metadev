@@ -103,10 +103,31 @@
                             "optionalData"
                         ]
                     },
+                    "label": {
+                        "type": "string"
+                    },
+                    "icon": {
+                        "type": "string"
+                    },
+                    "fieldPrefix": {
+                        "type": "string"
+                    },
+                    "fieldSuffix": {
+                        "type": "string"
+                    },
+                    "hint": {
+                        "type": "string"
+                    },
+                    "placeHolder": {
+                        "type": "string"
+                    },
                     "listName": {
                         "type": "string"
                     },
                     "listKey": {
+                        "type": "string"
+                    },
+                    "errorId":{
                         "type": "string"
                     }
                 },

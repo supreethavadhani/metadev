@@ -67,6 +67,7 @@ class Record {
 	String nameInDb;
 	boolean useTimestampCheck;
 	String customValidation;
+	String[] operations;
 	/*
 	 * reason we have it as an array rather than a MAP is that the sequence,
 	 * though not recommended, could be hard-coded by some coders
@@ -697,4 +698,30 @@ class Record {
 
 		sbf.append("\n}\n");
 	}
+
+	void emitFormTs(final StringBuilder sbf) {
+		sbf.append("import { Form } from 'simplity';");
+		sbf.append("\nexport const ").append(this.name).append("Form: Form = {");
+		sbf.append("\n\tname: '").append(this.name).append("',");
+		sbf.append("\n\tvalidOperations: {");
+		if (this.operations == null || this.operations.length == 0) {
+			logger.warn(
+					"No operatins are allowed for record {}. Client app will not be able to use auto-service for this record",
+					this.name);
+		} else {
+			for (final String oper : this.operations) {
+				sbf.append("\n\t\t").append(oper).append(": true,");
+			}
+			sbf.setLength(sbf.length() - 1);
+		}
+		sbf.append("\n\t},");
+		sbf.append("\n\tfields: {");
+		for (final Field field : this.fields) {
+			field.emitFormTs(sbf);
+			sbf.append(',');
+		}
+		sbf.setLength(sbf.length() - 1);
+		sbf.append("\n\t}\n}\n");
+	}
+
 }

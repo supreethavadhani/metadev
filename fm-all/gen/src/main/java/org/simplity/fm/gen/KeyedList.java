@@ -146,4 +146,44 @@ class KeyedList implements Util.ISelfLoader {
 			sbf.append(indent).append(']');
 		}
 	}
+
+	/**
+	 * @param sbf
+	 */
+	public void emitNewTs(final StringBuilder sbf) {
+		sbf.append("\n\t").append(this.name).append(": {");
+		sbf.append("\n\t\tname: '").append(this.name).append("',");
+		sbf.append("\n\t\tisKeyed: true,");
+		sbf.append("\n\t\tkeyedLists: {");
+
+		boolean firstOne = true;
+		for (final Map.Entry<String, ValueList> entry : this.lists.entrySet()) {
+			if (firstOne) {
+				firstOne = false;
+			} else {
+				sbf.append(C);
+			}
+			sbf.append("\n\t\t\t'").append(entry.getKey()).append("': [");
+			boolean f = true;
+			for (final Pair p : entry.getValue().pairs) {
+				if (f) {
+					f = false;
+				} else {
+					sbf.append(C);
+				}
+				sbf.append("\n\t\t\t\t{");
+				sbf.append("\n\t\t\t\t\tvalue:");
+				if (p.value instanceof String) {
+					sbf.append(Util.escapeTs(p.value));
+				} else {
+					sbf.append(p.value);
+				}
+				sbf.append(",\n\t\t\t\t\tlabel:").append(Util.escapeTs(p.label));
+				sbf.append("\n\t\t\t\t}");
+			}
+			sbf.append("\n\t\t\t]");
+		}
+
+		sbf.append("\n\t\t}\n\t}");
+	}
 }

@@ -176,4 +176,64 @@ public class Application {
 			Util.writeOut(folder + Util.toClassName(list.name) + ".java", sbf);
 		}
 	}
+
+	void emitTsDataTypes(final String folder) {
+		logger.info("Generatng data Types");
+		final StringBuilder sbf = new StringBuilder();
+		sbf.append("import { DataTypes } from 'simplity';");
+		sbf.append("\n\nexport const allDataTypes: DataTypes = {");
+		this.dataTypes.emitTs(sbf);
+		sbf.append("\n}\n");
+		final String fn = folder + "dataTypes.ts";
+		Util.writeOut(fn, sbf);
+		logger.info("File {} generated", fn);
+	}
+
+	void emitTsLists(final String folder) {
+		logger.info("Generatng data Types");
+		final StringBuilder sbf = new StringBuilder();
+		sbf.append("import { Lists } from 'simplity';");
+		sbf.append("\n\nexport const allLists: Lists = {");
+		int nbr = 0;
+
+		if (this.runtimeLists != null) {
+			for (final RuntimeList list : this.runtimeLists.values()) {
+				if (nbr != 0) {
+					sbf.append(",");
+				}
+				nbr++;
+				sbf.append("\n\t").append(list.name).append(": {");
+				sbf.append("\n\t\tname: '").append(list.name).append('\'');
+				if (list.keyColumn != null && list.keyColumn.isEmpty() == false) {
+					sbf.append(",\n\t\tisKeyed: true");
+				}
+				sbf.append("\n\t}");
+			}
+		}
+
+		if (this.valueLists != null) {
+			for (final ValueList list : this.valueLists.values()) {
+				if (nbr != 0) {
+					sbf.append(",");
+				}
+				nbr++;
+				list.emitNewTs(sbf);
+			}
+		}
+
+		if (this.keyedLists != null) {
+			for (final KeyedList list : this.keyedLists.values()) {
+				if (nbr != 0) {
+					sbf.append(",");
+				}
+				nbr++;
+				list.emitNewTs(sbf);
+			}
+		}
+
+		sbf.append("\n}\n");
+		final String fn = folder + "lists.ts";
+		Util.writeOut(fn, sbf);
+		logger.info("File {} generated with {} lists", fn, nbr);
+	}
 }

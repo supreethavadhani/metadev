@@ -176,6 +176,10 @@ public class Conventions {
 		 */
 		public static final String APP_FILE = "application.json";
 		/**
+		 * file that has the actual text for message ids
+		 */
+		public static final String MESSAGES_FILE = "messages.json";
+		/**
 		 * folder name (sun-package) under which all sources are generated
 		 */
 		public static final String FOLDER_NAME_GEN = "gen";
@@ -240,16 +244,6 @@ public class Conventions {
 		 * predefined name for list service
 		 */
 		public static final String SERVICE_LIST = "list";
-
-		/**
-		 * predefined name for list service
-		 */
-		public static final String SERVICE_LOGIN = "login";
-
-		/**
-		 * predefined name for list service
-		 */
-		public static final String SERVICE_LOGOUT = "logout";
 
 		/**
 		 * name with which the user data is saved in the context

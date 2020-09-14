@@ -1,5 +1,5 @@
 {
-    "description": "Schema for data base form.json",
+    "description": "Schema for form.json",
     "required": [
         "name",
         "recordName"
