@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.simplity.fm.core.data.FieldType;
+import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +57,10 @@ class Field implements Util.INamedMember {
 	String fieldPrefix;
 	String placeHolder;
 	String hint;
+	boolean renderInList;
+	boolean renderInSave;
+	ValueType valueType;
+
 	int index;
 	String dbColumnName;
 	private String fieldType;
@@ -64,6 +69,18 @@ class Field implements Util.INamedMember {
 	public void setNameAndIdx(final String name, final int idx) {
 		this.name = name;
 		this.index = idx;
+	}
+
+	void init(final Map<String, DataType> dataTypes) {
+		final DataType dt = dataTypes.get(this.dataType);
+		if (dt == null) {
+			logger.error("Field {} has an invalid dataType of {}. text value type is assumed", this.name,
+					this.dataType);
+			this.valueType = ValueType.Text;
+		} else {
+			this.valueType = dt.valueType;
+
+		}
 	}
 
 	void emitJavaCode(final StringBuilder sbf, final String dataTypesName, final boolean isDb) {
@@ -194,23 +211,20 @@ class Field implements Util.INamedMember {
 		sbf.append(BEGIN).append("name: '").append(this.name).append(END);
 		sbf.append(BEGIN).append("dataType: '").append(this.dataType).append(END);
 		sbf.append(BEGIN).append("isRequired: ").append(this.isRequired).append(COMA);
-		addAttr(sbf, "defaultValue", this.defaultValue);
-		addAttr(sbf, "label", this.label);
-		addAttr(sbf, "icon", this.icon);
-		addAttr(sbf, "suffix", this.fieldSuffix);
-		addAttr(sbf, "prefix", this.fieldPrefix);
-		addAttr(sbf, "placeHolder", this.placeHolder);
-		addAttr(sbf, "hint", this.hint);
-		addAttr(sbf, "errorId", this.errorId);
-		addAttr(sbf, "listName", this.listName);
-		addAttr(sbf, "listKeyName", this.listKey);
-		sbf.append("\n\t\t}");
-	}
-
-	private static void addAttr(final StringBuilder sbf, final String att, final String val) {
-		if (val != null) {
-			sbf.append(BEGIN).append(att).append(": ").append(Util.escape(val)).append(COMA);
+		String lbl = this.label;
+		if (lbl == null || lbl.isEmpty()) {
+			lbl = Util.toClassName(this.name);
 		}
-
+		Util.addAttr(sbf, BEGIN, "label", lbl);
+		Util.addAttr(sbf, BEGIN, "defaultValue", this.defaultValue);
+		Util.addAttr(sbf, BEGIN, "icon", this.icon);
+		Util.addAttr(sbf, BEGIN, "suffix", this.fieldSuffix);
+		Util.addAttr(sbf, BEGIN, "prefix", this.fieldPrefix);
+		Util.addAttr(sbf, BEGIN, "placeHolder", this.placeHolder);
+		Util.addAttr(sbf, BEGIN, "hint", this.hint);
+		Util.addAttr(sbf, BEGIN, "errorId", this.errorId);
+		Util.addAttr(sbf, BEGIN, "listName", this.listName);
+		Util.addAttr(sbf, BEGIN, "listKeyName", this.listKey);
+		sbf.append("\n\t\t}");
 	}
 }

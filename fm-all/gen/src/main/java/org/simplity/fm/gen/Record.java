@@ -34,6 +34,7 @@ import java.util.Set;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.data.DbTable;
 import org.simplity.fm.core.data.FieldType;
+import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.serialize.IInputObject;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.DependentListValidation;
@@ -41,6 +42,7 @@ import org.simplity.fm.core.validn.ExclusiveValidation;
 import org.simplity.fm.core.validn.FromToValidation;
 import org.simplity.fm.core.validn.IValidation;
 import org.simplity.fm.core.validn.InclusiveValidation;
+import org.simplity.fm.gen.DataTypes.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,6 +68,7 @@ class Record {
 	String name;
 	String nameInDb;
 	boolean useTimestampCheck;
+	boolean generatePage;
 	String customValidation;
 	String[] operations;
 	/*
@@ -93,7 +96,7 @@ class Record {
 	 */
 	transient boolean isUpdatable;
 
-	void init() {
+	void init(final Map<String, DataType> dataTypes) {
 		/*
 		 * we want to check for duplicate definition of standard fields
 		 */
@@ -111,6 +114,7 @@ class Record {
 			if (field == null) {
 				continue;
 			}
+			field.init(dataTypes);
 			idx++;
 			field.index = idx;
 			final String fieldName = field.name;
@@ -699,7 +703,7 @@ class Record {
 		sbf.append("\n}\n");
 	}
 
-	void emitFormTs(final StringBuilder sbf) {
+	void emitClientForm(final StringBuilder sbf) {
 		sbf.append("import { Form } from 'simplity';");
 		sbf.append("\nexport const ").append(this.name).append("Form: Form = {");
 		sbf.append("\n\tname: '").append(this.name).append("',");
@@ -722,6 +726,229 @@ class Record {
 		}
 		sbf.setLength(sbf.length() - 1);
 		sbf.append("\n\t}\n}\n");
+	}
+
+	void emitListPage(final StringBuilder sbf) {
+		//@formatter:off
+		sbf.append(
+				"import { NavigationAction, Page, FilterAction } from 'simplity';\n" +
+				"\n" +
+				"export const " + this.name + "List: Page = {\n" +
+				"    name: \"" + this.name  + "-list\",\n" +
+				"    isEditable: false,\n" +
+				"    titlePrefix: '" +this.name.toUpperCase() + " LIST',\n" +
+				"    hideMainMenu: false,\n" +
+				"    hideSubMenu: false,\n" +
+				"    onLoad: 'filter',\n" +
+				"    middleButtons: [\n" +
+				"        {\n" +
+				"            name: 'create-button',\n" +
+				"            compType: 'button',\n" +
+				"            buttonType: 'primary',\n" +
+				"            onClick: 'create',\n" +
+				"            label: 'New " + Util.toClassName(this.name)+ "',\n" +
+				"            tooltip: 'Add details for a new " + Util.toClassName(this.name)+ "',\n" +
+				"        }\n" +
+				"    ],\n" +
+				"    actions: {\n" +
+				"        filter: {\n" +
+				"            name: 'filter',\n" +
+				"            type: 'form',\n" +
+				"            formOperation: 'filter',\n" +
+				"            childName: 'itemList',\n" +
+				"            formName: '" + this.name + "',\n" +
+				"        } as FilterAction,\n" +
+				"        create: {\n" +
+				"            name: 'create',\n" +
+				"            type: 'navigation',\n" +
+				"            operation: 'open',\n" +
+				"            menuName: '" + this.name + "-add',\n" +
+				"        } as NavigationAction,\n" +
+				"        edit: {\n" +
+				"            name: 'edit',\n" +
+				"            type: 'navigation',\n" +
+				"            operation: 'open',\n" +
+				"            menuName: '" + this.name +"-edit',\n" +
+				"            params: { ");
+		boolean isFirst = true;
+		for(final Field key: this.keyFields) {
+			if(isFirst) {
+				isFirst = false;
+			}else {
+				sbf.append(", ");
+			}
+			sbf.append("\n\t\t\t\t").append( key.name).append(": '$").append(key.name).append("'");
+		}
+		sbf.append("\n\t\t\t}\n" +
+				"        } as NavigationAction,\n" +
+				"        cancel: {\n" +
+				"            name: 'cancel',\n" +
+				"            type: 'navigation',\n" +
+				"            operation: 'cancel'\n" +
+				"        } as NavigationAction\n" +
+				"    },\n" +
+				"    dataPanel: {\n" +
+				"        name: 'container-panel',\n" +
+				"        compType: 'panel',\n" +
+				"        panelType: 'container',\n" +
+				"        children: [\n" +
+				"            {\n" +
+				"                name: 'itemList',\n" +
+				"                compType: 'table',\n" +
+				"                tableType: 'display',\n" +
+				"                formName: '" + this.name + "',\n" +
+				"                onRowClick: 'edit',\n" +
+				"                columns: [");
+		isFirst = true;
+		for(final Field field : this.fields) {
+			if(!field.renderInList) {
+				continue;
+			}
+			if(isFirst) {
+				isFirst = false;
+			}else {
+				sbf.append(',');
+			}
+			sbf.append(
+				"\n                    {" +
+				"\n                        name: '" + field.name +"'," +
+				"\n                        compType: 'field'," +
+				"\n                        fieldType: 'output'" +
+				"\n                    }"
+			);
+		}
+
+		sbf.append(
+				"\n                ]\n" +
+				"            }\n" +
+				"        ]\n" +
+				"    }\n" +
+				"}");
+	}
+	//@formatter:on
+
+	void emitSavePage(final StringBuilder sbf) {
+		//@formatter:off
+		sbf.append(
+				"import { Page, EditCard, NavigationAction, SaveAction, GetAction } from 'simplity';\n" +
+				"\n" +
+				"export const " + this.name + "Save: Page = {\n" +
+				"    name: '" + this.name + "-save',\n" +
+				"    formName: 'department',\n" +
+				"    isEditable: true,\n" +
+				"    titlePrefix: 'NEW " + this.name.toUpperCase() + "',\n" +
+				"    hideMainMenu: true,\n" +
+				"    hideSubMenu: true,\n" +
+				"    onLoad: 'get',\n" +
+				"    inputIsForUpdate: true,\n" +
+				"    inputs: {"
+				);
+		boolean isFirst = true;
+		for(final Field key: this.keyFields) {
+			if(isFirst) {
+				isFirst = false;
+			}else {
+				sbf.append(", ");
+			}
+			sbf.append("\n\t\t").append( key.name).append(": false");
+		}
+
+		sbf.append("\n    },\n" +
+				"    actions: {\n" +
+				"        get: {\n" +
+				"            name: 'get',\n" +
+				"            type: 'form',\n" +
+				"            formOperation: 'get',\n" +
+				"            formName: 'department',\n" +
+				"            params: {\n" +
+				"                departmentId: true\n" +
+				"            }\n" +
+				"        } as GetAction,\n" +
+				"        save: {\n" +
+				"            name: 'save',\n" +
+				"            type: 'form',\n" +
+				"            formOperation: 'save',\n" +
+				"            onSuccess: 'close'\n" +
+				"        } as SaveAction,\n" +
+				"        cancel: {\n" +
+				"            name: 'cancel',\n" +
+				"            type: 'navigation',\n" +
+				"            operation: 'cancel'\n" +
+				"        } as NavigationAction,\n" +
+				"        close: {\n" +
+				"            name: 'close',\n" +
+				"            type: 'navigation',\n" +
+				"            operation: 'close'\n" +
+				"        } as NavigationAction\n" +
+				"    },\n" +
+				"    dataPanel: {\n" +
+				"        name: 'data-panel',\n" +
+				"        compType: 'panel',\n" +
+				"        panelType: 'edit',\n" +
+				"        children: [\n" +
+				"            {\n" +
+				"                name: 'data-card',\n" +
+				"                cardType: 'edit',\n" +
+				"                compType: 'card',\n" +
+				"                children: ["
+				);
+
+		isFirst = true;
+		for(final Field field: this.fields) {
+			if(!field.renderInSave) {
+				continue;
+			}
+
+			if(isFirst) {
+				isFirst = false;
+			}else {
+				sbf.append(',');
+			}
+
+			String ft;
+			if(field.valueType == ValueType.Boolean) {
+				ft = "checkbox";
+			}else if(field.listName != null) {
+				ft = "select";
+			}else {
+				ft = "text";
+			}
+			sbf.append(
+					"\n                    {" +
+					"\n                        name: '" + field.name + "'," +
+					"\n                        compType: 'field'," +
+					"\n                        fieldType: '" + ft + "'" +
+					"\n                    }"
+			);
+		}
+
+		sbf.append(
+				"                ]\n" +
+				"            } as EditCard\n" +
+				"        ]\n" +
+				"    },\n" +
+				"    middleButtons: [\n" +
+				"        {\n" +
+				"            name: 'cancel-button',\n" +
+				"            compType: 'button',\n" +
+				"            buttonType: 'secondary',\n" +
+				"            onClick: 'cancel',\n" +
+				"            label: 'Cancel',\n" +
+				"            tooltip: 'Abandon Changes'\n" +
+				"        },\n" +
+				"        {\n" +
+				"            name: 'save-button',\n" +
+				"            compType: 'button',\n" +
+				"            buttonType: 'primary',\n" +
+				"            onClick: 'save',\n" +
+				"            label: 'Save',\n" +
+				"            tooltip: 'save " + this.name + " details',\n" +
+				"            enableWhen: 'valid'\n" +
+				"        }\n" +
+				"    ]\n" +
+				"}"
+		);
+
 	}
 
 }

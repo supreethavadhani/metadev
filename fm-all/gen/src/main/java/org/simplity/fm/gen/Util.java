@@ -211,6 +211,7 @@ class Util {
 	}
 
 	/**
+	 * client side uses 0 for text etc...
 	 *
 	 * @param valueType
 	 * @return get index used by the client for this value type
@@ -308,6 +309,14 @@ class Util {
 		}
 	}
 
+	/**
+	 * extract entries of the form {"att": "value", "att2": "avlue2"... } into
+	 * the map
+	 *
+	 * @param map
+	 * @param reader
+	 * @throws IOException
+	 */
 	static void loadStringMap(final Map<String, String> map, final JsonReader reader) throws IOException {
 		reader.beginObject();
 		while (reader.peek() != JsonToken.END_OBJECT) {
@@ -357,6 +366,8 @@ class Util {
 	}
 
 	/**
+	 * read and discard the next token
+	 *
 	 * @param reader
 	 * @throws IOException
 	 */
@@ -399,6 +410,12 @@ class Util {
 		}
 	}
 
+	/**
+	 * like new String[]{"firstOne", ....}
+	 *
+	 * @param arr
+	 * @param sbf
+	 */
 	public static void emitArray(final String[] arr, final StringBuilder sbf) {
 		sbf.append("new String[]{");
 		boolean firstOne = true;
@@ -411,5 +428,20 @@ class Util {
 			sbf.append(escape(s));
 		}
 		sbf.append('}');
+	}
+
+	/**
+	 * add att: "value', but only if it is required
+	 *
+	 * @param sbf
+	 * @param prefix
+	 * @param att
+	 * @param val
+	 */
+	static void addAttr(final StringBuilder sbf, final String prefix, final String att, final String val) {
+		if (val == null || val.isEmpty()) {
+			return;
+		}
+		sbf.append(prefix).append(Util.escape(att)).append(": ").append(Util.escape(val)).append(',');
 	}
 }

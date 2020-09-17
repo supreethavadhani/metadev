@@ -110,8 +110,20 @@ public class Generator {
 			logger.error("Records folder {} not found. No records are processed", f.getPath());
 			return;
 		}
-		outFolder += "forms/";
-		ensureFolder(new File(outFolder));
+
+		ensureFolder(new File(outFolder + "forms/"));
+		ensureFolder(new File(outFolder + "pages/"));
+		/*
+		 * builders for the declaration files
+		 */
+		final StringBuilder sbf = new StringBuilder();
+		final StringBuilder menus = new StringBuilder(
+				"import { MenuItems } from 'simplity';\nexport const generatedMenuItems: MenuItems = {");
+		final StringBuilder forms = new StringBuilder("\nexport const generatedForms: Forms = {");
+		final StringBuilder formsImport = new StringBuilder("import { Forms } from 'simplity';");
+		final StringBuilder pages = new StringBuilder("\nexport const generatedPages: Pages = {");
+		final StringBuilder pagesImport = new StringBuilder("import { Pages } from 'simplity';");
+
 		for (final File file : f.listFiles()) {
 			final String fn = file.getName();
 			if (fn.endsWith(EXT_REC) == false) {
@@ -119,8 +131,101 @@ public class Generator {
 				continue;
 			}
 			logger.info("file: {}", fn);
-			emitFormTs(file, outFolder);
+			logger.debug("Going to generate record " + fn);
+			final Record record;
+			try (final JsonReader reader = new JsonReader(new FileReader(file))) {
+				record = Util.GSON.fromJson(reader, Record.class);
+			} catch (final Exception e) {
+				e.printStackTrace();
+				logger.error("Record {} not generated. Error : {}, {}", fn, e, e.getMessage());
+				continue;
+			}
+			final String RecordName = fn.substring(0, fn.length() - ".rec.json".length());
+			if (!RecordName.equals(record.name)) {
+				logger.error(
+						"Fi le {} contains record named {}. It is mandatory to use record name same as the filename",
+						RecordName, record.name);
+				continue;
+			}
+
+			record.init(app.dataTypes.dataTypes);
+
+			sbf.setLength(0);
+			record.emitClientForm(sbf);
+			String genFileName;
+			if (sbf.length() > 0) {
+				genFileName = outFolder + "forms/" + RecordName + ".form.ts";
+				Util.writeOut(genFileName, sbf);
+				logger.info("form {} generated", genFileName);
+				forms.append("\n\t").append(RecordName).append(": ").append(RecordName).append("Form,");
+				formsImport.append("\nimport { ").append(RecordName).append("Form } from './forms/").append(RecordName)
+						.append(".form';");
+			}
+
+			if (!record.generatePage) {
+				continue;
+			}
+
+			sbf.setLength(0);
+			record.emitListPage(sbf);
+			genFileName = outFolder + "pages/" + RecordName + "-list.page.ts";
+			Util.writeOut(genFileName, sbf);
+			logger.info("list page {} generated", genFileName);
+
+			genFileName = outFolder + "pages/" + RecordName + "-save.page.ts";
+			sbf.setLength(0);
+			record.emitSavePage(sbf);
+			Util.writeOut(genFileName, sbf);
+			logger.info("save page {} generated", genFileName);
+
+			/*
+			 * three menu items are to be added
+			 */
+			menus.append("\n\t'").append(RecordName).append("-list': {");
+			menus.append("\n\t\tid :'").append(RecordName).append("-list',");
+			menus.append("\n\t\tpageName :'").append(RecordName).append("-list',");
+			menus.append("\n\t\tlabel :'").append(Util.toClassName(RecordName)).append(" List',");
+			menus.append("\n\t\tisHidden :false");
+			menus.append("\n\t},");
+
+			menus.append("\n\t'").append(RecordName).append("-add': {");
+			menus.append("\n\t\tid :'").append(RecordName).append("-add',");
+			menus.append("\n\t\tpageName :'").append(RecordName).append("-save',");
+			menus.append("\n\t\tisHidden :true");
+			menus.append("\n\t},");
+
+			menus.append("\n\t'").append(RecordName).append("-edit': {");
+			menus.append("\n\t\tid :'").append(RecordName).append("-edit',");
+			menus.append("\n\t\tpageName :'").append(RecordName).append("-save',");
+			menus.append("\n\t\tisHidden :true");
+			menus.append("\n\t},");
+
+			/*
+			 * two pages are added
+			 */
+			pages.append("\n\t'").append(RecordName).append("-list': ").append(RecordName).append("List,");
+			pagesImport.append("\nimport { ").append(RecordName).append("List } from './pages/").append(RecordName)
+					.append("-list.page';");
+
+			pages.append("\n\t'").append(RecordName).append("-save': ").append(RecordName).append("Save,");
+			pagesImport.append("\nimport { ").append(RecordName).append("Save } from './pages/").append(RecordName)
+					.append("-save.page';");
+
 		}
+
+		/*
+		 * write-out declaration files
+		 */
+		formsImport.append(forms.toString()).append("\n}\n");
+		Util.writeOut(outFolder + "forms.ts", formsImport);
+
+		pagesImport.append(pages.toString()).append("\n}\n");
+		Util.writeOut(outFolder + "pages.ts", pagesImport);
+
+		menus.setLength(menus.length() - 1);
+		menus.append("\n}\n");
+		Util.writeOut(outFolder + "menuItems.ts", menus);
+
 	}
 
 	private static void emitMsgsTs(final String inFolder, final String outFolder) {
@@ -157,34 +262,6 @@ public class Generator {
 		final String fn = outFolder + "messages.ts";
 		Util.writeOut(fn, sbf);
 		logger.info("Messages file {} generated", fn);
-	}
-
-	private static void emitFormTs(final File file, final String outFolder) {
-		String fn = file.getName();
-		fn = fn.substring(0, fn.length() - EXT_REC.length());
-		logger.debug("Going to generate record " + fn);
-		final Record record;
-		try (final JsonReader reader = new JsonReader(new FileReader(file))) {
-			record = Util.GSON.fromJson(reader, Record.class);
-		} catch (final Exception e) {
-			e.printStackTrace();
-			logger.error("Record {} not generated. Error : {}, {}", fn, e, e.getMessage());
-			return;
-		}
-		if (!fn.equals(record.name)) {
-			logger.error("File {} contains record named {}. It is mandatory to use record name same as the filename",
-					fn, record.name);
-			return;
-		}
-
-		record.init();
-
-		final StringBuilder sbf = new StringBuilder();
-		record.emitFormTs(sbf);
-		if (sbf.length() > 0) {
-			Util.writeOut(outFolder + fn + ".form.ts", sbf);
-		}
-
 	}
 
 	/**
@@ -382,7 +459,7 @@ public class Generator {
 			return null;
 		}
 
-		record.init();
+		record.init(dataTypes.dataTypes);
 
 		final String outNamePrefix = generatedSourceRootFolder + "rec/" + Util.toClassName(fn);
 		/*

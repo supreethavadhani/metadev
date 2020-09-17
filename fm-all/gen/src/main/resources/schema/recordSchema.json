@@ -22,6 +22,9 @@
         "useTimestampCheck": {
             "type": "boolean"
         },
+        "generatePage": { 
+            "type" : "boolean"
+        },
         "operations": {
             "type": "array",
             "items": {
@@ -129,6 +132,12 @@
                     },
                     "errorId":{
                         "type": "string"
+                    },
+                    "renderInList":{
+                        "type": "boolean"
+                    },
+                    "renderInSave":{
+                        "type": "boolean"
                     }
                 },
                 "additionalProperties": false
