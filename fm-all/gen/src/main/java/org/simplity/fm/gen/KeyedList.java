@@ -178,7 +178,7 @@ class KeyedList implements Util.ISelfLoader {
 				} else {
 					sbf.append(p.value);
 				}
-				sbf.append(",\n\t\t\t\t\tlabel:").append(Util.escapeTs(p.label));
+				sbf.append(",\n\t\t\t\t\ttext:").append(Util.escapeTs(p.label));
 				sbf.append("\n\t\t\t\t}");
 			}
 			sbf.append("\n\t\t\t]");

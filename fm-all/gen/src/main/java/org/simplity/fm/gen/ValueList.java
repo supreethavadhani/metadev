@@ -110,7 +110,7 @@ class ValueList implements Util.ISelfLoader {
 			} else {
 				sbf.append(pair.value);
 			}
-			sbf.append(",\n\t\t\t\tlabel:").append(Util.escapeTs(pair.label));
+			sbf.append(",\n\t\t\t\ttext:").append(Util.escapeTs(pair.label));
 			sbf.append("\n\t\t\t}");
 		}
 
