@@ -68,7 +68,7 @@ class Record {
 	String name;
 	String nameInDb;
 	boolean useTimestampCheck;
-	boolean generatePage;
+	String[] generatePages;
 	String customValidation;
 	String[] operations;
 	/*
@@ -910,7 +910,7 @@ class Record {
 			"        panelType: 'edit',\n" +
 			"        children: ["
 			);
-			emitCard("edit-card", sbf, this.getFieldsToRender());
+			emitCard("edit-card", true, sbf, this.getFieldsToRender());
 		}else {
 			sbf.append(
 			"        panelType: 'tab-group',\n" +
@@ -933,7 +933,7 @@ class Record {
 				"            children :["
 				);
 
-				emitCard(tab.name + "-card", sbf, this.getFieldsToRender(tab.fields));
+				emitCard(tab.name + "-card", true, sbf, this.getFieldsToRender(tab.fields));
 				sbf.append("\n" +
 				"            ]\n" +
 				"        }"
@@ -965,20 +965,98 @@ class Record {
 		return sbf.toString();
 	}
 
-	void emitSavePage1(final StringBuilder sbf) {
+	private List<Field> getFieldsToRender() {
+		final List<Field> result = new ArrayList<>();
+		for (final Field field : this.fields) {
+			if (field.renderInSave) {
+				result.add(field);
+			}
+		}
+		return result;
+	}
+
+	private List<Field> getFieldsToRender(final String[] names) {
+		final List<Field> result = new ArrayList<>();
+		for (final String s : names) {
+			final Field field = this.fieldMap.get(s);
+			if (field == null) {
+				logger.error("{} is not a field in this record, but it is included in a tab. ignored", s);
+			} else {
+				result.add(field);
+			}
+		}
+		logger.info("{} names added to this tab", names.length);
+		return result;
+	}
+
+	private static void emitCard(final String cardName, final boolean forEdit, final StringBuilder sbf,
+			final List<Field> list) {
 		//@formatter:off
 		sbf.append(
-				"import { Page, EditCard, NavigationAction, SaveAction, GetAction } from 'simplity';\n" +
+		"\n            {\n" +
+		"                name: '" + cardName + "',\n" +
+		"                cardType: '" + (forEdit? "edit" : "display" ) + "',\n" +
+		"                compType: 'card',\n" +
+		"                children: ["
+		);
+
+		boolean isFirst = true;
+		for(final Field field: list) {
+			if(isFirst) {
+				isFirst = false;
+			}else {
+				sbf.append(',');
+			}
+
+			sbf.append(
+			"\n                    {" +
+			"\n                        name: '" + field.name + "'," +
+			"\n                        compType: 'field'," +
+			"\n                        fieldType: '" + (forEdit ? getFieldType(field) : "output") + "'" +
+			"\n                    }"
+			);
+		}
+
+		sbf.append("\n" +
+				"                ]\n" +
+				"            } as " + (forEdit ? "Edit" : "Display") + "Card"
+		);
+
+		//@formatter:on
+	}
+
+	private static String getFieldType(final Field field) {
+		if (field.valueType == ValueType.Boolean) {
+			return "checkbox";
+		}
+		if (field.listName != null) {
+			return "select";
+		}
+		return "text";
+	}
+
+	static class Tab {
+		String name;
+		String label;
+		String[] fields;
+	}
+
+	/**
+	 * @param sbf
+	 */
+	public void ViewPage(final StringBuilder sbf) {
+		//@formatter:off
+		sbf.append(
+				"import { Page, DisplayCard, NavigationAction, GetAction } from 'simplity';\n" +
 				"\n" +
-				"export const " + this.name + "Save: Page = {\n" +
-				"    name: '" + this.name + "-save',\n" +
-				"    formName: 'department',\n" +
-				"    isEditable: true,\n" +
-				"    titlePrefix: 'NEW " + this.name.toUpperCase() + "',\n" +
-				"    hideMainMenu: true,\n" +
-				"    hideSubMenu: true,\n" +
+				"export const " + this.name + "View: Page = {\n" +
+				"    name: '" + this.name + "-view',\n" +
+				"    formName: '" + this.name + "',\n" +
+				"    isEditable: false,\n" +
+				"    titlePrefix: 'View " + this.name + " Details',\n" +
+				"    hideMainMenu: false,\n" +
+				"    hideSubMenu: false,\n" +
 				"    onLoad: 'get',\n" +
-				"    inputIsForUpdate: true,\n" +
 				"    inputs: {"
 				);
 		boolean isFirst = true;
@@ -997,21 +1075,15 @@ class Record {
 				"            name: 'get',\n" +
 				"            type: 'form',\n" +
 				"            formOperation: 'get',\n" +
-				"            formName: 'department',\n" +
-				"            params: {\n" +
-				"                departmentId: true\n" +
+				"            formName: '" + this.name + "',\n" +
+				"            params: {" +
+								this.getParamsForGet() + '\n' +
 				"            }\n" +
 				"        } as GetAction,\n" +
-				"        save: {\n" +
-				"            name: 'save',\n" +
-				"            type: 'form',\n" +
-				"            formOperation: 'save',\n" +
-				"            onSuccess: 'close'\n" +
-				"        } as SaveAction,\n" +
-				"        cancel: {\n" +
-				"            name: 'cancel',\n" +
+				"        edit: {\n" +
+				"            name: 'edit',\n" +
 				"            type: 'navigation',\n" +
-				"            operation: 'cancel'\n" +
+				"            operation: 'open'\n" +
 				"        } as NavigationAction,\n" +
 				"        close: {\n" +
 				"            name: 'close',\n" +
@@ -1019,148 +1091,68 @@ class Record {
 				"            operation: 'close'\n" +
 				"        } as NavigationAction\n" +
 				"    },\n" +
-				"    dataPanel: {\n" +
-				"        name: 'data-panel',\n" +
-				"        compType: 'panel',\n" +
-				"        panelType: 'edit',\n" +
-				"        children: [\n" +
-				"            {\n" +
-				"                name: 'data-card',\n" +
-				"                cardType: 'edit',\n" +
-				"                compType: 'card',\n" +
-				"                children: ["
-				);
-
-		isFirst = true;
-		for(final Field field: this.fields) {
-			if(!field.renderInSave) {
-				continue;
-			}
-
-			if(isFirst) {
-				isFirst = false;
-			}else {
-				sbf.append(',');
-			}
-
-			String ft;
-			if(field.valueType == ValueType.Boolean) {
-				ft = "checkbox";
-			}else if(field.listName != null) {
-				ft = "select";
-			}else {
-				ft = "text";
-			}
-			sbf.append(
-					"\n                    {" +
-					"\n                        name: '" + field.name + "'," +
-					"\n                        compType: 'field'," +
-					"\n                        fieldType: '" + ft + "'" +
-					"\n                    }"
-			);
-		}
-
-		sbf.append(
-				"                ]\n" +
-				"            } as EditCard\n" +
-				"        ]\n" +
-				"    },\n" +
 				"    middleButtons: [\n" +
 				"        {\n" +
-				"            name: 'cancel-button',\n" +
+				"            name: 'close-button',\n" +
 				"            compType: 'button',\n" +
 				"            buttonType: 'secondary',\n" +
-				"            onClick: 'cancel',\n" +
-				"            label: 'Cancel',\n" +
-				"            tooltip: 'Abandon Changes'\n" +
+				"            onClick: 'close',\n" +
+				"            label: 'Close',\n" +
+				"            tooltip: 'Close this page'\n" +
 				"        },\n" +
 				"        {\n" +
-				"            name: 'save-button',\n" +
+				"            name: 'edit-button',\n" +
 				"            compType: 'button',\n" +
 				"            buttonType: 'primary',\n" +
-				"            onClick: 'save',\n" +
-				"            label: 'Save',\n" +
-				"            tooltip: 'save " + this.name + " details',\n" +
-				"            enableWhen: 'valid'\n" +
+				"            onClick: 'edit',\n" +
+				"            label: 'Edit',\n" +
+				"            tooltip: 'Edit " + this.name + " details',\n" +
 				"        }\n" +
-				"    ]\n" +
-				"}"
-		);
-
-	}
-
-	private List<Field> getFieldsToRender() {
-		final List<Field> result = new ArrayList<>();
-		for(final Field field : this.fields) {
-			if(field.renderInSave) {
-				result.add(field);
-			}
-		}
-		return result;
-	}
-
-	private List<Field> getFieldsToRender(final String[] names) {
-		final List<Field> result = new ArrayList<>();
-		for(final String s : names) {
-			final Field field = this.fieldMap.get(s);
-			if(field == null) {
-				logger.error("{} is not a field in this record, but it is included in a tab. ignored", s);
-			}else {
-				result.add(field);
-			}
-		}
-		logger.info("{} names added to this tab", names.length);
-		return result;
-	}
-
-	private static void emitCard(final String cardName, final StringBuilder sbf, final List<Field> list) {
-		sbf.append(
-		"\n            {\n" +
-		"                name: '" + cardName + "',\n" +
-		"                cardType: 'edit',\n" +
-		"                compType: 'card',\n" +
-		"                children: ["
-		);
-
-		boolean isFirst = true;
-		for(final Field field: list) {
-			if(isFirst) {
-				isFirst = false;
-			}else {
-				sbf.append(',');
-			}
-
+				"    ],\n" +
+				"    dataPanel: {\n" +
+				"        name: 'data-panel',\n" +
+				"        compType: 'panel',\n"
+				);
+		if(this.tabs == null) {
 			sbf.append(
-			"\n                    {" +
-			"\n                        name: '" + field.name + "'," +
-			"\n                        compType: 'field'," +
-			"\n                        fieldType: '" + getFiledType(field) + "'" +
-			"\n                    }"
+			"        panelType: 'display',\n" +
+			"        children: ["
 			);
-		}
+			emitCard("display-card", false, sbf, this.getFieldsToRender());
+		}else {
+			sbf.append(
+			"        panelType: 'tab-group',\n" +
+			"        children: ["
+			);
+			isFirst = true;
+			for(final Tab tab: this.tabs) {
+				if(isFirst) {
+					isFirst = false;
+				}else {
+					sbf.append(',');
+				}
 
+				sbf.append("\n" +
+				"        {\n" +
+				"            name: '" + tab.name + "',\n" +
+				"            compType: 'panel',\n" +
+				"            panelType: 'tab',\n" +
+				"            label: '" + tab.label + "', \n" +
+				"            children :["
+				);
+
+				emitCard(tab.name + "-card", false, sbf, this.getFieldsToRender(tab.fields));
+				sbf.append("\n" +
+				"            ]\n" +
+				"        }"
+				);
+			}
+		}
 		sbf.append("\n" +
-				"                ]\n" +
-				"            } as EditCard"
+			"        ]\n" +
+			"    }\n" +
+			"}\n"
 		);
-
+		//@formatter:on
 	}
-
-	private static String  getFiledType(final Field field) {
-		if(field.valueType == ValueType.Boolean) {
-			return "checkbox";
-		}
-		if(field.listName != null) {
-			return "select";
-		}
-		return "text";
-	}
-
-	static class Tab{
-		String name;
-		String label;
-		String[] fields;
-	}
-
-
 }

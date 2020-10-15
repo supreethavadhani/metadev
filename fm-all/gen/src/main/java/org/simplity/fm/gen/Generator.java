@@ -162,54 +162,97 @@ public class Generator {
 						.append(".form';");
 			}
 
-			if (!record.generatePage) {
+			if (record.generatePages == null || record.generatePages.length == 0) {
 				continue;
 			}
 
-			sbf.setLength(0);
-			record.emitListPage(sbf);
-			genFileName = outFolder + "pages/" + RecordName + "-list.page.ts";
-			Util.writeOut(genFileName, sbf);
-			logger.info("list page {} generated", genFileName);
+			for (final String t : record.generatePages) {
+				switch (t) {
+				case "list":
+					sbf.setLength(0);
+					record.emitListPage(sbf);
+					genFileName = outFolder + "pages/" + RecordName + "-list.page.ts";
+					Util.writeOut(genFileName, sbf);
+					logger.info("list page {} generated", genFileName);
+					/*
+					 * menu for list operation
+					 */
+					menus.append("\n\t'").append(RecordName).append("-list': {");
+					menus.append("\n\t\tid :'").append(RecordName).append("-list',");
+					menus.append("\n\t\tpageName :'").append(RecordName).append("-list',");
+					menus.append("\n\t\tlabel :'").append(Util.toClassName(RecordName)).append(" List',");
+					menus.append("\n\t\tisHidden :false");
+					menus.append("\n\t},");
 
-			genFileName = outFolder + "pages/" + RecordName + "-save.page.ts";
-			sbf.setLength(0);
-			record.emitSavePage(sbf);
-			Util.writeOut(genFileName, sbf);
-			logger.info("save page {} generated", genFileName);
+					/*
+					 * add the pages list
+					 */
+					pages.append("\n\t'").append(RecordName).append("-list': ").append(RecordName).append("List,");
+					pagesImport.append("\nimport { ").append(RecordName).append("List } from './pages/")
+							.append(RecordName).append("-list.page';");
 
-			/*
-			 * three menu items are to be added
-			 */
-			menus.append("\n\t'").append(RecordName).append("-list': {");
-			menus.append("\n\t\tid :'").append(RecordName).append("-list',");
-			menus.append("\n\t\tpageName :'").append(RecordName).append("-list',");
-			menus.append("\n\t\tlabel :'").append(Util.toClassName(RecordName)).append(" List',");
-			menus.append("\n\t\tisHidden :false");
-			menus.append("\n\t},");
+					break;
 
-			menus.append("\n\t'").append(RecordName).append("-add': {");
-			menus.append("\n\t\tid :'").append(RecordName).append("-add',");
-			menus.append("\n\t\tpageName :'").append(RecordName).append("-save',");
-			menus.append("\n\t\tisHidden :true");
-			menus.append("\n\t},");
+				case "save":
+					genFileName = outFolder + "pages/" + RecordName + "-save.page.ts";
+					sbf.setLength(0);
+					record.emitSavePage(sbf);
+					Util.writeOut(genFileName, sbf);
+					logger.info("save page {} generated", genFileName);
 
-			menus.append("\n\t'").append(RecordName).append("-edit': {");
-			menus.append("\n\t\tid :'").append(RecordName).append("-edit',");
-			menus.append("\n\t\tpageName :'").append(RecordName).append("-save',");
-			menus.append("\n\t\tisHidden :true");
-			menus.append("\n\t},");
+					/*
+					 * menu entry : add and edit
+					 */
+					menus.append("\n\t'").append(RecordName).append("-add': {");
+					menus.append("\n\t\tid :'").append(RecordName).append("-add',");
+					menus.append("\n\t\tpageName :'").append(RecordName).append("-save',");
+					menus.append("\n\t\tisHidden :true");
+					menus.append("\n\t},");
 
-			/*
-			 * two pages are added
-			 */
-			pages.append("\n\t'").append(RecordName).append("-list': ").append(RecordName).append("List,");
-			pagesImport.append("\nimport { ").append(RecordName).append("List } from './pages/").append(RecordName)
-					.append("-list.page';");
+					menus.append("\n\t'").append(RecordName).append("-edit': {");
+					menus.append("\n\t\tid :'").append(RecordName).append("-edit',");
+					menus.append("\n\t\tpageName :'").append(RecordName).append("-save',");
+					menus.append("\n\t\tisHidden :true");
+					menus.append("\n\t},");
 
-			pages.append("\n\t'").append(RecordName).append("-save': ").append(RecordName).append("Save,");
-			pagesImport.append("\nimport { ").append(RecordName).append("Save } from './pages/").append(RecordName)
-					.append("-save.page';");
+					/*
+					 * entry for this page
+					 */
+					pages.append("\n\t'").append(RecordName).append("-save':  ").append(RecordName).append("Save,");
+					pagesImport.append("\nimport { ").append(RecordName).append("Save } from './pages/")
+							.append(RecordName).append("-save.page';");
+					break;
+				case "view":
+					sbf.setLength(0);
+					record.ViewPage(sbf);
+					genFileName = outFolder + "pages/" + RecordName + "-view.page.ts";
+					Util.writeOut(genFileName, sbf);
+					logger.info("view page {} generated", genFileName);
+					/*
+					 * menu for this operation
+					 */
+					menus.append("\n\t'").append(RecordName).append("-view': {");
+					menus.append("\n\t\tid :'").append(RecordName).append("-view',");
+					menus.append("\n\t\tpageName :'").append(RecordName).append("-view',");
+					menus.append("\n\t\tlabel :'").append(Util.toClassName(RecordName)).append(" View',");
+					menus.append("\n\t\tisHidden :true");
+					menus.append("\n\t},");
+
+					/*
+					 * add to the pages list
+					 */
+					pages.append("\n\t'").append(RecordName).append("-view': ").append(RecordName).append("View,");
+					pagesImport.append("\nimport { ").append(RecordName).append("View } from './pages/")
+							.append(RecordName).append("-view.page';");
+
+					break;
+
+				default:
+					logger.error(
+							"{} is not a valid page type to generate. 'list', 'save' and 'view' are the only valid types",
+							t);
+				}
+			}
 
 		}
 

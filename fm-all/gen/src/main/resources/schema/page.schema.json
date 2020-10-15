@@ -1,0 +1,220 @@
+{
+    "description": "Schema for page.json",
+    "required": [
+        "name",
+        "recordName",
+        "operations"
+    ],
+    "properties": {
+        "description": {
+            "type": "string"
+        },
+        "name": {
+            "type": "string"
+        },
+        "recordName": {
+            "type": "string"
+        },
+        "serveGuests":{
+            "type": "boolean"
+        },
+        "operations": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "get",
+                    "create",
+                    "update",
+                    "filter",
+                    "delete"
+                ]
+            }
+        },
+        "viewPage": {
+            "type": "object",
+            "properties":{
+                "buttons":{
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["name", "label", "menuName", "fields"],
+                        "properties": {
+                            "name":{"type": "string"},
+                            "label":{"type": "string"},
+                            "menuName":{"type": "string"},
+                            "fields": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                             }
+                        }
+                    }
+                },
+                "hideFields": {
+                    "type": "array",
+                    "items": { "type" : "string"}
+                }
+            }
+        },
+        
+        "savePage": {
+            "type": "object",
+            "properties": {
+               "hideFields": {
+                    "type": "array",
+                    "items": { "type" : "string"}
+                }
+            }
+        },
+        
+        "createPage": {
+            "type": "object",
+            "properties": {
+               "hideFields": {
+                    "type": "array",
+                    "items": { "type" : "string"}
+                }
+            }
+        },
+        
+        "updatePage": {
+            "type": "object",
+            "properties": {
+               "hideFields": {
+                    "type": "array",
+                    "items": { "type" : "string"}
+                }
+            }
+        },
+
+        "listPage": {
+            "type": "object",
+            "required": ["showFields"],
+            "properties": {
+               "showFields": {
+                    "type": "array",
+                    "items": { "type" : "string"}
+                },
+                "rowClick": {
+                    "type": "object",
+                    "required": ["menuName", "fields"],
+                    "properties":{
+                        "menuName":{"type": "string"},
+                        "fields": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                         }
+                    }
+                },
+                "rowButtons": {
+                    "type": "array",
+                    "items": {
+                        "type":"object",
+                        "required": [],
+                        "properties": {
+                        "required": ["name", "menuName", "icon", "fields"],
+                            "icon": { "type": "string"},
+                            "name": { "type": "string"},
+                            "menuName":{"type": "string"},
+                            "fields": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                             }
+                        }
+                    }
+               },
+               "newButton": {
+               "type": "object"
+               }
+            }
+ 
+        },
+        
+        "selectableListPage": {
+            "type": "object",
+            "required" :["selectionField", "showFields", "buttons"],
+            "properties": {
+                "selectionField": {"type": "string"},
+               "showFields": {
+                    "type": "array",
+                    "items": { "type" : "string"}
+                },
+                "buttons": {
+                    "type": "array",
+                    "items": {
+                        "type":"object",
+                        "required": ["name", "menuName", "helpText", "fields"],
+                        "properties": {
+                            "icon": { "type": "string"},
+                            "label": {"type": "string"},
+                            "helpText": { "type": "string"},
+                            "name": { "type": "string"},
+                            "menuName":{"type": "string"},
+                            "fields": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                             }
+                        }
+                    }
+               }
+            }
+        },
+        
+        "linkedForms": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "formName",
+                    "isTabular"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "formName": {
+                        "type": "string"
+                    },
+                    "isEditable": {
+                        "type": "boolean"
+                    },
+                    "isTabular": {
+                        "type": "boolean"
+                    },
+                    "minRows": {
+                        "type": "integer"
+                    },
+                    "maxRows": {
+                        "type": "integer"
+                    },
+                    "errorId": {
+                        "type": "string"
+                    },
+                    "parentLinkFields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "childLinkFields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            }
+        }
+    },
+    "additionalProperties": false
+}
