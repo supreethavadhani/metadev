@@ -22,9 +22,6 @@
         "useTimestampCheck": {
             "type": "boolean"
         },
-        "generatePage": { 
-            "type" : "boolean"
-        },
         "operations": {
             "type": "array",
             "items": {
@@ -216,6 +213,95 @@
                     }
                 },
                 "additionalProperties": false
+            }
+        },
+        
+        "generateSavePage":{
+            "description": "generate a save-page for this record",
+            "type": "object",
+            "additionalProperties": false,
+            "properties":{
+                "hideFields":{
+                    "description": "fields to be hidden, in addition to the standard fields that are hidden by default.",
+                    "type": "array",
+                    "items":{ "type": "string" }
+                }
+            }
+        },
+        "generateUpdatePage":{
+            "description": "generate an edit/update page is to be generated",
+            "type": "object",
+            "additionalProperties": false,
+            "properties":{
+                "hideFields":{
+                    "description": "fields to be hidden, in addition to the standard fields that are hidden by default.",
+                    "type": "array",
+                    "items":{ "type": "string" }
+                }
+            }
+        },
+        "generateCreatePage":{
+            "description": "generate new/create page is to be generated",
+            "type": "object",
+            "additionalProperties": false,
+            "properties":{
+                "hideFields":{
+                    "description": "fields to be hidden, in addition to the standard fields that are hidden by default.",
+                    "type": "array",
+                    "items":{ "type": "string" }
+                }
+            }
+        },
+        "generateViewPage":{
+            "description": "generate view-page for this record",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "menuForNew":{
+                    "description": "menu/page to go to when new button is clicked. defaults to save/update of this record",
+                    "type": "string"
+                },
+                "menuForEdit":{
+                    "description": "menu to be used on click of edit button. defaults to save/edit of this record",
+                    "type": "string"
+                }
+            }
+        },
+        "generateListPage":{
+            "description": "generate list-page for this record",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "onNewClick":{
+                    "description": "menu/page to go to when New button is clicked in the view page. defaults to save/create of this record",
+                    "type": "string"
+                }
+            }
+        },
+        "generateSelectPage":{
+            "description": "generate select-page for this record",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+            "selectField":{
+                "description": "name of the boolean-valud field that determines whether this row is selected or not. A local field is added by default",
+                "type": "string"
+            }
+        },
+        "tabs": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required":["name", "label", "fields"],
+                "additionalProperties": false,
+                "properties":{
+                    "name": {"type": "string"},
+                    "label": {"type": "string"},
+                    "fields": {
+                        "type": "array",
+                        "items":{"type": "string"}
+                    }
+                }
             }
         }
     }

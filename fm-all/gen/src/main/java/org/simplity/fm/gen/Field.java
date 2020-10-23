@@ -215,16 +215,26 @@ class Field implements Util.INamedMember {
 		if (lbl == null || lbl.isEmpty()) {
 			lbl = Util.toClassName(this.name);
 		}
-		Util.addAttr(sbf, BEGIN, "label", lbl);
-		Util.addAttr(sbf, BEGIN, "defaultValue", this.defaultValue);
-		Util.addAttr(sbf, BEGIN, "icon", this.icon);
-		Util.addAttr(sbf, BEGIN, "suffix", this.fieldSuffix);
-		Util.addAttr(sbf, BEGIN, "prefix", this.fieldPrefix);
-		Util.addAttr(sbf, BEGIN, "placeHolder", this.placeHolder);
-		Util.addAttr(sbf, BEGIN, "hint", this.hint);
-		Util.addAttr(sbf, BEGIN, "errorId", this.errorId);
-		Util.addAttr(sbf, BEGIN, "listName", this.listName);
-		Util.addAttr(sbf, BEGIN, "listKeyName", this.listKey);
+		Util.addAttrTs(sbf, BEGIN, "label", lbl);
+		Util.addAttrTs(sbf, BEGIN, "defaultValue", this.defaultValue);
+		Util.addAttrTs(sbf, BEGIN, "icon", this.icon);
+		Util.addAttrTs(sbf, BEGIN, "suffix", this.fieldSuffix);
+		Util.addAttrTs(sbf, BEGIN, "prefix", this.fieldPrefix);
+		Util.addAttrTs(sbf, BEGIN, "placeHolder", this.placeHolder);
+		Util.addAttrTs(sbf, BEGIN, "hint", this.hint);
+		Util.addAttrTs(sbf, BEGIN, "errorId", this.errorId);
+		Util.addAttrTs(sbf, BEGIN, "listName", this.listName);
+		Util.addAttrTs(sbf, BEGIN, "listKeyName", this.listKey);
+		final FieldType ft = this.getFieldType();
+		if (ft == FieldType.PrimaryKey || ft == FieldType.OptionalData || ft == FieldType.RequiredData) {
+			String rt = "text";
+			if (this.valueType == ValueType.Boolean) {
+				rt = "checkbox";
+			} else if (this.listName != null) {
+				rt = "select";
+			}
+			Util.addAttrTs(sbf, BEGIN, "renderType", rt);
+		}
 		sbf.append("\n\t\t}");
 	}
 }

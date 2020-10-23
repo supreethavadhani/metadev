@@ -444,4 +444,19 @@ class Util {
 		}
 		sbf.append(prefix).append(Util.escape(att)).append(": ").append(Util.escape(val)).append(',');
 	}
+
+	/**
+	 * add att: "value', but only if it is required, for a TS script
+	 *
+	 * @param sbf
+	 * @param prefix
+	 * @param att
+	 * @param val
+	 */
+	static void addAttrTs(final StringBuilder sbf, final String prefix, final String att, final String val) {
+		if (val == null || val.isEmpty()) {
+			return;
+		}
+		sbf.append(prefix).append(att).append(": '").append(val).append("',");
+	}
 }

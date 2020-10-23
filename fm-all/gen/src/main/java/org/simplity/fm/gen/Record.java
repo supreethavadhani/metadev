@@ -34,7 +34,6 @@ import java.util.Set;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.data.DbTable;
 import org.simplity.fm.core.data.FieldType;
-import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.serialize.IInputObject;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.DependentListValidation;
@@ -68,7 +67,6 @@ class Record {
 	String name;
 	String nameInDb;
 	boolean useTimestampCheck;
-	String[] generatePages;
 	String customValidation;
 	String[] operations;
 	/*
@@ -79,7 +77,6 @@ class Record {
 	FromToPair[] fromToPairs;
 	ExclusivePair[] exclusivePairs;
 	InclusivePair[] inclusivePairs;
-	Tab[] tabs;
 
 	/*
 	 * derived fields required for generating java/ts
@@ -704,6 +701,8 @@ class Record {
 		sbf.append("\n}\n");
 	}
 
+	private static final char Q = '\'';
+
 	void emitClientForm(final StringBuilder sbf) {
 		sbf.append("import { Form } from 'simplity';");
 		sbf.append("\nexport const ").append(this.name).append("Form: Form = {");
@@ -715,444 +714,34 @@ class Record {
 					this.name);
 		} else {
 			for (final String oper : this.operations) {
-				sbf.append("\n\t\t").append(oper).append(": true,");
+				if (oper == null) {
+					logger.error("{} is not a valid form operation. skipped", oper);
+				} else {
+					sbf.append("\n\t\t").append(oper).append(": true,");
+				}
 			}
 			sbf.setLength(sbf.length() - 1);
 		}
 		sbf.append("\n\t},");
 		sbf.append("\n\tfields: {");
+		final StringBuilder names = new StringBuilder();
 		for (final Field field : this.fields) {
 			field.emitFormTs(sbf);
 			sbf.append(',');
+			names.append(Q).append(field.name).append(Q).append(',');
 		}
 		sbf.setLength(sbf.length() - 1);
-		sbf.append("\n\t}\n}\n");
-	}
-
-	void emitListPage(final StringBuilder sbf) {
-		//@formatter:off
-		sbf.append(
-				"import { NavigationAction, Page, FilterAction } from 'simplity';\n" +
-				"\n" +
-				"export const " + this.name + "List: Page = {\n" +
-				"    name: \"" + this.name  + "-list\",\n" +
-				"    isEditable: false,\n" +
-				"    titlePrefix: '" +this.name.toUpperCase() + " LIST',\n" +
-				"    hideMainMenu: false,\n" +
-				"    hideSubMenu: false,\n" +
-				"    onLoad: 'filter',\n" +
-				"    middleButtons: [\n" +
-				"        {\n" +
-				"            name: 'create-button',\n" +
-				"            compType: 'button',\n" +
-				"            buttonType: 'primary',\n" +
-				"            onClick: 'create',\n" +
-				"            label: 'New " + Util.toClassName(this.name)+ "',\n" +
-				"            tooltip: 'Add details for a new " + Util.toClassName(this.name)+ "',\n" +
-				"        }\n" +
-				"    ],\n" +
-				"    actions: {\n" +
-				"        filter: {\n" +
-				"            name: 'filter',\n" +
-				"            type: 'form',\n" +
-				"            formOperation: 'filter',\n" +
-				"            childName: 'itemList',\n" +
-				"            formName: '" + this.name + "',\n" +
-				"        } as FilterAction,\n" +
-				"        create: {\n" +
-				"            name: 'create',\n" +
-				"            type: 'navigation',\n" +
-				"            operation: 'open',\n" +
-				"            menuName: '" + this.name + "-add',\n" +
-				"        } as NavigationAction,\n" +
-				"        edit: {\n" +
-				"            name: 'edit',\n" +
-				"            type: 'navigation',\n" +
-				"            operation: 'open',\n" +
-				"            menuName: '" + this.name +"-edit',\n" +
-				"            params: { ");
-		boolean isFirst = true;
-		for(final Field key: this.keyFields) {
-			if(isFirst) {
-				isFirst = false;
-			}else {
-				sbf.append(", ");
+		names.setLength((names.length() - 1));
+		sbf.append("\n\t},");
+		sbf.append("\n\tfieldNames: [").append(names.toString()).append("]");
+		if (this.keyFields != null && this.keyFields.length > 0) {
+			// we generally have only one key field
+			sbf.append(",\n\tkeyFields: ['").append(this.keyFields[0].name).append(Q);
+			for (int i = 1; i < this.keyFields.length; i++) {
+				sbf.append(",'").append(this.keyFields[i].name).append(Q);
 			}
-			sbf.append("\n\t\t\t\t").append( key.name).append(": '$").append(key.name).append("'");
+			sbf.append("]");
 		}
-		sbf.append("\n\t\t\t}\n" +
-				"        } as NavigationAction,\n" +
-				"        cancel: {\n" +
-				"            name: 'cancel',\n" +
-				"            type: 'navigation',\n" +
-				"            operation: 'cancel'\n" +
-				"        } as NavigationAction\n" +
-				"    },\n" +
-				"    dataPanel: {\n" +
-				"        name: 'container-panel',\n" +
-				"        compType: 'panel',\n" +
-				"        panelType: 'container',\n" +
-				"        children: [\n" +
-				"            {\n" +
-				"                name: 'itemList',\n" +
-				"                compType: 'table',\n" +
-				"                tableType: 'display',\n" +
-				"                formName: '" + this.name + "',\n" +
-				"                onRowClick: 'edit',\n" +
-				"                columns: [");
-		isFirst = true;
-		for(final Field field : this.fields) {
-			if(!field.renderInList) {
-				continue;
-			}
-			if(isFirst) {
-				isFirst = false;
-			}else {
-				sbf.append(',');
-			}
-			sbf.append(
-				"\n                    {" +
-				"\n                        name: '" + field.name +"'," +
-				"\n                        compType: 'field'," +
-				"\n                        fieldType: 'output'" +
-				"\n                    }"
-			);
-		}
-
-		sbf.append(
-				"\n                ]\n" +
-				"            }\n" +
-				"        ]\n" +
-				"    }\n" +
-				"}");
-		//@formatter:on
-	}
-
-	void emitSavePage(final StringBuilder sbf) {
-		//@formatter:off
-		sbf.append(
-				"import { Page, EditCard, NavigationAction, SaveAction, GetAction } from 'simplity';\n" +
-				"\n" +
-				"export const " + this.name + "Save: Page = {\n" +
-				"    name: '" + this.name + "-save',\n" +
-				"    formName: '" + this.name + "',\n" +
-				"    isEditable: true,\n" +
-				"    titlePrefix: 'NEW " + this.name.toUpperCase() + "',\n" +
-				"    hideMainMenu: true,\n" +
-				"    hideSubMenu: true,\n" +
-				"    onLoad: 'get',\n" +
-				"    inputIsForUpdate: true,\n" +
-				"    inputs: {"
-				);
-		boolean isFirst = true;
-		for(final Field key: this.keyFields) {
-			if(isFirst) {
-				isFirst = false;
-			}else {
-				sbf.append(", ");
-			}
-			sbf.append("\n\t\t").append( key.name).append(": false");
-		}
-
-		sbf.append("\n    },\n" +
-				"    actions: {\n" +
-				"        get: {\n" +
-				"            name: 'get',\n" +
-				"            type: 'form',\n" +
-				"            formOperation: 'get',\n" +
-				"            formName: '" + this.name + "',\n" +
-				"            params: {" +
-								this.getParamsForGet() + '\n' +
-				"            }\n" +
-				"        } as GetAction,\n" +
-				"        save: {\n" +
-				"            name: 'save',\n" +
-				"            type: 'form',\n" +
-				"            formOperation: 'save',\n" +
-				"            onSuccess: 'close'\n" +
-				"        } as SaveAction,\n" +
-				"        cancel: {\n" +
-				"            name: 'cancel',\n" +
-				"            type: 'navigation',\n" +
-				"            operation: 'cancel'\n" +
-				"        } as NavigationAction,\n" +
-				"        close: {\n" +
-				"            name: 'close',\n" +
-				"            type: 'navigation',\n" +
-				"            operation: 'close'\n" +
-				"        } as NavigationAction\n" +
-				"    },\n" +
-				"    middleButtons: [\n" +
-				"        {\n" +
-				"            name: 'cancel-button',\n" +
-				"            compType: 'button',\n" +
-				"            buttonType: 'secondary',\n" +
-				"            onClick: 'cancel',\n" +
-				"            label: 'Cancel',\n" +
-				"            tooltip: 'Abandon Changes'\n" +
-				"        },\n" +
-				"        {\n" +
-				"            name: 'save-button',\n" +
-				"            compType: 'button',\n" +
-				"            buttonType: 'primary',\n" +
-				"            onClick: 'save',\n" +
-				"            label: 'Save',\n" +
-				"            tooltip: 'save " + this.name + " details',\n" +
-				"            enableWhen: 'valid'\n" +
-				"        }\n" +
-				"    ],\n" +
-				"    dataPanel: {\n" +
-				"        name: 'data-panel',\n" +
-				"        compType: 'panel',\n"
-				);
-		if(this.tabs == null) {
-			sbf.append(
-			"        panelType: 'edit',\n" +
-			"        children: ["
-			);
-			emitCard("edit-card", true, sbf, this.getFieldsToRender());
-		}else {
-			sbf.append(
-			"        panelType: 'tab-group',\n" +
-			"        children: ["
-			);
-			isFirst = true;
-			for(final Tab tab: this.tabs) {
-				if(isFirst) {
-					isFirst = false;
-				}else {
-					sbf.append(',');
-				}
-
-				sbf.append("\n" +
-				"        {\n" +
-				"            name: '" + tab.name + "',\n" +
-				"            compType: 'panel',\n" +
-				"            panelType: 'tab',\n" +
-				"            label: '" + tab.label + "', \n" +
-				"            children :["
-				);
-
-				emitCard(tab.name + "-card", true, sbf, this.getFieldsToRender(tab.fields));
-				sbf.append("\n" +
-				"            ]\n" +
-				"        }"
-				);
-			}
-		}
-		sbf.append("\n" +
-			"        ]\n" +
-			"    }\n" +
-			"}\n"
-		);
-		//@formatter:on
-	}
-
-	/**
-	 * @return
-	 */
-	private String getParamsForGet() {
-		final StringBuilder sbf = new StringBuilder();
-		boolean isFirst = true;
-		for (final Field field : this.keyFields) {
-			if (isFirst) {
-				isFirst = false;
-			} else {
-				sbf.append(',');
-			}
-			sbf.append("\n                " + field.name + ": true");
-		}
-		return sbf.toString();
-	}
-
-	private List<Field> getFieldsToRender() {
-		final List<Field> result = new ArrayList<>();
-		for (final Field field : this.fields) {
-			if (field.renderInSave) {
-				result.add(field);
-			}
-		}
-		return result;
-	}
-
-	private List<Field> getFieldsToRender(final String[] names) {
-		final List<Field> result = new ArrayList<>();
-		for (final String s : names) {
-			final Field field = this.fieldMap.get(s);
-			if (field == null) {
-				logger.error("{} is not a field in this record, but it is included in a tab. ignored", s);
-			} else {
-				result.add(field);
-			}
-		}
-		logger.info("{} names added to this tab", names.length);
-		return result;
-	}
-
-	private static void emitCard(final String cardName, final boolean forEdit, final StringBuilder sbf,
-			final List<Field> list) {
-		//@formatter:off
-		sbf.append(
-		"\n            {\n" +
-		"                name: '" + cardName + "',\n" +
-		"                cardType: '" + (forEdit? "edit" : "display" ) + "',\n" +
-		"                compType: 'card',\n" +
-		"                children: ["
-		);
-
-		boolean isFirst = true;
-		for(final Field field: list) {
-			if(isFirst) {
-				isFirst = false;
-			}else {
-				sbf.append(',');
-			}
-
-			sbf.append(
-			"\n                    {" +
-			"\n                        name: '" + field.name + "'," +
-			"\n                        compType: 'field'," +
-			"\n                        fieldType: '" + (forEdit ? getFieldType(field) : "output") + "'" +
-			"\n                    }"
-			);
-		}
-
-		sbf.append("\n" +
-				"                ]\n" +
-				"            } as " + (forEdit ? "Edit" : "Display") + "Card"
-		);
-
-		//@formatter:on
-	}
-
-	private static String getFieldType(final Field field) {
-		if (field.valueType == ValueType.Boolean) {
-			return "checkbox";
-		}
-		if (field.listName != null) {
-			return "select";
-		}
-		return "text";
-	}
-
-	static class Tab {
-		String name;
-		String label;
-		String[] fields;
-	}
-
-	/**
-	 * @param sbf
-	 */
-	public void ViewPage(final StringBuilder sbf) {
-		//@formatter:off
-		sbf.append(
-				"import { Page, DisplayCard, NavigationAction, GetAction } from 'simplity';\n" +
-				"\n" +
-				"export const " + this.name + "View: Page = {\n" +
-				"    name: '" + this.name + "-view',\n" +
-				"    formName: '" + this.name + "',\n" +
-				"    isEditable: false,\n" +
-				"    titlePrefix: 'View " + this.name + " Details',\n" +
-				"    hideMainMenu: false,\n" +
-				"    hideSubMenu: false,\n" +
-				"    onLoad: 'get',\n" +
-				"    inputs: {"
-				);
-		boolean isFirst = true;
-		for(final Field key: this.keyFields) {
-			if(isFirst) {
-				isFirst = false;
-			}else {
-				sbf.append(", ");
-			}
-			sbf.append("\n\t\t").append( key.name).append(": false");
-		}
-
-		sbf.append("\n    },\n" +
-				"    actions: {\n" +
-				"        get: {\n" +
-				"            name: 'get',\n" +
-				"            type: 'form',\n" +
-				"            formOperation: 'get',\n" +
-				"            formName: '" + this.name + "',\n" +
-				"            params: {" +
-								this.getParamsForGet() + '\n' +
-				"            }\n" +
-				"        } as GetAction,\n" +
-				"        edit: {\n" +
-				"            name: 'edit',\n" +
-				"            type: 'navigation',\n" +
-				"            operation: 'open'\n" +
-				"        } as NavigationAction,\n" +
-				"        close: {\n" +
-				"            name: 'close',\n" +
-				"            type: 'navigation',\n" +
-				"            operation: 'close'\n" +
-				"        } as NavigationAction\n" +
-				"    },\n" +
-				"    middleButtons: [\n" +
-				"        {\n" +
-				"            name: 'close-button',\n" +
-				"            compType: 'button',\n" +
-				"            buttonType: 'secondary',\n" +
-				"            onClick: 'close',\n" +
-				"            label: 'Close',\n" +
-				"            tooltip: 'Close this page'\n" +
-				"        },\n" +
-				"        {\n" +
-				"            name: 'edit-button',\n" +
-				"            compType: 'button',\n" +
-				"            buttonType: 'primary',\n" +
-				"            onClick: 'edit',\n" +
-				"            label: 'Edit',\n" +
-				"            tooltip: 'Edit " + this.name + " details',\n" +
-				"        }\n" +
-				"    ],\n" +
-				"    dataPanel: {\n" +
-				"        name: 'data-panel',\n" +
-				"        compType: 'panel',\n"
-				);
-		if(this.tabs == null) {
-			sbf.append(
-			"        panelType: 'display',\n" +
-			"        children: ["
-			);
-			emitCard("display-card", false, sbf, this.getFieldsToRender());
-		}else {
-			sbf.append(
-			"        panelType: 'tab-group',\n" +
-			"        children: ["
-			);
-			isFirst = true;
-			for(final Tab tab: this.tabs) {
-				if(isFirst) {
-					isFirst = false;
-				}else {
-					sbf.append(',');
-				}
-
-				sbf.append("\n" +
-				"        {\n" +
-				"            name: '" + tab.name + "',\n" +
-				"            compType: 'panel',\n" +
-				"            panelType: 'tab',\n" +
-				"            label: '" + tab.label + "', \n" +
-				"            children :["
-				);
-
-				emitCard(tab.name + "-card", false, sbf, this.getFieldsToRender(tab.fields));
-				sbf.append("\n" +
-				"            ]\n" +
-				"        }"
-				);
-			}
-		}
-		sbf.append("\n" +
-			"        ]\n" +
-			"    }\n" +
-			"}\n"
-		);
-		//@formatter:on
+		sbf.append("\n}\n");
 	}
 }

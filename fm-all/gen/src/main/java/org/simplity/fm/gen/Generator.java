@@ -53,7 +53,7 @@ public class Generator {
 	 */
 	public static void main(final String[] args) throws Exception {
 		if (args.length == 2) {
-			generateForms(args[0], args[1]);
+			generateClientComponents(args[0], args[1]);
 			return;
 		}
 		if (args.length == 5) {
@@ -70,7 +70,7 @@ public class Generator {
 	 * @param inputRootFolder
 	 * @param outputRootFolder
 	 */
-	public static void generateForms(final String inputRootFolder, final String outputRootFolder) {
+	public static void generateClientComponents(final String inputRootFolder, final String outputRootFolder) {
 		String inFolder = inputRootFolder;
 		if (!inputRootFolder.endsWith(FOLDER)) {
 			inFolder += FOLDER;
@@ -117,12 +117,8 @@ public class Generator {
 		 * builders for the declaration files
 		 */
 		final StringBuilder sbf = new StringBuilder();
-		final StringBuilder menus = new StringBuilder(
-				"import { MenuItems } from 'simplity';\nexport const generatedMenuItems: MenuItems = {");
-		final StringBuilder forms = new StringBuilder("\nexport const generatedForms: Forms = {");
+		final StringBuilder forms = new StringBuilder("\nexport const allForms: Forms = {");
 		final StringBuilder formsImport = new StringBuilder("import { Forms } from 'simplity';");
-		final StringBuilder pages = new StringBuilder("\nexport const generatedPages: Pages = {");
-		final StringBuilder pagesImport = new StringBuilder("import { Pages } from 'simplity';");
 
 		for (final File file : f.listFiles()) {
 			final String fn = file.getName();
@@ -143,7 +139,7 @@ public class Generator {
 			final String RecordName = fn.substring(0, fn.length() - ".rec.json".length());
 			if (!RecordName.equals(record.name)) {
 				logger.error(
-						"Fi le {} contains record named {}. It is mandatory to use record name same as the filename",
+						"File {} contains record named {}. It is mandatory to use record name same as the filename",
 						RecordName, record.name);
 				continue;
 			}
@@ -161,114 +157,13 @@ public class Generator {
 				formsImport.append("\nimport { ").append(RecordName).append("Form } from './forms/").append(RecordName)
 						.append(".form';");
 			}
-
-			if (record.generatePages == null || record.generatePages.length == 0) {
-				continue;
-			}
-
-			for (final String t : record.generatePages) {
-				switch (t) {
-				case "list":
-					sbf.setLength(0);
-					record.emitListPage(sbf);
-					genFileName = outFolder + "pages/" + RecordName + "-list.page.ts";
-					Util.writeOut(genFileName, sbf);
-					logger.info("list page {} generated", genFileName);
-					/*
-					 * menu for list operation
-					 */
-					menus.append("\n\t'").append(RecordName).append("-list': {");
-					menus.append("\n\t\tid :'").append(RecordName).append("-list',");
-					menus.append("\n\t\tpageName :'").append(RecordName).append("-list',");
-					menus.append("\n\t\tlabel :'").append(Util.toClassName(RecordName)).append(" List',");
-					menus.append("\n\t\tisHidden :false");
-					menus.append("\n\t},");
-
-					/*
-					 * add the pages list
-					 */
-					pages.append("\n\t'").append(RecordName).append("-list': ").append(RecordName).append("List,");
-					pagesImport.append("\nimport { ").append(RecordName).append("List } from './pages/")
-							.append(RecordName).append("-list.page';");
-
-					break;
-
-				case "save":
-					genFileName = outFolder + "pages/" + RecordName + "-save.page.ts";
-					sbf.setLength(0);
-					record.emitSavePage(sbf);
-					Util.writeOut(genFileName, sbf);
-					logger.info("save page {} generated", genFileName);
-
-					/*
-					 * menu entry : add and edit
-					 */
-					menus.append("\n\t'").append(RecordName).append("-add': {");
-					menus.append("\n\t\tid :'").append(RecordName).append("-add',");
-					menus.append("\n\t\tpageName :'").append(RecordName).append("-save',");
-					menus.append("\n\t\tisHidden :true");
-					menus.append("\n\t},");
-
-					menus.append("\n\t'").append(RecordName).append("-edit': {");
-					menus.append("\n\t\tid :'").append(RecordName).append("-edit',");
-					menus.append("\n\t\tpageName :'").append(RecordName).append("-save',");
-					menus.append("\n\t\tisHidden :true");
-					menus.append("\n\t},");
-
-					/*
-					 * entry for this page
-					 */
-					pages.append("\n\t'").append(RecordName).append("-save':  ").append(RecordName).append("Save,");
-					pagesImport.append("\nimport { ").append(RecordName).append("Save } from './pages/")
-							.append(RecordName).append("-save.page';");
-					break;
-				case "view":
-					sbf.setLength(0);
-					record.ViewPage(sbf);
-					genFileName = outFolder + "pages/" + RecordName + "-view.page.ts";
-					Util.writeOut(genFileName, sbf);
-					logger.info("view page {} generated", genFileName);
-					/*
-					 * menu for this operation
-					 */
-					menus.append("\n\t'").append(RecordName).append("-view': {");
-					menus.append("\n\t\tid :'").append(RecordName).append("-view',");
-					menus.append("\n\t\tpageName :'").append(RecordName).append("-view',");
-					menus.append("\n\t\tlabel :'").append(Util.toClassName(RecordName)).append(" View',");
-					menus.append("\n\t\tisHidden :true");
-					menus.append("\n\t},");
-
-					/*
-					 * add to the pages list
-					 */
-					pages.append("\n\t'").append(RecordName).append("-view': ").append(RecordName).append("View,");
-					pagesImport.append("\nimport { ").append(RecordName).append("View } from './pages/")
-							.append(RecordName).append("-view.page';");
-
-					break;
-
-				default:
-					logger.error(
-							"{} is not a valid page type to generate. 'list', 'save' and 'view' are the only valid types",
-							t);
-				}
-			}
-
 		}
 
 		/*
 		 * write-out declaration files
 		 */
 		formsImport.append(forms.toString()).append("\n}\n");
-		Util.writeOut(outFolder + "forms.ts", formsImport);
-
-		pagesImport.append(pages.toString()).append("\n}\n");
-		Util.writeOut(outFolder + "pages.ts", pagesImport);
-
-		menus.setLength(menus.length() - 1);
-		menus.append("\n}\n");
-		Util.writeOut(outFolder + "menuItems.ts", menus);
-
+		Util.writeOut(outFolder + "allForms.ts", formsImport);
 	}
 
 	private static void emitMsgsTs(final String inFolder, final String outFolder) {
@@ -302,7 +197,7 @@ public class Generator {
 			sbf.append("\n\t").append(Util.escape(entry.getKey())).append(": ").append(Util.escape(entry.getValue()));
 		}
 		sbf.append("\n}\n");
-		final String fn = outFolder + "messages.ts";
+		final String fn = outFolder + "allMessages.ts";
 		Util.writeOut(fn, sbf);
 		logger.info("Messages file {} generated", fn);
 	}

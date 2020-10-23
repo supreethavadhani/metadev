@@ -184,7 +184,7 @@ public class Application {
 		sbf.append("\n\nexport const allDataTypes: DataTypes = {");
 		this.dataTypes.emitTs(sbf);
 		sbf.append("\n}\n");
-		final String fn = folder + "dataTypes.ts";
+		final String fn = folder + "allDataTypes.ts";
 		Util.writeOut(fn, sbf);
 		logger.info("File {} generated", fn);
 	}
@@ -232,7 +232,7 @@ public class Application {
 		}
 
 		sbf.append("\n}\n");
-		final String fn = folder + "lists.ts";
+		final String fn = folder + "allLists.ts";
 		Util.writeOut(fn, sbf);
 		logger.info("File {} generated with {} lists", fn, nbr);
 	}
