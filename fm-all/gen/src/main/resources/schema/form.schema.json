@@ -1,0 +1,83 @@
+{
+    "description": "Schema for form.json",
+    "required": [
+        "name",
+        "recordName"
+    ],
+    "properties": {
+        "description": {
+            "type": "string"
+        },
+        "name": {
+            "type": "string"
+        },
+        "recordName": {
+            "type": "string"
+        },
+        "serveGuests":{
+            "type": "boolean"
+        },
+        "operations": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "get",
+                    "create",
+                    "update",
+                    "filter",
+
+                    "delete"
+                ]
+            }
+        },
+        "linkedForms": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "formName",
+                    "isTabular"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "formName": {
+                        "type": "string"
+                    },
+                    "isEditable": {
+                        "type": "boolean"
+                    },
+                    "isTabular": {
+                        "type": "boolean"
+                    },
+                    "minRows": {
+                        "type": "integer"
+                    },
+                    "maxRows": {
+                        "type": "integer"
+                    },
+                    "errorId": {
+                        "type": "string"
+                    },
+                    "parentLinkFields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "childLinkFields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            }
+        }
+    },
+    "additionalProperties": false
+}

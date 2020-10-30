@@ -29,6 +29,7 @@ import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.IDataTypes;
 import org.simplity.fm.core.IMessages;
 import org.simplity.fm.core.Message;
+import org.simplity.fm.core.data.DbRecord;
 import org.simplity.fm.core.data.Form;
 import org.simplity.fm.core.data.IoType;
 import org.simplity.fm.core.data.Record;
@@ -250,7 +251,16 @@ public class CompProvider implements ICompProvider {
 			return form.getService(opern);
 		}
 
-		logger.info("{} is not a form and hence a service is not generated for oepration {}", formName, opern);
+		/**
+		 * it could be a record
+		 */
+		final Record rec = this.getRecord(formName, ctx);
+		if (rec != null && rec instanceof DbRecord) {
+			return ((DbRecord) rec).getService(opern, serviceName);
+		}
+
+		logger.info("{} is not a form or DbRecord and hence a service is not generated for oepration {}", formName,
+				opern);
 		return null;
 
 	}
