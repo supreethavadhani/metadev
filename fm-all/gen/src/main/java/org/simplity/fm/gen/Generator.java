@@ -25,7 +25,9 @@ package org.simplity.fm.gen;
 import java.io.File;
 import java.io.FileReader;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.gen.DataTypes.DataType;
@@ -116,9 +118,41 @@ public class Generator {
 		/*
 		 * builders for the declaration files
 		 */
-		final StringBuilder sbf = new StringBuilder();
 		final StringBuilder forms = new StringBuilder("\nexport const allForms: Forms = {");
 		final StringBuilder formsImport = new StringBuilder("import { Forms } from 'simplity';");
+
+		/*
+		 * transitional issue with forms on the server: server defines forms as a way to
+		 * expose simple records as well as hierarchical structure of forms to the
+		 * client. frm.json file essentially declares that the underlying record is
+		 * available to the client and it also provides a way to send/receive
+		 * hierarchical structures.
+		 * 
+		 * For the new client, we do not need the hierarchical structure, but we do need
+		 * the form as a record, in case the name is different from the record
+		 * 
+		 * For example, if there is a form named a that just uses recordName=b, the new
+		 * client requires a "form" named b that has the fields in a.
+		 * 
+		 * Our design is to detect such cases, and keep them ready as 'aliases' of a
+		 * record, and emit them as and when the underlying record is emitted.
+		 * 
+		 * for example, in the above case, after emitting record b, we also emit the
+		 * record b as if its name is a.
+		 * 
+		 */
+
+		Map<String, Set<String>> aliases = new HashMap<>();
+		File formsFolder = new File(inFolder + "form/");
+		if (formsFolder.exists()) {
+			buildAliases(aliases, formsFolder);
+		}
+
+		/*
+		 * also, we want to ensure that a wrapped form name does not clash with another
+		 * record name
+		 */
+		Set<String> allRecords = new HashSet<>();
 
 		for (final File file : f.listFiles()) {
 			final String fn = file.getName();
@@ -136,27 +170,26 @@ public class Generator {
 				logger.error("Record {} not generated. Error : {}, {}", fn, e, e.getMessage());
 				continue;
 			}
-			final String RecordName = fn.substring(0, fn.length() - ".rec.json".length());
-			if (!RecordName.equals(record.name)) {
+			final String recordName = fn.substring(0, fn.length() - ".rec.json".length());
+			if (!recordName.equals(record.name)) {
 				logger.error(
 						"File {} contains record named {}. It is mandatory to use record name same as the filename",
-						RecordName, record.name);
+						recordName, record.name);
 				continue;
 			}
 
 			record.init(app.dataTypes.dataTypes);
+			writeRecord(record, outFolder, forms, formsImport, allRecords);
 
-			sbf.setLength(0);
-			record.emitClientForm(sbf);
-			String genFileName;
-			if (sbf.length() > 0) {
-				genFileName = outFolder + "forms/" + RecordName + ".form.ts";
-				Util.writeOut(genFileName, sbf);
-				logger.info("form {} generated", genFileName);
-				forms.append("\n\t").append(RecordName).append(": ").append(RecordName).append("Form,");
-				formsImport.append("\nimport { ").append(RecordName).append("Form } from './forms/").append(RecordName)
-						.append(".form';");
+			Set<String> names = aliases.get(recordName);
+			if (names != null) {
+				for (String s : names) {
+					record.name = s;
+					logger.info("Alias {} for record {}", s, recordName);
+					writeRecord(record, outFolder, forms, formsImport, allRecords);
+				}
 			}
+
 		}
 
 		/*
@@ -164,6 +197,67 @@ public class Generator {
 		 */
 		formsImport.append(forms.toString()).append("\n}\n");
 		Util.writeOut(outFolder + "allForms.ts", formsImport);
+	}
+
+	private static void writeRecord(Record record, String outFolder, StringBuilder forms, StringBuilder formsImport,
+			Set<String> allRecords) {
+		String recordName = record.name;
+		if (allRecords.add(recordName) == false) {
+			logger.error(
+					"{} is defined as a record. A form with the same name exists but it uses a different record name. This is incorrect",
+					recordName);
+			logger.error(
+					"Form should use the same name as the primary record it is based on, or a name that is different from any other ecord name");
+			return;
+		}
+		StringBuilder sbf = new StringBuilder();
+		record.emitClientForm(sbf);
+		if (sbf.length() > 0) {
+			String genFileName = outFolder + "forms/" + recordName + ".form.ts";
+			Util.writeOut(genFileName, sbf);
+			logger.info("form {} generated", genFileName);
+			forms.append("\n\t").append(recordName).append(": ").append(recordName).append("Form,");
+			formsImport.append("\nimport { ").append(recordName).append("Form } from './forms/").append(recordName)
+					.append(".form';");
+		}
+	}
+
+	private static void buildAliases(Map<String, Set<String>> aliases, File f) {
+		for (final File file : f.listFiles()) {
+			final String fn = file.getName();
+			if (fn.endsWith(EXT_REC) == false) {
+				logger.debug("Skipping non-form file {} ", fn);
+				continue;
+			}
+			final Form form;
+			try (final JsonReader reader = new JsonReader(new FileReader(file))) {
+				form = Util.GSON.fromJson(reader, Form.class);
+			} catch (final Exception e) {
+				e.printStackTrace();
+				logger.error("Form {} not Processed. Error : {}, {}", fn, e, e.getMessage());
+				continue;
+			}
+			final String formName = fn.substring(0, fn.length() - ".form.json".length());
+			if (!formName.equals(form.name)) {
+				logger.error("File {} contains form named {}. It is mandatory to use form name same as the filename",
+						formName, form.name);
+				continue;
+			}
+
+			String recordName = form.recordName;
+			if (formName.equals(recordName)) {
+				logger.info("Form {} : record is same", formName);
+				continue;
+			}
+
+			Set<String> names = aliases.get(recordName);
+			if (names == null) {
+				names = new HashSet<>();
+				aliases.put(recordName, names);
+			}
+			names.add(formName);
+			logger.info("Form {} : uses record {}", formName, recordName);
+		}
 	}
 
 	private static void emitMsgsTs(final String inFolder, final String outFolder) {
@@ -196,7 +290,7 @@ public class Generator {
 			}
 			sbf.append("\n\t").append(Util.escape(entry.getKey())).append(": ").append(Util.escape(entry.getValue()));
 		}
-		sbf.append("\n}\n");
+		sbf.append("\n}\n\n");
 		final String fn = outFolder + "allMessages.ts";
 		Util.writeOut(fn, sbf);
 		logger.info("Messages file {} generated", fn);
@@ -204,19 +298,15 @@ public class Generator {
 
 	/**
 	 *
-	 * @param inputRootFolder
-	 *            folder where application.xlsx file, and spec folder are
-	 *            located. e.g.
-	 * @param javaRootFolder
-	 *            java source folder where the sources are to be generated
-	 * @param javaRootPackage
-	 *            root
-	 * @param tsImportPrefix
-	 *            relative path of form folder from the folder where named forms
-	 *            are generated.for example ".." in case the two folders are in
-	 *            the same parent folder
-	 * @param tsRootFolder
-	 *            folder where generated ts files are to be saved
+	 * @param inputRootFolder folder where application.xlsx file, and spec folder
+	 *                        are located. e.g.
+	 * @param javaRootFolder  java source folder where the sources are to be
+	 *                        generated
+	 * @param javaRootPackage root
+	 * @param tsImportPrefix  relative path of form folder from the folder where
+	 *                        named forms are generated.for example ".." in case the
+	 *                        two folders are in the same parent folder
+	 * @param tsRootFolder    folder where generated ts files are to be saved
 	 */
 	public static void generate(final String inputRootFolder, final String javaRootFolder, final String javaRootPackage,
 			final String tsRootFolder, final String tsImportPrefix) {

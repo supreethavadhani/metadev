@@ -25,6 +25,7 @@ package org.simplity.fm.gen;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +35,7 @@ import java.util.Set;
 import org.simplity.fm.core.Conventions;
 import org.simplity.fm.core.data.DbTable;
 import org.simplity.fm.core.data.FieldType;
+import org.simplity.fm.core.data.IoType;
 import org.simplity.fm.core.serialize.IInputObject;
 import org.simplity.fm.core.service.IServiceContext;
 import org.simplity.fm.core.validn.DependentListValidation;
@@ -314,6 +316,7 @@ class Record {
 		sbf.append("Record {");
 
 		this.emitJavaFields(sbf, typesName, isDb);
+		this.emitValidOps(sbf);
 		this.emitJavaValidations(sbf);
 
 		sbf.append("\n\n\tprivate static final RecordMetaData META = new RecordMetaData(\"");
@@ -385,8 +388,7 @@ class Record {
 			sbf.append(P).append("String DELETE = \"DELETE FROM ").append(this.nameInDb).append("\";");
 		}
 
-		sbf.append("\n\n\tprivate static final Dba DBA = new Dba(FIELDS, \"").append(this.nameInDb).append("\", ");
-		sbf.append("SELECT, SELECT_IDX,");
+		sbf.append("\n\n\tprivate static final Dba DBA = new Dba(FIELDS, \"").append(this.nameInDb).append("\", OPERS, SELECT, SELECT_IDX,");
 		if (this.keyFields == null) {
 			sbf.append("null, null, null, null, null, null, null");
 		} else {
@@ -422,6 +424,31 @@ class Record {
 		sbf.append("\n\t};");
 	}
 
+	private void emitValidOps(StringBuilder sbf) {
+		sbf.append("\n\tprivate static final boolean[] OPERS = {");
+		Set<String> set = null;
+		if(this.operations != null && this.operations.length > 0) {
+			set = new HashSet<>();
+			for(String s : this.operations) {
+				if(s == null) {
+					continue;
+				}
+				//we want to be case insensitive..
+				s = s.toLowerCase();
+				s = s.substring(0, 1).toUpperCase() + s.substring(1);
+				set.add(s);
+			}
+		}
+		for(IoType op : IoType.values()) {
+			if(set != null && set.contains(op.name())) {
+				sbf.append("true,");
+			}else {
+				sbf.append("false,");
+			}
+		}
+		sbf.setLength(sbf.length() - 1);
+		sbf.append("};");
+	}
 	private void emitJavaValidations(final StringBuilder sbf) {
 		sbf.append("\n\tprivate static final IValidation[] VALIDS = {");
 		final int n = sbf.length();

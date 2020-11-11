@@ -56,6 +56,11 @@ public class Dba {
 	private final String nameInDb;
 
 	/**
+	 * operations like get etcc are valid?
+	 * array index corresponds to integer value of the enum IoType
+	 */
+	private final boolean[] allowedOperations;
+	/**
 	 * fields that are mapped to the db. This is same as fields in the record,
 	 * except any non-db-fields are replaced with null.
 	 */
@@ -140,6 +145,7 @@ public class Dba {
 	 *
 	 * @param allFields
 	 * @param nameInDb
+	 * @param opers
 	 * @param selectClause
 	 * @param selectIndexes
 	 * @param insertClause
@@ -150,13 +156,14 @@ public class Dba {
 	 * @param whereClause
 	 * @param whereIndexes
 	 */
-	public Dba(final Field[] allFields, final String nameInDb, final String selectClause, final int[] selectIndexes,
+	public Dba(final Field[] allFields, final String nameInDb, final boolean[] opers, final String selectClause, final int[] selectIndexes,
 			final String insertClause, final int[] insertIndexes, final String updateClause, final int[] updateIndexes,
 			final String deleteClause, final String whereClause, final int[] whereIndexes) {
 
 		this.dbFields = new DbField[allFields.length];
 		this.prepareFields(allFields);
 
+		this.allowedOperations = opers;
 		this.nameInDb = nameInDb;
 		this.selectClause = selectClause;
 		this.selectParams = this.prepareParams(selectIndexes);
@@ -872,9 +879,9 @@ public class Dba {
 	 * @return true if this operation is allowed
 	 */
 	boolean operationAllowed(final IoType operation) {
-		if (operation == IoType.Filter) {
-			return true;
+		if(operation == null) {
+			return false;
 		}
-		return this.keyIndexes != null;
+		return this.allowedOperations[operation.ordinal()];
 	}
 }

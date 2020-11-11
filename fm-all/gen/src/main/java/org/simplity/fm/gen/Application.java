@@ -183,7 +183,7 @@ public class Application {
 		sbf.append("import { DataTypes } from 'simplity';");
 		sbf.append("\n\nexport const allDataTypes: DataTypes = {");
 		this.dataTypes.emitTs(sbf);
-		sbf.append("\n}\n");
+		sbf.append("\n}\n\n");
 		final String fn = folder + "allDataTypes.ts";
 		Util.writeOut(fn, sbf);
 		logger.info("File {} generated", fn);
@@ -231,7 +231,7 @@ public class Application {
 			}
 		}
 
-		sbf.append("\n}\n");
+		sbf.append("\n}\n\n");
 		final String fn = folder + "allLists.ts";
 		Util.writeOut(fn, sbf);
 		logger.info("File {} generated with {} lists", fn, nbr);
