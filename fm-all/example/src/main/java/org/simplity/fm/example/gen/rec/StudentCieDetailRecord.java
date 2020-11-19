@@ -43,6 +43,7 @@ public class StudentCieDetailRecord extends DbRecord {
 			new DbField("practicalMarks", 20, DefinedDataTypes.text, "1", null, null, null, FieldType.OptionalData), 
 			new DbField("totalCie", 21, DefinedDataTypes.text, "1", null, null, null, FieldType.OptionalData)
 	};
+	private static final boolean[] OPERS = {true,true,true,true,true};
 	private static final IValidation[] VALIDS = {
 	};
 
@@ -51,7 +52,7 @@ public class StudentCieDetailRecord extends DbRecord {
 	private static final String SELECT = "SELECT student_id, subject_section_id, department_name, usn, student_name, is_eligible, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null FROM student_cie_details";
 	private static final int[] SELECT_IDX = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21};
 
-	private static final Dba DBA = new Dba(FIELDS, "student_cie_details", SELECT, SELECT_IDX,null, null, null, null, null, null, null);
+	private static final Dba DBA = new Dba(FIELDS, "student_cie_details", OPERS, SELECT, SELECT_IDX,null, null, null, null, null, null, null);
 
 	/**  default constructor */
 	public StudentCieDetailRecord() {

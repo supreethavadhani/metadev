@@ -67,7 +67,7 @@ public class RuntimeList implements IValueList {
 	public Object[][] getList(final Object key, final IServiceContext ctx) {
 		if (this.hasKey) {
 			if (key == null) {
-				logger.error("Key should have value for list {}", this.name);
+				logger.error("ist {} requires value for its key. Value not receoved", this.name);
 				return null;
 			}
 		}

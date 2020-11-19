@@ -35,6 +35,7 @@ public class SubjectSectionDetailRecord extends DbRecord {
 			new DbField("cieFrozen", 12, DefinedDataTypes.bool, "false", null, null, "cie_frozen", FieldType.OptionalData), 
 			new DbField("isOffered", 13, DefinedDataTypes.bool, "false", null, null, "is_offered", FieldType.OptionalData)
 	};
+	private static final boolean[] OPERS = {true,false,true,false,true};
 	private static final IValidation[] VALIDS = {
 	};
 
@@ -43,7 +44,7 @@ public class SubjectSectionDetailRecord extends DbRecord {
 	private static final String SELECT = "SELECT subject_section_id, institute_id, offered_subject_id, subject_id, level_section_id, department_id, section_id, subject_name, subject_code, section_name, total_classes, attendance_frozen, cie_frozen, is_offered FROM subject_section_details";
 	private static final int[] SELECT_IDX = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
 
-	private static final Dba DBA = new Dba(FIELDS, "subject_section_details", SELECT, SELECT_IDX,null, null, null, null, null, null, null);
+	private static final Dba DBA = new Dba(FIELDS, "subject_section_details", OPERS, SELECT, SELECT_IDX,null, null, null, null, null, null, null);
 
 	/**  default constructor */
 	public SubjectSectionDetailRecord() {

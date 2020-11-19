@@ -32,6 +32,7 @@ public class StudentAssessmentDetailRecord extends DbRecord {
 			new DbField("marksScored", 9, DefinedDataTypes.integer, "0", null, null, "marks_scored", FieldType.OptionalData), 
 			new DbField("marks", 10, DefinedDataTypes.text, null, null, null, null, FieldType.OptionalData)
 	};
+	private static final boolean[] OPERS = {true,false,false,false,true};
 	private static final IValidation[] VALIDS = {
 	};
 
@@ -40,7 +41,7 @@ public class StudentAssessmentDetailRecord extends DbRecord {
 	private static final String SELECT = "SELECT student_assessment_id, institute_id, subject_section_id, assessment_scheme_id, assessment_seq_no, student_id, name, usn, has_attended, marks_scored, null FROM student_assessment_details";
 	private static final int[] SELECT_IDX = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
-	private static final Dba DBA = new Dba(FIELDS, "student_assessment_details", SELECT, SELECT_IDX,null, null, null, null, null, null, null);
+	private static final Dba DBA = new Dba(FIELDS, "student_assessment_details", OPERS, SELECT, SELECT_IDX,null, null, null, null, null, null, null);
 
 	/**  default constructor */
 	public StudentAssessmentDetailRecord() {

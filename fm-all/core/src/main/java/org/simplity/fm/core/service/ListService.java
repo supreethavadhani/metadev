@@ -74,7 +74,7 @@ public class ListService implements IService {
 		if (list.isKeyBased()) {
 			key = payload.getString("key");
 			if (key == null || key.isEmpty()) {
-				ctx.addMessage(Message.newError("list " + listName + " is key based. key is missing in the request"));
+				ctx.addMessage(Message.newError("list " + listName + " requires value for key. But it is missing in the request"));
 				return;
 			}
 		}

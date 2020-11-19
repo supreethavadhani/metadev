@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 import org.simplity.fm.core.datatypes.BooleanType;
@@ -142,7 +143,50 @@ class Util {
 			}
 			nam = name.substring(idx);
 		}
-		return nam.substring(0, 1).toUpperCase() + nam.substring(1);
+		return toUpper(nam.charAt(0)) + nam.substring(1);
+	}
+
+	static String toLabel(final String name) {
+		StringBuilder sbf = new StringBuilder();
+		sbf.append(toUpper(name.charAt(0)));
+		int n = name.length();
+		/*
+		 * labels for id fields should not have the Id at the end
+		 */
+		if(name.endsWith("Id")) {
+			n = n - 2;
+		}
+		for(int i = 1; i < n; i++ ) {
+			char c = name.charAt(i);
+			if(isUpper(c)) {
+				sbf.append(' ');
+			}
+			sbf.append(c);
+		}
+		return sbf.toString();
+	}
+
+	private static final int DIFF = 'a' - 'A';
+	static boolean isUpper(char c) {
+		return c >= 'A' && c <= 'Z';
+	}
+
+	static boolean isLower(char c) {
+		return c >= 'a' && c <= 'z';
+	}
+
+	static char toLower(char c) {
+		if(isUpper(c)) {
+			return (char) (c + DIFF);
+		}
+		return c;
+	}
+
+	static char toUpper(char c) {
+		if(isLower(c)) {
+			return (char) (c - DIFF);
+		}
+		return c;
 	}
 
 	static String toName(final String name) {
@@ -300,10 +344,10 @@ class Util {
 			final String key = reader.nextName();
 			ISelfLoader value;
 			try {
-				value = (ISelfLoader) cls.newInstance();
+				value = (ISelfLoader) cls.getDeclaredConstructor().newInstance();
 				value.fromJson(reader, key, idx);
 				map.put(key, value);
-			} catch (InstantiationException | IllegalAccessException e) {
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 				e.printStackTrace();
 			}
 		}

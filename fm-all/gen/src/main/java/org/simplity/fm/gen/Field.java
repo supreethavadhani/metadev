@@ -213,7 +213,7 @@ class Field implements Util.INamedMember {
 		sbf.append(BEGIN).append("isRequired: ").append(this.isRequired).append(COMA);
 		String lbl = this.label;
 		if (lbl == null || lbl.isEmpty()) {
-			lbl = Util.toClassName(this.name);
+			lbl = Util.toLabel(this.name);
 		}
 		Util.addAttrTs(sbf, BEGIN, "label", lbl);
 		Util.addAttrTs(sbf, BEGIN, "defaultValue", this.defaultValue);

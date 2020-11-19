@@ -28,6 +28,7 @@ public class StudentDetailRecord extends DbRecord {
 			new DbField("name", 5, DefinedDataTypes.name, null, null, null, "name", FieldType.OptionalData), 
 			new DbField("phoneNumber", 6, DefinedDataTypes.phone, null, null, null, "phone_number", FieldType.OptionalData)
 	};
+	private static final boolean[] OPERS = {true,true,true,true,true};
 	private static final IValidation[] VALIDS = {
 	};
 
@@ -36,7 +37,7 @@ public class StudentDetailRecord extends DbRecord {
 	private static final String SELECT = "SELECT student_id, institute_id, department_id, department_name, usn, name, phone_number FROM student_details";
 	private static final int[] SELECT_IDX = {0, 1, 2, 3, 4, 5, 6};
 
-	private static final Dba DBA = new Dba(FIELDS, "student_details", SELECT, SELECT_IDX,null, null, null, null, null, null, null);
+	private static final Dba DBA = new Dba(FIELDS, "student_details", OPERS, SELECT, SELECT_IDX,null, null, null, null, null, null, null);
 
 	/**  default constructor */
 	public StudentDetailRecord() {

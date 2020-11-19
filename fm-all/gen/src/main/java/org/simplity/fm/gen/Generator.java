@@ -160,7 +160,6 @@ public class Generator {
 				logger.debug("Skipping non-form file {} ", fn);
 				continue;
 			}
-			logger.info("file: {}", fn);
 			logger.debug("Going to generate record " + fn);
 			final Record record;
 			try (final JsonReader reader = new JsonReader(new FileReader(file))) {
@@ -185,7 +184,6 @@ public class Generator {
 			if (names != null) {
 				for (String s : names) {
 					record.name = s;
-					logger.info("Alias {} for record {}", s, recordName);
 					writeRecord(record, outFolder, forms, formsImport, allRecords);
 				}
 			}
@@ -215,7 +213,6 @@ public class Generator {
 		if (sbf.length() > 0) {
 			String genFileName = outFolder + "forms/" + recordName + ".form.ts";
 			Util.writeOut(genFileName, sbf);
-			logger.info("form {} generated", genFileName);
 			forms.append("\n\t").append(recordName).append(": ").append(recordName).append("Form,");
 			formsImport.append("\nimport { ").append(recordName).append("Form } from './forms/").append(recordName)
 					.append(".form';");
@@ -246,7 +243,6 @@ public class Generator {
 
 			String recordName = form.recordName;
 			if (formName.equals(recordName)) {
-				logger.info("Form {} : record is same", formName);
 				continue;
 			}
 
@@ -256,7 +252,6 @@ public class Generator {
 				aliases.put(recordName, names);
 			}
 			names.add(formName);
-			logger.info("Form {} : uses record {}", formName, recordName);
 		}
 	}
 

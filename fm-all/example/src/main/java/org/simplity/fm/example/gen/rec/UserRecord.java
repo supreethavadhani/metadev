@@ -41,6 +41,7 @@ public class UserRecord extends DbRecord {
 			new DbField("updatedAt", 18, DefinedDataTypes.timestamp, null, null, null, "updated_at", FieldType.OptionalData), 
 			new DbField("updatedBy", 19, DefinedDataTypes.id, null, null, null, "updated_by", FieldType.OptionalData)
 	};
+	private static final boolean[] OPERS = {true,true,true,true,true};
 	private static final IValidation[] VALIDS = {
 	};
 
@@ -49,7 +50,7 @@ public class UserRecord extends DbRecord {
 	private static final String SELECT = "SELECT user_id, institute_id, trust_id, user_type, login_id, password, login_enabled, previous_login_at, current_login_at, reset_password_count, reset_password_sent_at, current_login_ip, previous_login_ip, login_count, confirmation_token, login_token, created_at, created_by, updated_at, updated_by FROM users";
 	private static final int[] SELECT_IDX = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
 
-	private static final Dba DBA = new Dba(FIELDS, "users", SELECT, SELECT_IDX,null, null, null, null, null, null, null);
+	private static final Dba DBA = new Dba(FIELDS, "users", OPERS, SELECT, SELECT_IDX,null, null, null, null, null, null, null);
 
 	/**  default constructor */
 	public UserRecord() {

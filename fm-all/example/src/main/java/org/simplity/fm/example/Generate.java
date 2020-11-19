@@ -29,10 +29,10 @@ import org.simplity.fm.gen.Generator;
  *
  */
 public class Generate {
-	private static final String SPEC_ROOT = "c:/repos/forms/fm-all/example/resources/spec/";
-	private static final String JAVA_ROOT = "c:/repos/forms/fm-all/example/src/main/java/";
+	private static final String SPEC_ROOT = "c:/repos/fm-all/example/resources/spec/";
+	private static final String JAVA_ROOT = "c:/repos/fm-all/example/src/main/java/";
 	private static final String JAVA_PACKAGE = "org.simplity.fm.example.gen";
-	private static final String TS_ROOT = "c:/repos/forms/fm-all/example/ts/";
+	private static final String TS_ROOT = "c:/repos/fm-all/example/ts/";
 	private static final String TS_FORM_IMPORT_PREFIX = "../form/";
 
 	/**
