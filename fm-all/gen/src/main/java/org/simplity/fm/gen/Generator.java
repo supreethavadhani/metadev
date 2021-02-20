@@ -119,7 +119,7 @@ public class Generator {
 		 * builders for the declaration files
 		 */
 		final StringBuilder forms = new StringBuilder("\nexport const allForms: Forms = {");
-		final StringBuilder formsImport = new StringBuilder("import { Forms } from 'simplity';");
+		final StringBuilder formsImport = new StringBuilder("import { Forms } from 'simplity-core';");
 
 		/*
 		 * transitional issue with forms on the server: server defines forms as a way to
@@ -274,7 +274,7 @@ public class Generator {
 		}
 
 		final StringBuilder sbf = new StringBuilder();
-		sbf.append("import { Messages } from 'simplity';");
+		sbf.append("import { Messages } from 'simplity-core';");
 		sbf.append("\n\nexport const allMessages: Messages = {");
 		boolean isFirst = true;
 		for (final Map.Entry<String, String> entry : msgs.entrySet()) {

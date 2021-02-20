@@ -25,7 +25,6 @@ package org.simplity.fm.gen;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -731,7 +730,7 @@ class Record {
 	private static final char Q = '\'';
 
 	void emitClientForm(final StringBuilder sbf) {
-		sbf.append("import { Form } from 'simplity';");
+		sbf.append("import { Form } from 'simplity-core';");
 		sbf.append("\nexport const ").append(this.name).append("Form: Form = {");
 		sbf.append("\n\tname: '").append(this.name).append("',");
 		sbf.append("\n\tvalidOperations: {");

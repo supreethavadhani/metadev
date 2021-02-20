@@ -180,7 +180,7 @@ public class Application {
 	void emitTsDataTypes(final String folder) {
 		logger.info("Generatng data Types");
 		final StringBuilder sbf = new StringBuilder();
-		sbf.append("import { DataTypes } from 'simplity';");
+		sbf.append("import { DataTypes } from 'simplity-core';");
 		sbf.append("\n\nexport const allDataTypes: DataTypes = {");
 		this.dataTypes.emitTs(sbf);
 		sbf.append("\n}\n\n");
@@ -192,7 +192,7 @@ public class Application {
 	void emitTsLists(final String folder) {
 		logger.info("Generatng data Types");
 		final StringBuilder sbf = new StringBuilder();
-		sbf.append("import { Lists } from 'simplity';");
+		sbf.append("import { Lists } from 'simplity-core';");
 		sbf.append("\n\nexport const allLists: Lists = {");
 		int nbr = 0;
 
