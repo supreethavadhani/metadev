@@ -64,6 +64,7 @@ class Field implements Util.INamedMember {
 	int index;
 	String dbColumnName;
 	private String fieldType;
+	DataType dt;
 
 	@Override
 	public void setNameAndIdx(final String name, final int idx) {
@@ -72,13 +73,13 @@ class Field implements Util.INamedMember {
 	}
 
 	void init(final Map<String, DataType> dataTypes) {
-		final DataType dt = dataTypes.get(this.dataType);
-		if (dt == null) {
+		this.dt = dataTypes.get(this.dataType);
+		if (this.dt == null) {
 			logger.error("Field {} has an invalid dataType of {}. text value type is assumed", this.name,
 					this.dataType);
 			this.valueType = ValueType.Text;
 		} else {
-			this.valueType = dt.valueType;
+			this.valueType = this.dt.valueType;
 
 		}
 	}
@@ -210,6 +211,7 @@ class Field implements Util.INamedMember {
 		sbf.append("\n\t\t").append(this.name).append(": {");
 		sbf.append(BEGIN).append("name: '").append(this.name).append(END);
 		sbf.append(BEGIN).append("dataType: '").append(this.dataType).append(END);
+		sbf.append(BEGIN).append("valueType: '").append(this.valueType.name()).append(END);
 		sbf.append(BEGIN).append("isRequired: ").append(this.isRequired).append(COMA);
 		String lbl = this.label;
 		if (lbl == null || lbl.isEmpty()) {
@@ -232,6 +234,8 @@ class Field implements Util.INamedMember {
 				rt = "checkbox";
 			} else if (this.listName != null) {
 				rt = "select";
+			} else if(this.dt.getMaxLength() > Application.TEXT_AREA_CUTOFF_LENGTH) {
+				rt = "textarea";
 			}
 			Util.addAttrTs(sbf, BEGIN, "renderType", rt);
 		}

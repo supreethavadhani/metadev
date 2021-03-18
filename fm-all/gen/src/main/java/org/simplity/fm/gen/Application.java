@@ -43,6 +43,7 @@ public class Application {
 	protected static final String ERROR = "ERROR";
 	protected static final String NAME = "name";
 	protected static final Logger logger = LoggerFactory.getLogger(Application.class);
+	protected static final int TEXT_AREA_CUTOFF_LENGTH = 199; 
 
 	String name;
 	String tenantFieldName;

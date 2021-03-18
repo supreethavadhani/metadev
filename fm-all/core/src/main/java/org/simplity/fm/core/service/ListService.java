@@ -78,12 +78,11 @@ public class ListService implements IService {
 				return;
 			}
 		}
-		final Object[][] result = list.getList(key, ctx);
+		Object[][] result = list.getList(key, ctx);
 		if (result == null) {
 			ctx.addMessage(Message.newError("Error while getting values for list " + listName + " for key " + key));
-			return;
-		}
-		if (result.length == 0) {
+			result = new Object[0][];
+		}else  if (result.length == 0) {
 			logger.warn("List {} has no values for key {}. sending an empty response", listName, key);
 		}
 		writeOut(ctx.getSerializer(), result);

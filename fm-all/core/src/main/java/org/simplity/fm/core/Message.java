@@ -203,7 +203,7 @@ public class Message {
 		writePair(writer, "objectName", this.objectName);
 
 		if (this.params != null && this.params.length > 0) {
-			writer.write(",\"params\":[");
+			writer.write(",\"params\":[\"");
 			writer.write(this.params[0].replaceAll("\"", "\"\""));
 			writer.write(Q);
 
