@@ -211,7 +211,7 @@ class Field implements Util.INamedMember {
 		sbf.append("\n\t\t").append(this.name).append(": {");
 		sbf.append(BEGIN).append("name: '").append(this.name).append(END);
 		sbf.append(BEGIN).append("dataType: '").append(this.dataType).append(END);
-		sbf.append(BEGIN).append("valueType: '").append(this.valueType.name()).append(END);
+		sbf.append(BEGIN).append("valueType: '").append(this.valueType.name().toLowerCase()).append(END);
 		sbf.append(BEGIN).append("isRequired: ").append(this.isRequired).append(COMA);
 		String lbl = this.label;
 		if (lbl == null || lbl.isEmpty()) {

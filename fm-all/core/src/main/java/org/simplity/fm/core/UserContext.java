@@ -93,7 +93,8 @@ public class UserContext {
 	/**
 	 *
 	 * @param recordName
-	 * @return true if this form is overridden in this context
+	 * @return null if this is not if overridden in the current context. overrideId if present. 
+	 * 
 	 */
 	public String getRecordOverrideId(final String recordName) {
 		if (this.recordOverrides != null && this.recordOverrides.contains(recordName)) {

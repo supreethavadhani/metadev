@@ -300,6 +300,7 @@ public class Agent {
 			this.session = this.app.getSessionCache().get(this.token);
 			if (this.session == null) {
 				logger.info("Token {} is not valid. possibly timed out. Treating this as a guest request", this.token);
+				this.token = null;
 			} else {
 				this.userId = this.session.getUserId();
 				logger.info("Request from authuenticated user {} ", this.userId);

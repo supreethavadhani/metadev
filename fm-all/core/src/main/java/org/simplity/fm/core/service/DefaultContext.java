@@ -84,6 +84,11 @@ public class DefaultContext implements IServiceContext {
 		}
 	}
 
+	@Override
+	public boolean hasUserContext() {
+		return this.currentUtx != null;
+	}
+	
 	/**
 	 * MUST be executed before this context is used in case this APP is designed
 	 * for multi-tenant deployment
@@ -97,9 +102,13 @@ public class DefaultContext implements IServiceContext {
 
 	@Override
 	public Object getUserId() {
+		this.checkCtx();
 		return this.userId;
 	}
 
+	private void checkCtx() {
+		throw new ApplicationError("Service Design Error: Service is meant for guests, but its functionality requires user context. For example, it may be creating/updating a record that use createdBy/modifiedBy");
+	}
 	@Override
 	public ISerializer getSerializer() {
 		return this.serializer;
@@ -270,6 +279,7 @@ public class DefaultContext implements IServiceContext {
 
 	@Override
 	public UserContext getCurrentUserContext() {
+		this.checkCtx();
 		return this.currentUtx;
 	}
 
@@ -281,22 +291,29 @@ public class DefaultContext implements IServiceContext {
 	@Override
 	public void setNewUserContext(final UserContext utx) {
 		this.newUtx = utx;
-
 	}
 
 	@Override
 	public String getRecordOverrideId(final String recordName) {
-		return this.getCurrentUserContext().getRecordOverrideId(recordName);
+		if(this.currentUtx == null) {
+			return null;
+		}
+		return this.currentUtx.getRecordOverrideId(recordName);
 	}
 
 	@Override
 	public RecordOverride getRecordOverride(final String recordName) {
-		return this.getCurrentUserContext().getRecordOverride(recordName);
+		if(this.currentUtx == null) {
+			return null;
+		}
+		return this.currentUtx.getRecordOverride(recordName);
 	}
 
 	@Override
 	public String getFormOverrideId(final String formName) {
-		return this.getCurrentUserContext().getFormOverrideId(formName);
+		if(this.currentUtx == null) {
+			return null;
+		}
+		return this.currentUtx.getFormOverrideId(formName);
 	}
-
 }
