@@ -160,9 +160,12 @@ public class Form {
 		 *
 		 */
 		sbf.append("\n/** constructor */\npublic ").append(cls).append("() {");
-		sbf.append("\n\t\tsuper(NAME, RECORD, OPS, LINKS);\n\t}");
+		sbf.append("\n\t\tsuper(NAME, RECORD, OPS, LINKS);");
+		if(this.serveGuests) {
+			sbf.append("\n\t\tthis.serveGuests = true;");
+		}
 
-		sbf.append("\n}\n");
+		sbf.append("\n\t}\n}\n");
 	}
 
 	private static final Map<String, Integer> OP_INDEXES = getOpIndexes();

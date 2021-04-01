@@ -58,6 +58,11 @@ public abstract class Form<T extends Record> {
 	 * record that this form is based on
 	 */
 	protected T record;
+	
+	/**
+	 * is this form open to guests
+	 */
+	protected boolean serveGuests;
 
 	/*
 	 * what operations are allowed on this form
@@ -190,7 +195,7 @@ public abstract class Form<T extends Record> {
 
 			@Override
 			public boolean serveGuests() {
-				return false;
+				return Form.this.serveGuests;
 			}
 
 			@Override
@@ -222,17 +227,17 @@ public abstract class Form<T extends Record> {
 		public String getId() {
 			return this.serviceName;
 		}
+		@Override
+		public boolean serveGuests() {
+			return Form.this.serveGuests;
+		}
+
 	}
 
 	protected class Reader extends Service {
 
 		protected Reader(final String name) {
 			super(name);
-		}
-
-		@Override
-		public boolean serveGuests() {
-			return false;
 		}
 
 		@Override
@@ -266,11 +271,6 @@ public abstract class Form<T extends Record> {
 	}
 
 	protected class Creater extends Service {
-
-		@Override
-		public boolean serveGuests() {
-			return false;
-		}
 
 		protected Creater(final String name) {
 			super(name);
@@ -308,11 +308,6 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public boolean serveGuests() {
-			return false;
-		}
-
-		@Override
 		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
 			final DbRecord rec = (DbRecord) Form.this.record;
 			if (!rec.parse(payload, false, ctx, null, 0)) {
@@ -346,11 +341,6 @@ public abstract class Form<T extends Record> {
 		}
 
 		@Override
-		public boolean serveGuests() {
-			return false;
-		}
-
-		@Override
 		public void serve(final IServiceContext ctx, final IInputObject payload) throws Exception {
 			final DbRecord rec = (DbRecord) Form.this.record;
 			if (!rec.parseKeys(payload, ctx)) {
@@ -381,11 +371,6 @@ public abstract class Form<T extends Record> {
 
 		protected Filter(final String name) {
 			super(name);
-		}
-
-		@Override
-		public boolean serveGuests() {
-			return false;
 		}
 
 		@Override

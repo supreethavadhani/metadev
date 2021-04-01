@@ -22,8 +22,11 @@
 
 package org.simplity.fm.gen;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Map;
 
+import org.simplity.fm.core.datatypes.ValueType;
 import org.simplity.fm.core.rdb.FilterSql;
 import org.simplity.fm.core.rdb.FilterWithRecordSql;
 import org.simplity.fm.core.rdb.ReadSql;
@@ -58,6 +61,31 @@ public class Sql {
 		final boolean hasParams = this.sqlParams != null && this.sqlParams.length > 0;
 		boolean isWrite = false;
 
+		/*
+		 * see if we have any date /time fields
+		 */
+		boolean hasDate = false;
+		boolean hasTime = false;
+		if(this.sqlParams != null) {
+			for(Field f : this.sqlParams) {
+				if(f.valueType == ValueType.Date) {
+					hasDate = true;
+				}else if(f.valueType == ValueType.Timestamp) {
+					hasTime = true;
+				}
+			}
+		}
+		
+		if(this.outputFields != null) {
+			for(Field f : this.outputFields) {
+				if(f.valueType == ValueType.Date) {
+					hasDate = true;
+				}else if(f.valueType == ValueType.Timestamp) {
+					hasTime = true;
+				}
+			}
+		}
+		
 		String msg = null;
 		if (this.sqlType.equals(SQL_TYPE_WRITE)) {
 			isWrite = true;
@@ -93,6 +121,12 @@ public class Sql {
 		}
 
 		emitImports(sbf, packageName, dataTypesName);
+		if(hasDate) {
+			Util.emitImport(sbf, LocalDate.class);
+		}
+		if(hasTime) {
+			Util.emitImport(sbf, Instant.class);
+		}
 
 		if (isWrite) {
 			this.emitWriteSql(sbf, className, dataTypesName, dataTypes);
