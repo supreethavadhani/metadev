@@ -29,6 +29,7 @@ import org.simplity.fm.core.conf.CompProvider;
 import org.simplity.fm.core.conf.IAccessController;
 import org.simplity.fm.core.conf.ICompProvider;
 import org.simplity.fm.core.conf.IDbConnectionFactory;
+import org.simplity.fm.core.conf.IEmailer;
 import org.simplity.fm.core.conf.IExceptionListener;
 import org.simplity.fm.core.conf.IRequestLogger;
 import org.simplity.fm.core.conf.IServiceContextFactory;
@@ -38,6 +39,7 @@ import org.simplity.fm.core.conf.defalt.DefaultAccessController;
 import org.simplity.fm.core.conf.defalt.DefaultCompProvider;
 import org.simplity.fm.core.conf.defalt.DefaultContextFactory;
 import org.simplity.fm.core.conf.defalt.DefaultDbConFactory;
+import org.simplity.fm.core.conf.defalt.DefaultEmailer;
 import org.simplity.fm.core.conf.defalt.DefaultExceptionListener;
 import org.simplity.fm.core.conf.defalt.DefaultRequestLogger;
 import org.simplity.fm.core.conf.defalt.DefaultSessionCacher;
@@ -69,6 +71,7 @@ public class App implements IApp {
 	private ISessionCache cache = new DefaultSessionCacher();
 	private IRequestLogger reqLogger = new DefaultRequestLogger();
 	private ITexter texter = new DefaultTexter();
+	private IEmailer emalier = new DefaultEmailer();
 	private IServiceContextFactory contextFactory = new DefaultContextFactory();
 
 	/**
@@ -230,6 +233,11 @@ public class App implements IApp {
 	public ITexter getTexter() {
 		return this.texter;
 	}
+	
+	@Override
+	public IEmailer getEmailer() {
+		return this.emalier;
+	}
 
 	@Override
 	public IServiceContextFactory getContextFactory() {
@@ -297,6 +305,11 @@ public class App implements IApp {
 		 * optional. if not specified, text messages are just logged.
 		 */
 		public ITexter texter;
+		
+		/**
+		 * optional. if not specified, emails  are just logged.
+		 */
+		public IEmailer emailer;
 
 		/**
 		 * optional. if not specified, Default context is created

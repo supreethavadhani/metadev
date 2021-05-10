@@ -29,6 +29,7 @@ import org.simplity.fm.core.conf.IRequestLogger;
 import org.simplity.fm.core.conf.IServiceContextFactory;
 import org.simplity.fm.core.conf.ISessionCache;
 import org.simplity.fm.core.conf.ITexter;
+import org.simplity.fm.core.conf.IEmailer;
 import org.simplity.fm.core.rdb.RdbDriver;
 
 /**
@@ -101,6 +102,12 @@ public interface IApp {
 	 * @return the utility to send text messages to mobile phones
 	 */
 	ITexter getTexter();
+	
+	/**
+	 *
+	 * @return the utility to send eamails
+	 */
+	IEmailer getEmailer();
 
 	/**
 	 *
