@@ -518,7 +518,7 @@ public class Generator {
 			logger.error("Sql {} not generated. Error : {}, {}", fn, e, e.getMessage());
 			return;
 		}
-
+		sql.init(dataTypes.dataTypes);
 		final String cls = Util.toClassName(fn) + "Sql";
 		final StringBuilder sbf = new StringBuilder();
 		sql.emitJava(sbf, packageName, cls, Conventions.App.GENERATED_DATA_TYPES_CLASS_NAME, dataTypes.dataTypes);

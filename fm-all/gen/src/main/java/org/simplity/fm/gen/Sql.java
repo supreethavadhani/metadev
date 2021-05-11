@@ -52,6 +52,36 @@ public class Sql {
 	Field[] sqlParams;
 	Field[] outputFields;
 	String recordName;
+	private boolean hasDate = false;
+	private boolean hasTime = false;
+
+
+	void init(Map<String, DataType> dataTypes) {
+		/*
+		 * see if we have any date /time fields
+		 */
+		if(this.sqlParams != null) {
+			for(Field f : this.sqlParams) {
+				f.init(dataTypes);
+				if(f.valueType == ValueType.Date) {
+					this.hasDate = true;
+				}else if(f.valueType == ValueType.Timestamp) {
+					this.hasTime = true;
+				}
+			}
+		}
+		
+		if(this.outputFields != null) {
+			for(Field f : this.outputFields) {
+				f.init(dataTypes);
+				if(f.valueType == ValueType.Date) {
+					this.hasDate = true;
+				}else if(f.valueType == ValueType.Timestamp) {
+					this.hasTime = true;
+				}
+			}
+		}
+	}
 
 	void emitJava(final StringBuilder sbf, final String packageName, final String className, final String dataTypesName,
 			final Map<String, DataType> dataTypes) {
@@ -61,30 +91,6 @@ public class Sql {
 		final boolean hasParams = this.sqlParams != null && this.sqlParams.length > 0;
 		boolean isWrite = false;
 
-		/*
-		 * see if we have any date /time fields
-		 */
-		boolean hasDate = false;
-		boolean hasTime = false;
-		if(this.sqlParams != null) {
-			for(Field f : this.sqlParams) {
-				if(f.valueType == ValueType.Date) {
-					hasDate = true;
-				}else if(f.valueType == ValueType.Timestamp) {
-					hasTime = true;
-				}
-			}
-		}
-		
-		if(this.outputFields != null) {
-			for(Field f : this.outputFields) {
-				if(f.valueType == ValueType.Date) {
-					hasDate = true;
-				}else if(f.valueType == ValueType.Timestamp) {
-					hasTime = true;
-				}
-			}
-		}
 		
 		String msg = null;
 		if (this.sqlType.equals(SQL_TYPE_WRITE)) {
@@ -121,10 +127,10 @@ public class Sql {
 		}
 
 		emitImports(sbf, packageName, dataTypesName);
-		if(hasDate) {
+		if(this.hasDate) {
 			Util.emitImport(sbf, LocalDate.class);
 		}
-		if(hasTime) {
+		if(this.hasTime) {
 			Util.emitImport(sbf, Instant.class);
 		}
 
