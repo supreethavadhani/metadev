@@ -36,14 +36,15 @@ public class DecimalType extends DataType {
 	private final long factor;
 
 	/**
-	 * 
+	 *
 	 * @param name
 	 * @param messageId
 	 * @param minValue
 	 * @param maxValue
 	 * @param nbrDecimals
 	 */
-	public DecimalType(String name, String messageId, long minValue, long maxValue, int nbrDecimals) {
+	public DecimalType(final String name, final String messageId, final long minValue, final long maxValue,
+			final int nbrDecimals) {
 		this.valueType = ValueType.Decimal;
 		this.name = name;
 		this.messageId = messageId;
@@ -51,7 +52,7 @@ public class DecimalType extends DataType {
 		this.maxValue = maxValue;
 
 		this.maxLength = ("" + this.maxValue).length();
-		int len = ("" + this.minValue).length();
+		final int len = ("" + this.minValue).length();
 		if (len > this.maxLength) {
 			this.maxLength = len;
 		}
@@ -64,25 +65,25 @@ public class DecimalType extends DataType {
 	}
 
 	@Override
-	public Double parse(String value) {
+	public Double parse(final String value) {
 		try {
 			return this.validate(Double.parseDouble(value));
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			return null;
 		}
 	}
 
 	@Override
-	public Double parse(Object value) {
+	public Double parse(final Object value) {
 		if (value instanceof Number) {
 			return this.validate(((Number) value).doubleValue());
 		}
 		return this.parse(value.toString());
 	}
 
-	private Double validate(double d) {
-		long f = Math.round(d);
-		if (f > this.maxValue || f < this.minLength) {
+	private Double validate(final double d) {
+		final long f = Math.round(d);
+		if (f > this.maxValue || f < this.minValue) {
 			return null;
 		}
 		return (double) ((d * this.factor) / this.factor);
