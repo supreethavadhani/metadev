@@ -30,5 +30,5 @@ package org.simplity.fm.gen;
  *
  */
 enum ControlType {
-	Hidden, Input, Dropdown, Radio, Checkbox, Output, Password
+	Hidden, Input, Dropdown, Radio, Checkbox, Output, Password, Textarea
 }
