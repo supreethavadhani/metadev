@@ -20,35 +20,15 @@
  * SOFTWARE.
  */
 
-package org.simplity.fm.example;
-
-import org.simplity.fm.gen.Generator;
+package org.simplity.fm.gen;
 
 /**
+ * types of controls used on an editable page. A control may or may not have
+ * data
+ *
  * @author simplity.org
  *
  */
-public class Generate {
-	private static final String SPEC_ROOT = "c:/repos/fm-all/example/resources/spec/";
-	private static final String JAVA_ROOT = "c:/repos/fm-all/example/src/main/java/";
-	private static final String JAVA_PACKAGE = "org.simplity.fm.example.gen";
-	private static final String TS_ROOT = "c:/repos/fm-all/example/ts/";
-	private static final String TEMPLATE_ROOT = "c:/repos/fm-all/example/ts/";
-	private static final String TS_FORM_IMPORT_PREFIX = "../form/";
-
-	/**
-	 *
-	 * @param args
-	 */
-	public static void main(final String[] args) {
-		final long start = System.currentTimeMillis();
-		if (args.length == 0) {
-			Generator.generate(SPEC_ROOT, JAVA_ROOT, JAVA_PACKAGE, TS_ROOT, TS_FORM_IMPORT_PREFIX, TEMPLATE_ROOT);
-		} else if (args.length == 6) {
-			Generator.generate(args[0], args[1], args[2], args[3], args[4], args[6]);
-		} else {
-			System.err.print("Usage: Gen spec_root java_root java_package_name ts_root ts_form_import_prefix ");
-		}
-		System.out.println("generated sources in " + (System.currentTimeMillis() - start) + "ms");
-	}
+enum ButtonType {
+	Primary, Secondary, Danger, Warning
 }

@@ -46,9 +46,9 @@ public class Form {
 	String name;
 	String recordName;
 	/*
-	 * used only for the client as of now. We are worried that careless
-	 * programmers may expose services by mistake. Hence we insist that any
-	 * service that can be served to guests MUST be hand-coded
+	 * used only for the client as of now. We are worried that careless programmers
+	 * may expose services by mistake. Hence we insist that any service that can be
+	 * served to guests MUST be hand-coded
 	 *
 	 */
 	boolean serveGuests;
@@ -161,7 +161,7 @@ public class Form {
 		 */
 		sbf.append("\n/** constructor */\npublic ").append(cls).append("() {");
 		sbf.append("\n\t\tsuper(NAME, RECORD, OPS, LINKS);");
-		if(this.serveGuests) {
+		if (this.serveGuests) {
 			sbf.append("\n\t\tthis.serveGuests = true;");
 		}
 
@@ -217,11 +217,8 @@ public class Form {
 	 */
 	void emitTs(final StringBuilder sbf, final Map<String, DataType> dataTypes, final Map<String, ValueList> lists,
 			final Map<String, KeyedList> keyedLists, final String tsImportPrefix) {
-		sbf.append("\nimport { Form , Field, ChildForm } from '").append(tsImportPrefix).append("form';");
-		sbf.append("\nimport { FormData } from '").append(tsImportPrefix).append("formData';");
-		sbf.append("\nimport { SelectOption, Vo } from '").append(tsImportPrefix).append("types';");
+		sbf.append("\nimport { Form , Field, ChildForm ,FormData, SelectOption, Vo, ServiceAgent } from 'mv-core';");
 		sbf.append("\nimport { Validators } from '@angular/forms'");
-		sbf.append("\nimport { ServiceAgent} from '").append(tsImportPrefix).append("serviceAgent';");
 		/*
 		 * import for child forms being referred
 		 */
@@ -239,8 +236,8 @@ public class Form {
 		sbf.append("\n\tprivate static _instance = new ").append(cls).append("();");
 
 		/*
-		 * form may not have all fields as control.As far as the client is
-		 * concerned, only controls are assumed to be fields. so we ignore li
+		 * form may not have all fields as control.As far as the client is concerned,
+		 * only controls are assumed to be fields. so we ignore li
 		 */
 
 		/*
@@ -403,16 +400,14 @@ public class Form {
 	}
 
 	/**
-	 * extend form data to restrict name field to valid names of this form.
-	 * Note that these operate only on form controls, and not on other fields.
-	 * Non-control fields are manipulated through the Vo interface, with no
-	 * support for two-way binding with the form. They would be one-way through
-	 * vo.??
+	 * extend form data to restrict name field to valid names of this form. Note
+	 * that these operate only on form controls, and not on other fields.
+	 * Non-control fields are manipulated through the Vo interface, with no support
+	 * for two-way binding with the form. They would be one-way through vo.??
 	 */
 	private void emitTsFormFd(final StringBuilder sbf) {
 		/*
-		 * formFd extends FormData() to extend setFieldValue() and
-		 * getFieldValue()
+		 * formFd extends FormData() to extend setFieldValue() and getFieldValue()
 		 */
 		final String cls = Util.toClassName(this.name);
 		sbf.append("\n\nexport class ").append(cls).append("Fd extends FormData {");

@@ -32,6 +32,7 @@ public class Gen {
 	private static final String JAVA_PACKAGE = "org.simplity.fm.test.gen";
 	private static final String TS_ROOT = "c:/repos/forms/fm-all/gen/src/test/resources/ts/forms/";
 	private static final String TS_FORM_IMPORT_PREFIX = "../form/";
+	private static final String TEMPLATE_ROOT = "c:/repos/forms/fm-all/gen/src/test/resources/templates/";
 
 	/**
 	 *
@@ -39,6 +40,6 @@ public class Gen {
 	 */
 	public static void main(final String[] args) {
 
-		Generator.generate(SPEC_ROOT, JAVA_ROOT, JAVA_PACKAGE, TS_ROOT, TS_FORM_IMPORT_PREFIX);
+		Generator.generate(SPEC_ROOT, JAVA_ROOT, JAVA_PACKAGE, TS_ROOT, TS_FORM_IMPORT_PREFIX, TEMPLATE_ROOT);
 	}
 }

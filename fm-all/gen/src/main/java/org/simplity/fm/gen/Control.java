@@ -37,10 +37,12 @@ import org.slf4j.LoggerFactory;
  */
 class Control {
 	private static final Map<String, ControlType> controlTypes = createType();
+	private static final Map<String, ButtonType> buttonTypes = createButtonType();
 	protected static final Logger logger = LoggerFactory.getLogger(Control.class);
 	protected static final String C = ", ";
 
 	String controlType;
+	String buttonType;
 	/**
 	 * required if the type of control requires data
 	 */
@@ -57,7 +59,9 @@ class Control {
 
 		final String b = "\n\t\t,";
 		def.append(b).append("controlType: '").append(this.getControlType().name()).append('\'');
-
+		if (this.buttonType != null) {
+			def.append(b).append("buttonType: '").append(this.getButtonType().name()).append('\'');
+		}
 		def.append(b).append("label: ");
 		if (this.label == null) {
 			def.append(Util.escapeTs(this.name));
@@ -103,6 +107,14 @@ class Control {
 		return map;
 	}
 
+	private static Map<String, ButtonType> createButtonType() {
+		final Map<String, ButtonType> map = new HashMap<>();
+		for (final ButtonType bt : ButtonType.values()) {
+			map.put(bt.name().toLowerCase(), bt);
+		}
+		return map;
+	}
+
 	/**
 	 *
 	 * @return control type, possibly null
@@ -112,5 +124,16 @@ class Control {
 			return null;
 		}
 		return controlTypes.get(this.controlType.toLowerCase());
+	}
+
+	/**
+	 *
+	 * @return control type, possibly null
+	 */
+	public ButtonType getButtonType() {
+		if (this.buttonType == null) {
+			return null;
+		}
+		return buttonTypes.get(this.buttonType.toLowerCase());
 	}
 }

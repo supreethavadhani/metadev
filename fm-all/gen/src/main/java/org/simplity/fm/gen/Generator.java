@@ -58,8 +58,8 @@ public class Generator {
 			generateClientComponents(args[0], args[1]);
 			return;
 		}
-		if (args.length == 5) {
-			generate(args[0], args[1], args[2], args[3], args[4]);
+		if (args.length == 6) {
+			generate(args[0], args[1], args[2], args[3], args[4], args[5]);
 			return;
 		}
 		System.err.println("Usage : java Generator.class resourceRootFolder tsFormFolder\n or \n"
@@ -302,9 +302,10 @@ public class Generator {
 	 *                        named forms are generated.for example ".." in case the
 	 *                        two folders are in the same parent folder
 	 * @param tsRootFolder    folder where generated ts files are to be saved
+	 * @param templateRoot
 	 */
 	public static void generate(final String inputRootFolder, final String javaRootFolder, final String javaRootPackage,
-			final String tsRootFolder, final String tsImportPrefix) {
+			final String tsRootFolder, final String tsImportPrefix, String templateRoot) {
 
 		String resourceRootFolder = inputRootFolder;
 		if (!inputRootFolder.endsWith(FOLDER)) {
@@ -330,6 +331,16 @@ public class Generator {
 		 */
 		if (!ensureFolder(new File(tsRootFolder))) {
 			logger.error("Unable to clean/create ts root folder {}", tsRootFolder);
+			return;
+		}
+
+		if (!ensureFolder(new File(templateRoot))) {
+			logger.error("Unable to clean/create ts root folder {}", templateRoot);
+			return;
+		}
+		
+		if (!ensureFolder(new File(templateRoot))) {
+			logger.error("Unable to clean/create ts root folder {}", templateRoot);
 			return;
 		}
 
