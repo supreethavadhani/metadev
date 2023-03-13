@@ -32,3 +32,7 @@ package org.simplity.fm.gen;
 enum ButtonType {
 	Primary, Secondary, Danger, Warning
 }
+
+enum ButtonActions {
+	Create, Update, Delete, Cancel
+}

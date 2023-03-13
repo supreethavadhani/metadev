@@ -47,6 +47,8 @@ public class Generator {
 	private static final String EXT_FRM = ".frm.json";
 	private static final String EXT_REC = ".rec.json";
 	private static final String EXT_SQL = ".sql.json";
+	private static final String EXT_TEMPLATE = ".template.json";
+	private static final String EXT_PAGE = ".page.json";
 
 	/**
 	 *
@@ -59,7 +61,7 @@ public class Generator {
 			return;
 		}
 		if (args.length == 6) {
-			generate(args[0], args[1], args[2], args[3], args[4], args[5]);
+			generate(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
 			return;
 		}
 		System.err.println("Usage : java Generator.class resourceRootFolder tsFormFolder\n or \n"
@@ -305,7 +307,7 @@ public class Generator {
 	 * @param templateRoot
 	 */
 	public static void generate(final String inputRootFolder, final String javaRootFolder, final String javaRootPackage,
-			final String tsRootFolder, final String tsImportPrefix, String templateRoot) {
+			final String tsRootFolder, final String tsImportPrefix, String templateRoot, String pageRoot) {
 
 		String resourceRootFolder = inputRootFolder;
 		if (!inputRootFolder.endsWith(FOLDER)) {
@@ -335,12 +337,7 @@ public class Generator {
 		}
 
 		if (!ensureFolder(new File(templateRoot))) {
-			logger.error("Unable to clean/create ts root folder {}", templateRoot);
-			return;
-		}
-		
-		if (!ensureFolder(new File(templateRoot))) {
-			logger.error("Unable to clean/create ts root folder {}", templateRoot);
+			logger.error("Unable to clean/create template root folder {}", templateRoot);
 			return;
 		}
 
@@ -403,6 +400,41 @@ public class Generator {
 				logger.info("file: {}", fn);
 				emitForm(file, generatedSourceRootFolder, tsRootFolder, app.dataTypes, app, javaRootPackage,
 						tsImportPrefix, recs);
+			}
+		}
+
+		emitAllForms(resourceRootFolder, tsRootFolder);
+		logger.debug("Going to process Templates under folder {}", resourceRootFolder);
+		f = new File(resourceRootFolder + "template/");
+		if (f.exists() == false) {
+			logger.error("Templates folder {} not found. No Templates are processed", f.getPath());
+		} else {
+
+			for (final File file : f.listFiles()) {
+				final String fn = file.getName();
+				if (fn.endsWith(EXT_TEMPLATE) == false) {
+					logger.debug("Skipping non-template file {} ", fn);
+					continue;
+				}
+				logger.info("file: {}", fn);
+				emitTemplate(file, templateRoot, tsRootFolder);
+			}
+		}
+
+		logger.debug("Going to process Pages under folder {}", pageRoot);
+		f = new File(resourceRootFolder + "page/");
+		if (f.exists() == false) {
+			logger.error("page folder {} not found. No Pages are processed", f.getPath());
+		} else {
+
+			for (final File file : f.listFiles()) {
+				final String fn = file.getName();
+				if (fn.endsWith(EXT_PAGE) == false) {
+					logger.debug("Skipping non-page file {} ", fn);
+					continue;
+				}
+				logger.info("file: {}", fn);
+				emitPage(file, pageRoot, resourceRootFolder);
 			}
 		}
 
@@ -603,6 +635,100 @@ public class Generator {
 			sbf.append("\n\t\treturn super.fetch").append(get).append("Value(").append(f.index).append(");");
 			sbf.append("\n\t}");
 		}
+
+	}
+
+	private static void emitTemplate(final File file, final String templateRoot, final String tsRootFolder) {
+		String fn = file.getName();
+		fn = fn.substring(0, fn.length() - EXT_TEMPLATE.length());
+		ensureFolder(new File(templateRoot + fn));
+		final Template template;
+		try (final JsonReader reader = new JsonReader(new FileReader(file))) {
+			template = Util.GSON.fromJson(reader, Template.class);
+		} catch (final Exception e) {
+			e.printStackTrace();
+			logger.error("Template {} not generated. Error : {}, {}", fn, e, e.getMessage());
+			return;
+		}
+
+		final StringBuilder sbf = new StringBuilder();
+		sbf.setLength(0);
+		template.emitTemplateTs(sbf, template, templateRoot, fn, tsRootFolder);
+		sbf.setLength(0);
+		template.emitTemplateHtml(sbf, template, templateRoot, fn);
+
+	}
+
+	private static void emitAllForms(String resourceRootFolder, String tsRootFolder) {
+		final StringBuilder sbf = new StringBuilder();
+		sbf.setLength(0);
+		File f = new File(resourceRootFolder + "form/");
+		if (f.exists() == false) {
+			logger.error("Forms folder {} not found. No forms are processed", f.getPath());
+		} else {
+
+			for (final File file : f.listFiles()) {
+				final String fn = file.getName();
+				if (fn.endsWith(EXT_FRM) == false) {
+					logger.debug("Skipping non-form file {} ", fn);
+					continue;
+				}
+				final Form form;
+				try (final JsonReader reader = new JsonReader(new FileReader(file))) {
+					form = Util.GSON.fromJson(reader, Form.class);
+				} catch (final Exception e) {
+					e.printStackTrace();
+					logger.error("Form {} not generated. Error : {}, {}", fn, e, e.getMessage());
+					return;
+				}
+				sbf.append("import { " + form.name.substring(0, 1).toUpperCase() + form.name.substring(1)
+						+ "Form } from \"./" + form.name + "Form\";\n");
+			}
+			sbf.append("\n export const allForms = { \n");
+			for (final File file : f.listFiles()) {
+				final String fn = file.getName();
+				if (fn.endsWith(EXT_FRM) == false) {
+					logger.debug("Skipping non-form file {} ", fn);
+					continue;
+				}
+				final Form form;
+				try (final JsonReader reader = new JsonReader(new FileReader(file))) {
+					form = Util.GSON.fromJson(reader, Form.class);
+				} catch (final Exception e) {
+					e.printStackTrace();
+					logger.error("Form {} not generated. Error : {}, {}", fn, e, e.getMessage());
+					return;
+				}
+				sbf.append("    \"" + form.name + "\"" + ":" + form.name.substring(0, 1).toUpperCase()
+						+ form.name.substring(1) + "Form" + ",\n");
+			}
+			sbf.append("}");
+		}
+		Util.writeOut(tsRootFolder + "/allForms.ts", sbf);
+	}
+
+	private static void emitPage(File file, String pageRoot, String resourceRootFolder) {
+		String fn = file.getName();
+		fn = fn.substring(0, fn.length() - EXT_PAGE.length());
+		final Page page;
+		try (final JsonReader reader = new JsonReader(new FileReader(file))) {
+			page = Util.GSON.fromJson(reader, Page.class);
+		} catch (final Exception e) {
+			e.printStackTrace();
+			logger.error("Template {} not generated. Error : {}, {}", fn, e, e.getMessage());
+			return;
+		}
+
+		StringBuilder sbf = new StringBuilder();
+		sbf.setLength(0);
+		File f = new File(pageRoot);
+		sbf.setLength(0);
+		if (f.exists() == false) {
+			logger.error("Forms folder {} not found. No forms are processed", f.getPath());
+		} else {
+			sbf = page.emitPageTs(sbf, page, resourceRootFolder);
+		}
+		Util.writeOut(pageRoot + fn + "-component.ts", sbf);
 
 	}
 }
