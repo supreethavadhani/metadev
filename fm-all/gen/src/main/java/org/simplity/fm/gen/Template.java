@@ -95,7 +95,7 @@ public class Template {
 		String tag = tags.getValue(template.templateType);
 		sbf = getHeaderHtml(template, sbf);
 		sbf.append("<div  class =\"col-md-8\" style=\"margin: auto; padding-top:3rem\"> \n	<" + tag
-				+ " [formData]=\"fd\"></" + tag + ">\n</div>");
+				+ " [formData]=\"fd\"></" + tag + ">\n</div>\n");
 		sbf = getButtonsHtml(template, sbf);
 		return sbf;
 	}
@@ -134,12 +134,12 @@ public class Template {
 
 	StringBuilder getButtonsHtml(Template template, StringBuilder sbf) {
 		BuiltInTags tags = new BuiltInTags();
-		sbf.append("<div style=\"text-align: center;padding-top: 2rem;margin:2rem\">");
+		sbf.append("<div style=\"text-align: center;padding-top: 2rem;\">");
 		for (Button b : template.buttons) {
-			sbf.append("<" + tags.getValue(b.buttonType + "") + " name= \"" + b.name + "\" (click)="
-					+ tags.getValue(b.action + "") + "()> </" + tags.getValue(b.buttonType + "") + "> \n");
+			sbf.append(" \n    <" + tags.getValue(b.buttonType + "") + " name= \"" + b.name + "\" (click)="
+					+ tags.getValue(b.action + "") + "()> </" + tags.getValue(b.buttonType + "") + ">");
 		}
-		sbf.append("</div>");
+		sbf.append("\n</div>");
 		return sbf;
 	}
 
@@ -166,8 +166,8 @@ public class Template {
 	}
 
 	StringBuilder getHeaderHtml(Template template, StringBuilder sbf) {
-		sbf.append("<mat-card class =\"col-md-8\" style=\"margin: auto\">\n" + "    <h2> {{formHeader}}</h2>\n"
-				+ "</mat-card>");
+		sbf.append("<div style=\"margin: 2rem;\">\n" + "    <mat-card class =\"col-md-8\" style=\"margin: auto\">\n"
+				+ "        <h2> {{formHeader}}</h2>\n" + "    </mat-card>\n" + "</div>\n");
 		return sbf;
 	}
 

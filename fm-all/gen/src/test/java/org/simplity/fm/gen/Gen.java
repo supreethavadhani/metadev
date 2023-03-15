@@ -41,7 +41,7 @@ public class Gen {
 	 */
 	public static void main(final String[] args) {
 
-		Generator.generate(SPEC_ROOT, JAVA_ROOT, JAVA_PACKAGE, TS_ROOT, TS_FORM_IMPORT_PREFIX, TEMPLATE_ROOT,
+		Generator.generate(SPEC_ROOT, JAVA_ROOT, JAVA_PACKAGE, TS_ROOT, TS_FORM_IMPORT_PREFIX, TEMPLATE_ROOT, Page_ROOT,
 				Page_ROOT);
 	}
 }

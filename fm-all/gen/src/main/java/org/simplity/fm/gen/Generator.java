@@ -60,8 +60,8 @@ public class Generator {
 			generateClientComponents(args[0], args[1]);
 			return;
 		}
-		if (args.length == 6) {
-			generate(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
+		if (args.length == 7) {
+			generate(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
 			return;
 		}
 		System.err.println("Usage : java Generator.class resourceRootFolder tsFormFolder\n or \n"
@@ -307,7 +307,8 @@ public class Generator {
 	 * @param templateRoot
 	 */
 	public static void generate(final String inputRootFolder, final String javaRootFolder, final String javaRootPackage,
-			final String tsRootFolder, final String tsImportPrefix, String templateRoot, String pageRoot) {
+			final String tsRootFolder, final String tsImportPrefix, String templateRoot, String pageRoot,
+			String routeRoot) {
 
 		String resourceRootFolder = inputRootFolder;
 		if (!inputRootFolder.endsWith(FOLDER)) {
@@ -438,6 +439,7 @@ public class Generator {
 			}
 		}
 
+		emitRoutes(routeRoot, resourceRootFolder, pageRoot);
 		logger.debug("Going to process sqls under folder {}sql/", resourceRootFolder);
 		f = new File(resourceRootFolder + "sql/");
 		if (f.exists() == false) {
@@ -731,4 +733,39 @@ public class Generator {
 		Util.writeOut(pageRoot + fn + "-component.ts", sbf);
 
 	}
+
+	private static void emitRoutes(String routeRoot, String resourceRootFolder, String PageRoot) {
+		StringBuilder sbf = new StringBuilder();
+		sbf.setLength(0);
+		sbf.append("import { RouterModule, Routes } from \"@angular/router\";\n"
+				+ "\nimport { NgModule } from \"@angular/core\";\n" + "\n" + "\n" + "const routes: Routes = [");
+		Page page;
+		File f = new File(routeRoot);
+		f = new File(resourceRootFolder + "page/");
+		if (f.exists() == false) {
+			logger.error("Templates folder {} not found. No Templates are processed", f.getPath());
+		} else {
+
+			for (final File file : f.listFiles()) {
+				final String fn = file.getName();
+				if (fn.endsWith(EXT_PAGE) == false) {
+					logger.debug("Skipping non-template file {} ", fn);
+					continue;
+				} else {
+					try (final JsonReader reader = new JsonReader(new FileReader(file))) {
+						page = Util.GSON.fromJson(reader, Page.class);
+						sbf = page.getPageRoute(sbf, PageRoot);
+					} catch (final Exception e) {
+						e.printStackTrace();
+						logger.error("Route {} not generated. Error : {}, {}", fn, e, e.getMessage());
+						return;
+					}
+				}
+			}
+		}
+		sbf.append("\n];\n" + "\n" + "  @NgModule({\n" + "    imports: [RouterModule.forRoot(routes)],\n"
+				+ "    exports: [RouterModule]\n" + "  })\n" + "  export class AppRouting { }");
+		Util.writeOut(routeRoot + "/app.routes.ts", sbf);
+	}
+
 }

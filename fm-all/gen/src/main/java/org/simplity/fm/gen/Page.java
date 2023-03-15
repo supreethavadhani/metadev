@@ -71,4 +71,10 @@ public class Page {
 		return template.htmlSelector;
 	}
 
+	StringBuilder getPageRoute(StringBuilder sbf, String pageRoot) {
+		sbf.append("\n    { path: '" + pageName + "', component: " + pageName + "Component},");
+		sbf.insert(0, "\nimport { " + pageName + "Component } from \"" + pageRoot + pageName + "-component\";");
+		return sbf;
+	}
+
 }

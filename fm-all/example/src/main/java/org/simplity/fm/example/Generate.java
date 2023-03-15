@@ -45,9 +45,9 @@ public class Generate {
 		final long start = System.currentTimeMillis();
 		if (args.length == 0) {
 			Generator.generate(SPEC_ROOT, JAVA_ROOT, JAVA_PACKAGE, TS_ROOT, TS_FORM_IMPORT_PREFIX, TEMPLATE_ROOT,
-					APge_IMPORT_PREFIX);
+					APge_IMPORT_PREFIX, APge_IMPORT_PREFIX);
 		} else if (args.length == 6) {
-			Generator.generate(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
+			Generator.generate(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
 		} else {
 			System.err.print("Usage: Gen spec_root java_root java_package_name ts_root ts_form_import_prefix ");
 		}
