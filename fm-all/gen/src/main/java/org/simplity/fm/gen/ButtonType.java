@@ -34,5 +34,5 @@ enum ButtonType {
 }
 
 enum ButtonActions {
-	Create, Update, Delete, Cancel
+	Create, Update, Delete, Navigate
 }

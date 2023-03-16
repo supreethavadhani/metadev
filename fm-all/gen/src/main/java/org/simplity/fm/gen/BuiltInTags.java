@@ -12,7 +12,7 @@ public class BuiltInTags {
 		builtInTags.put("Secondary", "app-mv-secondary-button");
 		builtInTags.put("Create", "create");
 		builtInTags.put("Save", "save");
-		builtInTags.put("Cancel", "cancel");
+		builtInTags.put("Navigate", "navigate");
 	}
 
 	public String getValue(String key) {

@@ -36,6 +36,7 @@ public class Template {
 	String templateType;
 	String htmlSelector;
 	Button[] buttons;
+	Boolean enableRoutes;
 
 	/**
 	 * @param sbf
@@ -81,10 +82,10 @@ public class Template {
 				+ "  templateUrl: './component.html',\n" + "  imports: [MVClientCoreAppModule, MVComponentsModule],\n"
 				+ "  exportAs: \"" + template.templateName + "Component\"\n" + "})\n" + "\n" + "export class "
 				+ template.templateName + "Component implements OnInit {\n" + "  @Input() formName: any;\n"
-				+ "  public fd: FormData;\n" + "  public formHeader:string;\n"
-				+ "  constructor(public sa: ServiceAgent) {}\n" + "  ngOnInit() {\n"
+				+ "@Input() routes?: [];\n" + "  public fd: FormData;\n" + "  public formHeader:string;\n"
+				+ "  constructor(public sa: ServiceAgent, public router: Router) {}\n" + "  ngOnInit() {\n"
 				+ "    this.fd = FormService.getFormFd(this.formName,this.sa,allForms)\n"
-				+ "    this.formHeader = this.fd.form.getName();\n" + "  }");
+				+ "    this.formHeader = this.fd.form.getName().toUpperCase();\n" + "  }");
 		getButtonsTs(template, sbf);
 		sbf.append("\n}");
 		return sbf;
@@ -94,9 +95,9 @@ public class Template {
 		BuiltInTags tags = new BuiltInTags();
 		String tag = tags.getValue(template.templateType);
 		sbf = getHeaderHtml(template, sbf);
-		sbf.append("<div  class =\"col-md-8\" style=\"margin: auto; padding-top:3rem\"> \n	<" + tag
-				+ " [formData]=\"fd\"></" + tag + ">\n</div>\n");
+		sbf.append("	<" + tag + " [formData]=\"fd\"></" + tag + ">\n");
 		sbf = getButtonsHtml(template, sbf);
+		sbf.append("</mat-card>");
 		return sbf;
 	}
 
@@ -110,16 +111,18 @@ public class Template {
 				+ "    exportAs:\"" + template.templateName + "Component\",\n" + "    styleUrls: []\n" + "  })\n"
 				+ "  \n" + "  export class " + template.templateName + "Component implements OnInit{\n"
 				+ "    @ViewChild(\"gridTable\", { static: false }) gtable: MvTableComponent;\n"
-				+ "    @Input() formName: any;\n" + "\n" + "    public fd: FormData\n"
+				+ "    @Input() formName: any;\n" + "\n" + "\n  @Input() routes?: [];\n" + "public fd: FormData\n"
 				+ "    public tableData: TableMetaData;\n" + "public formHeader: string\n" + "\n"
-				+ "    constructor(public sa: ServiceAgent) {}\n" + "    \n" + "    async ngOnInit() {\n"
+				+ "    constructor(public sa: ServiceAgent, public router: Router) {}\n" + "    \n"
+				+ "    async ngOnInit() {\n"
 				+ "      this.fd = await FormService.getFormFd(this.formName,this.sa,allForms)\n"
-				+ "      this.fetchData();\n     this.formHeader = this.fd.form.getName();\n" + "    }\n"
+				+ "      this.fetchData();\n     this.formHeader = this.fd.form.getName().toUpperCase();\n" + "    }\n"
 				+ "    fetchData() {\n" + "  \n" + "      this.tableData = this.gtable.getColumnData(this.fd)\n"
 				+ "      const filter: FilterRequest = {\n" + "        conditions: {}\n" + "      };\n" + "      \n"
 				+ "     this.fd.filter(filter).subscribe({\n" + "      next: data =>{\n"
 				+ "          this.tableData.data = data;\n" + "          this.gtable.update();\n" + "      },\n"
 				+ "      error: msg => console.error(\"Error from server \", msg)\n" + "     });\n" + "    }");
+		sbf = getButtonsTs(template, sbf);
 		sbf.append("\n}");
 		return sbf;
 	}
@@ -128,7 +131,10 @@ public class Template {
 		sbf = getHeaderHtml(template, sbf);
 		sbf.append(
 				" <app-mv-table style=\"width:1000px;\" data [tableGridData]=\"tableData\" #gridTable></app-mv-table>");
-		sbf = getButtonsHtml(template, sbf);
+		if (template.buttons != null && template.buttons.length > 0) {
+			sbf = getButtonsHtml(template, sbf);
+		}
+		sbf.append("</mat-card>");
 		return sbf;
 	}
 
@@ -137,28 +143,44 @@ public class Template {
 		sbf.append("<div style=\"text-align: center;padding-top: 2rem;\">");
 		for (Button b : template.buttons) {
 			sbf.append(" \n    <" + tags.getValue(b.buttonType + "") + " name= \"" + b.name + "\" (click)="
-					+ tags.getValue(b.action + "") + "()> </" + tags.getValue(b.buttonType + "") + ">");
+					+ tags.getValue(b.action + "") + b.name.replaceAll("\\s+", "") + "()> </"
+					+ tags.getValue(b.buttonType + "") + ">");
 		}
 		sbf.append("\n</div>");
 		return sbf;
 	}
 
 	StringBuilder getButtonsTs(Template template, StringBuilder sbf) {
+		Boolean CreateCalled = false;
+		Boolean NavigateCalled = false;
+		Boolean UpdateCalled = false;
 		if (template.buttons.length > 0) {
 			for (Button button : template.buttons) {
 				if (button.action == ButtonActions.Create) {
-					sbf.append(" \n create() {\n" + "    this.fd.saveAsNew().subscribe(\n" + "      data => {\n"
-							+ "        console.log(\"saved\")\n" + "      },\n" + "      err => {\n"
-							+ "        console.log(err)\n" + "      }\n" + "    )\n" + "  } ");
+					sbf.append(" \n create" + button.name.replaceAll("\\s+", "") + "() {\n"
+							+ "    this.fd.saveAsNew().subscribe(\n" + "      data => {\n"
+							+ "        console.log(\"saved\")\n");
+					if (button.routeOnClick != null && button.routeOnClick && template.enableRoutes) {
+						sbf = getRouteTs(sbf, button.name);
+					}
+					sbf.append("\n    },       err => {\n" + "        console.log(err)\n" + "      });   \n" + "    }");
+					CreateCalled = true;
 				}
 				if (button.action == ButtonActions.Update) {
-					sbf.append("  \n save() {\n" + "    this.fd.save().subscribe(\n" + "      data => {\n"
+					sbf.append("  \n save" + button.name.replaceAll("\\s+", "") + "() {\n"
+							+ "    this.fd.save().subscribe(\n" + "      data => {\n"
 							+ "        console.log(\"saved\")\n" + "      },\n" + "      err => {\n"
-							+ "        console.log(err)\n" + "      }\n" + "    )\n" + "  }");
+							+ "							       console.log(err)\n" + "          }); \n }");
+					UpdateCalled = true;
 				}
-				if (button.action == ButtonActions.Cancel) {
-					sbf.append("   \n cancel() {\n"
-							+ "    this.fd = FormService.getFormFd(this.formName,this.sa,allForms)  \n" + "  }");
+				if (button.action == ButtonActions.Navigate) {
+					sbf.append("   \n navigate" + button.name.replaceAll("\\s+", "") + "() {\n"
+							+ "    this.fd = FormService.getFormFd(this.formName,this.sa,allForms)  \n");
+					if (button.routeOnClick != null && button.routeOnClick && template.enableRoutes) {
+						sbf = getRouteTs(sbf, button.name);
+					}
+					sbf.append("  }");
+					NavigateCalled = true;
 				}
 			}
 		}
@@ -166,8 +188,16 @@ public class Template {
 	}
 
 	StringBuilder getHeaderHtml(Template template, StringBuilder sbf) {
-		sbf.append("<div style=\"margin: 2rem;\">\n" + "    <mat-card class =\"col-md-8\" style=\"margin: auto\">\n"
-				+ "        <h2> {{formHeader}}</h2>\n" + "    </mat-card>\n" + "</div>\n");
+		sbf.append("    "
+				+ "<mat-card class=\"col-md-10\" style=\"margin: auto; margin-top: 2rem;box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;\"> \n "
+				+ "    <div style=\"margin: 2rem;text-align:center;\">\n"
+				+ "        <h2 style=\"color:#004faa\"> {{formHeader}}</h2>\n" + "        <hr>\n" + "    </div>");
+		return sbf;
+	}
+
+	StringBuilder getRouteTs(StringBuilder sbf, String name) {
+		sbf.append("        this.router.navigate([this.routes.filter(routeTo=> routeTo['name'] == \"" + name
+				+ "\" )[0]['routeTo']])");
 		return sbf;
 	}
 

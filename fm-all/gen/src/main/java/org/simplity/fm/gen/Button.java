@@ -4,4 +4,5 @@ public class Button {
 	String name;
 	ButtonActions action;
 	ButtonType buttonType;
+	Boolean routeOnClick;
 }

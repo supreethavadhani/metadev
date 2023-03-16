@@ -41,17 +41,30 @@ public class Page {
 	String componentForm;
 	String templateType;
 	String pageSelector;
+	PageRoute[] routes;
 
 	StringBuilder emitPageTs(StringBuilder sbf, Page page, String resourceRootFolder) {
 		String templateTag = getTemplateTag(page, resourceRootFolder);
 		sbf.append("import {\n" + "  Component,\n" + "  Input\n" + "} from '@angular/core';\n" + "\n" + "import { "
 				+ page.templateType + "Component } from 'src/app/framework-modules/formdata/template/"
 				+ page.templateType + "/component';\n" + "\n" + "@Component({\n" + "  standalone: true,\n"
-				+ "  selector:'" + page.pageSelector + "',\n  template: `<" + templateTag + " [formName]= \"form\"></"
-				+ templateTag + ">`,\n" + "  imports:[" + page.templateType + "Component],\n" + "  styleUrls: []\n"
-				+ "})\n" + "\n" + "export class " + page.pageName + "Component {\n" + "  @Input() inputData: any;\n"
-				+ "\n" + "  public form\n" + "  \n" + "  constructor() {\n" + "    this.form = \"" + page.componentForm
-				+ "\"\n" + "  }\n" + "}\n" + "");
+				+ "  selector:'" + page.pageSelector + "',\n  template: `<" + templateTag + " [formName]= \"form\"");
+		if (page.routes != null && page.routes.length > 0) {
+			sbf = getRouteHtml(sbf);
+		}
+		sbf.append("></" + templateTag + ">`,\n" + "  imports:[" + page.templateType + "Component],\n"
+				+ "  styleUrls: []\n" + "})\n" + "\n" + "export class " + page.pageName + "Component {\n"
+				+ "  @Input() inputData: any;\n" + "\n" + "  public form;\n    public routes;" + "  \n"
+				+ "  constructor() {\n" + "    this.form = \"" + page.componentForm + "\";\n  ");
+		if (page.routes != null && page.routes.length > 0) {
+			sbf.append("  this.routes = [");
+			for (PageRoute R : page.routes) {
+				sbf.append("    {\n" + "      \"name\":\"" + R.name + "\",\n" + "      \"routeTo\":\"" + R.routeTo
+						+ "\"\n" + "    },");
+			}
+			sbf.append("\n    ]\n");
+		}
+		sbf.append("  }\n" + "}\n" + "");
 		return sbf;
 	}
 
@@ -74,6 +87,11 @@ public class Page {
 	StringBuilder getPageRoute(StringBuilder sbf, String pageRoot) {
 		sbf.append("\n    { path: '" + pageName + "', component: " + pageName + "Component},");
 		sbf.insert(0, "\nimport { " + pageName + "Component } from \"" + pageRoot + pageName + "-component\";");
+		return sbf;
+	}
+
+	StringBuilder getRouteHtml(StringBuilder sbf) {
+		sbf.append("    [routes]=routes");
 		return sbf;
 	}
 
