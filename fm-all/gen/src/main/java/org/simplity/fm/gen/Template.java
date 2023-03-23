@@ -37,6 +37,9 @@ public class Template {
 	String htmlSelector;
 	Button[] buttons;
 	Boolean enableRoutes;
+	String editRoute;
+
+	public Boolean hasSaveButton = false;
 
 	/**
 	 * @param sbf
@@ -82,10 +85,26 @@ public class Template {
 				+ "  templateUrl: './component.html',\n" + "  imports: [MVClientCoreAppModule, MVComponentsModule],\n"
 				+ "  exportAs: \"" + template.templateName + "Component\"\n" + "})\n" + "\n" + "export class "
 				+ template.templateName + "Component implements OnInit {\n" + "  @Input() formName: any;\n"
-				+ "@Input() routes?: [];\n" + "  public fd: FormData;\n" + "  public formHeader:string;\n"
+				+ "@Input() routes?: [];\n");
+		if (template.buttons.length > 0) {
+			for (Button button : template.buttons) {
+				if (button.action == ButtonActions.Update) {
+					sbf.append("@Input() inputData:{};\n\n");
+					this.hasSaveButton = true;
+					break;
+				}
+			}
+		}
+		sbf.append("  public fd: FormData;\n" + "  public formHeader:string;\n"
 				+ "  constructor(public sa: ServiceAgent, public router: Router) {}\n" + "  ngOnInit() {\n"
 				+ "    this.fd = FormService.getFormFd(this.formName,this.sa,allForms)\n"
-				+ "    this.formHeader = this.fd.form.getName().toUpperCase();\n" + "  }");
+				+ "    this.formHeader = this.fd.form.getName().toUpperCase();\n");
+		if (hasSaveButton) {
+			sbf.append("    this.fd.setFieldValues(this.inputData);\n" + "    this.fd.fetchData().subscribe(\n"
+					+ "      data=>{\n" + "      console.log(data,\"Data Fetched successfully\")\n" + "    },\n"
+					+ "    err=>{\n" + "      console.log(err)\n" + "    })");
+		}
+		sbf.append("  }");
 		getButtonsTs(template, sbf);
 		sbf.append("\n}");
 		return sbf;
@@ -111,9 +130,9 @@ public class Template {
 				+ "    exportAs:\"" + template.templateName + "Component\",\n" + "    styleUrls: []\n" + "  })\n"
 				+ "  \n" + "  export class " + template.templateName + "Component implements OnInit{\n"
 				+ "    @ViewChild(\"gridTable\", { static: false }) gtable: MvTableComponent;\n"
-				+ "    @Input() formName: any;\n" + "\n" + "\n  @Input() routes?: [];\n" + "public fd: FormData\n"
-				+ "    public tableData: TableMetaData;\n" + "public formHeader: string\n" + "\n"
-				+ "    constructor(public sa: ServiceAgent, public router: Router) {}\n" + "    \n"
+				+ "    @Input() formName: any;\n" + "\n" + "\n  @Input() routes?: [];\n@Input() editRoute: string\n"
+				+ "public fd: FormData\n" + "    public tableData: TableMetaData;\n" + "public formHeader: string\n"
+				+ "\n" + "    constructor(public sa: ServiceAgent, public router: Router) {}\n" + "    \n"
 				+ "    async ngOnInit() {\n"
 				+ "      this.fd = await FormService.getFormFd(this.formName,this.sa,allForms)\n"
 				+ "      this.fetchData();\n     this.formHeader = this.fd.form.getName().toUpperCase();\n" + "    }\n"
@@ -123,14 +142,17 @@ public class Template {
 				+ "          this.tableData.data = data;\n" + "          this.gtable.update();\n" + "      },\n"
 				+ "      error: msg => console.error(\"Error from server \", msg)\n" + "     });\n" + "    }");
 		sbf = getButtonsTs(template, sbf);
-		sbf.append("\n}");
+
+		sbf.append("  \neditClicked($event) {\n" + "    let primaryKey = Object.keys(this.fd.extractKeyFields())[0]\n"
+				+ "    let routeKey = {}\n" + "    routeKey[primaryKey] = this.tableData.data[$event][primaryKey]\n"
+				+ "    this.router.navigate([this.editRoute,routeKey])\n" + "  }\n}");
 		return sbf;
 	}
 
 	StringBuilder getTableHtml(Template template, StringBuilder sbf) {
 		sbf = getHeaderHtml(template, sbf);
 		sbf.append(
-				" <app-mv-table style=\"width:1000px;\" data [tableGridData]=\"tableData\" #gridTable></app-mv-table>");
+				" <app-mv-table (editAction)=\"editClicked($event)\" style=\"width:1000px;\" data [tableGridData]=\"tableData\" #gridTable></app-mv-table>");
 		if (template.buttons != null && template.buttons.length > 0) {
 			sbf = getButtonsHtml(template, sbf);
 		}

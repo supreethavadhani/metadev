@@ -440,6 +440,7 @@ public class Generator {
 		}
 
 		emitRoutes(routeRoot, resourceRootFolder, pageRoot);
+		emitMenu(routeRoot, resourceRootFolder, pageRoot);
 		logger.debug("Going to process sqls under folder {}sql/", resourceRootFolder);
 		f = new File(resourceRootFolder + "sql/");
 		if (f.exists() == false) {
@@ -766,6 +767,40 @@ public class Generator {
 		sbf.append("\n];\n" + "\n" + "  @NgModule({\n" + "    imports: [RouterModule.forRoot(routes)],\n"
 				+ "    exports: [RouterModule]\n" + "  })\n" + "  export class AppRouting { }");
 		Util.writeOut(routeRoot + "/app.routes.ts", sbf);
+	}
+
+	private static void emitMenu(String routeRoot, String resourceRootFolder, String PageRoot) {
+		StringBuilder sbf = new StringBuilder();
+		sbf.setLength(0);
+		sbf.append("export const navMenu = [ ");
+		Page page;
+		File f = new File(routeRoot);
+		f = new File(resourceRootFolder + "page/");
+		if (f.exists() == false) {
+			logger.error("Templates folder {} not found. No Templates are processed", f.getPath());
+		} else {
+
+			for (final File file : f.listFiles()) {
+				final String fn = file.getName();
+				if (fn.endsWith(EXT_PAGE) == false) {
+					logger.debug("Skipping non-template file {} ", fn);
+					continue;
+				} else {
+					try (final JsonReader reader = new JsonReader(new FileReader(file))) {
+						page = Util.GSON.fromJson(reader, Page.class);
+						if (page.navMenuName != null && page.navMenuName.length() > 0)
+							sbf.append("\n{\n    \"name\":\"" + page.navMenuName + "\",\"routeTo\":\"" + page.pageName
+									+ "\"\n  },");
+					} catch (final Exception e) {
+						e.printStackTrace();
+						logger.error("Route {} not generated. Error : {}, {}", fn, e, e.getMessage());
+						return;
+					}
+				}
+			}
+		}
+		sbf.append("]");
+		Util.writeOut(routeRoot + "/app.menu.ts", sbf);
 	}
 
 }

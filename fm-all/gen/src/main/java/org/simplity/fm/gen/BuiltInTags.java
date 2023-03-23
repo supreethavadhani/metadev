@@ -11,7 +11,7 @@ public class BuiltInTags {
 		builtInTags.put("Primary", "app-mv-primary-button");
 		builtInTags.put("Secondary", "app-mv-secondary-button");
 		builtInTags.put("Create", "create");
-		builtInTags.put("Save", "save");
+		builtInTags.put("Update", "save");
 		builtInTags.put("Navigate", "navigate");
 	}
 
