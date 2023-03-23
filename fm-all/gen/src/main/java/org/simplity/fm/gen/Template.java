@@ -173,9 +173,6 @@ public class Template {
 	}
 
 	StringBuilder getButtonsTs(Template template, StringBuilder sbf) {
-		Boolean CreateCalled = false;
-		Boolean NavigateCalled = false;
-		Boolean UpdateCalled = false;
 		if (template.buttons.length > 0) {
 			for (Button button : template.buttons) {
 				if (button.action == ButtonActions.Create) {
@@ -186,14 +183,15 @@ public class Template {
 						sbf = getRouteTs(sbf, button.name);
 					}
 					sbf.append("\n    },       err => {\n" + "        console.log(err)\n" + "      });   \n" + "    }");
-					CreateCalled = true;
 				}
 				if (button.action == ButtonActions.Update) {
 					sbf.append("  \n save" + button.name.replaceAll("\\s+", "") + "() {\n"
 							+ "    this.fd.save().subscribe(\n" + "      data => {\n"
-							+ "        console.log(\"saved\")\n" + "      },\n" + "      err => {\n"
-							+ "							       console.log(err)\n" + "          }); \n }");
-					UpdateCalled = true;
+							+ "        console.log(\"saved\")\n");
+					if (button.routeOnClick != null && button.routeOnClick && template.enableRoutes) {
+						sbf = getRouteTs(sbf, button.name);
+					}
+					sbf.append("\n    },       err => {\n" + "        console.log(err)\n" + "      });   \n" + "    }");
 				}
 				if (button.action == ButtonActions.Navigate) {
 					sbf.append("   \n navigate" + button.name.replaceAll("\\s+", "") + "() {\n"
@@ -202,7 +200,6 @@ public class Template {
 						sbf = getRouteTs(sbf, button.name);
 					}
 					sbf.append("  }");
-					NavigateCalled = true;
 				}
 			}
 		}
