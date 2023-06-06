@@ -116,7 +116,7 @@ public class Template {
 		sbf = getHeaderHtml(template, sbf);
 		sbf.append("	<" + tag + " [formData]=\"fd\"></" + tag + ">\n");
 		sbf = getButtonsHtml(template, sbf);
-		sbf.append("</mat-card>");
+		sbf.append("</div>");
 		return sbf;
 	}
 
@@ -156,7 +156,7 @@ public class Template {
 		if (template.buttons != null && template.buttons.length > 0) {
 			sbf = getButtonsHtml(template, sbf);
 		}
-		sbf.append("</mat-card>");
+		sbf.append("</div>");
 		return sbf;
 	}
 
@@ -207,10 +207,9 @@ public class Template {
 	}
 
 	StringBuilder getHeaderHtml(Template template, StringBuilder sbf) {
-		sbf.append("    "
-				+ "<mat-card class=\"col-md-10\" style=\"margin: auto; margin-top: 2rem;box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;\"> \n "
-				+ "    <div style=\"margin: 2rem;text-align:center;\">\n"
-				+ "        <h2 style=\"color:#004faa\"> {{formHeader}}</h2>\n" + "        <hr>\n" + "    </div>");
+		sbf.append("<div class=\"col-md-12\" style=\"margin: auto; margin-top: 3rem;\"> \n" + "     <div>\n"
+				+ "       <b><h3 style=\"color: #353b48; font-weight: 600;\"> {{formHeader}}</h3></b>\n"
+				+ "       <hr>\n" + "    </div>");
 		return sbf;
 	}
 
